@@ -2,6 +2,24 @@
 
 A cutting-edge AI-powered Next.js application that generates stunning character variations from multiple angles using Google Gemini 2.0 Flash and Fal AI. Upload character images and get professional-quality variations while maintaining perfect character consistency across all angles.
 
+## 🖼️ Application Preview
+
+![VaryAI Application Screenshot](Screenshot%20(2190).webp)
+
+*VaryAI in action - showcasing the modern dark UI, multi-image upload system, and interactive gallery with full-screen navigation*
+
+### Additional Screenshots
+
+![VaryAI Screenshot 2](Screenshot%20(2192).png)
+
+![VaryAI Screenshot 3](Screenshot%20(2193).png)
+
+![VaryAI Screenshot 4](Screenshot%20(2194).png)
+
+![VaryAI Screenshot 5](Screenshot%20(2195).png)
+
+*Comprehensive view of VaryAI's features: multi-image processing, character variations, gallery management, and full-screen navigation capabilities*
+
 ## ✨ Features
 
 ### 🎨 **Multi-Image Upload System**
