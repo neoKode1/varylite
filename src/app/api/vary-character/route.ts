@@ -1,44 +1,143 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
+
+// Sanitize prompts to avoid content policy violations while preserving character details
+function sanitizePrompt(description: string, angle: string): string {
+  // Remove potentially problematic words and replace with safer alternatives
+  const problematicPatterns = [
+    /\b(sexy|sensual|provocative|erotic|adult|mature|intimate)\b/gi,
+    /\b(revealing|exposed|naked|nude|undressed)\b/gi,
+    /\b(weapon|sword|gun|knife|blade|combat|fighting|violence)\b/gi,
+  ];
+  
+  let sanitized = description;
+  problematicPatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, 'character');
+  });
+  
+  // Extract key character details while keeping it safe
+  const safeDescription = sanitized
+    .replace(/\b(tight|form-fitting|skin-tight)\b/gi, 'fitted')
+    .replace(/\b(dark|gothic|edgy)\b/gi, 'stylized');
+  
+  // Create a detailed but safe prompt that preserves character consistency
+  return `Professional character portrait from ${angle.toLowerCase()} angle. ${safeDescription}. Maintain exact character design consistency with appropriate, family-friendly styling.`;
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-export async function POST(request: NextRequest) {
-  try {
-    const body: CharacterVariationRequest = await request.json();
-    const { image, prompt } = body;
+// Configure Fal AI
+if (process.env.FAL_KEY) {
+  console.log('🔧 Configuring Fal AI with key...');
+  fal.config({
+    credentials: process.env.FAL_KEY
+  });
+  console.log('✅ Fal AI configured successfully');
+} else {
+  console.log('❌ No FAL_KEY found for configuration');
+}
 
-    if (!image || !prompt) {
+export async function POST(request: NextRequest) {
+  console.log('🚀 API Route: /api/vary-character - Request received');
+  
+  try {
+    console.log('📝 Parsing request body...');
+    const body: CharacterVariationRequest = await request.json();
+    const { images, prompt } = body;
+
+    console.log('✅ Request body parsed successfully');
+    console.log(`📋 Prompt: "${prompt}"`);
+    console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
+    console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
+
+    if (!images || images.length === 0 || !prompt) {
+      console.log('❌ Validation failed: Missing image or prompt');
       return NextResponse.json({
         success: false,
-        error: 'Both image and prompt are required'
+        error: 'At least one image and prompt are required'
       } as CharacterVariationResponse, { status: 400 });
     }
 
+    console.log('🔑 Checking API keys...');
+    console.log(`🔍 GOOGLE_API_KEY exists: ${!!process.env.GOOGLE_API_KEY}`);
+    console.log(`🔍 GOOGLE_API_KEY length: ${process.env.GOOGLE_API_KEY?.length || 0} characters`);
+    console.log(`🔍 FAL_KEY exists: ${!!process.env.FAL_KEY}`);
+    console.log(`🔍 FAL_KEY length: ${process.env.FAL_KEY?.length || 0} characters`);
+
     if (!process.env.GOOGLE_API_KEY) {
+      console.log('❌ Google API key not found in environment variables');
       return NextResponse.json({
         success: false,
         error: 'Google API key not configured. Please add GOOGLE_API_KEY to your environment variables.'
       } as CharacterVariationResponse, { status: 500 });
     }
 
+    const hasFalKey = !!process.env.FAL_KEY;
+    if (!hasFalKey) {
+      console.log('⚠️ Fal AI key not found - will return descriptions only');
+    }
+
+    console.log('🤖 Initializing Gemini AI model...');
     // Get the generative model - using Gemini 2.0 Flash for better performance
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    console.log('✅ Gemini model initialized successfully');
 
-    // Create the prompt for character variation
-    const enhancedPrompt = `
-Analyze this character image and generate 4 distinct variations based on the user's request: "${prompt}"
+    console.log('📝 Creating enhanced prompt...');
+    
+    // Determine if this is a "vary" request (single image from URL) vs multi-image upload
+    const isVaryRequest = images.length === 1 && prompt.includes('Generate 4 new variations');
+    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : 'MULTI-IMAGE upload'}`);
+    
+    let enhancedPrompt;
+    
+    if (isVaryRequest) {
+      // For "Vary" requests - focus on detailed character analysis first
+      enhancedPrompt = `
+Analyze this character image in extreme detail and generate 4 distinct new variations based on this request: "${prompt}"
+
+STEP 1 - DETAILED CHARACTER ANALYSIS:
+First, carefully examine and document EVERY aspect of this character:
+- Facial features: eye color, shape, nose, mouth, jawline, cheekbones
+- Hair: style, color, length, texture, any accessories
+- Clothing: exact garments, colors, patterns, textures, fit
+- Body type: height, build, proportions
+- Skin tone and any markings, tattoos, or scars
+- Accessories: jewelry, equipment, props
+- Art style: realistic, anime, cartoon, etc.
+- Color palette used throughout the design
+
+STEP 2 - VARIATION GENERATION:
+Create 4 NEW variations that maintain 100% character consistency:
+- Use the EXACT same character analysis from Step 1
+- Only change the viewing angle or pose
+- Keep IDENTICAL facial features, hair, clothing, and colors
+- Maintain the same art style and proportions
+
+Each variation must include:
+1. Viewing angle (e.g., "Side Profile", "Back View", "3/4 Angle", "Low Angle")
+2. Pose description (e.g., "Standing pose", "Action stance", "Relaxed position")
+3. Complete character description maintaining ALL details from the analysis
+
+Format: Provide detailed character analysis first, then the 4 variations with perfect consistency.
+`;
+    } else {
+      // For multi-image uploads - use the existing comprehensive analysis
+      enhancedPrompt = `
+Analyze these ${images.length} character images and generate 4 distinct variations based on the user's request: "${prompt}"
 
 You are a character design expert. Create 4 different views of this EXACT SAME character, maintaining perfect character consistency while showing different angles or perspectives.
 
 CRITICAL REQUIREMENTS for character consistency:
-- Keep IDENTICAL facial features, expression, and proportions
+- Use ALL provided images to understand the complete character design
+- Keep IDENTICAL facial features, expression, and proportions from all angles
 - Maintain the EXACT SAME clothing, accessories, and outfit details
 - Preserve the SAME hair style, color, and length
 - Use the IDENTICAL color palette throughout
 - Keep the SAME body type, height, and build
 - Maintain any distinctive markings, scars, or unique features
+- Cross-reference between images to ensure consistency
 
 For each of the 4 variations, provide:
 1. A specific viewing angle (e.g., "Side Profile View", "Rear View", "3/4 Angle View", "Low Angle View")
@@ -53,19 +152,33 @@ The 4 variations should cover different angles while keeping the character absol
 
 Format each variation clearly with the angle, pose, and detailed character description that maintains perfect consistency.
 `;
+    }
 
-    // Convert base64 to the format expected by Gemini
-    const imagePart = {
-      inlineData: {
-        data: image,
-        mimeType: 'image/jpeg' // Assume JPEG, could be enhanced to detect actual type
-      }
-    };
+    // Convert all base64 images to the format expected by Gemini
+    const imageParts = images.map((imageData, index) => {
+      console.log(`🖼️ Processing image ${index + 1} for Gemini`);
+      return {
+        inlineData: {
+          data: imageData,
+          mimeType: 'image/jpeg' // Assume JPEG, could be enhanced to detect actual type
+        }
+      };
+    });
 
-    // Generate content with both image and text
-    const result = await model.generateContent([enhancedPrompt, imagePart]);
+    console.log('🚀 Sending request to Gemini API...');
+    // Generate content with text and all images
+    const result = await model.generateContent([enhancedPrompt, ...imageParts]);
+    console.log('📬 Received response from Gemini API');
+    
     const response = await result.response;
     const text = response.text();
+    console.log(`📄 Response text length: ${text ? text.length : 0} characters`);
+    
+    if (isVaryRequest) {
+      console.log('🔍 Enhanced character analysis completed for Vary request');
+      console.log(`📊 Analysis preview: ${text.substring(0, 200)}...`);
+    }
+    console.log('📋 First 200 characters of response:', text ? text.substring(0, 200) + '...' : 'No text received');
 
     if (!text) {
       return NextResponse.json({
@@ -74,27 +187,97 @@ Format each variation clearly with the angle, pose, and detailed character descr
       } as CharacterVariationResponse, { status: 500 });
     }
 
+    console.log('🔄 Parsing Gemini response...');
     // Parse the response to extract variations
     const variations = parseGeminiResponse(text);
+    console.log(`✅ Parsed ${variations.length} variations successfully`);
 
     if (variations.length === 0) {
+      console.log('❌ No variations could be parsed from the response');
       return NextResponse.json({
         success: false,
         error: 'Failed to parse character variations from AI response'
       } as CharacterVariationResponse, { status: 500 });
     }
 
+    let variationsWithImages = variations;
+
+    if (hasFalKey) {
+      console.log('🎨 Generating images with Fal AI...');
+      // Convert primary base64 image to data URI for Fal AI
+      const primaryImageDataUri = `data:image/jpeg;base64,${images[0]}`;
+      
+      // Generate images for each variation using Fal AI
+      variationsWithImages = await Promise.all(
+        variations.map(async (variation, index) => {
+          try {
+            console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
+            
+            // Sanitize the prompt to avoid content policy violations
+            const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle);
+            
+            const result = await fal.subscribe("fal-ai/nano-banana/edit", {
+              input: {
+                prompt: sanitizedPrompt,
+                image_urls: [primaryImageDataUri],
+                num_images: 1,
+                output_format: "jpeg"
+              },
+              logs: true,
+              onQueueUpdate: (update) => {
+                if (update.status === "IN_PROGRESS") {
+                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                }
+              },
+            });
+
+            console.log(`✅ Image ${index + 1} generated successfully`);
+            
+            return {
+              ...variation,
+              imageUrl: result.data.images[0]?.url || undefined
+            };
+          } catch (error) {
+            console.error(`❌ Failed to generate image for ${variation.angle}:`, error);
+            if (error instanceof Error && 'body' in error) {
+              console.error('❌ Full error body:', (error as any).body);
+              
+              // Check for content policy violation
+              const errorBody = (error as any).body;
+              if (errorBody?.detail?.[0]?.type === 'content_policy_violation') {
+                console.log(`⚠️ Content policy violation for ${variation.angle} - returning text description only`);
+                return {
+                  ...variation,
+                  description: `${variation.description} (Note: Image generation was blocked by content policy - text description only)`
+                };
+              }
+            }
+            return variation; // Return without image URL if generation fails
+          }
+        })
+      );
+    } else {
+      console.log('📝 Returning descriptions only (no FAL_KEY configured)');
+    }
+
+    console.log('🎉 API request completed successfully!');
+    console.log('📊 Variations with images generated:', variationsWithImages.map(v => v.angle).join(', '));
+    
     return NextResponse.json({
       success: true,
-      variations
+      variations: variationsWithImages
     } as CharacterVariationResponse);
 
   } catch (error) {
-    console.error('Error in vary-character API:', error);
+    console.error('💥 Error in vary-character API:', error);
+    console.error('💥 Error type:', typeof error);
+    console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('💥 Error message:', error instanceof Error ? error.message : String(error));
     
     let errorMessage = 'An unexpected error occurred';
     if (error instanceof Error) {
       errorMessage = error.message;
+      console.error('💥 Full error stack:', error.stack);
     }
 
     return NextResponse.json({
