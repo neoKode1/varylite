@@ -272,6 +272,3 @@ This project is licensed under the ISC License.
 
 🚀 **Built with cutting-edge AI technology**  
 **Next.js 14** • **Google Gemini 2.0 Flash** • **Fal AI nano-banana** • **TypeScript** • **Tailwind CSS**
-#   V a r y A i 
- 
- 
