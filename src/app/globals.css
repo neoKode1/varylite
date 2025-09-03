@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom background image */
+body {
+  background-image: url('/background-smileys.svg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
+/* Ensure the background covers the entire viewport */
+#__next {
+  min-height: 100vh;
+}

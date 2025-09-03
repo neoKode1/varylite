@@ -451,19 +451,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="flex">
+    <div className="min-h-screen relative">
+      {/* Semi-transparent overlay for content readability */}
+      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      
+      <div className="relative z-10 flex">
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-2/3' : 'w-full'}`}>
           <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-16">
+        <div className="flex justify-between items-start mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
           <h1 className="text-4xl font-bold text-white">
             vARY<span className="text-gray-400">ai</span>
           </h1>
           <button
             onClick={() => setShowGallery(!showGallery)}
-            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg"
             title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
           >
             {showGallery ? 'Hide' : 'Show'} gallery
@@ -473,7 +476,7 @@ export default function Home() {
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="max-w-2xl w-full">
             {/* Description */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
               <p className="text-gray-300 text-lg">
                 Upload a character image and generate 4 unique angle variations using AI.
               </p>
@@ -482,7 +485,7 @@ export default function Home() {
             {/* Main Input Area */}
             {uploadedImages.length === 0 ? (
               <div
-                className="border-2 border-white rounded-lg p-16 text-center hover:border-gray-300 transition-colors cursor-pointer"
+                className="border-2 border-white rounded-lg p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => document.getElementById('file-input')?.click()}
@@ -506,7 +509,7 @@ export default function Home() {
             ) : (
               <div className="space-y-6">
                 {/* Multiple Images Preview */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                   {uploadedImages.map((image, index) => (
                     <div key={index} className="relative">
                       <img
@@ -551,7 +554,7 @@ export default function Home() {
                 </div>
 
                 {/* Prompt Input */}
-                <div className="space-y-4">
+                <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                   <textarea
                     id="prompt"
                     value={prompt}
@@ -587,7 +590,7 @@ export default function Home() {
 
                     {/* Extended Prompts */}
                     {showExtendedPrompts && (
-                      <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-600">
+                      <div className="mt-4 p-4 bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg border border-gray-600">
                         <h4 className="text-white text-sm font-medium mb-3 text-center">Professional Camera Angles & Shot Types</h4>
                         
                         {/* Close-up shots */}
@@ -677,7 +680,7 @@ export default function Home() {
                     <button
                       onClick={handleProcessCharacter}
                       disabled={processing.isProcessing || !prompt.trim()}
-                      className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                     >
                       {processing.isProcessing ? (
                         <>
@@ -707,7 +710,7 @@ export default function Home() {
         {/* Error Display */}
         {error && (
           <div className="max-w-4xl mx-auto px-4">
-            <div className="bg-red-900 border border-red-700 rounded-lg p-4 mb-8">
+            <div className="bg-red-900 bg-opacity-90 backdrop-blur-sm border border-red-700 rounded-lg p-4 mb-8">
               <p className="text-red-300">{error}</p>
             </div>
           </div>
@@ -716,11 +719,11 @@ export default function Home() {
         {/* Results Section */}
         {variations.length > 0 && (
           <div className="max-w-6xl mx-auto px-4 mt-12">
-            <h2 className="text-2xl font-semibold mb-8 text-white text-center">Character Variations</h2>
+            <h2 className="text-2xl font-semibold mb-8 text-white text-center bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">Character Variations</h2>
             
             {/* Info message if no images are generated */}
             {variations.length > 0 && !variations.some(v => v.imageUrl) && (
-              <div className="bg-blue-900 border border-blue-700 rounded-lg p-4 mb-6">
+              <div className="bg-blue-900 bg-opacity-90 backdrop-blur-sm border border-blue-700 rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-blue-300" />
                   <p className="text-blue-200 font-medium">Character descriptions generated!</p>
@@ -735,7 +738,7 @@ export default function Home() {
               {variations.map((variation) => (
                 <div
                   key={variation.id}
-                  className="border border-white rounded-lg p-6 hover:border-gray-300 transition-colors"
+                  className="border border-white rounded-lg p-6 hover:border-gray-300 transition-colors bg-black bg-opacity-40 backdrop-blur-sm"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -812,7 +815,7 @@ export default function Home() {
 
         {/* Gallery Panel */}
         {showGallery && (
-          <div className="w-1/3 bg-gray-800 border-l border-gray-700 h-screen overflow-y-auto">
+          <div className="w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-l border-gray-700 h-screen overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
@@ -850,7 +853,7 @@ export default function Home() {
                   {gallery.map((item) => (
                     <div
                       key={`${item.id}-${item.timestamp}`}
-                      className="border border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-700"
+                      className="border border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-700 bg-opacity-80 backdrop-blur-sm"
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
@@ -881,7 +884,7 @@ export default function Home() {
                             className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => handleImageClick(item.imageUrl!)}
                           />
-                          <div className="bg-gray-700 rounded p-2">
+                          <div className="bg-gray-700 bg-opacity-80 backdrop-blur-sm rounded p-2">
                             <p className="text-xs text-gray-300 leading-relaxed">
                               {item.description.substring(0, 150)}
                               {item.description.length > 150 ? '...' : ''}

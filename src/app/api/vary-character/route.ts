@@ -3,6 +3,115 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
 
+// Retry configuration for API calls
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 second
+  maxDelay: 10000, // 10 seconds
+  backoffMultiplier: 2,
+  timeout: 30000, // 30 seconds timeout
+};
+
+// Timeout wrapper function
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+    )
+  ]);
+}
+
+// Exponential backoff retry function
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = RETRY_CONFIG.maxRetries,
+  baseDelay: number = RETRY_CONFIG.baseDelay,
+  maxDelay: number = RETRY_CONFIG.maxDelay,
+  backoffMultiplier: number = RETRY_CONFIG.backoffMultiplier
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await withTimeout(operation(), RETRY_CONFIG.timeout);
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on the last attempt
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      // Check if this is a retryable error
+      if (!isRetryableError(lastError)) {
+        throw lastError;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        baseDelay * Math.pow(backoffMultiplier, attempt),
+        maxDelay
+      );
+      
+      console.log(`⚠️ Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      console.log(`📊 Error: ${lastError.message}`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
+// Check if an error is retryable
+function isRetryableError(error: Error): boolean {
+  const retryableErrors = [
+    '503 Service Unavailable',
+    'The model is overloaded',
+    'rate limit exceeded',
+    'quota exceeded',
+    'internal server error',
+    'bad gateway',
+    'service unavailable',
+    'timeout',
+    'network error'
+  ];
+  
+  const errorMessage = error.message.toLowerCase();
+  return retryableErrors.some(retryableError => 
+    errorMessage.includes(retryableError.toLowerCase())
+  );
+}
+
+// Try alternative models if the primary one fails
+async function tryAlternativeModels(
+  genAI: GoogleGenerativeAI,
+  prompt: string,
+  imageParts: any[]
+): Promise<any> {
+  const models = [
+    { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
+    { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' },
+    { name: 'gemini-pro', description: 'Gemini Pro' }
+  ];
+  
+  for (const modelConfig of models) {
+    try {
+      console.log(`🔄 Trying alternative model: ${modelConfig.description}`);
+      const model = genAI.getGenerativeModel({ model: modelConfig.name });
+      const result = await model.generateContent([prompt, ...imageParts]);
+      console.log(`✅ Successfully used ${modelConfig.description}`);
+      return result;
+    } catch (error) {
+      console.log(`❌ ${modelConfig.description} failed:`, (error as Error).message);
+      continue;
+    }
+  }
+  
+  throw new Error('All available Gemini models are currently unavailable');
+}
+
 // Sanitize prompts to avoid content policy violations while preserving character details
 function sanitizePrompt(description: string, angle: string): string {
   // Remove potentially problematic words and replace with safer alternatives
@@ -28,6 +137,48 @@ function sanitizePrompt(description: string, angle: string): string {
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
+// Circuit breaker state
+let circuitBreakerState = {
+  failures: 0,
+  lastFailureTime: 0,
+  isOpen: false,
+  threshold: 5,
+  timeout: 60000, // 1 minute
+};
+
+// Circuit breaker function
+function shouldAllowRequest(): boolean {
+  if (!circuitBreakerState.isOpen) return true;
+  
+  const now = Date.now();
+  if (now - circuitBreakerState.lastFailureTime > circuitBreakerState.timeout) {
+    console.log('🔄 Circuit breaker timeout reached, allowing requests again');
+    circuitBreakerState.isOpen = false;
+    circuitBreakerState.failures = 0;
+    return true;
+  }
+  
+  return false;
+}
+
+function recordFailure(): void {
+  circuitBreakerState.failures++;
+  circuitBreakerState.lastFailureTime = Date.now();
+  
+  if (circuitBreakerState.failures >= circuitBreakerState.threshold) {
+    console.log('🚨 Circuit breaker opened due to repeated failures');
+    circuitBreakerState.isOpen = true;
+  }
+}
+
+function recordSuccess(): void {
+  circuitBreakerState.failures = 0;
+  if (circuitBreakerState.isOpen) {
+    console.log('✅ Circuit breaker closed due to successful request');
+    circuitBreakerState.isOpen = false;
+  }
+}
+
 // Configure Fal AI
 if (process.env.FAL_KEY) {
   console.log('🔧 Configuring Fal AI with key...');
@@ -41,6 +192,16 @@ if (process.env.FAL_KEY) {
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route: /api/vary-character - Request received');
+  
+  // Check circuit breaker
+  if (!shouldAllowRequest()) {
+    console.log('🚨 Circuit breaker is open, rejecting request');
+    return NextResponse.json({
+      success: false,
+      error: 'Service temporarily unavailable due to repeated failures. Please try again in a moment.',
+      retryable: true
+    } as CharacterVariationResponse, { status: 503 });
+  }
   
   try {
     console.log('📝 Parsing request body...');
@@ -56,7 +217,8 @@ export async function POST(request: NextRequest) {
       console.log('❌ Validation failed: Missing image or prompt');
       return NextResponse.json({
         success: false,
-        error: 'At least one image and prompt are required'
+        error: 'At least one image and prompt are required',
+        retryable: false
       } as CharacterVariationResponse, { status: 400 });
     }
 
@@ -70,7 +232,8 @@ export async function POST(request: NextRequest) {
       console.log('❌ Google API key not found in environment variables');
       return NextResponse.json({
         success: false,
-        error: 'Google API key not configured. Please add GOOGLE_API_KEY to your environment variables.'
+        error: 'Google API key not configured. Please add GOOGLE_API_KEY to your environment variables.',
+        retryable: false
       } as CharacterVariationResponse, { status: 500 });
     }
 
@@ -81,8 +244,9 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Initializing Gemini AI model...');
     // Get the generative model - using Gemini 2.0 Flash for better performance
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    console.log('✅ Gemini model initialized successfully');
+    // Fallback to Gemini 1.5 Pro if 2.0 Flash is overloaded
+    let model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    console.log('✅ Gemini 2.0 Flash model initialized successfully');
 
     console.log('📝 Creating enhanced prompt...');
     
@@ -166,8 +330,20 @@ Format each variation clearly with the angle, pose, and detailed character descr
     });
 
     console.log('🚀 Sending request to Gemini API...');
-    // Generate content with text and all images
-    const result = await model.generateContent([enhancedPrompt, ...imageParts]);
+    console.log(`📊 Circuit breaker state: ${circuitBreakerState.isOpen ? 'OPEN' : 'CLOSED'} (failures: ${circuitBreakerState.failures})`);
+    
+    // Generate content with text and all images using retry mechanism with model fallback
+    let result;
+    try {
+      result = await retryWithBackoff(async () => {
+        console.log('🔄 Attempting Gemini API call...');
+        return await model.generateContent([enhancedPrompt, ...imageParts]);
+      });
+    } catch (error) {
+      console.log('⚠️ Primary model failed, trying alternative models...');
+      console.log(`📊 Error details: ${(error as Error).message}`);
+      result = await tryAlternativeModels(genAI, enhancedPrompt, imageParts);
+    }
     console.log('📬 Received response from Gemini API');
     
     const response = await result.response;
@@ -216,19 +392,22 @@ Format each variation clearly with the angle, pose, and detailed character descr
             // Sanitize the prompt to avoid content policy violations
             const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle);
             
-            const result = await fal.subscribe("fal-ai/nano-banana/edit", {
-              input: {
-                prompt: sanitizedPrompt,
-                image_urls: [primaryImageDataUri],
-                num_images: 1,
-                output_format: "jpeg"
-              },
-              logs: true,
-              onQueueUpdate: (update) => {
-                if (update.status === "IN_PROGRESS") {
-                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                }
-              },
+            const result = await retryWithBackoff(async () => {
+              console.log(`🔄 Attempting Fal AI image generation for ${variation.angle}...`);
+              return await fal.subscribe("fal-ai/nano-banana/edit", {
+                input: {
+                  prompt: sanitizedPrompt,
+                  image_urls: [primaryImageDataUri],
+                  num_images: 1,
+                  output_format: "jpeg"
+                },
+                logs: true,
+                onQueueUpdate: (update) => {
+                  if (update.status === "IN_PROGRESS") {
+                    console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                  }
+                },
+              });
             });
 
             console.log(`✅ Image ${index + 1} generated successfully`);
@@ -263,6 +442,9 @@ Format each variation clearly with the angle, pose, and detailed character descr
     console.log('🎉 API request completed successfully!');
     console.log('📊 Variations with images generated:', variationsWithImages.map(v => v.angle).join(', '));
     
+    // Record success for circuit breaker
+    recordSuccess();
+    
     return NextResponse.json({
       success: true,
       variations: variationsWithImages
@@ -274,16 +456,40 @@ Format each variation clearly with the angle, pose, and detailed character descr
     console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
     console.error('💥 Error message:', error instanceof Error ? error.message : String(error));
     
+    // Record failure for circuit breaker
+    recordFailure();
+    
     let errorMessage = 'An unexpected error occurred';
+    let statusCode = 500;
+    
     if (error instanceof Error) {
       errorMessage = error.message;
       console.error('💥 Full error stack:', error.stack);
+      
+      // Provide more specific error messages for common failure scenarios
+      if (error.message.includes('503 Service Unavailable') || error.message.includes('model is overloaded')) {
+        errorMessage = 'The AI service is currently overloaded. Please try again in a few moments.';
+        statusCode = 503;
+      } else if (error.message.includes('rate limit exceeded') || error.message.includes('quota exceeded')) {
+        errorMessage = 'API rate limit exceeded. Please try again later.';
+        statusCode = 429;
+      } else if (error.message.includes('invalid api key') || error.message.includes('authentication')) {
+        errorMessage = 'Authentication failed. Please check your API configuration.';
+        statusCode = 401;
+      } else if (error.message.includes('content policy violation')) {
+        errorMessage = 'The request was blocked due to content policy violations.';
+        statusCode = 400;
+      } else if (error.message.includes('timeout') || error.message.includes('network error')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+        statusCode = 408;
+      }
     }
 
     return NextResponse.json({
       success: false,
-      error: errorMessage
-    } as CharacterVariationResponse, { status: 500 });
+      error: errorMessage,
+      retryable: statusCode === 503 || statusCode === 429 || statusCode === 408
+    } as CharacterVariationResponse, { status: statusCode });
   }
 }
 
