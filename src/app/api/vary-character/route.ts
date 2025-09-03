@@ -113,7 +113,7 @@ async function tryAlternativeModels(
 }
 
 // Sanitize prompts to avoid content policy violations while preserving character details
-function sanitizePrompt(description: string, angle: string): string {
+function sanitizePrompt(description: string, angle: string, originalPrompt?: string): string {
   // Remove potentially problematic words and replace with safer alternatives
   const problematicPatterns = [
     /\b(sexy|sensual|provocative|erotic|adult|mature|intimate)\b/gi,
@@ -131,8 +131,32 @@ function sanitizePrompt(description: string, angle: string): string {
     .replace(/\b(tight|form-fitting|skin-tight)\b/gi, 'fitted')
     .replace(/\b(dark|gothic|edgy)\b/gi, 'stylized');
   
-  // Create a detailed but safe prompt that preserves character consistency
-  return `Professional character portrait from ${angle.toLowerCase()} angle. ${safeDescription}. Maintain exact character design consistency with appropriate, family-friendly styling.`;
+  // Check if the original prompt contains background removal instructions
+  const hasBackgroundRemoval = originalPrompt?.toLowerCase().includes('remove background') || 
+                              originalPrompt?.toLowerCase().includes('background removed') ||
+                              originalPrompt?.toLowerCase().includes('no background') ||
+                              originalPrompt?.toLowerCase().includes('transparent background');
+  
+  // Check for other important image processing instructions
+  const hasImageProcessing = originalPrompt?.toLowerCase().includes('enhance') ||
+                            originalPrompt?.toLowerCase().includes('improve') ||
+                            originalPrompt?.toLowerCase().includes('clean up') ||
+                            originalPrompt?.toLowerCase().includes('fix') ||
+                            originalPrompt?.toLowerCase().includes('adjust');
+  
+  let enhancedPrompt = `Professional character portrait from ${angle.toLowerCase()} angle. ${safeDescription}. Maintain exact character design consistency with appropriate, family-friendly styling.`;
+  
+  // Add background removal instruction if it was in the original prompt
+  if (hasBackgroundRemoval) {
+    enhancedPrompt += ` IMPORTANT: Remove all background elements and create a clean, transparent background. Focus only on the character with no environmental details.`;
+  }
+  
+  // Add general image processing instructions if present
+  if (hasImageProcessing) {
+    enhancedPrompt += ` Apply high-quality image processing to enhance clarity and detail.`;
+  }
+  
+  return enhancedPrompt;
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
@@ -254,6 +278,15 @@ export async function POST(request: NextRequest) {
     const isVaryRequest = images.length === 1 && prompt.includes('Generate 4 new variations');
     console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : 'MULTI-IMAGE upload'}`);
     
+    // Analyze the original prompt for specific instructions
+    const hasBackgroundRemoval = prompt.toLowerCase().includes('remove background') || 
+                                prompt.toLowerCase().includes('background removed') ||
+                                prompt.toLowerCase().includes('no background') ||
+                                prompt.toLowerCase().includes('transparent background');
+    
+    console.log(`🔍 Background removal detected: ${hasBackgroundRemoval}`);
+    console.log(`📋 Original prompt analysis: "${prompt}"`);
+    
     let enhancedPrompt;
     
     if (isVaryRequest) {
@@ -277,12 +310,12 @@ Create 4 NEW variations that maintain 100% character consistency:
 - Use the EXACT same character analysis from Step 1
 - Only change the viewing angle or pose
 - Keep IDENTICAL facial features, hair, clothing, and colors
-- Maintain the same art style and proportions
+- Maintain the same art style and proportions${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
 
 Each variation must include:
 1. Viewing angle (e.g., "Side Profile", "Back View", "3/4 Angle", "Low Angle")
 2. Pose description (e.g., "Standing pose", "Action stance", "Relaxed position")
-3. Complete character description maintaining ALL details from the analysis
+3. Complete character description maintaining ALL details from the analysis${hasBackgroundRemoval ? '\n4. Note: Background should be clean/transparent for professional use' : ''}
 
 Format: Provide detailed character analysis first, then the 4 variations with perfect consistency.
 `;
@@ -301,12 +334,12 @@ CRITICAL REQUIREMENTS for character consistency:
 - Use the IDENTICAL color palette throughout
 - Keep the SAME body type, height, and build
 - Maintain any distinctive markings, scars, or unique features
-- Cross-reference between images to ensure consistency
+- Cross-reference between images to ensure consistency${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
 
 For each of the 4 variations, provide:
 1. A specific viewing angle (e.g., "Side Profile View", "Rear View", "3/4 Angle View", "Low Angle View")
 2. A detailed pose description (e.g., "Standing straight", "Action stance", "Relaxed posture")
-3. A comprehensive visual description that preserves ALL character details while showing the new perspective
+3. A comprehensive visual description that preserves ALL character details while showing the new perspective${hasBackgroundRemoval ? '\n4. Note: Background should be clean/transparent for professional use' : ''}
 
 The 4 variations should cover different angles while keeping the character absolutely identical in design:
 - Front/side profile views
@@ -390,16 +423,28 @@ Format each variation clearly with the angle, pose, and detailed character descr
             console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
             
             // Sanitize the prompt to avoid content policy violations
-            const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle);
+            const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle, prompt);
+            console.log(`🎨 Fal AI prompt for ${variation.angle}:`, sanitizedPrompt);
             
             const result = await retryWithBackoff(async () => {
               console.log(`🔄 Attempting Fal AI image generation for ${variation.angle}...`);
-              return await fal.subscribe("fal-ai/nano-banana/edit", {
+              
+              // Choose the best model based on the task
+              const modelName = hasBackgroundRemoval ? "fal-ai/nano-banana/edit" : "fal-ai/nano-banana/edit";
+              console.log(`🤖 Using Fal AI model: ${modelName}`);
+              
+              return await fal.subscribe(modelName, {
                 input: {
                   prompt: sanitizedPrompt,
                   image_urls: [primaryImageDataUri],
                   num_images: 1,
-                  output_format: "jpeg"
+                  output_format: "jpeg",
+                  // Add specific parameters for background removal
+                  ...(hasBackgroundRemoval && {
+                    negative_prompt: "background, environment, scenery, objects, text, watermark",
+                    guidance_scale: 7.5,
+                    num_inference_steps: 20
+                  })
                 },
                 logs: true,
                 onQueueUpdate: (update) => {
