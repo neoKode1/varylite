@@ -5,7 +5,7 @@ import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Tras
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse } from '@/types/gemini';
 
 // Configuration: Set to false to disable video-to-video functionality
-const ENABLE_VIDEO_FEATURES = false;
+const ENABLE_VIDEO_FEATURES = true;
 
 const BASIC_PROMPTS = [
   'Show this character from the side profile',
@@ -96,6 +96,177 @@ const EXTENDED_PROMPTS = [
   'Character in power pose stance'
 ];
 
+// Video-specific prompts organized by movie genres
+const VIDEO_PROMPTS = {
+  // Action & Adventure
+  action: [
+    'Change the background to a mountain scenic area with dramatic peaks',
+    'Change the background to a desert wasteland with sand dunes',
+    'Change the background to a dense jungle with ancient ruins',
+    'Change the background to a futuristic city skyline at night',
+    'Change the background to a volcanic landscape with lava flows',
+    'Change the background to a snow-covered mountain range',
+    'Change the background to a post-apocalyptic wasteland',
+    'Change the background to a high-tech military base',
+    'Change the background to a tropical island paradise',
+    'Change the background to a space station orbiting Earth',
+    'Change the scene to a high-speed car chase',
+    'Change the scene to a rooftop chase sequence',
+    'Change the scene to a underwater exploration mission',
+    'Change the scene to a helicopter rescue operation',
+    'Change the scene to a secret agent infiltration',
+    'Change the props to include weapons and tactical gear',
+    'Change the props to include survival equipment',
+    'Change the props to include high-tech gadgets',
+    'Change the props to include military vehicles',
+    'Change the props to include adventure gear'
+  ],
+  
+  // Fantasy & Magic
+  fantasy: [
+    'Change the background to a mystical forest with glowing trees',
+    'Change the background to a magical castle in the clouds',
+    'Change the background to an enchanted garden with floating islands',
+    'Change the background to a crystal cave with magical formations',
+    'Change the background to a dragon\'s lair with treasure hoards',
+    'Change the background to a wizard\'s tower reaching the stars',
+    'Change the background to a fairy realm with sparkling waterfalls',
+    'Change the background to an ancient temple with mystical energy',
+    'Change the background to a magical academy with floating books',
+    'Change the background to a realm of eternal twilight',
+    'Change the scene to a magical duel between wizards',
+    'Change the scene to a quest through enchanted lands',
+    'Change the scene to a summoning ritual in a sacred circle',
+    'Change the scene to a flight on a magical creature',
+    'Change the scene to a battle against dark forces',
+    'Change the props to include magical staffs and wands',
+    'Change the props to include enchanted armor and weapons',
+    'Change the props to include mystical artifacts and crystals',
+    'Change the props to include spell books and potions',
+    'Change the props to include magical creatures and familiars'
+  ],
+  
+  // Sci-Fi & Futuristic
+  scifi: [
+    'Change the background to a space station with Earth in view',
+    'Change the background to an alien planet with two moons',
+    'Change the background to a cyberpunk city with neon lights',
+    'Change the background to a laboratory with advanced technology',
+    'Change the background to a spaceship interior with holographic displays',
+    'Change the background to a Mars colony with red dust storms',
+    'Change the background to a virtual reality simulation',
+    'Change the background to a time travel laboratory',
+    'Change the background to an underwater research facility',
+    'Change the background to a space elevator reaching the stars',
+    'Change the scene to a space battle with laser weapons',
+    'Change the scene to a time travel experiment',
+    'Change the scene to an alien first contact meeting',
+    'Change the scene to a cybernetic enhancement procedure',
+    'Change the scene to a virtual reality adventure',
+    'Change the props to include futuristic weapons and gadgets',
+    'Change the props to include space suits and helmets',
+    'Change the props to include holographic interfaces',
+    'Change the props to include robotic companions',
+    'Change the props to include advanced medical equipment'
+  ],
+  
+  // Horror & Thriller
+  horror: [
+    'Change the background to a haunted mansion with creaking floors',
+    'Change the background to a dark forest with twisted trees',
+    'Change the background to an abandoned asylum with flickering lights',
+    'Change the background to a graveyard with fog and moonlight',
+    'Change the background to a cave system with mysterious sounds',
+    'Change the background to a Victorian house with secret passages',
+    'Change the background to a laboratory with strange experiments',
+    'Change the background to a shipwreck on a stormy coast',
+    'Change the background to a carnival at night with eerie music',
+    'Change the background to a hospital with flickering fluorescent lights',
+    'Change the scene to a supernatural investigation',
+    'Change the scene to a escape from a haunted location',
+    'Change the scene to a confrontation with dark forces',
+    'Change the scene to a ritual in a candlelit room',
+    'Change the scene to a chase through dark corridors',
+    'Change the props to include occult symbols and artifacts',
+    'Change the props to include vintage cameras and recording equipment',
+    'Change the props to include ancient books and scrolls',
+    'Change the props to include mysterious potions and herbs',
+    'Change the props to include protective amulets and talismans'
+  ],
+  
+  // Romance & Drama
+  romance: [
+    'Change the background to a Parisian café with warm lighting',
+    'Change the background to a beach at sunset with gentle waves',
+    'Change the background to a garden with blooming roses',
+    'Change the background to a cozy library with fireplace',
+    'Change the background to a vineyard with rolling hills',
+    'Change the background to a mountain cabin with snow outside',
+    'Change the background to a art gallery with soft lighting',
+    'Change the background to a rooftop terrace with city lights',
+    'Change the background to a lakeside dock with morning mist',
+    'Change the background to a ballroom with chandeliers',
+    'Change the scene to a romantic dinner for two',
+    'Change the scene to a dance under the stars',
+    'Change the scene to a proposal in a beautiful location',
+    'Change the scene to a wedding ceremony in a garden',
+    'Change the scene to a reunion after years apart',
+    'Change the props to include flowers and candles',
+    'Change the props to include vintage jewelry and accessories',
+    'Change the props to include elegant clothing and formal wear',
+    'Change the props to include musical instruments',
+    'Change the props to include love letters and photographs'
+  ],
+  
+  // Comedy & Fun
+  comedy: [
+    'Change the background to a circus tent with colorful decorations',
+    'Change the background to a amusement park with rides',
+    'Change the background to a candy store with sweet treats',
+    'Change the background to a toy factory with playful machines',
+    'Change the background to a beach party with music and dancing',
+    'Change the background to a karaoke bar with neon signs',
+    'Change the background to a bowling alley with retro vibes',
+    'Change the background to a arcade with classic games',
+    'Change the background to a pet shop with adorable animals',
+    'Change the background to a ice cream parlor with vintage decor',
+    'Change the scene to a hilarious misunderstanding',
+    'Change the scene to a comedy show performance',
+    'Change the scene to a prank gone wrong',
+    'Change the scene to a dance-off competition',
+    'Change the scene to a cooking disaster in the kitchen',
+    'Change the props to include silly costumes and wigs',
+    'Change the props to include funny hats and accessories',
+    'Change the props to include oversized objects',
+    'Change the props to include colorful balloons and confetti',
+    'Change the props to include musical instruments for comedy'
+  ],
+  
+  // Nature & Adventure
+  nature: [
+    'Change the background to underwater with coral reefs',
+    'Change the background to a tropical rainforest with exotic birds',
+    'Change the background to a savanna with wildlife',
+    'Change the background to a arctic tundra with northern lights',
+    'Change the background to a desert oasis with palm trees',
+    'Change the background to a mountain lake with crystal clear water',
+    'Change the background to a bamboo forest with gentle breeze',
+    'Change the background to a flower field with butterflies',
+    'Change the background to a waterfall with rainbow mist',
+    'Change the background to a starry night sky with constellations',
+    'Change the scene to a wildlife photography expedition',
+    'Change the scene to a camping adventure in the wilderness',
+    'Change the scene to a hiking trail through mountains',
+    'Change the scene to a kayaking trip down a river',
+    'Change the scene to a bird watching expedition',
+    'Change the props to include camping gear and equipment',
+    'Change the props to include photography equipment',
+    'Change the props to include hiking boots and backpacks',
+    'Change the props to include binoculars and field guides',
+    'Change the props to include nature journals and sketchbooks'
+  ]
+};
+
 interface StoredVariation extends CharacterVariation {
   timestamp: number;
   originalPrompt: string;
@@ -117,6 +288,8 @@ export default function Home() {
   const [gallery, setGallery] = useState<StoredVariation[]>([]);
   const [showGallery, setShowGallery] = useState(true);
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
+  const [showVideoPrompts, setShowVideoPrompts] = useState(false);
+  const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
@@ -135,6 +308,10 @@ export default function Home() {
       setNotification(null);
     }, 3000);
   }, []);
+
+  // Check if we have video files
+  const hasVideoFiles = uploadedFiles.some(file => file.fileType === 'video');
+  const hasImageFiles = uploadedFiles.some(file => file.fileType === 'image');
 
   // Load gallery from localStorage on component mount
   useEffect(() => {
@@ -1033,7 +1210,7 @@ export default function Home() {
                     id="prompt"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe the angle or pose variations you want..."
+                    placeholder={hasVideoFiles ? "Describe the scene changes, background modifications, or prop changes you want..." : "Describe the angle or pose variations you want..."}
                     className="w-full p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-lg"
                     rows={4}
                   />
@@ -1052,14 +1229,23 @@ export default function Home() {
                       ))}
                     </div>
 
-                    {/* More Button */}
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => setShowExtendedPrompts(!showExtendedPrompts)}
-                        className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
-                      >
-                        {showExtendedPrompts ? 'Show Less' : 'More Shot Types'}
-                      </button>
+                    {/* More Button - Show different options based on file type */}
+                    <div className="flex justify-center gap-2">
+                      {hasVideoFiles ? (
+                        <button
+                          onClick={() => setShowVideoPrompts(!showVideoPrompts)}
+                          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors border border-purple-500"
+                        >
+                          {showVideoPrompts ? 'Hide Video Options' : 'Video Scene Options'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setShowExtendedPrompts(!showExtendedPrompts)}
+                          className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+                        >
+                          {showExtendedPrompts ? 'Show Less' : 'More Shot Types'}
+                        </button>
+                      )}
                     </div>
 
                     {/* Extended Prompts */}
@@ -1194,6 +1380,80 @@ export default function Home() {
                             ))}
                           </div>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Video Prompts - Only show when video files are detected */}
+                    {hasVideoFiles && showVideoPrompts && (
+                      <div className="mt-4 p-4 bg-purple-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-purple-600">
+                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎬 Video Scene & Background Options</h4>
+                        
+                        {/* Genre Selection */}
+                        <div className="mb-4">
+                          <h5 className="text-purple-300 text-xs font-medium mb-2">Choose Movie Genre:</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.keys(VIDEO_PROMPTS).map((genre) => (
+                              <button
+                                key={genre}
+                                onClick={() => setSelectedVideoGenre(selectedVideoGenre === genre ? null : genre)}
+                                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                                  selectedVideoGenre === genre
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-purple-200 text-purple-800 hover:bg-purple-300'
+                                }`}
+                              >
+                                {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Genre-specific prompts */}
+                        {selectedVideoGenre && VIDEO_PROMPTS[selectedVideoGenre as keyof typeof VIDEO_PROMPTS] && (
+                          <div className="space-y-3">
+                            <h5 className="text-purple-300 text-xs font-medium">
+                              {selectedVideoGenre.charAt(0).toUpperCase() + selectedVideoGenre.slice(1)} Scene Options:
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {VIDEO_PROMPTS[selectedVideoGenre as keyof typeof VIDEO_PROMPTS].map((prompt) => (
+                                <button
+                                  key={prompt}
+                                  onClick={() => setPrompt(prompt)}
+                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                                >
+                                  {prompt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quick background changes */}
+                        {!selectedVideoGenre && (
+                          <div className="space-y-3">
+                            <h5 className="text-purple-300 text-xs font-medium">Quick Background Changes:</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                'Change the background to a mountain scenic area',
+                                'Change the background to underwater',
+                                'Change the background to a circus',
+                                'Change the background to a cave',
+                                'Change the background to the islands',
+                                'Change the background to a futuristic city',
+                                'Change the background to a magical forest',
+                                'Change the background to a space station'
+                              ].map((prompt) => (
+                                <button
+                                  key={prompt}
+                                  onClick={() => setPrompt(prompt)}
+                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                                >
+                                  {prompt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
