@@ -4,6 +4,20 @@ import { useState, useCallback, useEffect } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse } from '@/types/gemini';
 
+// Ko-fi widget types
+declare global {
+  interface Window {
+    kofiWidgetOverlay: {
+      draw: (username: string, options: {
+        type: string;
+        'floating-chat.donateButton.text': string;
+        'floating-chat.donateButton.background-color': string;
+        'floating-chat.donateButton.text-color': string;
+      }) => void;
+    };
+  }
+}
+
 // Configuration: Set to false to disable video-to-video functionality
 const ENABLE_VIDEO_FEATURES = true;
 
@@ -442,6 +456,33 @@ export default function Home() {
       document.body.style.overflow = 'unset';
     };
   }, [fullScreenImage, closeFullScreen, goToPrevious, goToNext]);
+
+  // Initialize Ko-fi widget
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+    script.async = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      // Initialize the Ko-fi widget
+      if (window.kofiWidgetOverlay) {
+        window.kofiWidgetOverlay.draw('varyai', {
+          'type': 'floating-chat',
+          'floating-chat.donateButton.text': 'Support me',
+          'floating-chat.donateButton.background-color': '#8b5cf6', // Purple to match your theme
+          'floating-chat.donateButton.text-color': '#fff'
+        });
+      }
+    };
+
+    return () => {
+      // Cleanup script on unmount
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
 
   // Convert image URL to base64
   const urlToBase64 = async (url: string): Promise<string> => {
@@ -1120,6 +1161,15 @@ export default function Home() {
               {showGallery ? 'Hide' : 'Show'}
             </span>
           </button>
+        </div>
+
+        {/* Funding Message */}
+        <div className="mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-opacity-90 backdrop-blur-sm rounded-lg p-3 border border-purple-400 border-opacity-30">
+          <div className="text-center">
+            <p className="text-white text-sm font-medium">
+              💜 Love this tool? Support development and help create more amazing AI tools!
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-center min-h-[70vh]">
