@@ -1144,6 +1144,15 @@ export default function Home() {
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'}`}>
           <div className="container mx-auto px-4 py-8">
+        {/* Funding Message - Above Header */}
+        <div className="mb-4 bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-lg p-3 border border-gray-700 border-opacity-50">
+          <div className="text-center">
+            <p className="text-gray-300 text-sm font-medium">
+              💜 Love this tool? Support development and help create more amazing AI tools!
+            </p>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-start mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20">
           <h1 className="text-2xl lg:text-4xl font-bold text-white">
@@ -1161,15 +1170,6 @@ export default function Home() {
               {showGallery ? 'Hide' : 'Show'}
             </span>
           </button>
-        </div>
-
-        {/* Funding Message */}
-        <div className="mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-opacity-90 backdrop-blur-sm rounded-lg p-3 border border-purple-400 border-opacity-30">
-          <div className="text-center">
-            <p className="text-white text-sm font-medium">
-              💜 Love this tool? Support development and help create more amazing AI tools!
-            </p>
-          </div>
         </div>
 
         <div className="flex items-center justify-center min-h-[70vh]">
