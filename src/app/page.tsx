@@ -864,8 +864,8 @@ export default function Home() {
         const startTime = Date.now();
         setVideoGenerationStartTime(startTime);
         
-        // Set estimated time based on model (in seconds)
-        const estimatedTime = model === 'gen4_aleph' ? 120 : 60; // 2 minutes for aleph, 1 minute for turbo
+        // Set estimated time based on model (in seconds) - updated based on web research
+        const estimatedTime = model === 'gen4_aleph' ? 300 : 120; // 5 minutes for aleph (complex), 2 minutes for turbo
         setEstimatedVideoTime(estimatedTime);
         
         console.log(`⏱️ Video generation started at ${new Date(startTime).toLocaleTimeString()}, estimated time: ${estimatedTime}s`);
@@ -961,7 +961,25 @@ export default function Home() {
           setVideoGenerationStartTime(null);
         } else if (task.status === 'PENDING' || task.status === 'RUNNING' || task.status === 'THROTTLED') {
           // Continue polling for these statuses
-          console.log(`⏳ Task still processing (${task.status}), polling again in 5 seconds...`);
+          const elapsed = Math.round((Date.now() - (videoGenerationStartTime || Date.now())) / 1000);
+          console.log(`⏳ Task still processing (${task.status}) - ${elapsed}s elapsed, polling again in 5 seconds...`);
+          
+          // Check if task has been stuck in PENDING for too long (more than 2 minutes)
+          if (task.status === 'PENDING' && elapsed > 120) {
+            console.warn(`⚠️ Task has been PENDING for ${elapsed}s - this may indicate server load issues`);
+            setError(`Task is taking longer than expected to start (${elapsed}s). This could be due to high server load. Please be patient or try again later.`);
+          }
+          
+          // Update progress based on elapsed time
+          if (videoGenerationStartTime) {
+            const progressPercent = Math.min(90, (elapsed / estimatedVideoTime) * 100);
+            setProcessing(prev => ({
+              ...prev,
+              progress: progressPercent,
+              currentStep: `Video processing... (${task.status.toLowerCase()}) - ${elapsed}s elapsed`
+            }));
+          }
+          
           const timeout = setTimeout(() => pollRunwayTask(taskId), 5000); // Poll every 5 seconds
           setPollingTimeout(timeout);
         } else {

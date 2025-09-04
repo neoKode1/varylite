@@ -237,7 +237,24 @@ export async function GET(request: NextRequest) {
 
     const taskData = await response.json();
     console.log(`📊 Task status: ${taskData.status}`);
-    console.log(`📋 Full task data:`, JSON.stringify(taskData, null, 2));
+    console.log(`📋 Task ID: ${taskData.id}`);
+    console.log(`📋 Task progress: ${taskData.progress || 'N/A'}`);
+    console.log(`📋 Task error: ${taskData.error || 'None'}`);
+    
+    // Log output structure for debugging
+    if (taskData.output) {
+      console.log(`📋 Output type: ${typeof taskData.output}`);
+      if (Array.isArray(taskData.output)) {
+        console.log(`📋 Output array length: ${taskData.output.length}`);
+        if (taskData.output.length > 0) {
+          console.log(`📋 First output item: ${taskData.output[0]}`);
+        }
+      } else {
+        console.log(`📋 Output keys:`, Object.keys(taskData.output));
+      }
+    } else {
+      console.log(`📋 No output yet`);
+    }
     
     // Log video output specifically
     if (taskData.output && taskData.output.video) {
