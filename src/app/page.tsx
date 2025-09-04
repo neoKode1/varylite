@@ -125,6 +125,7 @@ export default function Home() {
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
   const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
+  const [processingAction, setProcessingAction] = useState<string | null>(null); // Track which specific action is processing
 
   // Show notification function
   const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
@@ -287,6 +288,9 @@ export default function Home() {
 
   // Handle editing an existing image (inject into input area)
   const handleEditImage = async (imageUrl: string, originalPrompt?: string) => {
+    const actionId = `edit-${Date.now()}`;
+    setProcessingAction(actionId);
+    
     try {
       console.log('🎨 Editing image:', imageUrl);
       
@@ -324,17 +328,27 @@ export default function Home() {
     } catch (error) {
       console.error('Error loading image for editing:', error);
       setError('Failed to load image for editing');
+    } finally {
+      setProcessingAction(null);
     }
   };
 
   // Handle varying an existing generated image
   const handleVaryImage = async (imageUrl: string, originalPrompt?: string) => {
+    const actionId = `vary-${Date.now()}`;
+    setProcessingAction(actionId);
+    
+    console.log('🎨 handleVaryImage called with:', { imageUrl, originalPrompt });
+    
     if (processing.isProcessing) {
+      console.log('⚠️ Already processing, skipping...');
       setError('Already processing. Please wait...');
+      setProcessingAction(null);
       return;
     }
 
     try {
+      console.log('🔄 Starting image variation process...');
       setError(null);
       setVariations([]);
       setProcessing({
@@ -344,7 +358,9 @@ export default function Home() {
       });
 
       // Convert the image URL to base64
+      console.log('🔄 Converting image URL to base64...');
       const base64Image = await urlToBase64(imageUrl);
+      console.log('✅ Base64 conversion complete, length:', base64Image.length);
       
       setProcessing({
         isProcessing: true,
@@ -354,7 +370,9 @@ export default function Home() {
 
       // Use the original prompt or a default variation prompt
       const varyPrompt = originalPrompt || prompt.trim() || 'Generate 4 new variations of this character from different angles';
+      console.log('📝 Using prompt:', varyPrompt);
 
+      console.log('🔄 Making API call to /api/vary-character...');
       const response = await fetch('/api/vary-character', {
         method: 'POST',
         headers: {
@@ -366,20 +384,27 @@ export default function Home() {
         }),
       });
 
+      console.log('📡 API response status:', response.status);
       setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating variations...' }));
 
       const data = await response.json();
+      console.log('📊 API response data:', data);
 
       if (!response.ok) {
+        console.error('❌ API error:', data);
         throw new Error(data.error || 'Failed to generate variations');
       }
 
       const newVariations = data.variations || [];
+      console.log('🎨 Received variations:', newVariations.length, newVariations);
       setVariations(newVariations);
       
       // Add to gallery
       if (newVariations.length > 0) {
+        console.log('📸 Adding to gallery with addToGallery function...');
         addToGallery(newVariations, varyPrompt, imageUrl);
+      } else {
+        console.warn('⚠️ No variations received from API');
       }
       
       setTimeout(() => {
@@ -391,13 +416,17 @@ export default function Home() {
       }, 500);
 
     } catch (error) {
-      console.error('Error varying image:', error);
+      console.error('❌ Error varying image:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
       setError(error instanceof Error ? error.message : 'Failed to vary image');
       setProcessing({
         isProcessing: false,
         progress: 0,
         currentStep: ''
       });
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -844,6 +873,7 @@ export default function Home() {
     }
     setRunwayTaskId(null);
     setVideoGenerationStartTime(null);
+    setProcessingAction(null);
   };
 
   return (
@@ -1503,19 +1533,27 @@ export default function Home() {
                                 <>
                                   <button
                                     onClick={() => handleEditImage(item.imageUrl!, item.originalPrompt)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium touch-manipulation"
-                                    disabled={processing.isProcessing}
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium touch-manipulation disabled:opacity-50"
+                                    disabled={processingAction?.startsWith('edit') || processing.isProcessing}
                                   >
-                                    <Edit className="w-4 h-4" />
-                                    Edit
+                                    {processingAction?.startsWith('edit') ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Edit className="w-4 h-4" />
+                                    )}
+                                    {processingAction?.startsWith('edit') ? 'Loading...' : 'Edit'}
                                   </button>
                                   <button
                                     onClick={() => handleVaryImage(item.imageUrl!, item.originalPrompt)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium touch-manipulation"
-                                    disabled={processing.isProcessing}
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium touch-manipulation disabled:opacity-50"
+                                    disabled={processingAction?.startsWith('vary') || processing.isProcessing}
                                   >
-                                    <Sparkles className="w-4 h-4" />
-                                    Vary
+                                    {processingAction?.startsWith('vary') ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="w-4 h-4" />
+                                    )}
+                                    {processingAction?.startsWith('vary') ? 'Processing...' : 'Vary'}
                                   </button>
                                   <button
                                     onClick={() => handleDownloadVariation(item)}
