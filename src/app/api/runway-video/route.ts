@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import RunwayML from '@runwayml/sdk';
+// import RunwayML from '@runwayml/sdk'; // Commented out - not needed since video features are disabled
 
 // Initialize Runway client
-const client = new RunwayML();
+// const client = new RunwayML(); // Commented out - not needed since video features are disabled
 
 // Types for Runway API
 type VideoToVideoRatio = '1280:720' | '720:1280' | '1104:832' | '960:960' | '832:1104' | '1584:672' | '848:480' | '640:480';
@@ -112,48 +112,58 @@ export async function POST(request: NextRequest) {
     let task;
     try {
       if (model === 'gen4_aleph') {
-        // Video to video editing
-        const primaryVideo = createDataUri(files[0], getMimeType(files[0]));
+        // Video to video editing - DISABLED
+        // const primaryVideo = createDataUri(files[0], getMimeType(files[0]));
         
-        task = await (client.videoToVideo as any).create({
-          model: 'gen4_aleph',
-          videoUri: primaryVideo,
-          promptText: promptText || prompt,
-          ratio: ratio as VideoToVideoRatio,
-          ...(seed && { seed }),
-          ...(references && { references })
-        });
+        // task = await (client.videoToVideo as any).create({
+        //   model: 'gen4_aleph',
+        //   videoUri: primaryVideo,
+        //   promptText: promptText || prompt,
+        //   ratio: ratio as VideoToVideoRatio,
+        //   ...(seed && { seed }),
+        //   ...(references && { references })
+        // });
         
-        console.log(`🎬 Video-to-video editing with gen4_aleph model`);
-        console.log(`📝 Prompt: "${promptText || prompt}"`);
+        // console.log(`🎬 Video-to-video editing with gen4_aleph model`);
+        // console.log(`📝 Prompt: "${promptText || prompt}"`);
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Video-to-video editing is temporarily disabled'
+        }, { status: 503 });
       } else if (model === 'gen4_turbo') {
-        // Image to video generation
-        const primaryImage = createDataUri(files[0], getMimeType(files[0]));
+        // Image to video generation - DISABLED
+        // const primaryImage = createDataUri(files[0], getMimeType(files[0]));
         
-        task = await (client.imageToVideo as any).create({
-          model: 'gen4_turbo',
-          imageUri: primaryImage,
-          promptText: promptText || prompt,
-          ratio: ratio as ImageToVideoRatio,
-          ...(duration && { duration }),
-          ...(seed && { seed }),
-          ...(references && { references })
-        });
+        // task = await (client.imageToVideo as any).create({
+        //   model: 'gen4_turbo',
+        //   imageUri: primaryImage,
+        //   promptText: promptText || prompt,
+        //   ratio: ratio as ImageToVideoRatio,
+        //   ...(duration && { duration }),
+        //   ...(seed && { seed }),
+        //   ...(references && { references })
+        // });
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Image-to-video generation is temporarily disabled'
+        }, { status: 503 });
       } else {
         throw new Error(`Unsupported model: ${model}`);
       }
       
-      console.log('✅ Runway video editing task created successfully');
-      console.log(`📋 Task ID: ${task.id}`);
+      // console.log('✅ Runway video editing task created successfully');
+      // console.log(`📋 Task ID: ${task.id}`);
     } catch (error) {
       console.error('❌ Runway API error:', error);
       throw new Error(`Runway API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    return NextResponse.json({
-      success: true,
-      taskId: task.id
-    } as RunwayVideoResponse);
+    // return NextResponse.json({
+    //   success: true,
+    //   taskId: task.id
+    // } as RunwayVideoResponse);
 
   } catch (error) {
     console.error('💥 Error in runway-video API:', error);
