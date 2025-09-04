@@ -249,8 +249,13 @@ export async function POST(request: NextRequest) {
     console.log('🔑 Checking API keys...');
     console.log(`🔍 GOOGLE_API_KEY exists: ${!!process.env.GOOGLE_API_KEY}`);
     console.log(`🔍 GOOGLE_API_KEY length: ${process.env.GOOGLE_API_KEY?.length || 0} characters`);
+    console.log(`🔍 GOOGLE_API_KEY preview: ${process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
     console.log(`🔍 FAL_KEY exists: ${!!process.env.FAL_KEY}`);
     console.log(`🔍 FAL_KEY length: ${process.env.FAL_KEY?.length || 0} characters`);
+    console.log(`🔍 FAL_KEY preview: ${process.env.FAL_KEY ? process.env.FAL_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log(`🔍 RUNWAYML_API_SECRET exists: ${!!process.env.RUNWAYML_API_SECRET}`);
+    console.log(`🔍 RUNWAYML_API_SECRET length: ${process.env.RUNWAYML_API_SECRET?.length || 0} characters`);
+    console.log(`🔍 RUNWAYML_API_SECRET preview: ${process.env.RUNWAYML_API_SECRET ? process.env.RUNWAYML_API_SECRET.substring(0, 8) + '...' : 'NOT SET'}`);
 
     if (!process.env.GOOGLE_API_KEY) {
       console.log('❌ Google API key not found in environment variables');
@@ -313,9 +318,11 @@ Create 4 NEW variations that maintain 100% character consistency:
 - Maintain the same art style and proportions${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
 
 Each variation must include:
-1. Viewing angle (e.g., "Side Profile", "Back View", "3/4 Angle", "Low Angle")
-2. Pose description (e.g., "Standing pose", "Action stance", "Relaxed position")
-3. Complete character description maintaining ALL details from the analysis${hasBackgroundRemoval ? '\n4. Note: Background should be clean/transparent for professional use' : ''}
+1. Cinematic shot type (e.g., "Close-up Portrait", "Wide Establishing Shot", "Dutch Angle", "Low Hero Shot", "Over-the-Shoulder", "Dramatic Silhouette", "Medium Shot", "Extreme Close-up", "High Angle", "Bird's Eye View", "Worm's Eye View", "Profile Shot", "Three-Quarter Shot", "Full Body Shot", "Cinematic Wide Shot")
+2. Lighting setup (e.g., "Rembrandt lighting", "Rim lighting", "Soft key light", "Dramatic chiaroscuro", "Golden hour lighting", "Neon accent lighting", "Three-point lighting", "High-key lighting", "Low-key lighting", "Split lighting", "Butterfly lighting", "Loop lighting", "Side lighting", "Back lighting", "Practical lighting", "Mood lighting")
+3. Styling elements (e.g., "Cinematic depth of field", "Motion blur", "Color grading", "Atmospheric effects", "Professional studio lighting", "Film grain texture", "Vintage color palette", "High contrast", "Soft focus", "Bokeh effects", "Lens flare", "Vignetting", "Desaturated tones", "Warm color temperature", "Cool color temperature", "Dramatic shadows")
+4. Pose and composition (e.g., "Dynamic action pose", "Contemplative stance", "Power pose", "Casual interaction", "Dramatic gesture", "Confident stride", "Thoughtful expression", "Heroic stance", "Relaxed posture", "Intense focus", "Graceful movement", "Commanding presence", "Intimate moment", "Epic pose", "Natural candid", "Striking silhouette")
+5. Complete character description maintaining ALL details from the analysis${hasBackgroundRemoval ? '\n6. Note: Background should be clean/transparent for professional use' : ''}
 
 Format: Provide detailed character analysis first, then the 4 variations with perfect consistency.
 `;
@@ -337,9 +344,11 @@ CRITICAL REQUIREMENTS for character consistency:
 - Cross-reference between images to ensure consistency${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
 
 For each of the 4 variations, provide:
-1. A specific viewing angle (e.g., "Side Profile View", "Rear View", "3/4 Angle View", "Low Angle View")
-2. A detailed pose description (e.g., "Standing straight", "Action stance", "Relaxed posture")
-3. A comprehensive visual description that preserves ALL character details while showing the new perspective${hasBackgroundRemoval ? '\n4. Note: Background should be clean/transparent for professional use' : ''}
+1. Cinematic shot type (e.g., "Close-up Portrait", "Wide Establishing Shot", "Dutch Angle", "Low Hero Shot", "Over-the-Shoulder", "Dramatic Silhouette", "Medium Shot", "Extreme Close-up", "High Angle", "Bird's Eye View", "Worm's Eye View", "Profile Shot", "Three-Quarter Shot", "Full Body Shot", "Cinematic Wide Shot")
+2. Professional lighting setup (e.g., "Rembrandt lighting", "Rim lighting", "Soft key light", "Dramatic chiaroscuro", "Golden hour lighting", "Neon accent lighting", "Three-point lighting", "High-key lighting", "Low-key lighting", "Split lighting", "Butterfly lighting", "Loop lighting", "Side lighting", "Back lighting", "Practical lighting", "Mood lighting")
+3. Cinematic styling elements (e.g., "Cinematic depth of field", "Motion blur", "Color grading", "Atmospheric effects", "Professional studio lighting", "Film grain texture", "Vintage color palette", "High contrast", "Soft focus", "Bokeh effects", "Lens flare", "Vignetting", "Desaturated tones", "Warm color temperature", "Cool color temperature", "Dramatic shadows")
+4. Dynamic pose and composition (e.g., "Dynamic action pose", "Contemplative stance", "Power pose", "Casual interaction", "Dramatic gesture", "Confident stride", "Thoughtful expression", "Heroic stance", "Relaxed posture", "Intense focus", "Graceful movement", "Commanding presence", "Intimate moment", "Epic pose", "Natural candid", "Striking silhouette")
+5. A comprehensive visual description that preserves ALL character details while showing the new perspective${hasBackgroundRemoval ? '\n6. Note: Background should be clean/transparent for professional use' : ''}
 
 The 4 variations should cover different angles while keeping the character absolutely identical in design:
 - Front/side profile views
@@ -413,14 +422,15 @@ Format each variation clearly with the angle, pose, and detailed character descr
 
     if (hasFalKey) {
       console.log('🎨 Generating images with Fal AI...');
-      // Convert primary base64 image to data URI for Fal AI
+      // Use only the first image as primary reference to avoid payload size issues
       const primaryImageDataUri = `data:image/jpeg;base64,${images[0]}`;
+      console.log(`🖼️ Using primary image for generation (${images.length} total images uploaded)`);
       
       // Generate images for each variation using Fal AI
       variationsWithImages = await Promise.all(
         variations.map(async (variation, index) => {
           try {
-            console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
+            console.log(`🖼️ Generating image ${index + 1}/${variations.length} for: ${variation.angle}`);
             
             // Sanitize the prompt to avoid content policy violations
             const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle, prompt);
@@ -436,7 +446,7 @@ Format each variation clearly with the angle, pose, and detailed character descr
               return await fal.subscribe(modelName, {
                 input: {
                   prompt: sanitizedPrompt,
-                  image_urls: [primaryImageDataUri],
+                  image_urls: [primaryImageDataUri], // Use only primary image to avoid payload size issues
                   num_images: 1,
                   output_format: "jpeg",
                   // Add specific parameters for background removal

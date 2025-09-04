@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { UploadedImage, ProcessingState, CharacterVariation } from '@/types/gemini';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
+import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse } from '@/types/gemini';
+
+// Configuration: Set to false to disable video-to-video functionality
+const ENABLE_VIDEO_FEATURES = false;
 
 const BASIC_PROMPTS = [
   'Show this character from the side profile',
@@ -46,17 +49,63 @@ const EXTENDED_PROMPTS = [
   'Environmental shot with character in scene',
   'Dynamic action angle of this character',
   'Heroic upward angle of this character',
-  'Intimate close perspective of this character'
+  'Intimate close perspective of this character',
+  
+  // Professional lighting setups
+  'Character with Rembrandt lighting',
+  'Character with rim lighting effect',
+  'Character with dramatic chiaroscuro lighting',
+  'Character with golden hour lighting',
+  'Character with neon accent lighting',
+  'Character with three-point lighting setup',
+  'Character with high-key lighting',
+  'Character with low-key dramatic lighting',
+  'Character with split lighting (half lit)',
+  'Character with butterfly lighting',
+  'Character with back lighting silhouette',
+  'Character with mood lighting atmosphere',
+  
+  // Cinematic styling elements
+  'Character with cinematic depth of field',
+  'Character with motion blur effect',
+  'Character with color grading treatment',
+  'Character with atmospheric effects',
+  'Character with film grain texture',
+  'Character with vintage color palette',
+  'Character with high contrast lighting',
+  'Character with soft focus effect',
+  'Character with bokeh background',
+  'Character with lens flare effects',
+  'Character with vignetting',
+  'Character with warm color temperature',
+  'Character with cool color temperature',
+  'Character with dramatic shadows',
+  
+  // Dynamic poses and composition
+  'Character in heroic stance pose',
+  'Character in relaxed natural posture',
+  'Character with intense focused expression',
+  'Character in graceful movement pose',
+  'Character with commanding presence',
+  'Character in intimate moment pose',
+  'Character in epic dramatic pose',
+  'Character in natural candid moment',
+  'Character as striking silhouette',
+  'Character in confident stride pose',
+  'Character with thoughtful expression',
+  'Character in power pose stance'
 ];
 
 interface StoredVariation extends CharacterVariation {
   timestamp: number;
   originalPrompt: string;
   originalImagePreview?: string;
+  videoUrl?: string; // For Runway video editing results
+  fileType?: 'image' | 'video'; // Track if this is an image or video result
 }
 
 export default function Home() {
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [prompt, setPrompt] = useState('');
   const [processing, setProcessing] = useState<ProcessingState>({
     isProcessing: false,
@@ -70,6 +119,21 @@ export default function Home() {
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
+  const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
+  const [runwayTaskId, setRunwayTaskId] = useState<string | null>(null);
+  const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+  const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
+  const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
+
+  // Show notification function
+  const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    setNotification({ message, type });
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  }, []);
 
   // Load gallery from localStorage on component mount
   useEffect(() => {
@@ -82,6 +146,18 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Update video generation progress in real-time
+  useEffect(() => {
+    if (!runwayTaskId || !videoGenerationStartTime) return;
+
+    const interval = setInterval(() => {
+      // Force re-render to update the progress bar
+      setVideoGenerationStartTime(prev => prev);
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, [runwayTaskId, videoGenerationStartTime]);
 
   // Save gallery to localStorage whenever it changes
   useEffect(() => {
@@ -110,6 +186,19 @@ export default function Home() {
   // Remove single item from gallery
   const removeFromGallery = useCallback((variationId: string, timestamp: number) => {
     setGallery(prev => prev.filter(item => !(item.id === variationId && item.timestamp === timestamp)));
+  }, []);
+
+  // Toggle prompt expansion
+  const togglePromptExpansion = useCallback((itemKey: string) => {
+    setExpandedPrompts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemKey)) {
+        newSet.delete(itemKey);
+      } else {
+        newSet.add(itemKey);
+      }
+      return newSet;
+    });
   }, []);
 
   // Get all gallery images with URLs for navigation
@@ -196,6 +285,48 @@ export default function Home() {
     }
   };
 
+  // Handle editing an existing image (inject into input area)
+  const handleEditImage = async (imageUrl: string, originalPrompt?: string) => {
+    try {
+      console.log('🎨 Editing image:', imageUrl);
+      
+      // Convert the image URL to base64
+      const base64Image = await urlToBase64(imageUrl);
+      
+      // Create a new uploaded file object
+      const newFile: UploadedFile = {
+        file: new File([], 'edited-image.jpg', { type: 'image/jpeg' }), // Dummy file object
+        preview: imageUrl,
+        base64: base64Image,
+        type: 'reference',
+        fileType: 'image'
+      };
+      
+      // Set the uploaded files to just this one image
+      setUploadedFiles([newFile]);
+      
+      // Set the prompt if available
+      if (originalPrompt) {
+        setPrompt(originalPrompt);
+      }
+      
+      // Show notification
+      showNotification('🎨 Image loaded for editing! You can now generate new variations.', 'success');
+      
+      // Scroll to the input area
+      setTimeout(() => {
+        const inputArea = document.querySelector('[data-input-area]');
+        if (inputArea) {
+          inputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error loading image for editing:', error);
+      setError('Failed to load image for editing');
+    }
+  };
+
   // Handle varying an existing generated image
   const handleVaryImage = async (imageUrl: string, originalPrompt?: string) => {
     if (processing.isProcessing) {
@@ -270,14 +401,28 @@ export default function Home() {
     }
   };
 
-  const handleImageUpload = useCallback((files: File[]) => {
+  const handleFileUpload = useCallback((files: File[]) => {
+    console.log('📤 handleFileUpload called with files:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
+    
     const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        setError('Please upload valid image files (JPG, PNG)');
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      // Check if video features are disabled
+      if (isVideo && !ENABLE_VIDEO_FEATURES) {
+        setError('Video-to-video editing is temporarily disabled. Please upload image files only.');
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setError('Image size must be less than 10MB');
+      
+      if (!isImage && !isVideo) {
+        setError('Please upload valid image files (JPG, PNG) or video files (MP4, MOV)');
+        return false;
+      }
+      
+      // Different size limits for images vs videos
+      const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
+      if (file.size > maxSize) {
+        setError(`${isImage ? 'Image' : 'Video'} size must be less than ${isImage ? '10MB' : '100MB'}`);
         return false;
       }
       return true;
@@ -286,7 +431,7 @@ export default function Home() {
     if (validFiles.length === 0) return;
 
     setError(null);
-    const newImages: UploadedImage[] = [];
+    const newFiles: UploadedFile[] = [];
     let processedCount = 0;
     
     validFiles.forEach((file) => {
@@ -295,57 +440,108 @@ export default function Home() {
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         const preview = URL.createObjectURL(file);
+        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
         
-        newImages.push({
+        newFiles.push({
           file,
           preview,
-          base64: base64.split(',')[1], // Remove data:image/...;base64, prefix
-          type: 'reference' // Default type
+          base64: base64.split(',')[1], // Remove data:...;base64, prefix
+          type: 'reference', // Default type
+          fileType
         });
         
         processedCount++;
         // Update state when all files are processed
         if (processedCount === validFiles.length) {
-          setUploadedImages(prev => [...prev, ...newImages]);
+          setUploadedFiles(prev => [...prev, ...newFiles]);
+          
+          // Show model selection notification
+          const hasImages = newFiles.some(file => file.fileType === 'image');
+          const hasVideos = newFiles.some(file => file.fileType === 'video');
+          
+          if (hasImages && !hasVideos) {
+            showNotification('🎨 Nano Banana model selected for character variations', 'info');
+          } else if (hasVideos && !hasImages) {
+            showNotification('🎬 Aleph model selected for video-to-video editing', 'info');
+          } else if (hasImages && hasVideos) {
+            showNotification('⚠️ Please upload either images OR videos, not both', 'error');
+          }
         }
       };
       
       reader.readAsDataURL(file);
     });
-  }, []);
+  }, [showNotification]);
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('🎯 Drop event triggered');
     const files = Array.from(e.dataTransfer.files);
+    console.log('📁 Files dropped:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
+    
     if (files.length > 0) {
-      handleImageUpload(files);
+      handleFileUpload(files);
     }
-  }, [handleImageUpload]);
+  }, [handleFileUpload]);
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('🔄 Drag over event triggered');
   }, []);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('📁 File input change triggered');
     const files = e.target.files;
+    console.log('📁 Files selected:', files ? files.length : 0, files ? Array.from(files).map(f => ({ name: f.name, type: f.type, size: f.size })) : []);
+    
     if (files && files.length > 0) {
-      handleImageUpload(Array.from(files));
+      handleFileUpload(Array.from(files));
       // Reset the input so the same file can be selected again
       e.target.value = '';
     }
-  }, [handleImageUpload]);
+  }, [handleFileUpload]);
 
   const handleProcessCharacter = async () => {
-    if (uploadedImages.length === 0 || !prompt.trim()) {
-      setError('Please upload at least one image and enter a variation prompt');
+    if (uploadedFiles.length === 0 || !prompt.trim()) {
+      setError('Please upload at least one file and enter a variation prompt');
       return;
     }
 
     setError(null);
     setVariations([]);
+    
+    // Detect file types to determine which API to use
+    const hasImages = uploadedFiles.some(file => file.fileType === 'image');
+    const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
+    
+    if (hasImages && hasVideos) {
+      const errorMsg = 'Please upload either images OR videos, not both. Images go to character variation, videos go to video editing.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
+      return;
+    }
+    
+    if (hasVideos && ENABLE_VIDEO_FEATURES) {
+      // Route to Runway video editing API
+      await handleRunwayVideoEditing();
+    } else if (hasVideos && !ENABLE_VIDEO_FEATURES) {
+      setError('Video-to-video editing is temporarily disabled. Please upload image files only.');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      return;
+    } else {
+      // Route to existing character variation API
+      await handleCharacterVariation();
+    }
+  };
+
+  const handleCharacterVariation = async () => {
     setProcessing({
       isProcessing: true,
       progress: 20,
@@ -361,7 +557,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          images: uploadedImages.map(img => img.base64),
+          images: uploadedFiles.map(img => img.base64),
           prompt: prompt.trim()
         }),
       });
@@ -380,7 +576,8 @@ export default function Home() {
       
       // Add to gallery
       if (newVariations.length > 0) {
-        addToGallery(newVariations, prompt.trim(), uploadedImages[0]?.preview);
+        addToGallery(newVariations, prompt.trim(), uploadedFiles[0]?.preview);
+        showNotification('🎨 Character variations generated successfully!', 'success');
       }
       
       setTimeout(() => {
@@ -398,6 +595,179 @@ export default function Home() {
         progress: 0,
         currentStep: ''
       });
+    }
+  };
+
+  const handleRunwayVideoEditing = async () => {
+    setProcessing({
+      isProcessing: true,
+      progress: 20,
+      currentStep: 'Preparing video for editing...'
+    });
+
+    try {
+      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Sending to Runway for video editing...' }));
+      
+      // Determine the appropriate model based on file types
+      const hasImages = uploadedFiles.some(file => file.fileType === 'image');
+      const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
+      
+      let model: 'gen4_turbo' | 'gen3a_turbo' | 'gen4_aleph' | 'gen4_image' | 'gen4_image_turbo' | 'upscale_v1' | 'act_two';
+      
+      if (hasImages) {
+        model = 'gen4_turbo'; // Image to video editing
+      } else if (hasVideos) {
+        model = 'gen4_aleph'; // Video to video editing with gen4_aleph
+      } else {
+        throw new Error('No valid files for video editing');
+      }
+
+      const requestBody: RunwayVideoRequest = {
+        files: uploadedFiles.map(file => file.base64),
+        prompt: prompt.trim(),
+        model,
+        ratio: '1280:720', // Default ratio for gen4_aleph
+        duration: 10, // Default duration for image-to-video
+        promptText: prompt.trim()
+      };
+
+      const response = await fetch('/api/runway-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Video editing task created...' }));
+
+      const data: RunwayVideoResponse = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to create video editing task');
+      }
+
+      setRunwayTaskId(data.taskId || null);
+      setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Video editing task started!' }));
+
+      // Start polling for task completion
+      if (data.taskId) {
+        console.log(`🚀 Starting polling for task: ${data.taskId}`);
+        
+        // Set start time and estimated duration based on model
+        const startTime = Date.now();
+        setVideoGenerationStartTime(startTime);
+        
+        // Set estimated time based on model (in seconds)
+        const estimatedTime = model === 'gen4_aleph' ? 120 : 60; // 2 minutes for aleph, 1 minute for turbo
+        setEstimatedVideoTime(estimatedTime);
+        
+        console.log(`⏱️ Video generation started at ${new Date(startTime).toLocaleTimeString()}, estimated time: ${estimatedTime}s`);
+        
+        pollRunwayTask(data.taskId);
+      } else {
+        console.log('❌ No task ID received from Runway API');
+      }
+      
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error with Runway video editing:', error);
+      setError(error instanceof Error ? error.message : 'Failed to process video editing');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  const pollRunwayTask = async (taskId: string) => {
+    // Check if we should stop polling
+    if (!taskId || !runwayTaskId) {
+      console.log('🛑 Polling stopped - no active task ID');
+      return;
+    }
+    
+    console.log(`🔄 Polling Runway task: ${taskId}`);
+    try {
+      const response = await fetch(`/api/runway-video?taskId=${taskId}`);
+      const data = await response.json();
+      
+      console.log(`📊 Polling response:`, data);
+
+      if (data.success && data.task) {
+        const task: RunwayTaskResponse = data.task;
+        console.log(`📋 Task status: ${task.status}`);
+        
+        if (task.status === 'SUCCEEDED' && task.output && Array.isArray(task.output) && task.output.length > 0) {
+          // Video editing completed successfully
+          const videoUrl = task.output[0]; // Get first video from array
+          console.log('✅ Video editing completed:', videoUrl);
+          console.log('🛑 Stopping polling - task completed successfully');
+          
+          // Calculate actual generation time
+          if (videoGenerationStartTime) {
+            const actualTime = Math.round((Date.now() - videoGenerationStartTime) / 1000);
+            console.log(`⏱️ Video generation completed in ${actualTime}s (estimated: ${estimatedVideoTime}s)`);
+          }
+          
+          // Add the video to gallery
+          const videoVariation: StoredVariation = {
+            id: `runway-video-${task.id}`,
+            description: `Video editing result: ${prompt}`,
+            angle: 'Video Edit',
+            pose: 'Generated Video',
+            videoUrl: videoUrl,
+            fileType: 'video',
+            timestamp: Date.now(),
+            originalPrompt: prompt
+          };
+          
+          console.log('🎬 Adding video to gallery:', videoVariation);
+          console.log('🎬 Video URL:', videoUrl);
+          setGallery(prev => {
+            const newGallery = [videoVariation, ...prev];
+            console.log('🎬 Updated gallery:', newGallery);
+            return newGallery;
+          });
+          setError(null);
+          showNotification('🎬 Video editing completed successfully!', 'success');
+          
+          // Clear the task ID and stop polling
+          setRunwayTaskId(null);
+          setVideoGenerationStartTime(null);
+          if (pollingTimeout) {
+            clearTimeout(pollingTimeout);
+            setPollingTimeout(null);
+          }
+        } else if (task.status === 'FAILED') {
+          console.log('❌ Video editing failed:', task.error);
+          setError('Video editing failed: ' + (task.error || 'Unknown error'));
+          
+          // Clear timing on failure
+          setVideoGenerationStartTime(null);
+        } else if (task.status === 'PENDING' || task.status === 'RUNNING' || task.status === 'THROTTLED') {
+          // Continue polling for these statuses
+          console.log(`⏳ Task still processing (${task.status}), polling again in 5 seconds...`);
+          const timeout = setTimeout(() => pollRunwayTask(taskId), 5000); // Poll every 5 seconds
+          setPollingTimeout(timeout);
+        } else {
+          console.log(`⚠️ Unknown task status: ${task.status}`);
+          // For unknown statuses, continue polling
+          const timeout = setTimeout(() => pollRunwayTask(taskId), 5000);
+          setPollingTimeout(timeout);
+        }
+      }
+    } catch (error) {
+      console.error('Error polling Runway task:', error);
+      setError('Failed to check video editing status');
     }
   };
 
@@ -438,8 +808,26 @@ export default function Home() {
     }
   };
 
+  const handleDownloadVideo = async (videoUrl: string, originalPrompt: string) => {
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading video:', error);
+      setError('Failed to download video');
+    }
+  };
+
   const handleReset = () => {
-    setUploadedImages([]);
+    setUploadedFiles([]);
     setPrompt('');
     setVariations([]);
     setError(null);
@@ -448,6 +836,14 @@ export default function Home() {
       progress: 0,
       currentStep: ''
     });
+    
+    // Stop any ongoing polling
+    if (pollingTimeout) {
+      clearTimeout(pollingTimeout);
+      setPollingTimeout(null);
+    }
+    setRunwayTaskId(null);
+    setVideoGenerationStartTime(null);
   };
 
   return (
@@ -455,21 +851,49 @@ export default function Home() {
       {/* Semi-transparent overlay for content readability */}
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       
-      <div className="relative z-10 flex">
+      {/* Custom Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+          <div className={`px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm ${
+            notification.type === 'error' 
+              ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
+              : notification.type === 'success'
+              ? 'bg-green-600 bg-opacity-90 border-green-500 text-white'
+              : 'bg-blue-600 bg-opacity-90 border-blue-500 text-white'
+          }`}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{notification.message}</p>
+              <button
+                onClick={() => setNotification(null)}
+                className="ml-3 text-white hover:text-gray-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${showGallery ? 'w-2/3' : 'w-full'}`}>
+        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'}`}>
           <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
-          <h1 className="text-4xl font-bold text-white">
+        <div className="flex justify-between items-start mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20">
+          <h1 className="text-2xl lg:text-4xl font-bold text-white">
             vARY<span className="text-gray-400">ai</span>
           </h1>
           <button
             onClick={() => setShowGallery(!showGallery)}
-            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg"
+            className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
             title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
           >
-            {showGallery ? 'Hide' : 'Show'} gallery
+            <span className="hidden sm:inline">
+              {showGallery ? 'Hide' : 'Show'} gallery
+            </span>
+            <span className="sm:hidden">
+              {showGallery ? 'Hide' : 'Show'}
+            </span>
           </button>
         </div>
 
@@ -478,12 +902,13 @@ export default function Home() {
             {/* Description */}
             <div className="text-center mb-8 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
               <p className="text-gray-300 text-lg">
-                Upload a character image and generate 4 unique angle variations using AI.
+                {ENABLE_VIDEO_FEATURES ? 'Upload images for character variations or videos for AI video-to-video editing.' : 'Upload images for character variations.'}
               </p>
             </div>
 
             {/* Main Input Area */}
-            {uploadedImages.length === 0 ? (
+            <div data-input-area>
+            {uploadedFiles.length === 0 ? (
               <div
                 className="border-2 border-white rounded-lg p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm"
                 onDrop={handleDrop}
@@ -492,15 +917,15 @@ export default function Home() {
               >
                 <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg font-medium text-white mb-2">
-                  Drag & drop your character images here
+                  Drag & drop your files here
                 </p>
                 <p className="text-gray-400">
-                  or click to browse files (JPG, PNG - max 10MB each)
+                  or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
                 </p>
                 <input
                   id="file-input"
                   type="file"
-                  accept="image/*"
+                  accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
                   multiple
                   className="hidden"
                   onChange={handleFileInputChange}
@@ -508,48 +933,67 @@ export default function Home() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Multiple Images Preview */}
+                {/* Multiple Files Preview */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
-                  {uploadedImages.map((image, index) => (
+                  {uploadedFiles.map((file, index) => (
                     <div key={index} className="relative">
-                      <img
-                        src={image.preview}
-                        alt={`Character ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg shadow-lg"
-                      />
+                      {file.fileType === 'image' ? (
+                        <img
+                          src={file.preview}
+                          alt={`Character ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg shadow-lg"
+                        />
+                      ) : (
+                        <video
+                          src={file.preview}
+                          className="w-full h-32 object-cover rounded-lg shadow-lg"
+                          controls
+                          muted
+                        />
+                      )}
                       <button
-                        onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                        onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                        title="Remove image"
+                        title="Remove file"
                       >
                         <X className="w-3 h-3" />
                       </button>
                       <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                        {index + 1}
+                        {file.fileType.toUpperCase()} {index + 1}
                       </div>
                     </div>
                   ))}
                   
-                  {/* Add More Images Button */}
+                  {/* Add More Files Button */}
                   <div
                     className="border-2 border-dashed border-white rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-gray-300 transition-colors"
-                    onClick={() => document.getElementById('file-input')?.click()}
+                    onClick={() => document.getElementById('add-more-files-input')?.click()}
                   >
                     <div className="text-center">
                       <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">Add More</p>
+                      <p className="text-gray-400 text-sm">Add More Files</p>
                     </div>
                   </div>
+                  
+                  {/* Hidden file input for adding more files */}
+                  <input
+                    id="add-more-files-input"
+                    type="file"
+                    accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
+                    multiple
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
                 </div>
                 
                 {/* Clear All Button */}
                 <div className="flex justify-center">
                   <button
-                    onClick={() => setUploadedImages([])}
+                    onClick={() => setUploadedFiles([])}
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Clear All Images
+                    Clear All Files
                   </button>
                 </div>
 
@@ -658,14 +1102,62 @@ export default function Home() {
                         </div>
 
                         {/* Artistic perspectives */}
-                        <div>
+                        <div className="mb-4">
                           <h5 className="text-gray-300 text-xs font-medium mb-2">Artistic & Cinematic</h5>
                           <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(18).map((example) => (
+                            {EXTENDED_PROMPTS.slice(18, 24).map((example) => (
                               <button
                                 key={example}
                                 onClick={() => setPrompt(example)}
                                 className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Professional lighting setups */}
+                        <div className="mb-4">
+                          <h5 className="text-gray-300 text-xs font-medium mb-2">Professional Lighting</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {EXTENDED_PROMPTS.slice(24, 36).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full hover:bg-orange-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Cinematic styling elements */}
+                        <div className="mb-4">
+                          <h5 className="text-gray-300 text-xs font-medium mb-2">Cinematic Styling</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {EXTENDED_PROMPTS.slice(36, 50).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Dynamic poses and composition */}
+                        <div>
+                          <h5 className="text-gray-300 text-xs font-medium mb-2">Dynamic Poses & Composition</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {EXTENDED_PROMPTS.slice(50).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition-colors"
                               >
                                 {example}
                               </button>
@@ -688,7 +1180,7 @@ export default function Home() {
                           {processing.currentStep}
                         </>
                       ) : (
-                        "Generate Character Variations"
+                        "Process Files"
                       )}
                     </button>
                   </div>
@@ -701,10 +1193,41 @@ export default function Home() {
                       ></div>
                     </div>
                   )}
+
+                  {/* Video Generation Progress */}
+                  {runwayTaskId && videoGenerationStartTime && (
+                    <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-white border-opacity-20">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin text-white" />
+                          <span className="text-white font-medium">Video Generation in Progress</span>
+                        </div>
+                        <span className="text-gray-300 text-sm">
+                          {(() => {
+                            const elapsed = Math.round((Date.now() - videoGenerationStartTime) / 1000);
+                            const remaining = Math.max(0, estimatedVideoTime - elapsed);
+                            return `${elapsed}s elapsed, ~${remaining}s remaining`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-600 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
+                          style={{ 
+                            width: `${Math.min(100, ((Date.now() - videoGenerationStartTime) / 1000 / estimatedVideoTime) * 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-400 text-center">
+                        Estimated time: {estimatedVideoTime}s • Model: {runwayTaskId ? 'Gen4 Aleph' : 'Unknown'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
+        </div>
         </div>
 
         {/* Error Display */}
@@ -815,29 +1338,31 @@ export default function Home() {
 
         {/* Gallery Panel */}
         {showGallery && (
-          <div className="w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-l border-gray-700 h-screen overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
-                  <Images className="w-6 h-6 text-white" />
-                  Gallery ({gallery.length})
+          <div className="w-full lg:w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-t lg:border-t-0 lg:border-l border-gray-700 h-screen lg:h-screen overflow-y-auto">
+            <div className="p-4 lg:p-6">
+              <div className="flex items-center justify-between mb-4 lg:mb-6">
+                <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
+                  <Images className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  <span className="hidden sm:inline">Gallery</span>
+                  <span className="sm:hidden">Gallery</span>
+                  <span className="text-sm lg:text-base">({gallery.length})</span>
                 </h2>
-                <div className="flex gap-2">
+                <div className="flex gap-1 lg:gap-2">
                   <button
                     onClick={clearGallery}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                    className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs lg:text-sm"
                     title="Clear all"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    Clear
+                    <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span className="hidden sm:inline">Clear</span>
                   </button>
                   <button
                     onClick={() => setShowGallery(false)}
-                    className="flex items-center gap-1 px-3 py-1 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm"
+                    className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-white text-black rounded hover:bg-gray-100 transition-colors text-xs lg:text-sm"
                     title="Hide gallery"
                   >
-                    <X className="w-4 h-4" />
-                    Hide
+                    <X className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span className="hidden sm:inline">Hide</span>
                   </button>
                 </div>
               </div>
@@ -849,81 +1374,205 @@ export default function Home() {
                   <p className="text-sm">Generated character variations will appear here</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {gallery.map((item) => (
-                    <div
-                      key={`${item.id}-${item.timestamp}`}
-                      className="border border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-700 bg-opacity-80 backdrop-blur-sm"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white text-sm">
-                            {item.angle}
-                          </h3>
-                          <p className="text-xs text-gray-400">
-                            {new Date(item.timestamp).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-gray-300 mt-1">
-                            &ldquo;{item.originalPrompt}&rdquo;
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeFromGallery(item.id, item.timestamp)}
-                          className="text-gray-400 hover:text-red-400 transition-colors"
-                          title="Remove from gallery"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {item.imageUrl ? (
-                        <div className="space-y-3">
-                          <img
-                            src={item.imageUrl}
-                            alt={`${item.angle} - ${item.pose}`}
-                            className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => handleImageClick(item.imageUrl!)}
-                          />
-                          <div className="bg-gray-700 bg-opacity-80 backdrop-blur-sm rounded p-2">
-                            <p className="text-xs text-gray-300 leading-relaxed">
-                              {item.description.substring(0, 150)}
-                              {item.description.length > 150 ? '...' : ''}
+                <div className="space-y-4">
+                  {gallery.map((item) => {
+                    const itemKey = `${item.id}-${item.timestamp}`;
+                    const isExpanded = expandedPrompts.has(itemKey);
+                    
+                    // Debug logging for video items
+                    if (item.fileType === 'video') {
+                      console.log('🎬 Rendering video item:', item);
+                      console.log('🎬 Video URL:', item.videoUrl);
+                    }
+                    
+                    return (
+                      <div
+                        key={itemKey}
+                        className="border border-gray-600 rounded-lg p-3 hover:shadow-md transition-shadow bg-gray-700 bg-opacity-80 backdrop-blur-sm"
+                      >
+                        {/* Header with title, timestamp, and remove button */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-white text-sm truncate">
+                              {item.angle}
+                            </h3>
+                            <p className="text-xs text-gray-400">
+                              {new Date(item.timestamp).toLocaleString()}
                             </p>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleVaryImage(item.imageUrl!, item.originalPrompt)}
-                              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium"
-                              disabled={processing.isProcessing}
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              Vary
-                            </button>
-                            <button
-                              onClick={() => handleDownloadVariation(item)}
-                              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm font-medium"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => removeFromGallery(item.id, item.timestamp)}
+                            className="text-gray-400 hover:text-red-400 transition-colors ml-2 flex-shrink-0"
+                            title="Remove from gallery"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                      ) : (
-                        <div className="bg-gray-700 rounded p-3">
-                          <p className="text-xs text-gray-300 leading-relaxed">
-                            {item.description}
-                          </p>
-                          {item.description.includes('blocked by content policy') && (
-                            <div className="mt-2 p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
-                              <p className="text-yellow-300 text-xs">
-                                ⚠️ Image generation was restricted
-                              </p>
+
+                        {/* Image or Video */}
+                        {item.imageUrl || item.videoUrl ? (
+                          <div className="space-y-3">
+                            {item.fileType === 'video' && item.videoUrl ? (
+                              <div>
+                                <video
+                                  src={item.videoUrl}
+                                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                  controls
+                                  muted
+                                  onClick={(e) => e.stopPropagation()}
+                                  onError={(e) => {
+                                    console.error('🎬 Video load error:', e);
+                                    console.error('🎬 Video URL:', item.videoUrl);
+                                  }}
+                                  onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
+                                  onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
+                                />
+                                {/* Debug info for video */}
+                                <div className="text-xs text-gray-400 mt-1">
+                                  Video URL: {item.videoUrl ? 'Present' : 'Missing'}
+                                </div>
+                              </div>
+                            ) : (
+                              <img
+                                src={item.imageUrl}
+                                alt={`${item.angle} - ${item.pose}`}
+                                className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => handleImageClick(item.imageUrl!)}
+                              />
+                            )}
+                            
+                            {/* Collapsible prompt section */}
+                            <div className="space-y-2">
+                              {/* Original prompt - always visible but compact */}
+                              <div className="bg-gray-600 bg-opacity-50 rounded p-2">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-300 font-medium">
+                                    Original Prompt:
+                                  </p>
+                                  <button
+                                    onClick={() => togglePromptExpansion(itemKey)}
+                                    className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 p-1 rounded touch-manipulation"
+                                    title={isExpanded ? "Hide details" : "Show details"}
+                                  >
+                                    <span className="text-xs">
+                                      {isExpanded ? "Hide" : "Show"}
+                                    </span>
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-3 h-3" />
+                                    ) : (
+                                      <ChevronDown className="w-3 h-3" />
+                                    )}
+                                  </button>
+                                </div>
+                                <p className="text-xs text-gray-300 mt-1 line-clamp-2">
+                                  &ldquo;{item.originalPrompt}&rdquo;
+                                </p>
+                              </div>
+
+                              {/* Expanded details */}
+                              {isExpanded && (
+                                <div className="bg-gray-700 bg-opacity-80 backdrop-blur-sm rounded p-3 space-y-2">
+                                  <div>
+                                    <p className="text-xs text-gray-400 font-medium mb-1">AI Description:</p>
+                                    <p className="text-xs text-gray-300 leading-relaxed">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                  {item.description.includes('blocked by content policy') && (
+                                    <div className="p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
+                                      <p className="text-yellow-300 text-xs">
+                                        ⚠️ Image generation was restricted
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+
+                            {/* Action buttons */}
+                            <div className="flex gap-2">
+                              {item.fileType === 'video' ? (
+                                <button
+                                  onClick={() => handleDownloadVideo(item.videoUrl!, item.originalPrompt)}
+                                  className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm font-medium touch-manipulation"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  Download Video
+                                </button>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleEditImage(item.imageUrl!, item.originalPrompt)}
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium touch-manipulation"
+                                    disabled={processing.isProcessing}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleVaryImage(item.imageUrl!, item.originalPrompt)}
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium touch-manipulation"
+                                    disabled={processing.isProcessing}
+                                  >
+                                    <Sparkles className="w-4 h-4" />
+                                    Vary
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownloadVariation(item)}
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm font-medium touch-manipulation"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                    Download
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          /* Text-only variation (no image) */
+                          <div className="bg-gray-700 rounded p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs text-gray-400 font-medium">
+                                Text Description:
+                              </p>
+                              <button
+                                onClick={() => togglePromptExpansion(itemKey)}
+                                className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 p-1 rounded touch-manipulation"
+                                title={isExpanded ? "Hide details" : "Show details"}
+                              >
+                                <span className="text-xs">
+                                  {isExpanded ? "Hide" : "Show"}
+                                </span>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-3 h-3" />
+                                ) : (
+                                  <ChevronDown className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-300 leading-relaxed line-clamp-3">
+                              {item.description}
+                            </p>
+                            {isExpanded && (
+                              <div className="mt-2 pt-2 border-t border-gray-600">
+                                <p className="text-xs text-gray-400 font-medium mb-1">Original Prompt:</p>
+                                <p className="text-xs text-gray-300">
+                                  &ldquo;{item.originalPrompt}&rdquo;
+                                </p>
+                              </div>
+                            )}
+                            {item.description.includes('blocked by content policy') && (
+                              <div className="mt-2 p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
+                                <p className="text-yellow-300 text-xs">
+                                  ⚠️ Image generation was restricted
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
