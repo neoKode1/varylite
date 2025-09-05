@@ -396,6 +396,7 @@ export default function Home() {
     }, 3000);
   }, []);
 
+
   // Check if we have video files
   const hasVideoFiles = uploadedFiles.some(file => file.fileType === 'video');
   const hasImageFiles = uploadedFiles.some(file => file.fileType === 'image');
@@ -894,6 +895,69 @@ export default function Home() {
     reader.readAsDataURL(file);
   }, [showNotification]);
 
+  // Handle clipboard paste events
+  const handlePaste = useCallback(async (e: ClipboardEvent, slotIndex?: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('📋 Paste event triggered', slotIndex ? `for slot ${slotIndex}` : 'for main area');
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+    
+    if (imageItems.length === 0) {
+      showNotification('No image found in clipboard', 'error');
+      return;
+    }
+    
+    // Take the first image from clipboard
+    const imageItem = imageItems[0];
+    const file = imageItem.getAsFile();
+    
+    if (!file) {
+      showNotification('Could not extract image from clipboard', 'error');
+      return;
+    }
+    
+    console.log('📋 Pasting image from clipboard:', file.name, file.type, file.size);
+    
+    if (slotIndex !== undefined) {
+      // Paste to specific slot
+      handleFileUploadToSlot(file, slotIndex);
+    } else {
+      // Paste to main area (add to existing files)
+      handleFileUpload([file]);
+    }
+  }, [handleFileUpload, handleFileUploadToSlot, showNotification]);
+
+  // Handle slot-specific paste
+  const handleSlotPaste = useCallback((e: ClipboardEvent, slotIndex: number) => {
+    handlePaste(e, slotIndex);
+  }, [handlePaste]);
+
+  // Global paste event listener
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      // Only handle paste if we're focused on the input area or no specific element is focused
+      const activeElement = document.activeElement;
+      const isInputArea = activeElement?.closest('[data-input-area]') || 
+                         activeElement?.closest('[data-slot-area]') ||
+                         !activeElement || 
+                         activeElement === document.body;
+      
+      if (isInputArea) {
+        handlePaste(e);
+      }
+    };
+
+    document.addEventListener('paste', handleGlobalPaste);
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste);
+    };
+  }, [handlePaste]);
+
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('📁 File input change triggered');
     const files = e.target.files;
@@ -1344,6 +1408,8 @@ export default function Home() {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => document.getElementById('file-input')?.click()}
+                onPaste={(e) => handlePaste(e as any)}
+                tabIndex={0}
               >
                 <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg font-medium text-white mb-2">
@@ -1351,6 +1417,9 @@ export default function Home() {
                 </p>
                 <p className="text-gray-400">
                   or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
+                </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  💡 Tip: You can also paste images from your clipboard (Ctrl+V)
                 </p>
                 <input
                   id="file-input"
@@ -1376,6 +1445,9 @@ export default function Home() {
                       onDrop={(e) => handleSlotDrop(e, index)}
                       onDragOver={(e) => handleSlotDragOver(e, index)}
                       onDragLeave={handleSlotDragLeave}
+                      onPaste={(e) => handleSlotPaste(e as any, index)}
+                      data-slot-area
+                      tabIndex={0}
                     >
                       {file.fileType === 'image' ? (
                         <img
@@ -1426,11 +1498,14 @@ export default function Home() {
                         onDrop={(e) => handleSlotDrop(e, slotIndex)}
                         onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
                         onDragLeave={handleSlotDragLeave}
+                        onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
+                        data-slot-area
+                        tabIndex={0}
                       >
                         <div className="text-center">
                           <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                           <p className="text-gray-400 text-sm">Slot {slotIndex + 1}</p>
-                          <p className="text-gray-500 text-xs">Drop or click</p>
+                          <p className="text-gray-500 text-xs">Drop, click, or paste</p>
                         </div>
                         {dragOverSlot === slotIndex && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
