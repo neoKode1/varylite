@@ -110,6 +110,77 @@ const EXTENDED_PROMPTS = [
   'Character in power pose stance'
 ];
 
+// Background removal and switching prompts
+const BACKGROUND_PROMPTS = [
+  // Background removal
+  'Remove the background completely, transparent background',
+  'Remove background, clean transparent background',
+  'Remove all background elements, transparent background',
+  'Remove background, keep only the character',
+  'Remove background, create transparent background',
+  'Remove background, isolate character on transparent background',
+  'Remove background, clean cutout with transparent background',
+  'Remove background, professional transparent background',
+  
+  // Background replacement - Studio/Professional
+  'Change background to professional studio backdrop',
+  'Change background to clean white studio background',
+  'Change background to neutral gray studio background',
+  'Change background to professional photography backdrop',
+  'Change background to seamless studio background',
+  'Change background to clean gradient background',
+  'Change background to solid color background',
+  'Change background to minimalist background',
+  
+  // Background replacement - Natural/Outdoor
+  'Change background to natural outdoor setting',
+  'Change background to forest environment',
+  'Change background to beach scene',
+  'Change background to mountain landscape',
+  'Change background to city skyline',
+  'Change background to park setting',
+  'Change background to garden environment',
+  'Change background to sunset landscape',
+  'Change background to ocean view',
+  'Change background to countryside setting',
+  
+  // Background replacement - Indoor/Architectural
+  'Change background to modern office interior',
+  'Change background to luxury home interior',
+  'Change background to contemporary living room',
+  'Change background to elegant bedroom',
+  'Change background to modern kitchen',
+  'Change background to library setting',
+  'Change background to art gallery',
+  'Change background to hotel lobby',
+  'Change background to restaurant interior',
+  'Change background to modern architecture',
+  
+  // Background replacement - Creative/Artistic
+  'Change background to abstract artistic background',
+  'Change background to geometric pattern background',
+  'Change background to colorful gradient background',
+  'Change background to artistic texture background',
+  'Change background to creative digital background',
+  'Change background to fantasy environment',
+  'Change background to sci-fi setting',
+  'Change background to dreamy atmosphere',
+  'Change background to artistic illustration background',
+  'Change background to creative concept background',
+  
+  // Background replacement - Themed
+  'Change background to winter scene',
+  'Change background to autumn forest',
+  'Change background to spring garden',
+  'Change background to summer beach',
+  'Change background to night cityscape',
+  'Change background to rainy day scene',
+  'Change background to snowy landscape',
+  'Change background to desert scene',
+  'Change background to tropical paradise',
+  'Change background to urban street scene'
+];
+
 // Video-specific prompts organized by movie genres
 const VIDEO_PROMPTS = {
   // Action & Adventure
@@ -303,6 +374,7 @@ export default function Home() {
   const [showGallery, setShowGallery] = useState(true);
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
+  const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
@@ -1428,12 +1500,20 @@ export default function Home() {
                           {showVideoPrompts ? 'Hide Video Options' : 'Video Scene Options'}
                         </button>
                       ) : (
-                        <button
-                          onClick={() => setShowExtendedPrompts(!showExtendedPrompts)}
-                          className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
-                        >
-                          {showExtendedPrompts ? 'Show Less' : 'More Shot Types'}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setShowExtendedPrompts(!showExtendedPrompts)}
+                            className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+                          >
+                            {showExtendedPrompts ? 'Hide Shot Types' : 'More Shot Types'}
+                          </button>
+                          <button
+                            onClick={() => setShowBackgroundPrompts(!showBackgroundPrompts)}
+                            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors border border-green-500"
+                          >
+                            {showBackgroundPrompts ? 'Hide Backgrounds' : 'Background Options'}
+                          </button>
+                        </>
                       )}
                     </div>
 
@@ -1563,6 +1643,109 @@ export default function Home() {
                                 key={example}
                                 onClick={() => setPrompt(example)}
                                 className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Background Prompts */}
+                    {showBackgroundPrompts && (
+                      <div className="mt-4 p-4 bg-green-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-green-600">
+                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎨 Background Removal & Replacement Options</h4>
+                        
+                        {/* Background removal */}
+                        <div className="mb-4">
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Background Removal</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Studio/Professional backgrounds */}
+                        <div className="mb-4">
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Studio & Professional</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Natural/Outdoor backgrounds */}
+                        <div className="mb-4">
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Natural & Outdoor</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Indoor/Architectural backgrounds */}
+                        <div className="mb-4">
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Indoor & Architectural</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Creative/Artistic backgrounds */}
+                        <div className="mb-4">
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Creative & Artistic</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Themed backgrounds */}
+                        <div>
+                          <h5 className="text-green-300 text-xs font-medium mb-2">Themed Backgrounds</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(46).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
                               >
                                 {example}
                               </button>
