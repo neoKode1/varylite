@@ -283,8 +283,8 @@ export async function POST(request: NextRequest) {
     
     let enhancedPrompt;
     
-    // Preserve user's original prompt intent - only add minimal structure
-    enhancedPrompt = `Generate 4 character variations based on the user's specific request: "${prompt}"
+    // Preserve user's original prompt intent with enhanced quality instructions
+    enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
 
 For each variation, provide:
 - Viewing angle (preserve the user's specific angle requests like "worm's eye view")
@@ -297,7 +297,14 @@ CRITICAL: Preserve the user's exact specifications including:
 - Specific settings (luxurious shower, hot pool, etc.)
 - Specific character interactions (threesome, etc.)
 
-Maintain character consistency while respecting the user's detailed vision.`;
+QUALITY ENHANCEMENTS:
+- For "worm's eye view": Ensure dramatic low-angle perspective with strong upward lighting
+- For "self-examination": Focus on detailed hand/finger inspection with intense concentration
+- For "sprawled": Show relaxed, confident body language with proper positioning
+- Maintain high detail in character features, textures, and environmental elements
+- Use cinematic lighting and composition for maximum visual impact
+
+Maintain character consistency while respecting the user's detailed vision and enhancing visual quality.`;
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -376,9 +383,24 @@ Maintain character consistency while respecting the user's detailed vision.`;
           try {
             console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
             
-            // Use the user's original prompt with the specific variation details
-            const nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()}`;
-            console.log(`🎨 Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
+            // Use the user's original prompt with enhanced quality instructions
+            let nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()}`;
+            
+            // Add quality enhancements based on the specific angle
+            if (variation.angle.toLowerCase().includes('worm') && variation.angle.toLowerCase().includes('eye')) {
+              nanoBananaPrompt += ', dramatic low-angle perspective, strong upward lighting, cinematic composition';
+            }
+            if (variation.angle.toLowerCase().includes('self-examination')) {
+              nanoBananaPrompt += ', detailed hand inspection, intense concentration, close-up focus on fingers';
+            }
+            if (variation.angle.toLowerCase().includes('sprawled')) {
+              nanoBananaPrompt += ', relaxed confident pose, proper body positioning, comfortable sprawl';
+            }
+            
+            // Add general quality improvements
+            nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
+            
+            console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             const result = await retryWithBackoff(async () => {
               console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
@@ -504,7 +526,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       if (trimmedSection.length < 50) continue; // Skip very short sections
 
       // Extract angle/view information (look for common angle terms and preserve user's specific requests)
-      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance', 'worm', 'eye', 'low', 'high', 'bird', 'self-examination', 'sprawled'];
+      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance', 'worm', 'eye', 'low', 'high', 'bird', 'self-examination', 'sprawled', 'dramatic', 'cinematic', 'lighting'];
       const lines = trimmedSection.split('\n').filter(line => line.trim());
       
       let angle = 'Character View';
@@ -516,12 +538,21 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
         if (angleKeywords.some(keyword => line.includes(keyword))) {
           if (line.includes('worm') && line.includes('eye')) {
             angle = 'Worm\'s Eye View';
+            if (line.includes('dramatic') || line.includes('cinematic')) {
+              pose = 'Dramatic Low-Angle Pose';
+            }
           } else if (line.includes('self-examination')) {
             angle = 'Self-Examination View';
             pose = 'Self-Examination Pose';
+            if (line.includes('detailed') || line.includes('concentration')) {
+              pose = 'Intense Self-Examination Pose';
+            }
           } else if (line.includes('sprawled')) {
             angle = 'Sprawled View';
             pose = 'Sprawled Pose';
+            if (line.includes('relaxed') || line.includes('confident')) {
+              pose = 'Relaxed Sprawled Pose';
+            }
           } else if (line.includes('side') || line.includes('profile')) {
             angle = 'Side Profile View';
           } else if (line.includes('back')) {
