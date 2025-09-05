@@ -982,8 +982,18 @@ export default function Home() {
         // Paste to specific slot
         handleFileUploadToSlot(file, slotIndex);
       } else {
-        // Paste to main area (add to existing files)
-        handleFileUpload([file]);
+        // Paste to main area - check if we should replace or add
+        if (uploadedFiles.length === 0) {
+          // No existing files, add to main area
+          handleFileUpload([file]);
+        } else if (uploadedFiles.length < 4) {
+          // Add to next available slot
+          handleFileUploadToSlot(file, uploadedFiles.length);
+        } else {
+          // All slots full, replace the first slot
+          handleFileUploadToSlot(file, 0);
+          showNotification('📋 All slots full, replaced first image', 'info');
+        }
       }
       
       showNotification('📋 Image pasted successfully!', 'success');
@@ -992,7 +1002,7 @@ export default function Home() {
       console.error('📋 Error handling paste event:', error);
       showNotification('Failed to paste image. Please try drag & drop or file upload instead.', 'error');
     }
-  }, [handleFileUpload, handleFileUploadToSlot, showNotification]);
+  }, [handleFileUpload, handleFileUploadToSlot, showNotification, uploadedFiles]);
 
   // Handle slot-specific paste
   const handleSlotPaste = useCallback((e: ClipboardEvent, slotIndex: number) => {
