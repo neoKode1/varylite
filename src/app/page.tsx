@@ -956,27 +956,30 @@ export default function Home() {
       
       console.log('📋 Clipboard items:', Array.from(items).map(item => ({ type: item.type, kind: item.kind })));
       
-      const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+      // Look for both images and videos
+      const mediaItems = Array.from(items).filter(item => 
+        item.type.startsWith('image/') || item.type.startsWith('video/')
+      );
       
-      if (imageItems.length === 0) {
-        console.warn('📋 No image items in clipboard');
-        showNotification('No image found in clipboard. Please copy an image first.', 'error');
+      if (mediaItems.length === 0) {
+        console.warn('📋 No image or video items in clipboard');
+        showNotification('No image or video found in clipboard. Please copy an image or video first.', 'error');
         return;
       }
       
-      // Take the first image from clipboard
-      const imageItem = imageItems[0];
-      console.log('📋 Processing image item:', imageItem.type, imageItem.kind);
+      // Take the first media item from clipboard
+      const mediaItem = mediaItems[0];
+      console.log('📋 Processing media item:', mediaItem.type, mediaItem.kind);
       
-      const file = imageItem.getAsFile();
+      const file = mediaItem.getAsFile();
       
       if (!file) {
         console.error('📋 Could not extract file from clipboard item');
-        showNotification('Could not extract image from clipboard. Please try copying the image again.', 'error');
+        showNotification('Could not extract media from clipboard. Please try copying the image/video again.', 'error');
         return;
       }
       
-      console.log('📋 Successfully extracted image from clipboard:', file.name, file.type, file.size);
+      console.log('📋 Successfully extracted media from clipboard:', file.name, file.type, file.size);
       
       if (slotIndex !== undefined) {
         // Paste to specific slot
@@ -996,11 +999,11 @@ export default function Home() {
         }
       }
       
-      showNotification('📋 Image pasted successfully!', 'success');
+      showNotification('📋 Media pasted successfully!', 'success');
       
     } catch (error) {
       console.error('📋 Error handling paste event:', error);
-      showNotification('Failed to paste image. Please try drag & drop or file upload instead.', 'error');
+      showNotification('Failed to paste media. Please try drag & drop or file upload instead.', 'error');
     }
   }, [handleFileUpload, handleFileUploadToSlot, showNotification, uploadedFiles]);
 
@@ -1550,7 +1553,7 @@ export default function Home() {
                   or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
-                  💡 Tip: You can also paste images from your clipboard (Ctrl+V) or drag & drop files
+                  💡 Tip: You can also paste images or videos from your clipboard (Ctrl+V) or drag & drop files
                 </p>
                 <input
                   id="file-input"
