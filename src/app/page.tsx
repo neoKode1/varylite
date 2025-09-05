@@ -1567,25 +1567,60 @@ export default function Home() {
   };
 
   const handleDownloadVariation = async (variation: CharacterVariation) => {
-    if (variation.imageUrl) {
-      // Download the generated image
-      try {
-        const response = await fetch(variation.imageUrl);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `character-${variation.angle.toLowerCase().replace(/\s+/g, '-')}-${variation.id}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error('Failed to download image:', error);
-        // Fallback to description download
+    try {
+      // Check if we're on mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (variation.imageUrl) {
+        // Download the generated image
+        if (isMobile) {
+          // For mobile, use direct download
+          const a = document.createElement('a');
+          a.href = variation.imageUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          
+          try {
+            a.download = `character-${variation.angle.toLowerCase().replace(/\s+/g, '-')}-${variation.id}.jpg`;
+          } catch (e) {
+            console.log('📱 Download attribute not supported');
+          }
+          
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          showNotification('📱 Image download started!', 'success');
+        } else {
+          // For desktop, use blob download
+          const response = await fetch(variation.imageUrl, {
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `character-${variation.angle.toLowerCase().replace(/\s+/g, '-')}-${variation.id}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          showNotification('🖼️ Image downloaded successfully!', 'success');
+        }
+      } else {
+        // Download variation description as text file
         downloadDescription();
       }
-    } else {
+    } catch (error) {
+      console.error('❌ Error downloading variation:', error);
+      // Fallback to description download
       downloadDescription();
     }
 
@@ -1600,12 +1635,53 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      showNotification('📄 Description saved!', 'success');
     }
   };
 
   const handleDownloadVideo = async (videoUrl: string, originalPrompt: string) => {
     try {
-      const response = await fetch(videoUrl);
+      console.log('🎬 Starting video download:', videoUrl);
+      
+      // Check if we're on mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // For mobile, try direct download first (works better with CORS)
+        console.log('📱 Mobile detected, using direct download');
+        const a = document.createElement('a');
+        a.href = videoUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        
+        // Try to set download attribute (some mobile browsers support it)
+        try {
+          a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
+        } catch (e) {
+          console.log('📱 Download attribute not supported, using target="_blank"');
+        }
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Show notification for mobile users
+        showNotification('📱 Video download started! Check your downloads folder.', 'success');
+        return;
+      }
+      
+      // For desktop, use blob download
+      console.log('🖥️ Desktop detected, using blob download');
+      const response = await fetch(videoUrl, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1615,9 +1691,23 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      showNotification('🎬 Video downloaded successfully!', 'success');
+      
     } catch (error) {
-      console.error('Error downloading video:', error);
-      setError('Failed to download video');
+      console.error('❌ Error downloading video:', error);
+      
+      // Fallback: open in new tab
+      console.log('🔄 Fallback: opening video in new tab');
+      const a = document.createElement('a');
+      a.href = videoUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      showNotification('📱 Video opened in new tab. You can save it from there.', 'info');
     }
   };
 
@@ -2501,6 +2591,30 @@ export default function Home() {
                     </div>
                   )}
 
+                  {/* EndFrame Progress Bar */}
+                  {endFrameProcessing && (
+                    <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-green-500 border-opacity-20">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin text-green-500" />
+                          <span className="text-white font-medium">EndFrame Video Generation</span>
+                        </div>
+                        <span className="text-green-400 text-sm font-mono">
+                          {endFrameTaskId ? `Task: ${endFrameTaskId.slice(-8)}` : 'Starting...'}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-600 rounded-full h-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all duration-500 animate-pulse"
+                          style={{ width: '75%' }}
+                        ></div>
+                      </div>
+                      <p className="text-gray-300 text-sm mt-2 text-center">
+                        {processing.currentStep || 'Generating video from start to end frame...'}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Video Generation Progress */}
                   {runwayTaskId && videoGenerationStartTime && (
                     <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-white border-opacity-20">
@@ -2589,11 +2703,13 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => handleDownloadVariation(variation)}
-                        className="flex items-center gap-1 px-3 py-1 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                        className="flex items-center gap-1 px-3 py-1 bg-white text-black rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
+                        style={{ touchAction: 'manipulation' }}
                         title="Download variation description"
                       >
                         <Download className="w-4 h-4" />
-                        Save
+                        <span className="hidden sm:inline">Save</span>
+                        <span className="sm:hidden">Save</span>
                       </button>
                     </div>
                   </div>
@@ -2801,10 +2917,12 @@ export default function Home() {
                               {item.fileType === 'video' ? (
                                 <button
                                   onClick={() => handleDownloadVideo(item.videoUrl!, item.originalPrompt)}
-                                  className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm font-medium touch-manipulation"
+                                  className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
+                                  style={{ touchAction: 'manipulation' }}
                                 >
                                   <Download className="w-4 h-4" />
-                                  Download Video
+                                  <span className="hidden sm:inline">Download Video</span>
+                                  <span className="sm:hidden">Download</span>
                                 </button>
                               ) : (
                                 <>
@@ -2834,10 +2952,12 @@ export default function Home() {
                                   </button>
                                   <button
                                     onClick={() => handleDownloadVariation(item)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 transition-colors text-sm font-medium touch-manipulation"
+                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
+                                    style={{ touchAction: 'manipulation' }}
                                   >
                                     <Download className="w-4 h-4" />
-                                    Download
+                                    <span className="hidden sm:inline">Download</span>
+                                    <span className="sm:hidden">Save</span>
                                   </button>
                                 </>
                               )}
