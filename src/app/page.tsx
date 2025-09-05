@@ -2073,7 +2073,7 @@ export default function Home() {
                       ) : (
                         <video
                           src={file.preview}
-                          className="w-full h-32 object-cover rounded-lg shadow-lg"
+                          className="w-full h-32 object-contain rounded-lg shadow-lg bg-black"
                           controls
                           muted
                         />
@@ -2899,7 +2899,7 @@ export default function Home() {
                                   <div>
                                     <video
                                       src={item.videoUrl}
-                                      className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                      className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
                                       controls
                                       muted
                                       onClick={(e) => e.stopPropagation()}
