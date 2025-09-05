@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
+import AnimatedError from '@/components/AnimatedError';
+import { useAnimatedError } from '@/hooks/useAnimatedError';
 
 // Ko-fi widget types
 declare global {
@@ -519,10 +521,52 @@ export default function Home() {
   const [endFrameTaskId, setEndFrameTaskId] = useState<string | null>(null); // Track EndFrame task ID
   const [endFramePollingTimeout, setEndFramePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
   const [showPromptGuide, setShowPromptGuide] = useState<boolean>(false); // Track prompt guide modal
+  const [failedVideos, setFailedVideos] = useState<Set<string>>(new Set()); // Track failed video URLs
+  
+  // Animated error system
+  const { errors: animatedErrors, showError: showAnimatedError, removeError: removeAnimatedError } = useAnimatedError();
 
   // Show notification function
   const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setNotification({ message, type });
+  }, []);
+
+  // Show animated error function
+  const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' = 'farting-man') => {
+    showAnimatedError(message, errorType);
+  }, [showAnimatedError]);
+
+  // Retry failed video
+  const retryVideo = useCallback((videoUrl: string) => {
+    setFailedVideos(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(videoUrl);
+      return newSet;
+    });
+    showNotification('🔄 Retrying video load...', 'info');
+  }, [showNotification]);
+
+  // Validate video URL format
+  const isValidVideoUrl = useCallback((url: string): boolean => {
+    if (!url) return false;
+    
+    // Check if it's a valid URL
+    try {
+      const urlObj = new URL(url);
+      // Check for common video file extensions or video content types
+      const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+      const hasVideoExtension = videoExtensions.some(ext => urlObj.pathname.toLowerCase().endsWith(ext));
+      
+      // Check if it's a data URL with video content
+      const isDataUrl = url.startsWith('data:video/');
+      
+      // Check if it's a proxy URL (our API endpoints)
+      const isProxyUrl = url.includes('/api/');
+      
+      return hasVideoExtension || isDataUrl || isProxyUrl;
+    } catch {
+      return false;
+    }
   }, []);
 
   // Auto-hide notification after 3 seconds
@@ -893,11 +937,13 @@ export default function Home() {
       // Check if video features are disabled
       if (isVideo && !ENABLE_VIDEO_FEATURES) {
         setError('Video-to-video editing is temporarily disabled. Please upload image files only.');
+        showAnimatedErrorNotification('Video features are disabled! 👊⚡', 'mortal-kombat');
         return false;
       }
       
       if (!isImage && !isVideo) {
         setError('Please upload valid image files (JPG, PNG) or video files (MP4, MOV)');
+        showAnimatedErrorNotification('Invalid file type! ⚠️🌀', 'bouncing-error');
         return false;
       }
       
@@ -905,6 +951,7 @@ export default function Home() {
       const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
       if (file.size > maxSize) {
         setError(`${isImage ? 'Image' : 'Video'} size must be less than ${isImage ? '10MB' : '100MB'}`);
+        showAnimatedErrorNotification('File too large! 😵💥', 'shake-error');
         return false;
       }
       return true;
@@ -1338,7 +1385,50 @@ export default function Home() {
       }, 1000);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      console.error('❌ Character variation error:', err);
+      
+      // Enhanced error handling with better user messages
+      let userMessage = 'An unexpected error occurred';
+      let retryable = true;
+      
+      if (err instanceof Error) {
+        const message = err.message.toLowerCase();
+        
+        if (message.includes('service unavailable') || message.includes('503')) {
+          userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
+          retryable = true;
+          showAnimatedErrorNotification('AI service overloaded! 👊⚡', 'mortal-kombat');
+        } else if (message.includes('timeout') || message.includes('504')) {
+          userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
+          retryable = true;
+          showAnimatedErrorNotification('Request timed out! 😵💥', 'shake-error');
+        } else if (message.includes('rate limit') || message.includes('429')) {
+          userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+          retryable = true;
+          showAnimatedErrorNotification('Rate limit exceeded! ⚠️🌀', 'bouncing-error');
+        } else if (message.includes('content') && message.includes('moderation')) {
+          userMessage = 'Content was flagged by moderation. Please try with a different prompt or image.';
+          retryable = false;
+          showAnimatedErrorNotification('Content flagged by moderation! 👊⚡', 'mortal-kombat');
+        } else if (message.includes('400') || message.includes('bad request')) {
+          userMessage = 'Invalid request. Please check your images and prompt.';
+          retryable = false;
+          showAnimatedErrorNotification('Invalid request! ⚠️🌀', 'bouncing-error');
+        } else {
+          userMessage = err.message;
+          showAnimatedErrorNotification('Something went wrong! 😵💥', 'shake-error');
+        }
+      }
+      
+      setError(userMessage);
+      
+      // Show helpful notification with retry suggestion
+      if (retryable) {
+        showNotification(`⚠️ ${userMessage} Try again?`, 'error');
+      } else {
+        showNotification(`❌ ${userMessage}`, 'error');
+      }
+      
       setProcessing({
         isProcessing: false,
         progress: 0,
@@ -1974,6 +2064,18 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Animated Error Messages */}
+      {animatedErrors.map((error, index) => (
+        <div key={error.id} style={{ top: `${20 + (index * 80)}px` }} className="fixed right-4 z-50">
+          <AnimatedError
+            message={error.message}
+            type={error.type}
+            onClose={() => removeAnimatedError(error.id)}
+            duration={4000}
+          />
+        </div>
+      ))}
       
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
@@ -1993,18 +2095,34 @@ export default function Home() {
           <h1 className="text-2xl lg:text-4xl font-bold text-white">
             vARY<span className="text-gray-400">ai</span>
           </h1>
-          <button
-            onClick={() => setShowGallery(!showGallery)}
-            className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
-            title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
-          >
-            <span className="hidden sm:inline">
-              {showGallery ? 'Hide' : 'Show'} gallery
-            </span>
-            <span className="sm:hidden">
-              {showGallery ? 'Hide' : 'Show'}
-            </span>
-          </button>
+          <div className="flex gap-2">
+            {/* Test Animated Errors Button - Remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={() => {
+                  const errorTypes = ['farting-man', 'mortal-kombat', 'bouncing-error', 'shake-error'] as const;
+                  const randomType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+                  showAnimatedErrorNotification(`Test ${randomType} animation!`, randomType);
+                }}
+                className="flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg text-sm"
+                title="Test animated errors (dev only)"
+              >
+                🎭 Test
+              </button>
+            )}
+            <button
+              onClick={() => setShowGallery(!showGallery)}
+              className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
+              title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
+            >
+              <span className="hidden sm:inline">
+                {showGallery ? 'Hide' : 'Show'} gallery
+              </span>
+              <span className="sm:hidden">
+                {showGallery ? 'Hide' : 'Show'}
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-center min-h-[70vh]">
@@ -2910,24 +3028,123 @@ export default function Home() {
                             {item.imageUrl || item.videoUrl ? (
                               <div className="space-y-3">
                                 {item.fileType === 'video' && item.videoUrl ? (
-                                  <div>
-                                    <video
-                                      src={item.videoUrl}
-                                      className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
-                                      controls
-                                      muted
-                                      onClick={(e) => e.stopPropagation()}
+                                  <div className="relative">
+                                    {isValidVideoUrl(item.videoUrl) ? (
+                                      <video
+                                        key={`${item.videoUrl || 'no-url'}-${item.videoUrl && failedVideos.has(item.videoUrl) ? 'failed' : 'loading'}`}
+                                        src={item.videoUrl}
+                                        className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
+                                        controls
+                                        muted
+                                        onClick={(e) => e.stopPropagation()}
                                       onError={(e) => {
-                                        console.error('🎬 Video load error:', e);
-                                        console.error('🎬 Video URL:', item.videoUrl);
+                                        const videoElement = e.target as HTMLVideoElement;
+                                        const error = videoElement.error;
+                                        
+                                        // Only log detailed errors in development
+                                        if (process.env.NODE_ENV === 'development') {
+                                          console.error('🎬 Video load error:', {
+                                            error: error,
+                                            errorCode: error?.code,
+                                            errorMessage: error?.message,
+                                            networkState: videoElement.networkState,
+                                            readyState: videoElement.readyState,
+                                            videoUrl: item.videoUrl,
+                                            videoSrc: videoElement.src
+                                          });
+                                        }
+                                        
+                                        // Handle different error types with user-friendly messages
+                                        if (error) {
+                                          switch (error.code) {
+                                            case MediaError.MEDIA_ERR_ABORTED:
+                                              console.warn('🎬 Video loading was aborted');
+                                              showAnimatedErrorNotification('Video loading was interrupted! 🏃‍♂️💨', 'farting-man');
+                                              break;
+                                            case MediaError.MEDIA_ERR_NETWORK:
+                                              console.warn('🎬 Network error while loading video');
+                                              showAnimatedErrorNotification('Network connection lost! 👊⚡', 'mortal-kombat');
+                                              break;
+                                            case MediaError.MEDIA_ERR_DECODE:
+                                              console.warn('🎬 Video format not supported or corrupted');
+                                              showAnimatedErrorNotification('Video format not supported! ⚠️🌀', 'bouncing-error');
+                                              break;
+                                            case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                                              console.warn('🎬 Video format not supported');
+                                              showAnimatedErrorNotification('Video format not supported! ⚠️🌀', 'bouncing-error');
+                                              break;
+                                            default:
+                                              console.warn('🎬 Unknown video error');
+                                              showAnimatedErrorNotification('Something went wrong! 😵💥', 'shake-error');
+                                          }
+                                        } else {
+                                          console.warn('🎬 Video failed to load (no error details)');
+                                          showAnimatedErrorNotification('Video failed to load! 😵💥', 'shake-error');
+                                        }
+                                        
+                                        // Track this video as failed
+                                        if (item.videoUrl) {
+                                          setFailedVideos(prev => new Set(prev).add(item.videoUrl!));
+                                        }
                                       }}
-                                      onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
-                                      onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
-                                    />
-                                    {/* Debug info for video */}
+                                        onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
+                                        onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-32 bg-gray-800 rounded-lg flex items-center justify-center">
+                                        <div className="text-center text-gray-400">
+                                          <div className="text-sm font-medium mb-1">Invalid Video URL</div>
+                                          <div className="text-xs">URL format not supported</div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {/* Video status info */}
                                     <div className="text-xs text-gray-400 mt-1">
-                                      Video URL: {item.videoUrl ? 'Present' : 'Missing'}
+                                      {item.videoUrl ? (
+                                        isValidVideoUrl(item.videoUrl) ? (
+                                          <span className="text-green-400">✓ Valid video URL</span>
+                                        ) : (
+                                          <span className="text-yellow-400">⚠ Invalid video URL format</span>
+                                        )
+                                      ) : (
+                                        <span className="text-red-400">✗ No video URL</span>
+                                      )}
                                     </div>
+                                    {/* Fallback for failed video loads */}
+                                    {failedVideos.has(item.videoUrl) && (
+                                      <div className="absolute inset-0 bg-gray-800 bg-opacity-75 rounded-lg flex items-center justify-center">
+                                        <div className="text-center text-white">
+                                          <div className="text-sm font-medium mb-2">Video failed to load</div>
+                                          <div className="text-xs text-gray-300 mb-3">
+                                            This may be due to network issues or video format compatibility
+                                          </div>
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (item.videoUrl) {
+                                                  retryVideo(item.videoUrl);
+                                                }
+                                              }}
+                                              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+                                            >
+                                              Retry
+                                            </button>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (item.videoUrl) {
+                                                  window.open(item.videoUrl, '_blank');
+                                                }
+                                              }}
+                                              className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors"
+                                            >
+                                              Open in New Tab
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <img

@@ -26,14 +26,35 @@ async function uploadImageToTempUrl(base64Data: string): Promise<string> {
   }
 }
 
-// Retry configuration for API calls
+// Enhanced retry configuration for API calls
 const RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelay: 1000, // 1 second
-  maxDelay: 10000, // 10 seconds
+  maxRetries: 5, // Increased from 3 to handle the 18% failure rate
+  baseDelay: 2000, // Increased to 2 seconds for better spacing
+  maxDelay: 15000, // Increased to 15 seconds
   backoffMultiplier: 2,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 45000, // Increased to 45 seconds for nano-banana's longer processing times
 };
+
+// Success rate tracking
+let apiStats = {
+  totalRequests: 0,
+  successfulRequests: 0,
+  failedRequests: 0,
+  lastReset: Date.now()
+};
+
+// Reset stats every hour
+function resetStatsIfNeeded() {
+  const now = Date.now();
+  if (now - apiStats.lastReset > 3600000) { // 1 hour
+    apiStats = {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      lastReset: now
+    };
+  }
+}
 
 // Timeout wrapper function
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -77,8 +98,10 @@ async function retryWithBackoff<T>(
         maxDelay
       );
       
-      console.log(`⚠️ Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      const errorInfo = categorizeError(lastError);
+      console.log(`⚠️ Attempt ${attempt + 1} failed (${errorInfo.category}), retrying in ${delay}ms...`);
       console.log(`📊 Error: ${lastError.message}`);
+      console.log(`💬 User message: ${errorInfo.userMessage}`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -87,24 +110,95 @@ async function retryWithBackoff<T>(
   throw lastError!;
 }
 
+// Enhanced error categorization
+function categorizeError(error: Error): { category: string; retryable: boolean; userMessage: string } {
+  const message = error.message.toLowerCase();
+  
+  // Network/Infrastructure errors (retryable)
+  if (message.includes('503') || message.includes('service unavailable')) {
+    return {
+      category: 'infrastructure',
+      retryable: true,
+      userMessage: 'Service temporarily unavailable. Retrying...'
+    };
+  }
+  
+  if (message.includes('502') || message.includes('bad gateway')) {
+    return {
+      category: 'infrastructure',
+      retryable: true,
+      userMessage: 'Server error. Retrying...'
+    };
+  }
+  
+  if (message.includes('504') || message.includes('gateway timeout')) {
+    return {
+      category: 'timeout',
+      retryable: true,
+      userMessage: 'Request timed out. Retrying...'
+    };
+  }
+  
+  if (message.includes('429') || message.includes('too many requests') || message.includes('rate limit exceeded')) {
+    return {
+      category: 'rate_limit',
+      retryable: true,
+      userMessage: 'Rate limit reached. Waiting before retry...'
+    };
+  }
+  
+  if (message.includes('timeout') || message.includes('econnreset') || message.includes('enotfound') || message.includes('etimedout') || message.includes('network error')) {
+    return {
+      category: 'network',
+      retryable: true,
+      userMessage: 'Network issue. Retrying...'
+    };
+  }
+  
+  if (message.includes('overloaded') || message.includes('quota exceeded')) {
+    return {
+      category: 'capacity',
+      retryable: true,
+      userMessage: 'Service overloaded. Retrying...'
+    };
+  }
+  
+  // Content/API errors (not retryable)
+  if (message.includes('400') || message.includes('bad request')) {
+    return {
+      category: 'invalid_request',
+      retryable: false,
+      userMessage: 'Invalid request. Please check your input.'
+    };
+  }
+  
+  if (message.includes('401') || message.includes('unauthorized')) {
+    return {
+      category: 'auth',
+      retryable: false,
+      userMessage: 'Authentication failed. Please check API keys.'
+    };
+  }
+  
+  if (message.includes('content') && message.includes('moderation')) {
+    return {
+      category: 'content_moderation',
+      retryable: false,
+      userMessage: 'Content flagged by moderation. Please try a different prompt.'
+    };
+  }
+  
+  // Default case
+  return {
+    category: 'unknown',
+    retryable: true,
+    userMessage: 'Unexpected error. Retrying...'
+  };
+}
+
 // Check if an error is retryable
 function isRetryableError(error: Error): boolean {
-  const retryableErrors = [
-    '503 Service Unavailable',
-    'The model is overloaded',
-    'rate limit exceeded',
-    'quota exceeded',
-    'internal server error',
-    'bad gateway',
-    'service unavailable',
-    'timeout',
-    'network error'
-  ];
-  
-  const errorMessage = error.message.toLowerCase();
-  return retryableErrors.some(retryableError => 
-    errorMessage.includes(retryableError.toLowerCase())
-  );
+  return categorizeError(error).retryable;
 }
 
 // Try alternative models if the primary one fails
@@ -211,9 +305,15 @@ if (process.env.FAL_KEY) {
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route: /api/vary-character - Request received');
   
+  // Reset stats if needed
+  resetStatsIfNeeded();
+  apiStats.totalRequests++;
+  
   // Check circuit breaker
   if (!shouldAllowRequest()) {
     console.log('🚨 Circuit breaker is open, rejecting request');
+    apiStats.failedRequests++;
+    console.log(`📊 Current success rate: ${((apiStats.successfulRequests / apiStats.totalRequests) * 100).toFixed(1)}%`);
     return NextResponse.json({
       success: false,
       error: 'Service temporarily unavailable due to repeated failures. Please try again in a moment.',
@@ -410,12 +510,12 @@ Maintain character consistency while respecting the user's detailed vision and e
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
               return await fal.subscribe(modelName, {
-                input: {
+              input: {
                   prompt: nanoBananaPrompt,
                   image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
-                  num_images: 1,
-                  output_format: "jpeg"
-                },
+                num_images: 1,
+                output_format: "jpeg"
+              },
               logs: true,
               onQueueUpdate: (update) => {
                 if (update.status === "IN_PROGRESS") {
@@ -459,6 +559,10 @@ Maintain character consistency while respecting the user's detailed vision and e
     
     // Record success for circuit breaker
     recordSuccess();
+    apiStats.successfulRequests++;
+    
+    const successRate = ((apiStats.successfulRequests / apiStats.totalRequests) * 100).toFixed(1);
+    console.log(`✅ Request completed successfully. Success rate: ${successRate}% (${apiStats.successfulRequests}/${apiStats.totalRequests})`);
     
     return NextResponse.json({
       success: true,
@@ -473,6 +577,10 @@ Maintain character consistency while respecting the user's detailed vision and e
     
     // Record failure for circuit breaker
     recordFailure();
+    apiStats.failedRequests++;
+    
+    const successRate = ((apiStats.successfulRequests / apiStats.totalRequests) * 100).toFixed(1);
+    console.log(`❌ Request failed. Success rate: ${successRate}% (${apiStats.successfulRequests}/${apiStats.totalRequests})`);
     
     let errorMessage = 'An unexpected error occurred';
     let statusCode = 500;
