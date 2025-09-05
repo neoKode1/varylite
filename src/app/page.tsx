@@ -1219,9 +1219,15 @@ export default function Home() {
         
         console.log(`⏱️ Video generation started at ${new Date(startTime).toLocaleTimeString()}, estimated time: ${estimatedTime}s`);
         
-        pollRunwayTask(data.taskId);
+        // Start polling immediately
+        setTimeout(() => {
+          if (data.taskId) {
+            pollRunwayTask(data.taskId);
+          }
+        }, 1000); // Wait 1 second before first poll
       } else {
         console.log('❌ No task ID received from Runway API');
+        setError('No task ID received from Runway API');
       }
       
       setTimeout(() => {
@@ -1245,7 +1251,7 @@ export default function Home() {
 
   const pollRunwayTask = async (taskId: string) => {
     // Check if we should stop polling
-    if (!taskId || !runwayTaskId) {
+    if (!taskId) {
       console.log('🛑 Polling stopped - no active task ID');
       return;
     }
@@ -1257,13 +1263,34 @@ export default function Home() {
       
       console.log(`📊 Polling response:`, data);
 
+      if (!data.success) {
+        console.error('❌ Polling failed:', data.error);
+        setError(`Failed to check video status: ${data.error || 'Unknown error'}`);
+        return;
+      }
+
       if (data.success && data.task) {
         const task: RunwayTaskResponse = data.task;
         console.log(`📋 Task status: ${task.status}`);
+        console.log(`📋 Task output:`, task.output);
         
-        if (task.status === 'SUCCEEDED' && task.output && Array.isArray(task.output) && task.output.length > 0) {
+        if (task.status === 'SUCCEEDED' && task.output) {
           // Video editing completed successfully
-          const videoUrl = task.output[0]; // Get first video from array
+          let videoUrl: string;
+          
+          // Handle different output structures
+          if (Array.isArray(task.output) && task.output.length > 0) {
+            videoUrl = task.output[0]; // Get first video from array
+          } else if (task.output && typeof task.output === 'object' && 'video' in task.output) {
+            videoUrl = (task.output as any).video; // Get video from object
+          } else if (typeof task.output === 'string') {
+            videoUrl = task.output; // Direct string URL
+          } else {
+            console.error('❌ Unknown output format:', task.output);
+            setError('Video generation completed but output format is unexpected');
+            return;
+          }
+          
           console.log('✅ Video editing completed:', videoUrl);
           console.log('🛑 Stopping polling - task completed successfully');
           
@@ -1337,6 +1364,9 @@ export default function Home() {
           const timeout = setTimeout(() => pollRunwayTask(taskId), 5000);
           setPollingTimeout(timeout);
         }
+      } else {
+        console.error('❌ No task data in polling response:', data);
+        setError('Failed to get task data from Runway API');
       }
     } catch (error) {
       console.error('Error polling Runway task:', error);
