@@ -38,6 +38,10 @@ interface RunwayTaskResponse {
     image?: string;
   };
   progress?: number;
+  failure?: string;
+  failureCode?: string;
+  failureReason?: string;
+  logs?: any[];
 }
 
 // Helper function to create data URI from base64
@@ -240,6 +244,16 @@ export async function GET(request: NextRequest) {
     console.log(`📋 Task ID: ${taskData.id}`);
     console.log(`📋 Task progress: ${taskData.progress || 'N/A'}`);
     console.log(`📋 Task error: ${taskData.error || 'None'}`);
+    
+    // Log failure details if task failed
+    if (taskData.status === 'FAILED') {
+      console.log(`❌ Task failed - detailed error info:`);
+      console.log(`📋 Failure: ${taskData.failure || 'None'}`);
+      console.log(`📋 Failure Code: ${taskData.failureCode || 'None'}`);
+      console.log(`📋 Failure Reason: ${taskData.failureReason || 'None'}`);
+      console.log(`📋 Logs: ${taskData.logs ? JSON.stringify(taskData.logs, null, 2) : 'None'}`);
+      console.log(`📋 Full task data:`, JSON.stringify(taskData, null, 2));
+    }
     
     // Log output structure for debugging
     if (taskData.output) {

@@ -1338,6 +1338,11 @@ export default function Home() {
           }
         } else if (task.status === 'FAILED') {
           console.log('❌ Video editing failed:', task.error);
+          console.log('❌ Failure details:', {
+            error: task.error,
+            failure: task.failure,
+            failureCode: task.failureCode
+          });
           
           // Handle specific failure types
           let errorMessage = 'Video editing failed: ' + (task.error || 'Unknown error');
@@ -1347,6 +1352,12 @@ export default function Home() {
             errorMessage = 'Video failed content moderation. Please try a different video with less intense content.';
           } else if (task.failure && task.failure.includes('content moderation')) {
             errorMessage = 'Video did not pass content moderation. Please try a different video.';
+          } else if (task.failureCode && task.failureCode.includes('QUOTA')) {
+            errorMessage = 'Runway API quota exceeded. Please try again later or check your account limits.';
+          } else if (task.failureCode && task.failureCode.includes('INVALID_INPUT')) {
+            errorMessage = 'Invalid input provided. Please check your video format and try again.';
+          } else if (task.failure && task.failure.includes('timeout')) {
+            errorMessage = 'Video processing timed out. Please try with a shorter video or try again later.';
           }
           
           setError(errorMessage);
@@ -1363,6 +1374,19 @@ export default function Home() {
           if (task.status === 'PENDING' && elapsed > 120) {
             console.warn(`⚠️ Task has been PENDING for ${elapsed}s - this may indicate server load issues`);
             setError(`Task is taking longer than expected to start (${elapsed}s). This could be due to high server load. Please be patient or try again later.`);
+          }
+          
+          // Check if task has been running for too long (more than 10 minutes)
+          if (elapsed > 600) {
+            console.warn(`⚠️ Task has been running for ${elapsed}s - this is unusually long`);
+            setError(`Video processing is taking unusually long (${elapsed}s). This may indicate a server issue. Please try again later.`);
+            setRunwayTaskId(null);
+            setVideoGenerationStartTime(null);
+            if (pollingTimeout) {
+              clearTimeout(pollingTimeout);
+              setPollingTimeout(null);
+            }
+            return;
           }
           
           // Update progress based on elapsed time
