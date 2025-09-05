@@ -1109,6 +1109,43 @@ export default function Home() {
       
       console.log('📋 Clipboard items:', Array.from(items).map(item => ({ type: item.type, kind: item.kind })));
       
+      // Check if user is trying to paste text into the prompt field
+      const activeElement = document.activeElement;
+      const isPromptField = activeElement?.tagName === 'TEXTAREA' || 
+                           activeElement?.getAttribute('data-prompt-field') === 'true' ||
+                           activeElement?.closest('[data-prompt-field]');
+      
+      if (isPromptField) {
+        // Handle text paste into prompt field
+        const textItems = Array.from(items).filter(item => item.type === 'text/plain');
+        if (textItems.length > 0) {
+          const textItem = textItems[0];
+          const text = await new Promise<string>((resolve) => {
+            textItem.getAsString(resolve);
+          });
+          
+          if (text && text.trim()) {
+            // Insert text at cursor position
+            const textarea = activeElement as HTMLTextAreaElement;
+            const start = textarea.selectionStart || 0;
+            const end = textarea.selectionEnd || 0;
+            const currentValue = textarea.value;
+            const newValue = currentValue.substring(0, start) + text + currentValue.substring(end);
+            
+            // Update the prompt state
+            setPrompt(newValue);
+            
+            // Update the textarea value and cursor position
+            textarea.value = newValue;
+            const newCursorPos = start + text.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            
+            showNotification('📋 Text pasted successfully!', 'success');
+            return;
+          }
+        }
+      }
+      
       // Look for both images and videos
       const mediaItems = Array.from(items).filter(item => 
         item.type.startsWith('image/') || item.type.startsWith('video/')
@@ -1987,7 +2024,7 @@ export default function Home() {
                   or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
-                  💡 Tip: You can also paste images or videos from your clipboard (Ctrl+V) or drag & drop files
+                  💡 Tip: You can paste text into the prompt field or paste images/videos into slots (Ctrl+V) or drag & drop files
                 </p>
                 <input
                   id="file-input"
@@ -2112,6 +2149,7 @@ export default function Home() {
                 <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                   <textarea
                     id="prompt"
+                    data-prompt-field="true"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder={
