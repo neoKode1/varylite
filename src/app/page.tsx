@@ -518,6 +518,7 @@ export default function Home() {
   const [processingMode, setProcessingMode] = useState<'variations' | 'endframe'>('variations'); // Track processing mode
   const [endFrameTaskId, setEndFrameTaskId] = useState<string | null>(null); // Track EndFrame task ID
   const [endFramePollingTimeout, setEndFramePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
+  const [showPromptGuide, setShowPromptGuide] = useState<boolean>(false); // Track prompt guide modal
 
   // Show notification function
   const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
@@ -2157,6 +2158,19 @@ export default function Home() {
 
                 {/* Prompt Input */}
                 <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
+                  <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="prompt" className="text-white font-medium text-lg">
+                      Prompt
+                    </label>
+                    <button
+                      onClick={() => setShowPromptGuide(true)}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                      title="Open Prompt Guide"
+                    >
+                      <span>📸</span>
+                      <span>Help</span>
+                    </button>
+                  </div>
                   <textarea
                     id="prompt"
                     data-prompt-field="true"
@@ -3149,6 +3163,246 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Prompt Guide Modal */}
+      {showPromptGuide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">📸 Prompt Guide: Camera Angles & Background Changes</h2>
+                <button
+                  onClick={() => setShowPromptGuide(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6 text-gray-300">
+                {/* Understanding Camera Angles */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">🎯 Understanding Camera Angles</h3>
+                  <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium text-green-400 mb-2">✅ What Works Best:</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>Images with environmental context (characters in rooms, landscapes, scenes)</li>
+                      <li>Images with clear ground planes (floors, surfaces, horizons)</li>
+                      <li>Images with spatial relationships (objects in environments)</li>
+                    </ul>
+                    
+                    <h4 className="font-medium text-red-400 mb-2 mt-4">❌ What Doesn&apos;t Work Well:</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>Single isolated objects (skulls, floating heads, objects without context)</li>
+                      <li>Flat images (logos, text, 2D graphics)</li>
+                      <li>Images without spatial reference (close-ups without environment)</li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* Camera Angle Presets */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">📐 Camera Angle Presets Explained</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">🐛 Worm&apos;s Eye View</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Characters or objects in environments with clear ground planes</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Worm&apos;s eye view of a character standing in a modern living room&quot;</p>
+                        <p className="text-green-400">✅ &quot;Low angle looking up at a person in a forest clearing&quot;</p>
+                        <p className="text-red-400">❌ &quot;Worm&apos;s eye view of a skull&quot; (no spatial context)</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Needs a ground plane and spatial context to create the dramatic low-angle perspective.</p>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">👤 Side Profile</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Any character or object with clear side features</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Side profile of a character looking left&quot;</p>
+                        <p className="text-green-400">✅ &quot;Profile view of a person in a park&quot;</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Works with most images as it focuses on the side features.</p>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">📐 3/4 Angle View</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Characters or objects where you want to show depth</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;3/4 angle of a character in a studio&quot;</p>
+                        <p className="text-green-400">✅ &quot;Three-quarter view of a person in an office&quot;</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Creates depth and dimension by showing multiple sides.</p>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">🔙 Back View</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Characters or objects with interesting back features</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Back view of a character walking away&quot;</p>
+                        <p className="text-green-400">✅ &quot;Rear perspective of a person in a hallway&quot;</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Focuses on the back features and creates mystery.</p>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">📉 Low Angle View</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Any character or object (more flexible than worm&apos;s eye)</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Low angle view of a character&quot;</p>
+                        <p className="text-green-400">✅ &quot;Looking up at a person&quot;</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> More flexible than worm&apos;s eye view, works with most images.</p>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-400 mb-2">📈 High Angle View</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Characters or objects where you want to show the top</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;High angle view of a character&quot;</p>
+                        <p className="text-green-400">✅ &quot;Looking down at a person&quot;</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Shows the top features and creates a different perspective.</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Background Changes */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">🎨 Background Change Presets</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-purple-400 mb-2">🗑️ Background Removal</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Any image where you want to isolate the subject</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Remove the background, keep only the character&quot;</p>
+                        <p className="text-green-400">✅ &quot;Transparent background, focus on the subject&quot;</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-purple-400 mb-2">🔄 Background Replacement</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Images with clear subjects that can be separated from background</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Change background to a modern office&quot;</p>
+                        <p className="text-green-400">✅ &quot;Replace background with a forest scene&quot;</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium text-purple-400 mb-2">🌍 Environmental Context</h4>
+                      <p className="mb-2"><strong>Best for:</strong> Adding spatial context to isolated objects</p>
+                      <div className="space-y-1">
+                        <p className="text-green-400">✅ &quot;Place the character in a luxurious hotel lobby&quot;</p>
+                        <p className="text-green-400">✅ &quot;Add the object to a modern kitchen counter&quot;</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Pro Tips */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">💡 Pro Tips</h3>
+                  
+                  <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium text-yellow-400 mb-2">For Camera Angles:</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>Think about the environment - What would the camera be standing on?</li>
+                      <li>Consider the subject&apos;s position - Are they standing, sitting, or in a specific pose?</li>
+                      <li>Add spatial context - Include environmental details in your prompt</li>
+                      <li>Use descriptive language - &quot;character standing in a room&quot; vs just &quot;character&quot;</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-800 p-4 rounded-lg mt-4">
+                    <h4 className="font-medium text-yellow-400 mb-2">Combining Both:</h4>
+                    <ol className="list-decimal list-inside space-y-1 ml-4">
+                      <li>Start with the environment - &quot;Character in a modern living room&quot;</li>
+                      <li>Add the camera angle - &quot;from a low angle looking up&quot;</li>
+                      <li>Include the pose - &quot;character standing confidently&quot;</li>
+                      <li>Add details - &quot;with dramatic lighting and shadows&quot;</li>
+                    </ol>
+                  </div>
+                </section>
+
+                {/* Quick Reference */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">🎯 Quick Reference</h3>
+                  
+                  <div className="bg-gray-800 p-4 rounded-lg overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-600">
+                          <th className="text-left py-2 text-white">Camera Angle</th>
+                          <th className="text-left py-2 text-white">Best For</th>
+                          <th className="text-left py-2 text-white">Needs Environment?</th>
+                          <th className="text-left py-2 text-white">Example</th>
+                        </tr>
+                      </thead>
+                      <tbody className="space-y-2">
+                        <tr className="border-b border-gray-700">
+                          <td className="py-2 text-blue-400">Worm&apos;s Eye View</td>
+                          <td className="py-2">Characters in scenes</td>
+                          <td className="py-2 text-green-400">✅ Yes</td>
+                          <td className="py-2">&quot;Character in a room, looking up&quot;</td>
+                        </tr>
+                        <tr className="border-b border-gray-700">
+                          <td className="py-2 text-blue-400">Side Profile</td>
+                          <td className="py-2">Any character</td>
+                          <td className="py-2 text-red-400">❌ No</td>
+                          <td className="py-2">&quot;Side view of a person&quot;</td>
+                        </tr>
+                        <tr className="border-b border-gray-700">
+                          <td className="py-2 text-blue-400">3/4 Angle</td>
+                          <td className="py-2">Showing depth</td>
+                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
+                          <td className="py-2">&quot;Angled view of a character&quot;</td>
+                        </tr>
+                        <tr className="border-b border-gray-700">
+                          <td className="py-2 text-blue-400">Back View</td>
+                          <td className="py-2">Interesting backs</td>
+                          <td className="py-2 text-red-400">❌ No</td>
+                          <td className="py-2">&quot;Rear view of a person&quot;</td>
+                        </tr>
+                        <tr className="border-b border-gray-700">
+                          <td className="py-2 text-blue-400">Low Angle</td>
+                          <td className="py-2">Most subjects</td>
+                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
+                          <td className="py-2">&quot;Looking up at a character&quot;</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 text-blue-400">High Angle</td>
+                          <td className="py-2">Top features</td>
+                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
+                          <td className="py-2">&quot;Looking down at a person&quot;</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                {/* Troubleshooting */}
+                <section>
+                  <h3 className="text-xl font-semibold text-white mb-3">🔧 Troubleshooting</h3>
+                  
+                  <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium text-orange-400 mb-2">If your results aren&apos;t what you expected:</h4>
+                    <ol className="list-decimal list-inside space-y-1 ml-4">
+                      <li>Check your image - Does it have the right context for your requested angle?</li>
+                      <li>Simplify your prompt - Remove complex instructions and focus on the basics</li>
+                      <li>Add environmental context - Include details about the setting</li>
+                      <li>Try a different angle - Some angles work better with certain images</li>
+                      <li>Be more specific - &quot;Character standing in a modern office&quot; vs &quot;Character&quot;</li>
+                    </ol>
+                  </div>
+                </section>
+              </div>
+            </div>
           </div>
         </div>
       )}
