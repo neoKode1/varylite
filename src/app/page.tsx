@@ -143,6 +143,8 @@ const BACKGROUND_PROMPTS = [
   'Change background to sunset landscape',
   'Change background to ocean view',
   'Change background to countryside setting',
+  'Change background to a surreal field of oversized potatoes',
+  'Change background to a dreamlike landscape with giant potatoes',
   
   // Background replacement - Indoor/Architectural
   'Change background to modern office interior',
@@ -339,6 +341,8 @@ const VIDEO_PROMPTS = {
     'Change the background to a flower field with butterflies',
     'Change the background to a waterfall with rainbow mist',
     'Change the background to a starry night sky with constellations',
+    'Change the background to a surreal field of oversized potatoes',
+    'Change the background to a dreamlike landscape with giant potatoes',
     'Change the scene to a wildlife photography expedition',
     'Change the scene to a camping adventure in the wilderness',
     'Change the scene to a hiking trail through mountains',
