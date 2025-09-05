@@ -283,21 +283,21 @@ export async function POST(request: NextRequest) {
     
     let enhancedPrompt;
     
-    // Simplified prompt that preserves user intent
-    enhancedPrompt = `Generate 4 character variations based on: "${prompt}"
-
-Create 4 different views of the same character from different angles:
-1. Front View
-2. Side Profile  
-3. 3/4 Angle View
-4. Back View
+    // Preserve user's original prompt intent - only add minimal structure
+    enhancedPrompt = `Generate 4 character variations based on the user's specific request: "${prompt}"
 
 For each variation, provide:
-- Viewing angle
-- Pose description  
+- Viewing angle (preserve the user's specific angle requests like "worm's eye view")
+- Pose description (maintain the user's specific pose requests like "self-examination")
 - Character description
 
-Maintain character consistency across all variations.`;
+CRITICAL: Preserve the user's exact specifications including:
+- Specific camera angles (worm's eye view, side profile, etc.)
+- Specific poses (self-examination, sprawled, etc.)
+- Specific settings (luxurious shower, hot pool, etc.)
+- Specific character interactions (threesome, etc.)
+
+Maintain character consistency while respecting the user's detailed vision.`;
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -376,8 +376,8 @@ Maintain character consistency across all variations.`;
           try {
             console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
             
-            // Use the user's original prompt with minimal modification
-            const nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()} view`;
+            // Use the user's original prompt with the specific variation details
+            const nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()}`;
             console.log(`🎨 Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             const result = await retryWithBackoff(async () => {
@@ -503,18 +503,26 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       const trimmedSection = section.trim();
       if (trimmedSection.length < 50) continue; // Skip very short sections
 
-      // Extract angle/view information (look for common angle terms)
-      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance'];
+      // Extract angle/view information (look for common angle terms and preserve user's specific requests)
+      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance', 'worm', 'eye', 'low', 'high', 'bird', 'self-examination', 'sprawled'];
       const lines = trimmedSection.split('\n').filter(line => line.trim());
       
       let angle = 'Character View';
       let pose = 'Standard Pose';
       
-      // Try to find angle and pose in the first few lines
+      // Try to find angle and pose in the first few lines, preserving user's specific requests
       for (let i = 0; i < Math.min(3, lines.length); i++) {
         const line = lines[i].toLowerCase();
         if (angleKeywords.some(keyword => line.includes(keyword))) {
-          if (line.includes('side') || line.includes('profile')) {
+          if (line.includes('worm') && line.includes('eye')) {
+            angle = 'Worm\'s Eye View';
+          } else if (line.includes('self-examination')) {
+            angle = 'Self-Examination View';
+            pose = 'Self-Examination Pose';
+          } else if (line.includes('sprawled')) {
+            angle = 'Sprawled View';
+            pose = 'Sprawled Pose';
+          } else if (line.includes('side') || line.includes('profile')) {
             angle = 'Side Profile View';
           } else if (line.includes('back')) {
             angle = 'Back View';
@@ -526,6 +534,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
             angle = 'Action View';
             pose = 'Dynamic Action Pose';
           } else {
+            // Preserve the original line if it contains specific user requests
             angle = lines[i].trim().length > 0 ? lines[i].trim() : angle;
           }
           break;
