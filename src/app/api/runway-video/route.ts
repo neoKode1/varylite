@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import RunwayML from '@runwayml/sdk';
+import { processVideoForRunway, base64ToTempFile, cleanupTempVideo } from '../../../utils/videoProcessor';
 
 // Initialize Runway client
 const client = new RunwayML();
@@ -71,6 +72,42 @@ function getMimeType(base64Data: string): string {
   return 'video/mp4';
 }
 
+// Helper function to validate and adjust aspect ratio for Runway
+function validateAndAdjustRatio(ratio: string, model: string): string {
+  console.log(`🔍 Validating aspect ratio: ${ratio} for model: ${model}`);
+  
+  // Parse the ratio (e.g., "1280:720" -> 1280/720 = 1.778)
+  const [width, height] = ratio.split(':').map(Number);
+  const aspectRatio = width / height;
+  
+  console.log(`📐 Calculated aspect ratio: ${aspectRatio.toFixed(3)}`);
+  
+  // Runway gen4_aleph accepts ratios between 0.5 and 2.0
+  if (model === 'gen4_aleph') {
+    if (aspectRatio < 0.5) {
+      console.log(`⚠️ Aspect ratio ${aspectRatio.toFixed(3)} is too narrow, adjusting to 0.5`);
+      return '720:1440'; // 0.5 ratio
+    } else if (aspectRatio > 2.0) {
+      console.log(`⚠️ Aspect ratio ${aspectRatio.toFixed(3)} is too wide, adjusting to 2.0`);
+      return '1280:640'; // 2.0 ratio
+    }
+  }
+  
+  // Runway gen4_turbo accepts ratios between 0.5 and 2.0
+  if (model === 'gen4_turbo') {
+    if (aspectRatio < 0.5) {
+      console.log(`⚠️ Aspect ratio ${aspectRatio.toFixed(3)} is too narrow, adjusting to 0.5`);
+      return '720:1440'; // 0.5 ratio
+    } else if (aspectRatio > 2.0) {
+      console.log(`⚠️ Aspect ratio ${aspectRatio.toFixed(3)} is too wide, adjusting to 2.0`);
+      return '1280:640'; // 2.0 ratio
+    }
+  }
+  
+  console.log(`✅ Aspect ratio ${aspectRatio.toFixed(3)} is valid for ${model}`);
+  return ratio;
+}
+
 // POST endpoint to create video editing tasks
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route: /api/runway-video - Video editing request received');
@@ -110,20 +147,45 @@ export async function POST(request: NextRequest) {
     // Trust the model parameter from frontend instead of trying to detect from base64
     console.log(`🔍 Using model: ${model} (trusting frontend file type detection)`);
     
+    // Validate and adjust aspect ratio for Runway compatibility
+    const validatedRatio = validateAndAdjustRatio(ratio, model);
+    if (validatedRatio !== ratio) {
+      console.log(`🔄 Adjusted ratio from ${ratio} to ${validatedRatio} for Runway compatibility`);
+    }
+    
     // Make request to Runway API using SDK
     console.log('🔄 Making request to Runway API using SDK...');
     
     let task;
+    let tempVideoPath: string | null = null;
+    
     try {
       if (model === 'gen4_aleph') {
-        // Video to video editing
-        const primaryVideo = createDataUri(files[0], getMimeType(files[0]));
+        // Video to video editing - process video first
+        console.log('🎬 Processing video for Runway compatibility...');
+        
+        // Create temporary file from base64
+        const mimeType = getMimeType(files[0]);
+        tempVideoPath = base64ToTempFile(files[0], mimeType);
+        
+        // Process video to ensure valid aspect ratio
+        const processedVideoPath = await processVideoForRunway(tempVideoPath);
+        
+        // Create data URI from processed video
+        const processedVideoBuffer = require('fs').readFileSync(processedVideoPath);
+        const processedVideoBase64 = processedVideoBuffer.toString('base64');
+        const primaryVideo = createDataUri(processedVideoBase64, mimeType);
+        
+        // Clean up processed video if it's different from temp
+        if (processedVideoPath !== tempVideoPath) {
+          cleanupTempVideo(processedVideoPath);
+        }
         
         task = await (client.videoToVideo as any).create({
           model: 'gen4_aleph',
           videoUri: primaryVideo,
           promptText: promptText || prompt,
-          ratio: ratio as VideoToVideoRatio,
+          ratio: validatedRatio as VideoToVideoRatio,
           ...(seed && { seed }),
           ...(references && { references })
         });
@@ -138,7 +200,7 @@ export async function POST(request: NextRequest) {
           model: 'gen4_turbo',
           imageUri: primaryImage,
           promptText: promptText || prompt,
-          ratio: ratio as ImageToVideoRatio,
+          ratio: validatedRatio as ImageToVideoRatio,
           ...(duration && { duration }),
           ...(seed && { seed }),
           ...(references && { references })
@@ -155,6 +217,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('❌ Runway API error:', error);
       throw new Error(`Runway API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // Clean up temporary video file
+      if (tempVideoPath) {
+        cleanupTempVideo(tempVideoPath);
+      }
     }
 
     return NextResponse.json({
@@ -188,6 +255,12 @@ export async function POST(request: NextRequest) {
         errorMessage = 'Request timed out. Please check your connection and try again.';
         statusCode = 408;
         retryable = true;
+      } else if (error.message.includes('Invalid asset aspect ratio')) {
+        errorMessage = 'Video aspect ratio is not supported. Please try a different video with a standard aspect ratio (16:9, 9:16, 1:1, etc.).';
+        statusCode = 400;
+      } else if (error.message.includes('aspect ratio')) {
+        errorMessage = 'Video aspect ratio issue. The video dimensions are not compatible with Runway\'s requirements.';
+        statusCode = 400;
       }
     }
 

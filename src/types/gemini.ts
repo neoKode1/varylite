@@ -88,3 +88,20 @@ export interface RunwayTaskResponse {
   failure?: string; // Content moderation failure message
   failureCode?: string; // Failure code (e.g., SAFETY.INPUT.VIDEO)
 }
+
+// EndFrame API Types
+export interface EndFrameRequest {
+  firstImage: string; // base64 encoded first image (start frame)
+  secondImage: string; // base64 encoded second image (end frame)
+  prompt: string; // description of the transition
+  model?: string; // model to use (default: MiniMax-Hailuo-02)
+}
+
+export interface EndFrameResponse {
+  success: boolean;
+  videoUrl?: string;
+  taskId?: string;
+  status?: string;
+  error?: string;
+  retryable?: boolean;
+}

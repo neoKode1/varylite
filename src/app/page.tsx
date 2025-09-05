@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
-import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse } from '@/types/gemini';
+import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
 // Ko-fi widget types
 declare global {
@@ -143,8 +143,38 @@ const BACKGROUND_PROMPTS = [
   'Change background to sunset landscape',
   'Change background to ocean view',
   'Change background to countryside setting',
-  'Change background to a surreal field of oversized potatoes',
-  'Change background to a dreamlike landscape with giant potatoes',
+  'Change background to a surreal field of oversized potatoes - Potato Cult Filter',
+  'Change background to a dreamlike landscape with giant potatoes - Potato Cult preset',
+  
+  // Halloween Horror Movie Themes
+  'Change background to Camp Crystal Lake from Friday the 13th - Horror Movie Filter',
+  'Change background to Elm Street neighborhood from Nightmare on Elm Street - Horror Movie preset',
+  'Change background to Haddonfield from Halloween movie - Horror Movie Filter',
+  'Change background to Amityville Horror house exterior - Horror Movie preset',
+  'Change background to Overlook Hotel from The Shining - Horror Movie Filter',
+  'Change background to Bates Motel from Psycho - Horror Movie preset',
+  'Change background to Derry from IT - Horror Movie Filter',
+  'Change background to Silent Hill foggy streets - Horror Movie preset',
+  'Change background to haunted graveyard with fog - Horror Movie Filter',
+  'Change background to abandoned asylum with flickering lights - Horror Movie preset',
+  'Change background to cursed cabin in the woods - Horror Movie Filter',
+  'Change background to Victorian haunted mansion - Horror Movie preset',
+  
+  // Thanksgiving Themes
+  'Change background to cozy Thanksgiving dining room - Thanksgiving Filter',
+  'Change background to autumn harvest table setting - Thanksgiving preset',
+  'Change background to warm kitchen with turkey cooking - Thanksgiving Filter',
+  'Change background to fall foliage and pumpkins - Thanksgiving preset',
+  'Change background to family gathering around fireplace - Thanksgiving Filter',
+  'Change background to rustic farmhouse dining - Thanksgiving preset',
+  
+  // Christmas Themes
+  'Change background to snowy Christmas village - Christmas Filter',
+  'Change background to cozy living room with Christmas tree - Christmas preset',
+  'Change background to winter wonderland with snow - Christmas Filter',
+  'Change background to festive holiday market - Christmas preset',
+  'Change background to warm fireplace with stockings - Christmas Filter',
+  'Change background to magical Christmas forest - Christmas preset',
   
   // Background replacement - Indoor/Architectural
   'Change background to modern office interior',
@@ -281,6 +311,70 @@ const VIDEO_PROMPTS = {
     'Change the props to include protective amulets and talismans'
   ],
   
+  // Halloween Horror Movies
+  halloween: [
+    'Change the background to Camp Crystal Lake from Friday the 13th - Horror Movie Filter',
+    'Change the background to Elm Street neighborhood from Nightmare on Elm Street - Horror Movie preset',
+    'Change the background to Haddonfield from Halloween movie - Horror Movie Filter',
+    'Change the background to Amityville Horror house exterior - Horror Movie preset',
+    'Change the background to Overlook Hotel from The Shining - Horror Movie Filter',
+    'Change the background to Bates Motel from Psycho - Horror Movie preset',
+    'Change the background to Derry from IT - Horror Movie Filter',
+    'Change the background to Silent Hill foggy streets - Horror Movie preset',
+    'Change the background to haunted graveyard with fog - Horror Movie Filter',
+    'Change the background to abandoned asylum with flickering lights - Horror Movie preset',
+    'Change the background to cursed cabin in the woods - Horror Movie Filter',
+    'Change the background to Victorian haunted mansion - Horror Movie preset',
+    'Change the scene to a slasher movie chase sequence',
+    'Change the scene to a supernatural horror confrontation',
+    'Change the scene to a haunted house investigation',
+    'Change the scene to a horror movie climax',
+    'Change the scene to a monster attack sequence',
+    'Change the props to include horror movie weapons and tools',
+    'Change the props to include supernatural artifacts',
+    'Change the props to include horror movie costumes and masks'
+  ],
+  
+  // Thanksgiving
+  thanksgiving: [
+    'Change the background to cozy Thanksgiving dining room - Thanksgiving Filter',
+    'Change the background to autumn harvest table setting - Thanksgiving preset',
+    'Change the background to warm kitchen with turkey cooking - Thanksgiving Filter',
+    'Change the background to fall foliage and pumpkins - Thanksgiving preset',
+    'Change the background to family gathering around fireplace - Thanksgiving Filter',
+    'Change the background to rustic farmhouse dining - Thanksgiving preset',
+    'Change the scene to a Thanksgiving dinner preparation',
+    'Change the scene to a family gathering around the table',
+    'Change the scene to a cozy autumn evening',
+    'Change the scene to a harvest celebration',
+    'Change the scene to a Thanksgiving parade',
+    'Change the props to include Thanksgiving decorations',
+    'Change the props to include autumn harvest items',
+    'Change the props to include traditional Thanksgiving foods',
+    'Change the props to include cozy fall clothing',
+    'Change the props to include seasonal decorations'
+  ],
+  
+  // Christmas
+  christmas: [
+    'Change the background to snowy Christmas village - Christmas Filter',
+    'Change the background to cozy living room with Christmas tree - Christmas preset',
+    'Change the background to winter wonderland with snow - Christmas Filter',
+    'Change the background to festive holiday market - Christmas preset',
+    'Change the background to warm fireplace with stockings - Christmas Filter',
+    'Change the background to magical Christmas forest - Christmas preset',
+    'Change the scene to a Christmas morning celebration',
+    'Change the scene to a winter wonderland adventure',
+    'Change the scene to a holiday party gathering',
+    'Change the scene to a Christmas carol performance',
+    'Change the scene to a magical Christmas journey',
+    'Change the props to include Christmas decorations',
+    'Change the props to include winter clothing and accessories',
+    'Change the props to include holiday gifts and presents',
+    'Change the props to include Christmas tree ornaments',
+    'Change the props to include festive holiday items'
+  ],
+  
   // Romance & Drama
   romance: [
     'Change the background to a Parisian café with warm lighting',
@@ -341,8 +435,38 @@ const VIDEO_PROMPTS = {
     'Change the background to a flower field with butterflies',
     'Change the background to a waterfall with rainbow mist',
     'Change the background to a starry night sky with constellations',
-    'Change the background to a surreal field of oversized potatoes',
-    'Change the background to a dreamlike landscape with giant potatoes',
+    'Change the background to a surreal field of oversized potatoes - Potato Cult Filter',
+    'Change the background to a dreamlike landscape with giant potatoes - Potato Cult preset',
+    
+    // Halloween Horror Movie Themes
+    'Change the background to Camp Crystal Lake from Friday the 13th - Horror Movie Filter',
+    'Change the background to Elm Street neighborhood from Nightmare on Elm Street - Horror Movie preset',
+    'Change the background to Haddonfield from Halloween movie - Horror Movie Filter',
+    'Change the background to Amityville Horror house exterior - Horror Movie preset',
+    'Change the background to Overlook Hotel from The Shining - Horror Movie Filter',
+    'Change the background to Bates Motel from Psycho - Horror Movie preset',
+    'Change the background to Derry from IT - Horror Movie Filter',
+    'Change the background to Silent Hill foggy streets - Horror Movie preset',
+    'Change the background to haunted graveyard with fog - Horror Movie Filter',
+    'Change the background to abandoned asylum with flickering lights - Horror Movie preset',
+    'Change the background to cursed cabin in the woods - Horror Movie Filter',
+    'Change the background to Victorian haunted mansion - Horror Movie preset',
+    
+    // Thanksgiving Themes
+    'Change the background to cozy Thanksgiving dining room - Thanksgiving Filter',
+    'Change the background to autumn harvest table setting - Thanksgiving preset',
+    'Change the background to warm kitchen with turkey cooking - Thanksgiving Filter',
+    'Change the background to fall foliage and pumpkins - Thanksgiving preset',
+    'Change the background to family gathering around fireplace - Thanksgiving Filter',
+    'Change the background to rustic farmhouse dining - Thanksgiving preset',
+    
+    // Christmas Themes
+    'Change the background to snowy Christmas village - Christmas Filter',
+    'Change the background to cozy living room with Christmas tree - Christmas preset',
+    'Change the background to winter wonderland with snow - Christmas Filter',
+    'Change the background to festive holiday market - Christmas preset',
+    'Change the background to warm fireplace with stockings - Christmas Filter',
+    'Change the background to magical Christmas forest - Christmas preset',
     'Change the scene to a wildlife photography expedition',
     'Change the scene to a camping adventure in the wilderness',
     'Change the scene to a hiking trail through mountains',
@@ -390,20 +514,45 @@ export default function Home() {
   const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
   const [processingAction, setProcessingAction] = useState<string | null>(null); // Track which specific action is processing
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
+  const [endFrameProcessing, setEndFrameProcessing] = useState<boolean>(false); // Track EndFrame generation
+  const [processingMode, setProcessingMode] = useState<'variations' | 'endframe'>('variations'); // Track processing mode
+  const [endFrameTaskId, setEndFrameTaskId] = useState<string | null>(null); // Track EndFrame task ID
+  const [endFramePollingTimeout, setEndFramePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
 
   // Show notification function
   const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setNotification({ message, type });
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      setNotification(null);
-    }, 3000);
   }, []);
+
+  // Auto-hide notification after 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
 
   // Check if we have video files
   const hasVideoFiles = uploadedFiles.some(file => file.fileType === 'video');
   const hasImageFiles = uploadedFiles.some(file => file.fileType === 'image');
+
+  // Auto-detect processing mode based on uploaded files
+  useEffect(() => {
+    if (hasVideoFiles) {
+      // Video files automatically use ALEPH model - no mode selection needed
+      setProcessingMode('variations'); // Reset to default
+    } else if (uploadedFiles.length >= 2) {
+      // Two or more images - EndFrame option becomes available, but still default to variations
+      setProcessingMode('variations');
+    } else {
+      // Single image - only variations mode available
+      setProcessingMode('variations');
+    }
+  }, [hasVideoFiles, uploadedFiles.length]);
 
   // Load gallery from localStorage on component mount
   useEffect(() => {
@@ -1488,9 +1637,176 @@ export default function Home() {
       clearTimeout(pollingTimeout);
       setPollingTimeout(null);
     }
+    if (endFramePollingTimeout) {
+      clearTimeout(endFramePollingTimeout);
+      setEndFramePollingTimeout(null);
+    }
     setRunwayTaskId(null);
+    setEndFrameTaskId(null);
     setVideoGenerationStartTime(null);
     setProcessingAction(null);
+  };
+
+  // Poll EndFrame task status
+  const pollEndFrameTask = useCallback(async (taskId: string) => {
+    try {
+      console.log(`🔍 Polling EndFrame task: ${taskId}`);
+      const response = await fetch(`/api/endframe?taskId=${taskId}`);
+      const data: EndFrameResponse = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'EndFrame polling failed');
+      }
+
+      if (data.status === 'completed' && data.videoUrl) {
+        console.log('✅ EndFrame video completed:', data.videoUrl);
+        
+        // Add the completed video to gallery
+        const endFrameVariation: StoredVariation = {
+          id: `endframe-${Date.now()}`,
+          description: `EndFrame Video: ${prompt}`,
+          angle: 'EndFrame',
+          pose: 'Generated EndFrame Video',
+          videoUrl: data.videoUrl,
+          fileType: 'video',
+          timestamp: Date.now(),
+          originalPrompt: prompt
+        };
+
+        setGallery(prev => [endFrameVariation, ...prev]);
+        setError(null);
+        showNotification('🎬 EndFrame video generated successfully!', 'success');
+        
+        // Clean up
+        setEndFrameTaskId(null);
+        setEndFrameProcessing(false);
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+        
+        if (endFramePollingTimeout) {
+          clearTimeout(endFramePollingTimeout);
+          setEndFramePollingTimeout(null);
+        }
+        
+      } else if (data.status === 'failed') {
+        throw new Error(data.error || 'EndFrame generation failed');
+      } else {
+        // Still processing, continue polling
+        console.log(`⏳ EndFrame task still processing: ${data.status}`);
+        setProcessing(prev => ({
+          ...prev,
+          currentStep: `Generating video... (${data.status})`
+        }));
+        
+        // Continue polling after 2 seconds
+        const timeout = setTimeout(() => {
+          pollEndFrameTask(taskId);
+        }, 2000);
+        setEndFramePollingTimeout(timeout);
+      }
+    } catch (error) {
+      console.error('❌ EndFrame polling error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'EndFrame polling failed';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      
+      // Clean up
+      setEndFrameTaskId(null);
+      setEndFrameProcessing(false);
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      
+      if (endFramePollingTimeout) {
+        clearTimeout(endFramePollingTimeout);
+        setEndFramePollingTimeout(null);
+      }
+    }
+  }, [prompt, endFramePollingTimeout, showNotification]);
+
+  // EndFrame generation function - works with two images (start and end frame)
+  const handleEndFrameGeneration = async () => {
+    if (uploadedFiles.length < 2) {
+      setError('Please upload two images: one for the start frame and one for the end frame');
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt describing the transition between frames');
+      return;
+    }
+
+    setEndFrameProcessing(true);
+    setProcessing({
+      isProcessing: true,
+      progress: 20,
+      currentStep: 'Generating video from start and end frames...'
+    });
+
+    try {
+      console.log('🎬 Starting EndFrame processing...');
+      console.log(`📋 Prompt: "${prompt}"`);
+      console.log(`🖼️ Start frame: ${uploadedFiles[0].file.name}`);
+      console.log(`🖼️ End frame: ${uploadedFiles[1].file.name}`);
+
+      const requestBody: EndFrameRequest = {
+        firstImage: uploadedFiles[0].base64, // Use the first image (start frame)
+        secondImage: uploadedFiles[1].base64, // Use the second image (end frame)
+        prompt: prompt,
+        model: 'MiniMax-Hailuo-02'
+      };
+
+      console.log('📤 Sending request to EndFrame API...');
+      const response = await fetch('/api/endframe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data: EndFrameResponse = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'EndFrame task submission failed');
+      }
+
+      if (!data.taskId) {
+        throw new Error('No task ID returned from EndFrame API');
+      }
+
+      console.log('✅ EndFrame task submitted successfully:', data.taskId);
+      
+      // Store task ID and start polling
+      setEndFrameTaskId(data.taskId);
+      setProcessing(prev => ({
+        ...prev,
+        currentStep: 'Task submitted, waiting for video generation...'
+      }));
+      
+      // Start polling after 1 second
+      setTimeout(() => {
+        pollEndFrameTask(data.taskId!);
+      }, 1000);
+
+    } catch (error) {
+      console.error('❌ EndFrame processing failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'EndFrame processing failed';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+    } finally {
+      setEndFrameProcessing(false);
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
   };
 
   return (
@@ -1708,7 +2024,13 @@ export default function Home() {
                     id="prompt"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={hasVideoFiles ? "Describe the scene changes, background modifications, or prop changes you want..." : "Describe the angle or pose variations you want..."}
+                    placeholder={
+                      hasVideoFiles 
+                        ? "Describe the scene changes, background modifications, or prop changes you want..." 
+                        : processingMode === 'endframe'
+                        ? "Describe the transition or transformation between your start and end frames..."
+                        : "Describe the angle or pose variations you want..."
+                    }
                     className="w-full p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-lg"
                     rows={4}
                   />
@@ -2067,21 +2389,107 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* Processing Mode Selection - Only show when not video and multiple images available */}
+                  {!hasVideoFiles && uploadedFiles.length >= 2 && (
+                    <div className="flex justify-center mb-4">
+                      <div className="bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                        <div className="text-center mb-3">
+                          <h3 className="text-white text-sm font-medium mb-1">Choose Processing Mode:</h3>
+                          <p className="text-gray-300 text-xs">
+                                                      {processingMode === 'variations' 
+                            ? "Generate multiple character variations from your images (Nano Banana)" 
+                            : "Generate video from start frame (left) → end frame (right) transition (Minimax)"
+                          }
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setProcessingMode('variations')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                              processingMode === 'variations'
+                                ? 'bg-white text-black'
+                                : 'bg-transparent text-white hover:bg-gray-700'
+                            }`}
+                          >
+                            <Images className="w-4 h-4 inline mr-2" />
+                            Character Variations
+                          </button>
+                          <button
+                            onClick={() => setProcessingMode('endframe')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                              processingMode === 'endframe'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-transparent text-white hover:bg-green-600 hover:text-white'
+                            }`}
+                          >
+                            <Camera className="w-4 h-4 inline mr-2" />
+                            Start → End Video
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
                   <div className="flex justify-center">
-                    <button
-                      onClick={handleProcessCharacter}
-                      disabled={processing.isProcessing || !prompt.trim()}
-                      className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                    >
-                      {processing.isProcessing ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          {processing.currentStep}
-                        </>
-                      ) : (
-                        "Process Files"
-                      )}
-                    </button>
+                    {hasVideoFiles ? (
+                      // Video files - automatically use ALEPH model
+                      <button
+                        onClick={handleRunwayVideoEditing}
+                        disabled={processing.isProcessing || !prompt.trim()}
+                        className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        {processing.isProcessing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            {processing.currentStep}
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-5 h-5" />
+                            Process Video (ALEPH)
+                          </>
+                        )}
+                      </button>
+                    ) : processingMode === 'variations' ? (
+                      // Character variations - Nano Banana
+                      <button
+                        onClick={handleProcessCharacter}
+                        disabled={processing.isProcessing || !prompt.trim()}
+                        className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        {processing.isProcessing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            {processing.currentStep}
+                          </>
+                        ) : (
+                          <>
+                            <Images className="w-5 h-5" />
+                            Generate Character Variations (Nano Banana)
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      // EndFrame processing
+                      <button
+                        onClick={handleEndFrameGeneration}
+                        disabled={endFrameProcessing || processing.isProcessing || uploadedFiles.length < 2 || !prompt.trim()}
+                        className="px-8 py-4 bg-transparent text-white border-2 border-green-600 rounded-lg font-semibold text-lg hover:bg-green-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        {endFrameProcessing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Generating Video...
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-5 h-5" />
+                            Generate Start → End Video
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
 
                   {processing.isProcessing && (
