@@ -313,6 +313,7 @@ export default function Home() {
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
   const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
   const [processingAction, setProcessingAction] = useState<string | null>(null); // Track which specific action is processing
+  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
 
   // Show notification function
   const showNotification = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
@@ -504,7 +505,7 @@ export default function Home() {
     }
   };
 
-  // Handle editing an existing image (inject into input area)
+  // Handle editing an existing image (inject into next available input slot)
   const handleEditImage = async (imageUrl: string, originalPrompt?: string) => {
     const actionId = `edit-${Date.now()}`;
     setProcessingAction(actionId);
@@ -512,28 +513,34 @@ export default function Home() {
     try {
       console.log('🎨 Editing image:', imageUrl);
       
+      // Check if we already have 4 images (max slots)
+      if (uploadedFiles.length >= 4) {
+        showNotification('Maximum of 4 images allowed. Please remove an image first.', 'error');
+        return;
+      }
+      
       // Convert the image URL to base64
       const base64Image = await urlToBase64(imageUrl);
       
       // Create a new uploaded file object
       const newFile: UploadedFile = {
-        file: new File([], 'edited-image.jpg', { type: 'image/jpeg' }), // Dummy file object
+        file: new File([], `edit-image-${Date.now()}.jpg`, { type: 'image/jpeg' }),
         preview: imageUrl,
         base64: base64Image,
         type: 'reference',
         fileType: 'image'
       };
       
-      // Set the uploaded files to just this one image
-      setUploadedFiles([newFile]);
+      // Add to existing files (don't replace)
+      setUploadedFiles(prev => [...prev, newFile]);
       
-      // Set the prompt if available
-      if (originalPrompt) {
+      // Set the prompt if available and no existing prompt
+      if (originalPrompt && !prompt) {
         setPrompt(originalPrompt);
       }
       
       // Show notification
-      showNotification('🎨 Image loaded for editing! You can now generate new variations.', 'success');
+      showNotification(`🎨 Image added to slot ${uploadedFiles.length + 1}! You can add up to 4 images total.`, 'success');
       
       // Scroll to the input area
       setTimeout(() => {
@@ -550,6 +557,7 @@ export default function Home() {
       setProcessingAction(null);
     }
   };
+
 
   // Handle varying an existing generated image
   const handleVaryImage = async (imageUrl: string, originalPrompt?: string) => {
@@ -738,6 +746,81 @@ export default function Home() {
     e.stopPropagation();
     console.log('🔄 Drag over event triggered');
   }, []);
+
+  // Handle dropping files into a specific slot
+  const handleSlotDrop = useCallback((e: React.DragEvent<HTMLDivElement>, slotIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverSlot(null);
+    
+    console.log(`🎯 Drop event triggered for slot ${slotIndex}`);
+    const files = Array.from(e.dataTransfer.files);
+    console.log('📁 Files dropped:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
+    
+    if (files.length > 0) {
+      // Take only the first file for the specific slot
+      const file = files[0];
+      handleFileUploadToSlot(file, slotIndex);
+    }
+  }, []);
+
+  // Handle dragging over a specific slot
+  const handleSlotDragOver = useCallback((e: React.DragEvent<HTMLDivElement>, slotIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverSlot(slotIndex);
+  }, []);
+
+  // Handle leaving a specific slot
+  const handleSlotDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverSlot(null);
+  }, []);
+
+  // Handle uploading a file to a specific slot
+  const handleFileUploadToSlot = useCallback((file: File, slotIndex: number) => {
+    console.log(`📤 Uploading file to slot ${slotIndex}:`, file.name);
+    
+    // Validate file
+    const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
+    if (file.size > maxSize) {
+      showNotification(`File too large. Max size: ${maxSize / (1024 * 1024)}MB`, 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      const preview = URL.createObjectURL(file);
+      const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+      
+      const newFile: UploadedFile = {
+        file,
+        preview,
+        base64: base64.split(',')[1], // Remove data:...;base64, prefix
+        type: 'reference',
+        fileType
+      };
+      
+      // Update the specific slot
+      setUploadedFiles(prev => {
+        const newFiles = [...prev];
+        // If slot doesn't exist, add to the end
+        if (slotIndex >= newFiles.length) {
+          newFiles.push(newFile);
+        } else {
+          // Replace the existing file at that slot
+          newFiles[slotIndex] = newFile;
+        }
+        return newFiles;
+      });
+      
+      showNotification(`📁 File added to slot ${slotIndex + 1}`, 'success');
+    };
+    
+    reader.readAsDataURL(file);
+  }, [showNotification]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('📁 File input change triggered');
@@ -1211,7 +1294,17 @@ export default function Home() {
                 {/* Multiple Files Preview */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="relative">
+                    <div 
+                      key={index} 
+                      className={`relative transition-all duration-200 ${
+                        dragOverSlot === index 
+                          ? 'ring-4 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
+                          : ''
+                      }`}
+                      onDrop={(e) => handleSlotDrop(e, index)}
+                      onDragOver={(e) => handleSlotDragOver(e, index)}
+                      onDragLeave={handleSlotDragLeave}
+                    >
                       {file.fileType === 'image' ? (
                         <img
                           src={file.preview}
@@ -1236,19 +1329,47 @@ export default function Home() {
                       <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                         {file.fileType.toUpperCase()} {index + 1}
                       </div>
+                      {dragOverSlot === index && (
+                        <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                          <div className="text-white text-sm font-medium bg-blue-600 px-3 py-1 rounded">
+                            Drop here
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   
-                  {/* Add More Files Button */}
-                  <div
-                    className="border-2 border-dashed border-white rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-gray-300 transition-colors"
-                    onClick={() => document.getElementById('add-more-files-input')?.click()}
-                  >
-                    <div className="text-center">
-                      <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">Add More Files</p>
-                    </div>
-                  </div>
+                  {/* Empty slots for drag and drop */}
+                  {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
+                    const slotIndex = uploadedFiles.length + index;
+                    return (
+                      <div
+                        key={`empty-${slotIndex}`}
+                        className={`border-2 border-dashed border-white rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-gray-300 transition-all duration-200 ${
+                          dragOverSlot === slotIndex 
+                            ? 'ring-4 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
+                            : ''
+                        }`}
+                        onClick={() => document.getElementById('add-more-files-input')?.click()}
+                        onDrop={(e) => handleSlotDrop(e, slotIndex)}
+                        onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
+                        onDragLeave={handleSlotDragLeave}
+                      >
+                        <div className="text-center">
+                          <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-400 text-sm">Slot {slotIndex + 1}</p>
+                          <p className="text-gray-500 text-xs">Drop or click</p>
+                        </div>
+                        {dragOverSlot === slotIndex && (
+                          <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                            <div className="text-white text-sm font-medium bg-blue-600 px-3 py-1 rounded">
+                              Drop here
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   
                   {/* Hidden file input for adding more files */}
                   <input
@@ -1767,37 +1888,37 @@ export default function Home() {
                           </button>
                         </div>
 
-                        {/* Image or Video */}
-                        {item.imageUrl || item.videoUrl ? (
-                          <div className="space-y-3">
-                            {item.fileType === 'video' && item.videoUrl ? (
-                              <div>
-                                <video
-                                  src={item.videoUrl}
-                                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                  controls
-                                  muted
-                                  onClick={(e) => e.stopPropagation()}
-                                  onError={(e) => {
-                                    console.error('🎬 Video load error:', e);
-                                    console.error('🎬 Video URL:', item.videoUrl);
-                                  }}
-                                  onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
-                                  onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
-                                />
-                                {/* Debug info for video */}
-                                <div className="text-xs text-gray-400 mt-1">
-                                  Video URL: {item.videoUrl ? 'Present' : 'Missing'}
-                                </div>
-                              </div>
-                            ) : (
-                              <img
-                                src={item.imageUrl}
-                                alt={`${item.angle} - ${item.pose}`}
-                                className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleImageClick(item.imageUrl!)}
-                              />
-                            )}
+                                                    {/* Image or Video */}
+                            {item.imageUrl || item.videoUrl ? (
+                              <div className="space-y-3">
+                                {item.fileType === 'video' && item.videoUrl ? (
+                                  <div>
+                                    <video
+                                      src={item.videoUrl}
+                                      className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                      controls
+                                      muted
+                                      onClick={(e) => e.stopPropagation()}
+                                      onError={(e) => {
+                                        console.error('🎬 Video load error:', e);
+                                        console.error('🎬 Video URL:', item.videoUrl);
+                                      }}
+                                      onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
+                                      onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
+                                    />
+                                    {/* Debug info for video */}
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      Video URL: {item.videoUrl ? 'Present' : 'Missing'}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt={`${item.angle} - ${item.pose}`}
+                                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => handleImageClick(item.imageUrl!)}
+                                  />
+                                )}
                             
                             {/* Collapsible prompt section */}
                             <div className="space-y-2">

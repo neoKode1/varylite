@@ -3,6 +3,29 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
 
+// Function to upload image using Fal AI client's built-in upload
+async function uploadImageToTempUrl(base64Data: string): Promise<string> {
+  try {
+    // Convert base64 to buffer
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Create a File object from the buffer
+    const file = new File([buffer], 'image.jpg', { type: 'image/jpeg' });
+    
+    // Use Fal AI client's built-in upload functionality
+    const url = await fal.storage.upload(file);
+    
+    console.log(`✅ Uploaded image to Fal AI: ${url}`);
+    return url;
+  } catch (error) {
+    console.error('❌ Failed to upload image to Fal AI:', error);
+    // Fallback to data URI - Nano Banana should accept this according to docs
+    const dataUri = `data:image/jpeg;base64,${base64Data}`;
+    console.log(`⚠️ Using data URI directly: ${dataUri.substring(0, 50)}...`);
+    return dataUri;
+  }
+}
+
 // Retry configuration for API calls
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -112,13 +135,12 @@ async function tryAlternativeModels(
   throw new Error('All available Gemini models are currently unavailable');
 }
 
-// Sanitize prompts to avoid content policy violations while preserving character details
+// Minimal prompt processing to preserve user intent
 function sanitizePrompt(description: string, angle: string, originalPrompt?: string): string {
-  // Remove potentially problematic words and replace with safer alternatives
+  // Only do minimal content policy filtering - preserve user's original intent
   const problematicPatterns = [
     /\b(sexy|sensual|provocative|erotic|adult|mature|intimate)\b/gi,
     /\b(revealing|exposed|naked|nude|undressed)\b/gi,
-    /\b(weapon|sword|gun|knife|blade|combat|fighting|violence)\b/gi,
   ];
   
   let sanitized = description;
@@ -126,37 +148,9 @@ function sanitizePrompt(description: string, angle: string, originalPrompt?: str
     sanitized = sanitized.replace(pattern, 'character');
   });
   
-  // Extract key character details while keeping it safe
-  const safeDescription = sanitized
-    .replace(/\b(tight|form-fitting|skin-tight)\b/gi, 'fitted')
-    .replace(/\b(dark|gothic|edgy)\b/gi, 'stylized');
-  
-  // Check if the original prompt contains background removal instructions
-  const hasBackgroundRemoval = originalPrompt?.toLowerCase().includes('remove background') || 
-                              originalPrompt?.toLowerCase().includes('background removed') ||
-                              originalPrompt?.toLowerCase().includes('no background') ||
-                              originalPrompt?.toLowerCase().includes('transparent background');
-  
-  // Check for other important image processing instructions
-  const hasImageProcessing = originalPrompt?.toLowerCase().includes('enhance') ||
-                            originalPrompt?.toLowerCase().includes('improve') ||
-                            originalPrompt?.toLowerCase().includes('clean up') ||
-                            originalPrompt?.toLowerCase().includes('fix') ||
-                            originalPrompt?.toLowerCase().includes('adjust');
-  
-  let enhancedPrompt = `Professional character portrait from ${angle.toLowerCase()} angle. ${safeDescription}. Maintain exact character design consistency with appropriate, family-friendly styling.`;
-  
-  // Add background removal instruction if it was in the original prompt
-  if (hasBackgroundRemoval) {
-    enhancedPrompt += ` IMPORTANT: Remove all background elements and create a clean, transparent background. Focus only on the character with no environmental details.`;
-  }
-  
-  // Add general image processing instructions if present
-  if (hasImageProcessing) {
-    enhancedPrompt += ` Apply high-quality image processing to enhance clarity and detail.`;
-  }
-  
-  return enhancedPrompt;
+  // Use the user's original prompt as much as possible
+  // Only add minimal context for the specific angle
+  return `${originalPrompt || description} - ${angle.toLowerCase()} view`;
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
@@ -233,7 +227,7 @@ export async function POST(request: NextRequest) {
     const { images, prompt } = body;
 
     console.log('✅ Request body parsed successfully');
-    console.log(`📋 Prompt: "${prompt}"`);
+    console.log(`💬 Prompt: "${prompt}"`);
     console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
 
@@ -246,16 +240,11 @@ export async function POST(request: NextRequest) {
       } as CharacterVariationResponse, { status: 400 });
     }
 
-    console.log('🔑 Checking API keys...');
-    console.log(`🔍 GOOGLE_API_KEY exists: ${!!process.env.GOOGLE_API_KEY}`);
-    console.log(`🔍 GOOGLE_API_KEY length: ${process.env.GOOGLE_API_KEY?.length || 0} characters`);
-    console.log(`🔍 GOOGLE_API_KEY preview: ${process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
-    console.log(`🔍 FAL_KEY exists: ${!!process.env.FAL_KEY}`);
-    console.log(`🔍 FAL_KEY length: ${process.env.FAL_KEY?.length || 0} characters`);
-    console.log(`🔍 FAL_KEY preview: ${process.env.FAL_KEY ? process.env.FAL_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
-    console.log(`🔍 RUNWAYML_API_SECRET exists: ${!!process.env.RUNWAYML_API_SECRET}`);
-    console.log(`🔍 RUNWAYML_API_SECRET length: ${process.env.RUNWAYML_API_SECRET?.length || 0} characters`);
-    console.log(`🔍 RUNWAYML_API_SECRET preview: ${process.env.RUNWAYML_API_SECRET ? process.env.RUNWAYML_API_SECRET.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log('🔍 Checking API keys...');
+    console.log(`🔑 GOOGLE_API_KEY exists: ${!!process.env.GOOGLE_API_KEY}`);
+    console.log(`🔑 GOOGLE_API_KEY length: ${process.env.GOOGLE_API_KEY?.length || 0} characters`);
+    console.log(`🔑 FAL_KEY exists: ${!!process.env.FAL_KEY}`);
+    console.log(`🔑 FAL_KEY length: ${process.env.FAL_KEY?.length || 0} characters`);
 
     if (!process.env.GOOGLE_API_KEY) {
       console.log('❌ Google API key not found in environment variables');
@@ -290,75 +279,25 @@ export async function POST(request: NextRequest) {
                                 prompt.toLowerCase().includes('transparent background');
     
     console.log(`🔍 Background removal detected: ${hasBackgroundRemoval}`);
-    console.log(`📋 Original prompt analysis: "${prompt}"`);
+    console.log(`💬 Original prompt analysis: "${prompt}"`);
     
     let enhancedPrompt;
     
-    if (isVaryRequest) {
-      // For "Vary" requests - focus on detailed character analysis first
-      enhancedPrompt = `
-Analyze this character image in extreme detail and generate 4 distinct new variations based on this request: "${prompt}"
+    // Simplified prompt that preserves user intent
+    enhancedPrompt = `Generate 4 character variations based on: "${prompt}"
 
-STEP 1 - DETAILED CHARACTER ANALYSIS:
-First, carefully examine and document EVERY aspect of this character:
-- Facial features: eye color, shape, nose, mouth, jawline, cheekbones
-- Hair: style, color, length, texture, any accessories
-- Clothing: exact garments, colors, patterns, textures, fit
-- Body type: height, build, proportions
-- Skin tone and any markings, tattoos, or scars
-- Accessories: jewelry, equipment, props
-- Art style: realistic, anime, cartoon, etc.
-- Color palette used throughout the design
+Create 4 different views of the same character from different angles:
+1. Front View
+2. Side Profile  
+3. 3/4 Angle View
+4. Back View
 
-STEP 2 - VARIATION GENERATION:
-Create 4 NEW variations that maintain 100% character consistency:
-- Use the EXACT same character analysis from Step 1
-- Only change the viewing angle or pose
-- Keep IDENTICAL facial features, hair, clothing, and colors
-- Maintain the same art style and proportions${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
+For each variation, provide:
+- Viewing angle
+- Pose description  
+- Character description
 
-Each variation must include:
-1. Cinematic shot type (e.g., "Close-up Portrait", "Wide Establishing Shot", "Dutch Angle", "Low Hero Shot", "Over-the-Shoulder", "Dramatic Silhouette", "Medium Shot", "Extreme Close-up", "High Angle", "Bird's Eye View", "Worm's Eye View", "Profile Shot", "Three-Quarter Shot", "Full Body Shot", "Cinematic Wide Shot")
-2. Lighting setup (e.g., "Rembrandt lighting", "Rim lighting", "Soft key light", "Dramatic chiaroscuro", "Golden hour lighting", "Neon accent lighting", "Three-point lighting", "High-key lighting", "Low-key lighting", "Split lighting", "Butterfly lighting", "Loop lighting", "Side lighting", "Back lighting", "Practical lighting", "Mood lighting")
-3. Styling elements (e.g., "Cinematic depth of field", "Motion blur", "Color grading", "Atmospheric effects", "Professional studio lighting", "Film grain texture", "Vintage color palette", "High contrast", "Soft focus", "Bokeh effects", "Lens flare", "Vignetting", "Desaturated tones", "Warm color temperature", "Cool color temperature", "Dramatic shadows")
-4. Pose and composition (e.g., "Dynamic action pose", "Contemplative stance", "Power pose", "Casual interaction", "Dramatic gesture", "Confident stride", "Thoughtful expression", "Heroic stance", "Relaxed posture", "Intense focus", "Graceful movement", "Commanding presence", "Intimate moment", "Epic pose", "Natural candid", "Striking silhouette")
-5. Complete character description maintaining ALL details from the analysis${hasBackgroundRemoval ? '\n6. Note: Background should be clean/transparent for professional use' : ''}
-
-Format: Provide detailed character analysis first, then the 4 variations with perfect consistency.
-`;
-    } else {
-      // For multi-image uploads - use the existing comprehensive analysis
-      enhancedPrompt = `
-Analyze these ${images.length} character images and generate 4 distinct variations based on the user's request: "${prompt}"
-
-You are a character design expert. Create 4 different views of this EXACT SAME character, maintaining perfect character consistency while showing different angles or perspectives.
-
-CRITICAL REQUIREMENTS for character consistency:
-- Use ALL provided images to understand the complete character design
-- Keep IDENTICAL facial features, expression, and proportions from all angles
-- Maintain the EXACT SAME clothing, accessories, and outfit details
-- Preserve the SAME hair style, color, and length
-- Use the IDENTICAL color palette throughout
-- Keep the SAME body type, height, and build
-- Maintain any distinctive markings, scars, or unique features
-- Cross-reference between images to ensure consistency${hasBackgroundRemoval ? '\n- IMPORTANT: All variations should have backgrounds removed for clean, professional presentation' : ''}
-
-For each of the 4 variations, provide:
-1. Cinematic shot type (e.g., "Close-up Portrait", "Wide Establishing Shot", "Dutch Angle", "Low Hero Shot", "Over-the-Shoulder", "Dramatic Silhouette", "Medium Shot", "Extreme Close-up", "High Angle", "Bird's Eye View", "Worm's Eye View", "Profile Shot", "Three-Quarter Shot", "Full Body Shot", "Cinematic Wide Shot")
-2. Professional lighting setup (e.g., "Rembrandt lighting", "Rim lighting", "Soft key light", "Dramatic chiaroscuro", "Golden hour lighting", "Neon accent lighting", "Three-point lighting", "High-key lighting", "Low-key lighting", "Split lighting", "Butterfly lighting", "Loop lighting", "Side lighting", "Back lighting", "Practical lighting", "Mood lighting")
-3. Cinematic styling elements (e.g., "Cinematic depth of field", "Motion blur", "Color grading", "Atmospheric effects", "Professional studio lighting", "Film grain texture", "Vintage color palette", "High contrast", "Soft focus", "Bokeh effects", "Lens flare", "Vignetting", "Desaturated tones", "Warm color temperature", "Cool color temperature", "Dramatic shadows")
-4. Dynamic pose and composition (e.g., "Dynamic action pose", "Contemplative stance", "Power pose", "Casual interaction", "Dramatic gesture", "Confident stride", "Thoughtful expression", "Heroic stance", "Relaxed posture", "Intense focus", "Graceful movement", "Commanding presence", "Intimate moment", "Epic pose", "Natural candid", "Striking silhouette")
-5. A comprehensive visual description that preserves ALL character details while showing the new perspective${hasBackgroundRemoval ? '\n6. Note: Background should be clean/transparent for professional use' : ''}
-
-The 4 variations should cover different angles while keeping the character absolutely identical in design:
-- Front/side profile views
-- Back/rear perspective  
-- 3/4 diagonal angles
-- Action poses or dynamic views (if requested)
-
-Format each variation clearly with the angle, pose, and detailed character description that maintains perfect consistency.
-`;
-    }
+Maintain character consistency across all variations.`;
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -386,17 +325,17 @@ Format each variation clearly with the angle, pose, and detailed character descr
       console.log(`📊 Error details: ${(error as Error).message}`);
       result = await tryAlternativeModels(genAI, enhancedPrompt, imageParts);
     }
-    console.log('📬 Received response from Gemini API');
+    console.log('📥 Received response from Gemini API');
     
     const response = await result.response;
     const text = response.text();
-    console.log(`📄 Response text length: ${text ? text.length : 0} characters`);
+    console.log(`📊 Response text length: ${text ? text.length : 0} characters`);
     
     if (isVaryRequest) {
       console.log('🔍 Enhanced character analysis completed for Vary request');
       console.log(`📊 Analysis preview: ${text.substring(0, 200)}...`);
     }
-    console.log('📋 First 200 characters of response:', text ? text.substring(0, 200) + '...' : 'No text received');
+    console.log('💬 First 200 characters of response:', text ? text.substring(0, 200) + '...' : 'No text received');
 
     if (!text) {
       return NextResponse.json({
@@ -421,47 +360,46 @@ Format each variation clearly with the angle, pose, and detailed character descr
     let variationsWithImages = variations;
 
     if (hasFalKey) {
-      console.log('🎨 Generating images with Fal AI...');
-      // Use only the first image as primary reference to avoid payload size issues
-      const primaryImageDataUri = `data:image/jpeg;base64,${images[0]}`;
-      console.log(`🖼️ Using primary image for generation (${images.length} total images uploaded)`);
+      console.log('🎨 Generating images with Nano Banana...');
+      // Upload all images to get proper URLs for Nano Banana
+      const imageUrls = await Promise.all(
+        images.map(async (imageData, index) => {
+          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI...`);
+          return await uploadImageToTempUrl(imageData);
+        })
+      );
+      console.log(`🖼️ Uploaded ${imageUrls.length} images for Nano Banana processing`);
       
-      // Generate images for each variation using Fal AI
+      // Generate images for each variation using Nano Banana
       variationsWithImages = await Promise.all(
         variations.map(async (variation, index) => {
           try {
-            console.log(`🖼️ Generating image ${index + 1}/${variations.length} for: ${variation.angle}`);
+            console.log(`🖼️ Generating image ${index + 1}/4 for: ${variation.angle}`);
             
-            // Sanitize the prompt to avoid content policy violations
-            const sanitizedPrompt = sanitizePrompt(variation.description, variation.angle, prompt);
-            console.log(`🎨 Fal AI prompt for ${variation.angle}:`, sanitizedPrompt);
+            // Use the user's original prompt with minimal modification
+            const nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()} view`;
+            console.log(`🎨 Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             const result = await retryWithBackoff(async () => {
-              console.log(`🔄 Attempting Fal AI image generation for ${variation.angle}...`);
+              console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
               
-              // Choose the best model based on the task
-              const modelName = hasBackgroundRemoval ? "fal-ai/nano-banana/edit" : "fal-ai/nano-banana/edit";
-              console.log(`🤖 Using Fal AI model: ${modelName}`);
+              // Use Nano Banana for image editing with multiple input images
+              const modelName = "fal-ai/nano-banana/edit";
+              console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
               return await fal.subscribe(modelName, {
                 input: {
-                  prompt: sanitizedPrompt,
-                  image_urls: [primaryImageDataUri], // Use only primary image to avoid payload size issues
+                  prompt: nanoBananaPrompt,
+                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
                   num_images: 1,
-                  output_format: "jpeg",
-                  // Add specific parameters for background removal
-                  ...(hasBackgroundRemoval && {
-                    negative_prompt: "background, environment, scenery, objects, text, watermark",
-                    guidance_scale: 7.5,
-                    num_inference_steps: 20
-                  })
+                  output_format: "jpeg"
                 },
-                logs: true,
-                onQueueUpdate: (update) => {
-                  if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                  }
-                },
+              logs: true,
+              onQueueUpdate: (update) => {
+                if (update.status === "IN_PROGRESS") {
+                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                }
+              },
               });
             });
 
