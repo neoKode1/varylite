@@ -833,9 +833,46 @@ export default function Home() {
     if (files.length > 0) {
       // Take only the first file for the specific slot
       const file = files[0];
-      handleFileUploadToSlot(file, slotIndex);
+      // We'll call handleFileUploadToSlot directly here to avoid circular dependency
+      console.log(`📤 Uploading file to slot ${slotIndex}:`, file.name);
+      
+      // Validate file
+      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+      if (file.size > maxSize) {
+        showNotification(`File too large. Max size: ${maxSize / (1024 * 1024)}MB`, 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        const preview = URL.createObjectURL(file);
+        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+        
+        const newFile: UploadedFile = {
+          file,
+          preview,
+          base64: base64.split(',')[1],
+          type: 'reference',
+          fileType
+        };
+        
+        setUploadedFiles(prev => {
+          const newFiles = [...prev];
+          if (slotIndex >= newFiles.length) {
+            newFiles.push(newFile);
+          } else {
+            newFiles[slotIndex] = newFile;
+          }
+          return newFiles;
+        });
+        
+        showNotification(`📁 File added to slot ${slotIndex + 1}`, 'success');
+      };
+      
+      reader.readAsDataURL(file);
     }
-  }, []);
+  }, [showNotification]);
 
   // Handle dragging over a specific slot
   const handleSlotDragOver = useCallback((e: React.DragEvent<HTMLDivElement>, slotIndex: number) => {
@@ -902,33 +939,58 @@ export default function Home() {
     
     console.log('📋 Paste event triggered', slotIndex ? `for slot ${slotIndex}` : 'for main area');
     
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    
-    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
-    
-    if (imageItems.length === 0) {
-      showNotification('No image found in clipboard', 'error');
-      return;
-    }
-    
-    // Take the first image from clipboard
-    const imageItem = imageItems[0];
-    const file = imageItem.getAsFile();
-    
-    if (!file) {
-      showNotification('Could not extract image from clipboard', 'error');
-      return;
-    }
-    
-    console.log('📋 Pasting image from clipboard:', file.name, file.type, file.size);
-    
-    if (slotIndex !== undefined) {
-      // Paste to specific slot
-      handleFileUploadToSlot(file, slotIndex);
-    } else {
-      // Paste to main area (add to existing files)
-      handleFileUpload([file]);
+    try {
+      // Check if clipboard API is available
+      if (!e.clipboardData) {
+        console.warn('📋 Clipboard data not available');
+        showNotification('Clipboard access not available. Please use drag & drop or file upload.', 'error');
+        return;
+      }
+      
+      const items = e.clipboardData.items;
+      if (!items || items.length === 0) {
+        console.warn('📋 No items in clipboard');
+        showNotification('No items found in clipboard', 'error');
+        return;
+      }
+      
+      console.log('📋 Clipboard items:', Array.from(items).map(item => ({ type: item.type, kind: item.kind })));
+      
+      const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+      
+      if (imageItems.length === 0) {
+        console.warn('📋 No image items in clipboard');
+        showNotification('No image found in clipboard. Please copy an image first.', 'error');
+        return;
+      }
+      
+      // Take the first image from clipboard
+      const imageItem = imageItems[0];
+      console.log('📋 Processing image item:', imageItem.type, imageItem.kind);
+      
+      const file = imageItem.getAsFile();
+      
+      if (!file) {
+        console.error('📋 Could not extract file from clipboard item');
+        showNotification('Could not extract image from clipboard. Please try copying the image again.', 'error');
+        return;
+      }
+      
+      console.log('📋 Successfully extracted image from clipboard:', file.name, file.type, file.size);
+      
+      if (slotIndex !== undefined) {
+        // Paste to specific slot
+        handleFileUploadToSlot(file, slotIndex);
+      } else {
+        // Paste to main area (add to existing files)
+        handleFileUpload([file]);
+      }
+      
+      showNotification('📋 Image pasted successfully!', 'success');
+      
+    } catch (error) {
+      console.error('📋 Error handling paste event:', error);
+      showNotification('Failed to paste image. Please try drag & drop or file upload instead.', 'error');
     }
   }, [handleFileUpload, handleFileUploadToSlot, showNotification]);
 
@@ -940,21 +1002,38 @@ export default function Home() {
   // Global paste event listener
   useEffect(() => {
     const handleGlobalPaste = (e: ClipboardEvent) => {
-      // Only handle paste if we're focused on the input area or no specific element is focused
-      const activeElement = document.activeElement;
-      const isInputArea = activeElement?.closest('[data-input-area]') || 
-                         activeElement?.closest('[data-slot-area]') ||
-                         !activeElement || 
-                         activeElement === document.body;
-      
-      if (isInputArea) {
-        handlePaste(e);
+      try {
+        // Only handle paste if we're focused on the input area or no specific element is focused
+        const activeElement = document.activeElement;
+        const isInputArea = activeElement?.closest('[data-input-area]') || 
+                           activeElement?.closest('[data-slot-area]') ||
+                           !activeElement || 
+                           activeElement === document.body;
+        
+        if (isInputArea) {
+          console.log('📋 Global paste event detected in input area');
+          handlePaste(e);
+        } else {
+          console.log('📋 Global paste event detected outside input area, ignoring');
+        }
+      } catch (error) {
+        console.error('📋 Error in global paste handler:', error);
       }
     };
 
-    document.addEventListener('paste', handleGlobalPaste);
+    // Check if paste events are supported
+    if (typeof document.addEventListener === 'function') {
+      document.addEventListener('paste', handleGlobalPaste);
+      console.log('📋 Global paste event listener registered');
+    } else {
+      console.warn('📋 Paste events not supported in this environment');
+    }
+
     return () => {
-      document.removeEventListener('paste', handleGlobalPaste);
+      if (typeof document.removeEventListener === 'function') {
+        document.removeEventListener('paste', handleGlobalPaste);
+        console.log('📋 Global paste event listener removed');
+      }
     };
   }, [handlePaste]);
 
@@ -1419,7 +1498,7 @@ export default function Home() {
                   or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
-                  💡 Tip: You can also paste images from your clipboard (Ctrl+V)
+                  💡 Tip: You can also paste images from your clipboard (Ctrl+V) or drag & drop files
                 </p>
                 <input
                   id="file-input"
