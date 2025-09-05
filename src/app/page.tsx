@@ -1804,14 +1804,23 @@ export default function Home() {
         setError(null);
         showNotification('🎬 EndFrame video generated successfully!', 'success');
         
-        // Clean up
-        setEndFrameTaskId(null);
-        setEndFrameProcessing(false);
+        // Show final success state before cleanup
         setProcessing({
           isProcessing: false,
-          progress: 0,
-          currentStep: ''
+          progress: 100,
+          currentStep: 'Generation Successful!'
         });
+        
+        // Clean up after a brief delay to show the success message
+        setTimeout(() => {
+          setEndFrameTaskId(null);
+          setEndFrameProcessing(false);
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+        }, 2000); // Show "Generation Successful" for 2 seconds
         
         if (endFramePollingTimeout) {
           clearTimeout(endFramePollingTimeout);
@@ -1926,7 +1935,8 @@ export default function Home() {
       const errorMessage = error instanceof Error ? error.message : 'EndFrame processing failed';
       setError(errorMessage);
       showNotification(errorMessage, 'error');
-    } finally {
+      
+      // Only clean up on error - successful completion cleanup happens in pollEndFrameTask
       setEndFrameProcessing(false);
       setProcessing({
         isProcessing: false,
@@ -2634,7 +2644,13 @@ export default function Home() {
                     <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-green-500 border-opacity-20">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Loader2 className="w-5 h-5 animate-spin text-green-500" />
+                          {processing.currentStep === 'Generation Successful!' ? (
+                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          ) : (
+                            <Loader2 className="w-5 h-5 animate-spin text-green-500" />
+                          )}
                           <span className="text-white font-medium">EndFrame Video Generation</span>
                         </div>
                         <span className="text-green-400 text-sm font-mono">
@@ -2643,8 +2659,14 @@ export default function Home() {
                       </div>
                       <div className="w-full bg-gray-600 rounded-full h-2">
                         <div
-                          className="bg-green-500 h-2 rounded-full transition-all duration-500 animate-pulse"
-                          style={{ width: '75%' }}
+                          className={`h-2 rounded-full transition-all duration-500 ${
+                            processing.currentStep === 'Generation Successful!' 
+                              ? 'bg-green-500' 
+                              : 'bg-green-500 animate-pulse'
+                          }`}
+                          style={{ 
+                            width: processing.currentStep === 'Generation Successful!' ? '100%' : '75%' 
+                          }}
                         ></div>
                       </div>
                       <p className="text-gray-300 text-sm mt-2 text-center">
