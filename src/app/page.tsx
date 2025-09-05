@@ -1331,7 +1331,19 @@ export default function Home() {
           }
         } else if (task.status === 'FAILED') {
           console.log('❌ Video editing failed:', task.error);
-          setError('Video editing failed: ' + (task.error || 'Unknown error'));
+          
+          // Handle specific failure types
+          let errorMessage = 'Video editing failed: ' + (task.error || 'Unknown error');
+          
+          // Check for content moderation failures
+          if (task.failureCode && task.failureCode.includes('SAFETY')) {
+            errorMessage = 'Video failed content moderation. Please try a different video with less intense content.';
+          } else if (task.failure && task.failure.includes('content moderation')) {
+            errorMessage = 'Video did not pass content moderation. Please try a different video.';
+          }
+          
+          setError(errorMessage);
+          showNotification(errorMessage, 'error');
           
           // Clear timing on failure
           setVideoGenerationStartTime(null);

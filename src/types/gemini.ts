@@ -85,4 +85,6 @@ export interface RunwayTaskResponse {
   createdAt: string;
   output?: string[]; // Runway returns video URLs as an array
   error?: string;
+  failure?: string; // Content moderation failure message
+  failureCode?: string; // Failure code (e.g., SAFETY.INPUT.VIDEO)
 }
