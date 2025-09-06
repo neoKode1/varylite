@@ -212,7 +212,39 @@ const BACKGROUND_PROMPTS = [
   'Change background to snowy landscape',
   'Change background to desert scene',
   'Change background to tropical paradise',
-  'Change background to urban street scene'
+  'Change background to urban street scene',
+  
+  // Style Transfer Options
+  'Apply Ghibli anime style - Studio Ghibli magical colorful animation aesthetic',
+  'Apply Van Gogh painting style - impressionist brushstrokes and vibrant colors',
+  'Apply cinematic style similar to The Matrix - green-tinted digital rain atmosphere',
+  'Apply green-tinted, high-contrast cinematic style - dramatic lighting and color grading',
+  'Apply watercolor painting style - soft blended colors and artistic texture',
+  'Apply oil painting style - rich textures and classical art aesthetic',
+  'Apply cyberpunk neon style - electric colors and futuristic lighting',
+  'Apply film noir style - high contrast black and white with dramatic shadows',
+  'Apply vintage photography style - sepia tones and nostalgic atmosphere',
+  'Apply digital art style - clean lines and modern graphic design aesthetic',
+  'Apply charcoal sketch style - monochrome artistic drawing technique',
+  'Apply pop art style - bold colors and graphic design elements',
+  'Apply surrealist style - dreamlike and imaginative artistic approach',
+  'Apply minimalist style - clean simple design with focus on essential elements',
+  'Apply abstract expressionist style - bold colors and emotional artistic expression',
+  'Apply photorealistic style - ultra-detailed realistic rendering',
+  'Apply comic book style - bold outlines and vibrant comic art aesthetic',
+  'Apply pencil sketch style - detailed hand-drawn artistic technique',
+  'Apply pastel art style - soft muted colors and gentle artistic approach',
+  'Apply graffiti art style - street art aesthetic with bold urban design',
+  'Apply stained glass style - colorful translucent artistic effect',
+  'Apply mosaic art style - fragmented colorful tile artistic pattern',
+  'Apply origami paper style - folded paper geometric artistic aesthetic',
+  'Apply holographic style - iridescent colors and futuristic shine effect',
+  'Apply marble sculpture style - classical stone carving artistic texture',
+  'Apply wood carving style - natural wood grain artistic texture',
+  'Apply metal sculpture style - metallic reflective artistic surface',
+  'Apply glass art style - transparent and translucent artistic effect',
+  'Apply textile art style - fabric and woven material artistic texture',
+  'Apply ceramic art style - glazed pottery artistic surface texture'
 ];
 
 // Video-specific prompts organized by movie genres
@@ -505,6 +537,7 @@ export default function Home() {
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
+  const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
@@ -532,7 +565,7 @@ export default function Home() {
   }, []);
 
   // Show animated error function
-  const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' = 'farting-man') => {
+  const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty' = 'toasty') => {
     showAnimatedError(message, errorType);
   }, [showAnimatedError]);
 
@@ -937,13 +970,13 @@ export default function Home() {
       // Check if video features are disabled
       if (isVideo && !ENABLE_VIDEO_FEATURES) {
         setError('Video-to-video editing is temporarily disabled. Please upload image files only.');
-        showAnimatedErrorNotification('Video features are disabled! 👊⚡', 'mortal-kombat');
+        showAnimatedErrorNotification('User Error: Video features are disabled! TOASTY!', 'toasty');
         return false;
       }
       
       if (!isImage && !isVideo) {
         setError('Please upload valid image files (JPG, PNG) or video files (MP4, MOV)');
-        showAnimatedErrorNotification('Invalid file type! ⚠️🌀', 'bouncing-error');
+        showAnimatedErrorNotification('User Error: Invalid file type! TOASTY!', 'toasty');
         return false;
       }
       
@@ -951,7 +984,7 @@ export default function Home() {
       const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
       if (file.size > maxSize) {
         setError(`${isImage ? 'Image' : 'Video'} size must be less than ${isImage ? '10MB' : '100MB'}`);
-        showAnimatedErrorNotification('File too large! 😵💥', 'shake-error');
+        showAnimatedErrorNotification('User Error: File too large! TOASTY!', 'toasty');
         return false;
       }
       return true;
@@ -1397,26 +1430,26 @@ export default function Home() {
         if (message.includes('service unavailable') || message.includes('503')) {
           userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
           retryable = true;
-          showAnimatedErrorNotification('AI service overloaded! 👊⚡', 'mortal-kombat');
+          showAnimatedErrorNotification('Network Error: AI service overloaded! TOASTY!', 'toasty');
         } else if (message.includes('timeout') || message.includes('504')) {
           userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
           retryable = true;
-          showAnimatedErrorNotification('Request timed out! 😵💥', 'shake-error');
+          showAnimatedErrorNotification('Network Error: Request timed out! TOASTY!', 'toasty');
         } else if (message.includes('rate limit') || message.includes('429')) {
           userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
           retryable = true;
-          showAnimatedErrorNotification('Rate limit exceeded! ⚠️🌀', 'bouncing-error');
+          showAnimatedErrorNotification('User Error: Rate limit exceeded! TOASTY!', 'toasty');
         } else if (message.includes('content') && message.includes('moderation')) {
           userMessage = 'Content was flagged by moderation. Please try with a different prompt or image.';
           retryable = false;
-          showAnimatedErrorNotification('Content flagged by moderation! 👊⚡', 'mortal-kombat');
+          showAnimatedErrorNotification('User Error: Content flagged by moderation! TOASTY!', 'toasty');
         } else if (message.includes('400') || message.includes('bad request')) {
           userMessage = 'Invalid request. Please check your images and prompt.';
           retryable = false;
-          showAnimatedErrorNotification('Invalid request! ⚠️🌀', 'bouncing-error');
+          showAnimatedErrorNotification('User Error: Invalid request! TOASTY!', 'toasty');
         } else {
           userMessage = err.message;
-          showAnimatedErrorNotification('Something went wrong! 😵💥', 'shake-error');
+          showAnimatedErrorNotification('Network Error: Something went wrong! TOASTY!', 'toasty');
         }
       }
       
@@ -2067,7 +2100,7 @@ export default function Home() {
 
       {/* Animated Error Messages */}
       {animatedErrors.map((error, index) => (
-        <div key={error.id} style={{ top: `${20 + (index * 80)}px` }} className="fixed right-4 z-50">
+        <div key={error.id} style={{ bottom: `${20 + (index * 80)}px` }} className="fixed right-4 z-50">
           <AnimatedError
             message={error.message}
             type={error.type}
@@ -2098,17 +2131,26 @@ export default function Home() {
           <div className="flex gap-2">
             {/* Test Animated Errors Button - Remove in production */}
             {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={() => {
-                  const errorTypes = ['farting-man', 'mortal-kombat', 'bouncing-error', 'shake-error'] as const;
-                  const randomType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
-                  showAnimatedErrorNotification(`Test ${randomType} animation!`, randomType);
-                }}
-                className="flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg text-sm"
-                title="Test animated errors (dev only)"
-              >
-                🎭 Test
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    const errorTypes = ['farting-man', 'mortal-kombat', 'bouncing-error', 'shake-error', 'toasty'] as const;
+                    const randomType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+                    showAnimatedErrorNotification(`Test ${randomType} animation!`, randomType);
+                  }}
+                  className="flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg text-sm"
+                  title="Test random animated errors (dev only)"
+                >
+                  🎭 Test
+                </button>
+                <button
+                  onClick={() => showAnimatedErrorNotification('Network Error: Test TOASTY animation!', 'toasty')}
+                  className="flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium shadow-lg text-sm"
+                  title="Test Toasty animation (dev only)"
+                >
+                  🥖 TOASTY
+                </button>
+              </>
             )}
             <button
               onClick={() => setShowGallery(!showGallery)}
@@ -2486,100 +2528,179 @@ export default function Home() {
                       <div className="mt-4 p-4 bg-green-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-green-600">
                         <h4 className="text-white text-sm font-medium mb-3 text-center">🎨 Background Removal & Replacement Options</h4>
                         
-                        {/* Background removal */}
-                        <div className="mb-4">
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Background Removal</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
+                        {/* Tab Navigation */}
+                        <div className="flex flex-wrap gap-1 mb-4 p-1 bg-gray-800 rounded-lg">
+                          <button
+                            onClick={() => setActiveBackgroundTab('removal')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'removal' 
+                                ? 'bg-red-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🗑️ Removal
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('studio')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'studio' 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🏢 Studio
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('natural')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'natural' 
+                                ? 'bg-green-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🌿 Natural
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('indoor')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'indoor' 
+                                ? 'bg-purple-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🏠 Indoor
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('creative')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'creative' 
+                                ? 'bg-pink-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🎨 Creative
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('themed')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'themed' 
+                                ? 'bg-yellow-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🎭 Themed
+                          </button>
+                          <button
+                            onClick={() => setActiveBackgroundTab('style')}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              activeBackgroundTab === 'style' 
+                                ? 'bg-red-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            🎨 Style
+                          </button>
                         </div>
 
-                        {/* Studio/Professional backgrounds */}
-                        <div className="mb-4">
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Studio & Professional</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Tab Content */}
+                        <div className="min-h-[200px]">
+                          {activeBackgroundTab === 'removal' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                        {/* Natural/Outdoor backgrounds */}
-                        <div className="mb-4">
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Natural & Outdoor</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                          {activeBackgroundTab === 'studio' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                        {/* Indoor/Architectural backgrounds */}
-                        <div className="mb-4">
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Indoor & Architectural</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                          {activeBackgroundTab === 'natural' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                        {/* Creative/Artistic backgrounds */}
-                        <div className="mb-4">
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Creative & Artistic</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                          {activeBackgroundTab === 'indoor' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                        {/* Themed backgrounds */}
-                        <div>
-                          <h5 className="text-green-300 text-xs font-medium mb-2">Themed Backgrounds</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(46).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
+                          {activeBackgroundTab === 'creative' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {activeBackgroundTab === 'themed' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(46, 56).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {activeBackgroundTab === 'style' && (
+                            <div className="flex flex-wrap gap-2">
+                              {BACKGROUND_PROMPTS.slice(56).map((example) => (
+                                <button
+                                  key={example}
+                                  onClick={() => setPrompt(example)}
+                                  className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+                                >
+                                  {example}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -3059,27 +3180,27 @@ export default function Home() {
                                           switch (error.code) {
                                             case MediaError.MEDIA_ERR_ABORTED:
                                               console.warn('🎬 Video loading was aborted');
-                                              showAnimatedErrorNotification('Video loading was interrupted! 🏃‍♂️💨', 'farting-man');
+                                              showAnimatedErrorNotification('Network Error: Video loading was interrupted! TOASTY!', 'toasty');
                                               break;
                                             case MediaError.MEDIA_ERR_NETWORK:
                                               console.warn('🎬 Network error while loading video');
-                                              showAnimatedErrorNotification('Network connection lost! 👊⚡', 'mortal-kombat');
+                                              showAnimatedErrorNotification('Network Error: Network connection lost! TOASTY!', 'toasty');
                                               break;
                                             case MediaError.MEDIA_ERR_DECODE:
                                               console.warn('🎬 Video format not supported or corrupted');
-                                              showAnimatedErrorNotification('Video format not supported! ⚠️🌀', 'bouncing-error');
+                                              showAnimatedErrorNotification('User Error: Video format not supported! TOASTY!', 'toasty');
                                               break;
                                             case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
                                               console.warn('🎬 Video format not supported');
-                                              showAnimatedErrorNotification('Video format not supported! ⚠️🌀', 'bouncing-error');
+                                              showAnimatedErrorNotification('User Error: Video format not supported! TOASTY!', 'toasty');
                                               break;
                                             default:
                                               console.warn('🎬 Unknown video error');
-                                              showAnimatedErrorNotification('Something went wrong! 😵💥', 'shake-error');
+                                              showAnimatedErrorNotification('Network Error: Something went wrong! TOASTY!', 'toasty');
                                           }
                                         } else {
                                           console.warn('🎬 Video failed to load (no error details)');
-                                          showAnimatedErrorNotification('Video failed to load! 😵💥', 'shake-error');
+                                          showAnimatedErrorNotification('Network Error: Video failed to load! TOASTY!', 'toasty');
                                         }
                                         
                                         // Track this video as failed

@@ -44,81 +44,96 @@ body {
   }
 }
 
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .animate-in {
   animation: slide-in-from-top 0.3s ease-out;
+}
+
+.animate-in.slide-in-from-bottom-2 {
+  animation: slide-in-from-bottom 0.3s ease-out;
 }
 
 /* Animated Error Component Animations */
 @keyframes slide-in-left {
   from {
-    transform: translateX(-100%);
+    transform: translateX(100%) translateY(100%);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateX(0) translateY(0);
     opacity: 1;
   }
 }
 
 @keyframes slide-out-right {
   from {
-    transform: translateX(0);
+    transform: translateX(0) translateY(0);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(100%) translateY(100%);
     opacity: 0;
   }
 }
 
 @keyframes slide-in-top {
   from {
-    transform: translateY(-100%) rotate(-10deg);
+    transform: translateY(100%) translateX(100%) rotate(10deg);
     opacity: 0;
   }
   to {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) translateX(0) rotate(0deg);
     opacity: 1;
   }
 }
 
 @keyframes slide-out-bottom {
   from {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) translateX(0) rotate(0deg);
     opacity: 1;
   }
   to {
-    transform: translateY(100%) rotate(10deg);
+    transform: translateY(100%) translateX(100%) rotate(-10deg);
     opacity: 0;
   }
 }
 
 @keyframes bounce-in {
   0% {
-    transform: scale(0.3) rotate(-10deg);
+    transform: translateX(100%) translateY(100%) scale(0.3) rotate(10deg);
     opacity: 0;
   }
   50% {
-    transform: scale(1.1) rotate(5deg);
+    transform: translateX(20%) translateY(20%) scale(1.1) rotate(-5deg);
     opacity: 0.8;
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
     opacity: 1;
   }
 }
 
 @keyframes bounce-out {
   0% {
-    transform: scale(1) rotate(0deg);
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
     opacity: 1;
   }
   50% {
-    transform: scale(1.1) rotate(-5deg);
+    transform: translateX(-20%) translateY(-20%) scale(1.1) rotate(5deg);
     opacity: 0.8;
   }
   100% {
-    transform: scale(0.3) rotate(10deg);
+    transform: translateX(-100%) translateY(-100%) scale(0.3) rotate(-10deg);
     opacity: 0;
   }
 }
@@ -161,4 +176,71 @@ body {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* Toasty Animations */
+@keyframes toasty-enter {
+  0% {
+    transform: translateX(100%) translateY(100%) scale(0.5) rotate(15deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(20%) translateY(20%) scale(1.2) rotate(-5deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes toasty-exit {
+  0% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-20%) translateY(-20%) scale(1.1) rotate(5deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-100%) translateY(-100%) scale(0.5) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes toasty-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-5px) scale(1.05);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+@keyframes toasty-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1)) drop-shadow(0 0 30px rgba(255, 165, 0, 0.6));
+  }
+}
+
+.animate-toasty-enter {
+  animation: toasty-enter 0.8s ease-out;
+}
+
+.animate-toasty-exit {
+  animation: toasty-exit 0.6s ease-in;
+}
+
+.animate-toasty-bounce {
+  animation: toasty-bounce 1s ease-in-out infinite;
 }

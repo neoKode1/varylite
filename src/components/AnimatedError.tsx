@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 
 interface AnimatedErrorProps {
   message: string;
-  type?: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error';
+  type?: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty';
   onClose?: () => void;
   duration?: number;
 }
@@ -18,8 +18,19 @@ export default function AnimatedError({
 }: AnimatedErrorProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [animationPhase, setAnimationPhase] = useState<'enter' | 'idle' | 'exit'>('enter');
+  const [audioPlayed, setAudioPlayed] = useState(false);
 
   useEffect(() => {
+    // Play audio for Toasty animation
+    if (type === 'toasty' && !audioPlayed) {
+      const audio = new Audio('/TOASTY SOUND EFFECT (MORTAL KOMBAT).mp3');
+      audio.volume = 0.7; // Set volume to 70%
+      audio.play().catch(error => {
+        console.warn('Could not play Toasty audio:', error);
+      });
+      setAudioPlayed(true);
+    }
+
     // Enter animation
     const enterTimer = setTimeout(() => {
       setAnimationPhase('idle');
@@ -38,7 +49,7 @@ export default function AnimatedError({
       clearTimeout(enterTimer);
       clearTimeout(closeTimer);
     };
-  }, [duration, onClose]);
+  }, [duration, onClose, type, audioPlayed]);
 
   if (!isVisible) return null;
 
@@ -117,13 +128,34 @@ export default function AnimatedError({
           </div>
         );
 
+      case 'toasty':
+        return (
+          <div className={`relative ${animationPhase === 'enter' ? 'animate-toasty-enter' : animationPhase === 'exit' ? 'animate-toasty-exit' : 'animate-toasty-bounce'}`}>
+            <div className="flex items-center justify-center">
+              <img 
+                src="/Toasty_mk3.JPG.webp" 
+                alt="Toasty from Mortal Kombat"
+                className="w-16 h-16 object-contain"
+                style={{ 
+                  filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))',
+                  animation: animationPhase === 'idle' ? 'toasty-glow 2s ease-in-out infinite' : 'none'
+                }}
+              />
+            </div>
+            {/* "TOASTY!" text */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-400 animate-bounce">
+              TOASTY!
+            </div>
+          </div>
+        );
+
       default:
         return <div className="text-2xl">⚠️</div>;
     }
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
       <div className="bg-red-600 bg-opacity-95 backdrop-blur-sm border border-red-500 rounded-lg p-4 max-w-sm shadow-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">

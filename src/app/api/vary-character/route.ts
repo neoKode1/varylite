@@ -383,28 +383,40 @@ export async function POST(request: NextRequest) {
     
     let enhancedPrompt;
     
-    // Preserve user's original prompt intent with enhanced quality instructions
+    // Preserve user's original prompt intent with enhanced camera angle understanding
     enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
 
+CRITICAL CAMERA ANGLE INSTRUCTIONS:
+- For "worm's eye view": Camera must be at GROUND LEVEL looking dramatically upward at the character, showing floor/ground in foreground, character towering above with converging vertical lines
+- For "bird's eye view": Camera must be HIGH ABOVE looking down at the character, showing character from above with ground/floor visible below
+- For "dutch angle": Camera must be TILTED at an angle, creating diagonal composition
+- For "low angle": Camera positioned BELOW the character's eye level looking up
+- For "high angle": Camera positioned ABOVE the character's eye level looking down
+- For "eye level": Camera at the character's eye level, straight-on perspective
+
+ENVIRONMENTAL CONTEXT REQUIREMENTS:
+- Include appropriate environmental elements that support the camera angle (floor, ground, ceiling, walls, etc.)
+- Show the relationship between character and environment based on the requested perspective
+- Use lighting that reinforces the camera position and angle
+
+CRITICAL INSTRUCTIONS:
+- PRESERVE the user's exact specifications including camera angles, poses, settings, and interactions
+- DO NOT add generic camera angles like "3/4 view", "side profile", "back view" unless specifically requested
+- DO NOT override the user's specific requests with standard variations
+- Focus on the user's unique vision and enhance quality without changing the core concept
+
 For each variation, provide:
-- Viewing angle (preserve the user's specific angle requests like "worm's eye view")
-- Pose description (maintain the user's specific pose requests like "self-examination")
-- Character description
+- The user's requested viewing angle with proper environmental context
+- Character description that matches the user's vision
+- Quality enhancements that support the user's specific request
 
-CRITICAL: Preserve the user's exact specifications including:
-- Specific camera angles (worm's eye view, side profile, etc.)
-- Specific poses (self-examination, sprawled, etc.)
-- Specific settings (luxurious shower, hot pool, etc.)
-- Specific character interactions (threesome, etc.)
-
-QUALITY ENHANCEMENTS:
-- For "worm's eye view": Ensure dramatic low-angle perspective with strong upward lighting
-- For "self-examination": Focus on detailed hand/finger inspection with intense concentration
-- For "sprawled": Show relaxed, confident body language with proper positioning
+QUALITY ENHANCEMENTS (only if they support the user's vision):
 - Maintain high detail in character features, textures, and environmental elements
-- Use cinematic lighting and composition for maximum visual impact
+- Use appropriate lighting and composition for the user's specific request
+- Ensure character consistency across variations
+- Enhance visual quality without changing the core concept
 
-Maintain character consistency while respecting the user's detailed vision and enhancing visual quality.`;
+RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their specific requests.`;
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -634,7 +646,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       if (trimmedSection.length < 50) continue; // Skip very short sections
 
       // Extract angle/view information (look for common angle terms and preserve user's specific requests)
-      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance', 'worm', 'eye', 'low', 'high', 'bird', 'self-examination', 'sprawled', 'dramatic', 'cinematic', 'lighting'];
+      const angleKeywords = ['side', 'front', 'back', 'profile', 'angle', 'view', 'perspective', 'pose', 'stance', 'worm', 'eye', 'low', 'high', 'bird', 'dutch', 'ground', 'floor', 'towering', 'looking', 'self-examination', 'sprawled', 'dramatic', 'cinematic', 'lighting'];
       const lines = trimmedSection.split('\n').filter(line => line.trim());
       
       let angle = 'Character View';
@@ -643,25 +655,27 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       // Try to find angle and pose in the first few lines, preserving user's specific requests
       for (let i = 0; i < Math.min(3, lines.length); i++) {
         const line = lines[i].toLowerCase();
+        const originalLine = lines[i].trim();
+        
+        // First, check if the line contains specific camera angle requests (preserve these exactly)
+        if (originalLine.length > 0 && (
+          line.includes('worm') || line.includes('bird') || line.includes('dutch') ||
+          line.includes('low angle') || line.includes('high angle') || line.includes('eye level') ||
+          line.includes('self-examination') || line.includes('sprawled') || line.includes('cinematic') ||
+          line.includes('dramatic') || line.includes('action') || line.includes('dynamic') ||
+          line.includes('luxurious') || line.includes('hot pool') || line.includes('threesome') ||
+          line.includes('ground level') || line.includes('floor') || line.includes('towering') ||
+          line.includes('looking up') || line.includes('looking down') || line.includes('perspective')
+        )) {
+          // Preserve the original user request exactly
+          angle = originalLine;
+          pose = originalLine;
+          break;
+        }
+        
+        // Only use generic fallbacks if no specific user request is found
         if (angleKeywords.some(keyword => line.includes(keyword))) {
-          if (line.includes('worm') && line.includes('eye')) {
-            angle = 'Worm\'s Eye View';
-            if (line.includes('dramatic') || line.includes('cinematic')) {
-              pose = 'Dramatic Low-Angle Pose';
-            }
-          } else if (line.includes('self-examination')) {
-            angle = 'Self-Examination View';
-            pose = 'Self-Examination Pose';
-            if (line.includes('detailed') || line.includes('concentration')) {
-              pose = 'Intense Self-Examination Pose';
-            }
-          } else if (line.includes('sprawled')) {
-            angle = 'Sprawled View';
-            pose = 'Sprawled Pose';
-            if (line.includes('relaxed') || line.includes('confident')) {
-              pose = 'Relaxed Sprawled Pose';
-            }
-          } else if (line.includes('side') || line.includes('profile')) {
+          if (line.includes('side') || line.includes('profile')) {
             angle = 'Side Profile View';
           } else if (line.includes('back')) {
             angle = 'Back View';
@@ -669,21 +683,18 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
             angle = 'Front View';
           } else if (line.includes('3/4') || line.includes('quarter')) {
             angle = '3/4 Angle View';
-          } else if (line.includes('action') || line.includes('dynamic')) {
-            angle = 'Action View';
-            pose = 'Dynamic Action Pose';
           } else {
-            // Preserve the original line if it contains specific user requests
-            angle = lines[i].trim().length > 0 ? lines[i].trim() : angle;
+            // Use the original line if it's meaningful
+            angle = originalLine.length > 0 ? originalLine : angle;
           }
           break;
         }
       }
 
-      // If we couldn't determine a specific angle, assign based on variation number
+      // If we couldn't determine a specific angle, preserve the user's original prompt
       if (angle === 'Character View') {
-        const defaultAngles = ['Front View', 'Side Profile', '3/4 Angle View', 'Back View'];
-        angle = defaultAngles[variationCount] || `Variation ${variationCount + 1}`;
+        // Don't override with generic fallbacks - preserve user intent
+        angle = `Variation ${variationCount + 1}`;
       }
 
       variations.push({
@@ -706,14 +717,12 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       variations.length = 0; // Clear previous attempts
 
       paragraphs.forEach((paragraph, index) => {
-        const defaultAngles = ['Front View', 'Side Profile', '3/4 Angle View', 'Back View'];
-        const defaultPoses = ['Standard Stance', 'Profile Pose', 'Angled Stance', 'Rear View Pose'];
-        
+        // Preserve user's original prompt instead of using generic fallbacks
         variations.push({
           id: `variation-${index + 1}`,
           description: paragraph.trim(),
-          angle: defaultAngles[index] || `View ${index + 1}`,
-          pose: defaultPoses[index] || `Pose ${index + 1}`
+          angle: `Variation ${index + 1}`,
+          pose: `Custom Pose ${index + 1}`
         });
       });
     }
@@ -721,14 +730,12 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
     // Ensure we have at least 4 variations, even if we need to create fallbacks
     while (variations.length < 4) {
       const index = variations.length;
-      const fallbackAngles = ['Front View', 'Side Profile', '3/4 Angle View', 'Back View'];
-      const fallbackPoses = ['Standard Stance', 'Profile Pose', 'Angled Stance', 'Rear View Pose'];
       
       variations.push({
         id: `variation-${index + 1}`,
-        description: `Character variation ${index + 1}: Show the same character from a ${fallbackAngles[index].toLowerCase()} with ${fallbackPoses[index].toLowerCase()}. Maintain all original design elements, clothing, and features while changing the viewing angle and pose.`,
-        angle: fallbackAngles[index],
-        pose: fallbackPoses[index]
+        description: `Character variation ${index + 1}: Show the same character with different styling while maintaining all original design elements, clothing, and features.`,
+        angle: `Variation ${index + 1}`,
+        pose: `Custom Pose ${index + 1}`
       });
     }
 
@@ -741,27 +748,27 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
     return [
       {
         id: 'variation-1',
-        description: 'Front view of the character maintaining original design and features.',
-        angle: 'Front View',
-        pose: 'Standard Stance'
+        description: 'Character variation 1: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
+        angle: 'Variation 1',
+        pose: 'Custom Pose 1'
       },
       {
         id: 'variation-2',
-        description: 'Side profile view of the character with same clothing and style.',
-        angle: 'Side Profile',
-        pose: 'Profile Pose'
+        description: 'Character variation 2: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
+        angle: 'Variation 2',
+        pose: 'Custom Pose 2'
       },
       {
         id: 'variation-3',
-        description: '3/4 angle view showing character from diagonal perspective.',
-        angle: '3/4 Angle View',
-        pose: 'Angled Stance'
+        description: 'Character variation 3: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
+        angle: 'Variation 3',
+        pose: 'Custom Pose 3'
       },
       {
         id: 'variation-4',
-        description: 'Back view of the character showing rear perspective.',
-        angle: 'Back View',
-        pose: 'Rear View Pose'
+        description: 'Character variation 4: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
+        angle: 'Variation 4',
+        pose: 'Custom Pose 4'
       }
     ];
   }

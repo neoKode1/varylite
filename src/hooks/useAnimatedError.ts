@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type ErrorType = 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error';
+export type ErrorType = 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty';
 
 interface AnimatedError {
   id: string;
