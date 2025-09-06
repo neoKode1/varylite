@@ -19,6 +19,7 @@ interface UserGalleryHook {
   addToGallery: (variations: CharacterVariation[], originalPrompt: string, originalImagePreview?: string) => Promise<void>
   removeFromGallery: (variationId: string, timestamp: number) => Promise<void>
   clearGallery: () => Promise<void>
+  removeDuplicates: () => void
   migrateLocalStorageToDatabase: () => Promise<void>
   saveToAccount: (variations: CharacterVariation[], originalPrompt: string, originalImagePreview?: string) => Promise<void>
 }

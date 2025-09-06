@@ -1101,7 +1101,7 @@ export default function Home() {
       
       reader.readAsDataURL(file);
     });
-  }, [showNotification]);
+  }, [showNotification, checkVideoDuration, showAnimatedErrorNotification]);
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -1174,7 +1174,7 @@ export default function Home() {
       
       reader.readAsDataURL(file);
     }
-  }, [showNotification]);
+  }, [showNotification, showAnimatedErrorNotification]);
 
   // Handle dragging over a specific slot
   const handleSlotDragOver = useCallback((e: React.DragEvent<HTMLDivElement>, slotIndex: number) => {
@@ -1241,7 +1241,7 @@ export default function Home() {
     };
     
     reader.readAsDataURL(file);
-  }, [showNotification]);
+  }, [showNotification, checkVideoDuration, showAnimatedErrorNotification]);
 
   // Handle clipboard paste events
   const handlePaste = useCallback(async (e: ClipboardEvent, slotIndex?: number) => {
@@ -2106,7 +2106,7 @@ export default function Home() {
         setEndFramePollingTimeout(null);
       }
     }
-  }, [prompt, endFramePollingTimeout, showNotification]);
+  }, [prompt, endFramePollingTimeout, showNotification, addToGallery, uploadedFiles]);
 
   // EndFrame generation function - works with two images (start and end frame)
   const handleEndFrameGeneration = async () => {
