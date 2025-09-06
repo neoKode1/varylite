@@ -261,6 +261,9 @@ export async function POST(request: NextRequest) {
       } else if (error.message.includes('aspect ratio')) {
         errorMessage = 'Video aspect ratio issue. The video dimensions are not compatible with Runway\'s requirements.';
         statusCode = 400;
+      } else if (error.message.includes('duration') || error.message.includes('too long') || error.message.includes('maximum')) {
+        errorMessage = 'Video duration too long. Runway Aleph supports videos up to 5 seconds maximum. Please trim your video to 5 seconds or less.';
+        statusCode = 400;
       }
     }
 

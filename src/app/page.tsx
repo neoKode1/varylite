@@ -569,6 +569,38 @@ export default function Home() {
     showAnimatedError(message, errorType);
   }, [showAnimatedError]);
 
+  // Check video duration and show Toasty error if too long
+  const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('video/')) {
+        resolve(true);
+        return;
+      }
+
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        const duration = video.duration;
+        console.log(`📹 Video duration: ${duration} seconds`);
+        
+        if (duration > 5) {
+          showAnimatedErrorNotification(`User Error: Video too long! ${duration.toFixed(1)}s exceeds 5s limit! TOASTY!`, 'toasty');
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      };
+      
+      video.onerror = () => {
+        console.warn('📹 Could not load video metadata, will let API handle validation');
+        resolve(true); // Let the API handle it
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  }, [showAnimatedErrorNotification]);
+
   // Retry failed video
   const retryVideo = useCallback((videoUrl: string) => {
     setFailedVideos(prev => {
@@ -960,7 +992,7 @@ export default function Home() {
     }
   };
 
-  const handleFileUpload = useCallback((files: File[]) => {
+  const handleFileUpload = useCallback(async (files: File[]) => {
     console.log('📤 handleFileUpload called with files:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     
     const validFiles = files.filter(file => {
@@ -987,10 +1019,24 @@ export default function Home() {
         showAnimatedErrorNotification('User Error: File too large! TOASTY!', 'toasty');
         return false;
       }
+      
       return true;
     });
 
     if (validFiles.length === 0) return;
+
+    // Check video durations first
+    const videoFiles = validFiles.filter(file => file.type.startsWith('video/'));
+    if (videoFiles.length > 0) {
+      console.log('📹 Checking video durations...');
+      for (const videoFile of videoFiles) {
+        const isValidDuration = await checkVideoDuration(videoFile);
+        if (!isValidDuration) {
+          console.log(`📹 Video ${videoFile.name} rejected due to duration`);
+          return; // Stop processing if any video is too long
+        }
+      }
+    }
 
     setError(null);
     const newFiles: UploadedFile[] = [];
@@ -1071,11 +1117,11 @@ export default function Home() {
       console.log(`📤 Uploading file to slot ${slotIndex}:`, file.name);
       
       // Validate file
-      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
-      if (file.size > maxSize) {
-        showNotification(`File too large. Max size: ${maxSize / (1024 * 1024)}MB`, 'error');
-        return;
-      }
+    const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showAnimatedErrorNotification(`User Error: File too large! Max size: ${maxSize / (1024 * 1024)}MB TOASTY!`, 'toasty');
+      return;
+    }
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -1123,14 +1169,23 @@ export default function Home() {
   }, []);
 
   // Handle uploading a file to a specific slot
-  const handleFileUploadToSlot = useCallback((file: File, slotIndex: number) => {
+  const handleFileUploadToSlot = useCallback(async (file: File, slotIndex: number) => {
     console.log(`📤 Uploading file to slot ${slotIndex}:`, file.name);
     
     // Validate file
     const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
     if (file.size > maxSize) {
-      showNotification(`File too large. Max size: ${maxSize / (1024 * 1024)}MB`, 'error');
+      showAnimatedErrorNotification(`User Error: File too large! Max size: ${maxSize / (1024 * 1024)}MB TOASTY!`, 'toasty');
       return;
+    }
+
+    // Check video duration if it's a video file
+    if (file.type.startsWith('video/')) {
+      const isValidDuration = await checkVideoDuration(file);
+      if (!isValidDuration) {
+        console.log(`📹 Video ${file.name} rejected due to duration`);
+        return;
+      }
     }
 
     const reader = new FileReader();
@@ -1499,7 +1554,7 @@ export default function Home() {
         prompt: prompt.trim(),
         model,
         ratio: '1280:720', // Default ratio for gen4_aleph
-        duration: 10, // Default duration for image-to-video
+        duration: 5, // Maximum duration for gen4_aleph (Runway limit)
         promptText: prompt.trim()
       };
 
@@ -1513,7 +1568,14 @@ export default function Home() {
 
       setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Video editing task created...' }));
 
-      const data: RunwayVideoResponse = await response.json();
+      let data: RunwayVideoResponse;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        const errorText = await response.text();
+        console.error('❌ Failed to parse JSON response:', errorText);
+        throw new Error(`Server returned invalid response: ${errorText.substring(0, 100)}...`);
+      }
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to create video editing task');
@@ -1576,7 +1638,14 @@ export default function Home() {
     console.log(`🔄 Polling Runway task: ${taskId}`);
     try {
       const response = await fetch(`/api/runway-video?taskId=${taskId}`);
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        const errorText = await response.text();
+        console.error('❌ Failed to parse JSON response during polling:', errorText);
+        throw new Error(`Server returned invalid response: ${errorText.substring(0, 100)}...`);
+      }
       
       console.log(`📊 Polling response:`, data);
 
@@ -2152,18 +2221,18 @@ export default function Home() {
                 </button>
               </>
             )}
-            <button
-              onClick={() => setShowGallery(!showGallery)}
-              className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
-              title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
-            >
-              <span className="hidden sm:inline">
-                {showGallery ? 'Hide' : 'Show'} gallery
-              </span>
-              <span className="sm:hidden">
-                {showGallery ? 'Hide' : 'Show'}
-              </span>
-            </button>
+          <button
+            onClick={() => setShowGallery(!showGallery)}
+            className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
+            title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
+          >
+            <span className="hidden sm:inline">
+              {showGallery ? 'Hide' : 'Show'} gallery
+            </span>
+            <span className="sm:hidden">
+              {showGallery ? 'Hide' : 'Show'}
+            </span>
+          </button>
           </div>
         </div>
 
@@ -2605,87 +2674,87 @@ export default function Home() {
                         {/* Tab Content */}
                         <div className="min-h-[200px]">
                           {activeBackgroundTab === 'removal' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'studio' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'natural' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'indoor' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'creative' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'themed' && (
-                            <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2">
                               {BACKGROUND_PROMPTS.slice(46, 56).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
+                              <button
+                                key={example}
+                                onClick={() => setPrompt(example)}
+                                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
                           )}
 
                           {activeBackgroundTab === 'style' && (
@@ -3151,28 +3220,28 @@ export default function Home() {
                                 {item.fileType === 'video' && item.videoUrl ? (
                                   <div className="relative">
                                     {isValidVideoUrl(item.videoUrl) ? (
-                                      <video
-                                        key={`${item.videoUrl || 'no-url'}-${item.videoUrl && failedVideos.has(item.videoUrl) ? 'failed' : 'loading'}`}
-                                        src={item.videoUrl}
-                                        className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
-                                        controls
-                                        muted
-                                        onClick={(e) => e.stopPropagation()}
+                                    <video
+                                      key={`${item.videoUrl || 'no-url'}-${item.videoUrl && failedVideos.has(item.videoUrl) ? 'failed' : 'loading'}`}
+                                      src={item.videoUrl}
+                                      className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
+                                      controls
+                                      muted
+                                      onClick={(e) => e.stopPropagation()}
                                       onError={(e) => {
                                         const videoElement = e.target as HTMLVideoElement;
                                         const error = videoElement.error;
                                         
                                         // Only log detailed errors in development
                                         if (process.env.NODE_ENV === 'development') {
-                                          console.error('🎬 Video load error:', {
-                                            error: error,
-                                            errorCode: error?.code,
-                                            errorMessage: error?.message,
-                                            networkState: videoElement.networkState,
-                                            readyState: videoElement.readyState,
-                                            videoUrl: item.videoUrl,
-                                            videoSrc: videoElement.src
-                                          });
+                                        console.error('🎬 Video load error:', {
+                                          error: error,
+                                          errorCode: error?.code,
+                                          errorMessage: error?.message,
+                                          networkState: videoElement.networkState,
+                                          readyState: videoElement.readyState,
+                                          videoUrl: item.videoUrl,
+                                          videoSrc: videoElement.src
+                                        });
                                         }
                                         
                                         // Handle different error types with user-friendly messages
@@ -3208,9 +3277,9 @@ export default function Home() {
                                           setFailedVideos(prev => new Set(prev).add(item.videoUrl!));
                                         }
                                       }}
-                                        onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
-                                        onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
-                                      />
+                                      onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
+                                      onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
+                                    />
                                     ) : (
                                       <div className="w-full h-32 bg-gray-800 rounded-lg flex items-center justify-center">
                                         <div className="text-center text-gray-400">
@@ -3240,17 +3309,17 @@ export default function Home() {
                                             This may be due to network issues or video format compatibility
                                           </div>
                                           <div className="flex gap-2">
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (item.videoUrl) {
-                                                  retryVideo(item.videoUrl);
-                                                }
-                                              }}
-                                              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-                                            >
-                                              Retry
-                                            </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (item.videoUrl) {
+                                                retryVideo(item.videoUrl);
+                                              }
+                                            }}
+                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+                                          >
+                                            Retry
+                                          </button>
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();

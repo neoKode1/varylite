@@ -1,0 +1,7 @@
+warning: in the working copy of 'src/app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+src/app/api/vary-character/route.ts
+src/app/globals.css
+src/app/page.tsx
+src/components/AnimatedError.tsx
+src/hooks/useAnimatedError.ts
