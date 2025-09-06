@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
+
+// Generation mode types
+type GenerationMode = 'nano-banana' | 'runway-t2i' | 'runway-video' | 'endframe';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -564,6 +567,9 @@ export default function Home() {
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
   const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
   const [processingAction, setProcessingAction] = useState<string | null>(null); // Track which specific action is processing
+  const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null); // Track current generation mode
+  const [textToImageTaskId, setTextToImageTaskId] = useState<string | null>(null); // Track text-to-image task ID
+  const [textToImagePollingTimeout, setTextToImagePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
   const [endFrameProcessing, setEndFrameProcessing] = useState<boolean>(false); // Track EndFrame generation
   const [processingMode, setProcessingMode] = useState<'variations' | 'endframe'>('variations'); // Track processing mode
@@ -584,6 +590,50 @@ export default function Home() {
   const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty' = 'toasty') => {
     showAnimatedError(message, errorType);
   }, [showAnimatedError]);
+
+  // Determine generation mode based on uploaded files
+  const determineGenerationMode = useCallback((): GenerationMode | null => {
+    const hasImages = uploadedFiles.some(file => file.fileType === 'image');
+    const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
+    
+    if (hasVideos && !hasImages) {
+      return 'runway-video';
+    } else if (hasImages && uploadedFiles.length >= 2) {
+      return 'endframe';
+    } else if (hasImages && uploadedFiles.length === 1) {
+      // Ambiguous case - could be nano-banana or runway-t2i
+      return null; // Let user choose
+    } else if (!hasImages && !hasVideos) {
+      return 'runway-t2i';
+    }
+    
+    return null;
+  }, [uploadedFiles]);
+
+  // Get available generation modes for current state
+  const getAvailableModes = useCallback((): GenerationMode[] => {
+    const hasImages = uploadedFiles.some(file => file.fileType === 'image');
+    const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
+    
+    const modes: GenerationMode[] = [];
+    
+    // Always allow text-to-image
+    modes.push('runway-t2i');
+    
+    if (hasImages && uploadedFiles.length === 1) {
+      modes.push('nano-banana');
+    }
+    
+    if (hasVideos && !hasImages) {
+      modes.push('runway-video');
+    }
+    
+    if (hasImages && uploadedFiles.length >= 2) {
+      modes.push('endframe');
+    }
+    
+    return modes;
+  }, [uploadedFiles]);
 
   // Check video duration and show Toasty error if too long
   const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
@@ -1014,6 +1064,85 @@ export default function Home() {
     }
   };
 
+  // Handle text-to-image generation
+  const handleTextToImage = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a text prompt to generate an image');
+      showAnimatedErrorNotification('User Error: Please enter a text prompt! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!canGenerate) {
+      setError('Generation limit reached. Please sign up for unlimited generations.');
+      setShowAuthModal(true);
+      return;
+    }
+
+    const actionId = `t2i-${Date.now()}`;
+    setProcessingAction(actionId);
+    setGenerationMode('runway-t2i');
+
+    try {
+      console.log('🎨 Starting text-to-image generation:', prompt);
+      
+      setProcessing({
+        isProcessing: true,
+        progress: 10,
+        currentStep: 'Generating image from text...'
+      });
+
+      // Prepare style reference if first slot has an image
+      let styleReference: string | undefined;
+      if (uploadedFiles.length > 0 && uploadedFiles[0].fileType === 'image') {
+        styleReference = uploadedFiles[0].base64;
+        console.log('🎨 Using uploaded image as style reference');
+      }
+
+      // Start the text-to-image task
+      const response = await fetch('/api/runway-t2i', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          styleReference,
+          model: 'gen4_image',
+          ratio: '1024:1024'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start image generation');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success || !data.taskId) {
+        throw new Error(data.error || 'No task ID received');
+      }
+
+      console.log('✅ Text-to-image task started:', data.taskId);
+      setTextToImageTaskId(data.taskId);
+
+      // Start polling for the task completion
+      await pollTextToImageTask(data.taskId, prompt.trim(), styleReference);
+
+    } catch (error) {
+      console.error('❌ Text-to-image generation error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate image from text');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      setGenerationMode(null);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   const handleFileUpload = useCallback(async (files: File[]) => {
     console.log('📤 handleFileUpload called with files:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     
@@ -1139,11 +1268,11 @@ export default function Home() {
       console.log(`📤 Uploading file to slot ${slotIndex}:`, file.name);
       
       // Validate file
-    const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
-    if (file.size > maxSize) {
+      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+      if (file.size > maxSize) {
       showAnimatedErrorNotification(`User Error: File too large! Max size: ${maxSize / (1024 * 1024)}MB TOASTY!`, 'toasty');
-      return;
-    }
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -2108,6 +2237,102 @@ export default function Home() {
     }
   }, [prompt, endFramePollingTimeout, showNotification, addToGallery, uploadedFiles]);
 
+  // Poll text-to-image task status
+  const pollTextToImageTask = useCallback(async (taskId: string, originalPrompt: string, styleReference?: string) => {
+    try {
+      console.log(`🔍 Polling text-to-image task: ${taskId}`);
+      const response = await fetch(`/api/runway-t2i?taskId=${taskId}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Text-to-image polling failed');
+      }
+
+      if (data.status === 'completed' && data.imageUrl) {
+        console.log('✅ Text-to-image completed:', data.imageUrl);
+        
+        // Create a variation object for the gallery
+        const generatedVariation: CharacterVariation = {
+          id: `t2i-${Date.now()}`,
+          description: `Generated: ${originalPrompt}`,
+          angle: 'Text-to-Image',
+          pose: 'AI Generated',
+          imageUrl: data.imageUrl,
+          fileType: 'image'
+        };
+
+        // Track usage
+        await trackUsage('image_generation', 'runway_aleph', {
+          prompt: originalPrompt,
+          has_style_reference: !!styleReference,
+          service: 'runway_t2i'
+        });
+
+        // Add to gallery
+        await addToGallery([generatedVariation], originalPrompt);
+        
+        setProcessing({
+          isProcessing: false,
+          progress: 100,
+          currentStep: 'Generation Successful!'
+        });
+
+        showNotification('🎨 Image generated successfully from text!', 'success');
+
+        // Clean up
+        setTextToImageTaskId(null);
+        setGenerationMode(null);
+        
+        // Clear processing state after delay
+        setTimeout(() => {
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+        }, 2000);
+        
+        if (textToImagePollingTimeout) {
+          clearTimeout(textToImagePollingTimeout);
+          setTextToImagePollingTimeout(null);
+        }
+        
+      } else if (data.status === 'failed') {
+        throw new Error('Text-to-image generation failed');
+      } else {
+        // Still processing, continue polling
+        console.log(`⏳ Text-to-image task still processing: ${data.status}`);
+        setProcessing(prev => ({
+          ...prev,
+          currentStep: `Generating image... (${data.status})`
+        }));
+        
+        // Continue polling after 2 seconds
+        const timeout = setTimeout(() => {
+          pollTextToImageTask(taskId, originalPrompt, styleReference);
+        }, 2000);
+        setTextToImagePollingTimeout(timeout);
+      }
+    } catch (error) {
+      console.error('❌ Text-to-image polling error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Text-to-image polling failed';
+      setError(errorMessage);
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      setGenerationMode(null);
+      
+      // Clean up
+      setTextToImageTaskId(null);
+      if (textToImagePollingTimeout) {
+        clearTimeout(textToImagePollingTimeout);
+        setTextToImagePollingTimeout(null);
+      }
+    }
+  }, [textToImagePollingTimeout, showNotification, addToGallery, trackUsage]);
+
   // EndFrame generation function - works with two images (start and end frame)
   const handleEndFrameGeneration = async () => {
     if (uploadedFiles.length < 2) {
@@ -2303,16 +2528,10 @@ export default function Home() {
 
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="max-w-2xl w-full">
-            {/* Description */}
-            <div className="text-center mb-8 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
-              <p className="text-gray-300 text-lg">
-                {ENABLE_VIDEO_FEATURES ? 'Upload images for character variations or videos for AI video-to-video editing.' : 'Upload images for character variations.'}
-              </p>
-            </div>
 
             {/* Main Input Area */}
             <div data-input-area>
-            {uploadedFiles.length === 0 ? (
+              {uploadedFiles.length === 0 ? (
               <div
                 className="border-2 border-white rounded-lg p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm"
                 onDrop={handleDrop}
@@ -2449,39 +2668,53 @@ export default function Home() {
                     Clear All Files
                   </button>
                 </div>
+              </div>
+            )}
+            </div>
 
-                {/* Prompt Input */}
-                <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
-                  <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="prompt" className="text-white font-medium text-lg">
-                      Prompt
-                    </label>
-                    <button
-                      onClick={() => setShowPromptGuide(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-                      title="Open Prompt Guide"
-                    >
-                      <span>📸</span>
-                      <span>Help</span>
-                    </button>
-                  </div>
-                  <textarea
-                    id="prompt"
-                    data-prompt-field="true"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={
-                      hasVideoFiles 
-                        ? "Describe the scene changes, background modifications, or prop changes you want..." 
-                        : processingMode === 'endframe'
-                        ? "Describe the transition or transformation between your start and end frames..."
-                        : "Describe the angle or pose variations you want..."
-                    }
-                    className="w-full p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-lg"
-                    rows={4}
-                  />
+            {/* Prompt Input - Always visible */}
+            <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 mt-6">
+              {uploadedFiles.length === 0 && (
+                <div className="text-center mb-4 p-3 bg-purple-600 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-lg">
+                  <p className="text-purple-300 text-sm">
+                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using gen4_image
+                  </p>
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="prompt" className="text-white font-medium text-lg">
+                  Prompt
+                </label>
+                <button
+                  onClick={() => setShowPromptGuide(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                  title="Open Prompt Guide"
+                >
+                  <span>📸</span>
+                  <span>Help</span>
+                </button>
+              </div>
+              <textarea
+                id="prompt"
+                data-prompt-field="true"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={
+                  hasVideoFiles 
+                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
+                    : processingMode === 'endframe'
+                    ? "Describe the transition or transformation between your start and end frames..."
+                    : uploadedFiles.length === 0
+                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
+                    : "Describe the angle or pose variations you want..."
+                }
+                className="w-full p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-lg"
+                rows={4}
+              />
+            </div>
 
-                  <div className="space-y-4">
+            {/* Prompt Examples - Always visible */}
+            <div className="space-y-4 mt-6">
                     {/* Basic Prompts */}
                     <div className="flex flex-wrap gap-2 justify-center">
                       {BASIC_PROMPTS.map((example) => (
@@ -2912,50 +3145,75 @@ export default function Home() {
                         )}
                       </div>
                     )}
+            </div>
+          </div>
+
+            {/* Processing Mode Selection - Only show when not video and multiple images available */}
+            {!hasVideoFiles && uploadedFiles.length >= 2 && (
+              <div className="flex justify-center mb-4">
+                <div className="bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
+                  <div className="text-center mb-3">
+                    <h3 className="text-white text-sm font-medium mb-1">Choose Processing Mode:</h3>
+                    <p className="text-gray-300 text-xs">
+                      {processingMode === 'variations' 
+                        ? "Generate multiple character variations from your images (Nano Banana)" 
+                        : "Generate video from start frame (left) → end frame (right) transition (End Frame by Minimax)"
+                      }
+                    </p>
                   </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setProcessingMode('variations')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        processingMode === 'variations'
+                          ? 'bg-white text-black'
+                          : 'bg-transparent text-white hover:bg-gray-700'
+                      }`}
+                    >
+                      <Images className="w-4 h-4 inline mr-2" />
+                      Character Variations
+                    </button>
+                    <button
+                      onClick={() => setProcessingMode('endframe')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        processingMode === 'endframe'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-transparent text-white hover:bg-green-600 hover:text-white'
+                      }`}
+                    >
+                      <Camera className="w-4 h-4 inline mr-2" />
+                      Start → End Video
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                  {/* Processing Mode Selection - Only show when not video and multiple images available */}
-                  {!hasVideoFiles && uploadedFiles.length >= 2 && (
-                    <div className="flex justify-center mb-4">
-                      <div className="bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
-                        <div className="text-center mb-3">
-                          <h3 className="text-white text-sm font-medium mb-1">Choose Processing Mode:</h3>
-                          <p className="text-gray-300 text-xs">
-                                                      {processingMode === 'variations' 
-                            ? "Generate multiple character variations from your images (Nano Banana)" 
-                            : "Generate video from start frame (left) → end frame (right) transition (Minimax)"
-                          }
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col items-center gap-4 mt-6">
+                    {/* Mode Selector - Show when ambiguous */}
+                    {determineGenerationMode() === null && uploadedFiles.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-2 mb-4">
+                        {getAvailableModes().map((mode) => (
                           <button
-                            onClick={() => setProcessingMode('variations')}
+                            key={mode}
+                            onClick={() => setGenerationMode(mode)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              processingMode === 'variations'
-                                ? 'bg-white text-black'
-                                : 'bg-transparent text-white hover:bg-gray-700'
+                              generationMode === mode
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                             }`}
                           >
-                            <Images className="w-4 h-4 inline mr-2" />
-                            Character Variations
+                            {mode === 'nano-banana' && 'Generate Character Variations (Nano Banana)'}
+                            {mode === 'runway-t2i' && 'Generate Image from Text (Gen 4)'}
+                            {mode === 'runway-video' && 'Process Video (Aleph)'}
+                            {mode === 'endframe' && 'Generate Start → End Video'}
                           </button>
-                          <button
-                            onClick={() => setProcessingMode('endframe')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              processingMode === 'endframe'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-transparent text-white hover:bg-green-600 hover:text-white'
-                            }`}
-                          >
-                            <Camera className="w-4 h-4 inline mr-2" />
-                            Start → End Video
-                          </button>
-                        </div>
+                        ))}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Action Button */}
+                    {/* Main Action Button */}
                   <div className="flex justify-center">
                     {hasVideoFiles ? (
                       // Video files - automatically use ALEPH model
@@ -2972,11 +3230,30 @@ export default function Home() {
                         ) : (
                           <>
                             <Camera className="w-5 h-5" />
-                            Process Video (ALEPH)
+                            Process Video (Aleph)
                           </>
                         )}
                       </button>
-                    ) : processingMode === 'variations' ? (
+                      ) : (generationMode === 'runway-t2i' || (uploadedFiles.length === 0 && !generationMode)) ? (
+                        // Text-to-image generation
+                        <button
+                          onClick={handleTextToImage}
+                          disabled={processing.isProcessing || !prompt.trim()}
+                          className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          {processing.isProcessing && generationMode === 'runway-t2i' ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              {processing.currentStep}
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-5 h-5" />
+                              Generate Image from Text (Gen 4)
+                            </>
+                          )}
+                        </button>
+                      ) : processingMode === 'variations' || generationMode === 'nano-banana' ? (
                       // Character variations - Nano Banana
                       <button
                         onClick={handleProcessCharacter}
@@ -3015,6 +3292,7 @@ export default function Home() {
                         )}
                       </button>
                     )}
+                    </div>
                   </div>
 
                   {processing.isProcessing && (
@@ -3087,15 +3365,12 @@ export default function Home() {
                         ></div>
                       </div>
                       <div className="mt-2 text-xs text-gray-400 text-center">
-                        Estimated time: {estimatedVideoTime}s • Model: {runwayTaskId ? 'Gen4 Aleph' : 'Unknown'}
+                        Estimated time: {estimatedVideoTime}s • Model: {runwayTaskId ? 'Aleph' : 'Unknown'}
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
         </div>
 
         {/* Error Display */}
@@ -3203,8 +3478,6 @@ export default function Home() {
             </div>
           </div>
         )}
-        </div>
-        </div>
 
         {/* Gallery Panel */}
         {showGallery && (
@@ -3408,7 +3681,7 @@ export default function Home() {
                                               className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors"
                                             >
                                               Open in New Tab
-                                            </button>
+                                          </button>
                                           </div>
                                         </div>
                                       </div>

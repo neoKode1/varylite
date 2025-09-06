@@ -416,6 +416,8 @@ QUALITY ENHANCEMENTS (only if they support the user's vision):
 - Ensure character consistency across variations
 - Enhance visual quality without changing the core concept
 
+CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
+
 RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their specific requests.`;
 
     // Convert all base64 images to the format expected by Gemini
@@ -511,6 +513,9 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             // Add general quality improvements
             nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
+            
+            // Add subtle negative prompts to prevent character duplication
+            nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
             
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
