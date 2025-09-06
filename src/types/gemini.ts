@@ -9,6 +9,8 @@ export interface CharacterVariation {
   angle: string;
   pose: string;
   imageUrl?: string; // URL to the generated image
+  videoUrl?: string; // URL to the generated video
+  fileType?: 'image' | 'video'; // Type of generated content
 }
 
 export interface CharacterVariationResponse {

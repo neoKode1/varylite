@@ -5,6 +5,12 @@ import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Tras
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { useUserGallery } from '@/hooks/useUserGallery';
+import { Header } from '@/components/Header';
+import { AuthModal } from '@/components/AuthModal';
+import { UsageLimitBanner, UsageCounter } from '@/components/UsageLimitBanner';
 
 // Ko-fi widget types
 declare global {
@@ -523,6 +529,13 @@ interface StoredVariation extends CharacterVariation {
 }
 
 export default function Home() {
+  const { user } = useAuth();
+  const { canGenerate, trackUsage, isAnonymous } = useUsageTracking();
+  const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
+  
+  // Note: Automatic duplicate removal removed to prevent infinite loop
+  // Use the "Fix Duplicates" button in development mode if needed
+  
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [prompt, setPrompt] = useState('');
   const [processing, setProcessing] = useState<ProcessingState>({
@@ -532,8 +545,11 @@ export default function Home() {
   });
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [gallery, setGallery] = useState<StoredVariation[]>([]);
   const [showGallery, setShowGallery] = useState(true);
+  
+  // Authentication UI state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | 'reset'>('signin');
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
@@ -582,12 +598,14 @@ export default function Home() {
       
       video.onloadedmetadata = () => {
         const duration = video.duration;
-        console.log(`📹 Video duration: ${duration} seconds`);
+        console.log(`📹 Video duration: ${duration} seconds (exact: ${duration})`);
         
-        if (duration > 5) {
-          showAnimatedErrorNotification(`User Error: Video too long! ${duration.toFixed(1)}s exceeds 5s limit! TOASTY!`, 'toasty');
+        // Allow videos up to 6 seconds (frame-to-frame generation creates ~6s videos)
+        if (duration > 6.0) {
+          showAnimatedErrorNotification(`User Error: Video too long! ${duration.toFixed(1)}s exceeds 6s limit! TOASTY!`, 'toasty');
           resolve(false);
         } else {
+          console.log(`✅ Video duration ${duration.toFixed(1)}s is within 6s limit`);
           resolve(true);
         }
       };
@@ -664,17 +682,12 @@ export default function Home() {
     }
   }, [hasVideoFiles, uploadedFiles.length]);
 
-  // Load gallery from localStorage on component mount
+  // Migrate localStorage to database when user signs up
   useEffect(() => {
-    const savedGallery = localStorage.getItem('varyai-gallery');
-    if (savedGallery) {
-      try {
-        setGallery(JSON.parse(savedGallery));
-      } catch (error) {
-        console.error('Error loading gallery from localStorage:', error);
-      }
+    if (user) {
+      migrateLocalStorageToDatabase();
     }
-  }, []);
+  }, [user, migrateLocalStorageToDatabase]);
 
   // Update video generation progress in real-time
   useEffect(() => {
@@ -688,34 +701,36 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [runwayTaskId, videoGenerationStartTime]);
 
-  // Save gallery to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('varyai-gallery', JSON.stringify(gallery));
-  }, [gallery]);
+  // Authentication handlers
+  const handleSignUpClick = () => {
+    setAuthModalMode('signup');
+    setShowAuthModal(true);
+  };
 
-  // Add variations to gallery
-  const addToGallery = useCallback((newVariations: CharacterVariation[], originalPrompt: string, originalImagePreview?: string) => {
-    const timestamp = Date.now();
-    const storedVariations: StoredVariation[] = newVariations.map(variation => ({
-      ...variation,
-      timestamp,
-      originalPrompt,
-      originalImagePreview
-    }));
-    
-    setGallery(prev => [...storedVariations, ...prev]); // Add new items to the beginning
-  }, []);
+  const handleSignInClick = () => {
+    setAuthModalMode('signin');
+    setShowAuthModal(true);
+  };
 
-  // Clear gallery
-  const clearGallery = useCallback(() => {
-    setGallery([]);
-    localStorage.removeItem('varyai-gallery');
-  }, []);
+  const handleSaveToAccountClick = async () => {
+    if (!user) {
+      handleSignUpClick();
+      return;
+    }
 
-  // Remove single item from gallery
-  const removeFromGallery = useCallback((variationId: string, timestamp: number) => {
-    setGallery(prev => prev.filter(item => !(item.id === variationId && item.timestamp === timestamp)));
-  }, []);
+    try {
+      // Save current variations to account
+      if (variations.length > 0) {
+        await saveToAccount(variations, prompt, uploadedFiles[0]?.preview);
+        showAnimatedErrorNotification('User Error: Work saved to your account! TOASTY!', 'toasty');
+      } else {
+        showAnimatedErrorNotification('User Error: No work to save! TOASTY!', 'toasty');
+      }
+    } catch (error) {
+      console.error('Error saving to account:', error);
+      showAnimatedErrorNotification('Network Error: Failed to save work! TOASTY!', 'toasty');
+    }
+  };
 
   // Toggle prompt expansion
   const togglePromptExpansion = useCallback((itemKey: string) => {
@@ -960,6 +975,13 @@ export default function Home() {
       const newVariations = data.variations || [];
       console.log('🎨 Received variations:', newVariations.length, newVariations);
       setVariations(newVariations);
+      
+      // Track usage
+      await trackUsage('image_generation', 'nano_banana', {
+        prompt: varyPrompt,
+        variations_count: newVariations.length,
+        service: 'nano_banana'
+      });
       
       // Add to gallery
       if (newVariations.length > 0) {
@@ -1426,6 +1448,12 @@ export default function Home() {
   };
 
   const handleCharacterVariation = async () => {
+    // Check if user can generate
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
     setProcessing({
       isProcessing: true,
       progress: 20,
@@ -1457,6 +1485,13 @@ export default function Home() {
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       const newVariations = data.variations || [];
       setVariations(newVariations);
+      
+      // Track usage
+      await trackUsage('character_variation', 'gemini', {
+        prompt: prompt.trim(),
+        variations_count: newVariations.length,
+        file_type: uploadedFiles[0]?.fileType
+      });
       
       // Add to gallery
       if (newVariations.length > 0) {
@@ -1554,7 +1589,7 @@ export default function Home() {
         prompt: prompt.trim(),
         model,
         ratio: '1280:720', // Default ratio for gen4_aleph
-        duration: 5, // Maximum duration for gen4_aleph (Runway limit)
+        duration: 6, // Frame-to-frame generation creates ~6s videos
         promptText: prompt.trim()
       };
 
@@ -1700,11 +1735,17 @@ export default function Home() {
           
           console.log('🎬 Adding video to gallery:', videoVariation);
           console.log('🎬 Video URL:', videoUrl);
-          setGallery(prev => {
-            const newGallery = [videoVariation, ...prev];
-            console.log('🎬 Updated gallery:', newGallery);
-            return newGallery;
-          });
+          
+          // Add to gallery using the hook
+          await addToGallery([{
+            id: videoVariation.id,
+            description: videoVariation.description,
+            angle: videoVariation.angle,
+            pose: videoVariation.pose,
+            imageUrl: videoVariation.imageUrl,
+            videoUrl: videoVariation.videoUrl,
+            fileType: videoVariation.fileType
+          }], prompt, uploadedFiles[0]?.preview);
           setError(null);
           showNotification('🎬 Video editing completed successfully!', 'success');
           
@@ -1993,7 +2034,16 @@ export default function Home() {
           originalPrompt: prompt
         };
 
-        setGallery(prev => [endFrameVariation, ...prev]);
+        // Add to gallery using the hook
+        await addToGallery([{
+          id: endFrameVariation.id,
+          description: endFrameVariation.description,
+          angle: endFrameVariation.angle,
+          pose: endFrameVariation.pose,
+          imageUrl: endFrameVariation.imageUrl,
+          videoUrl: endFrameVariation.videoUrl,
+          fileType: endFrameVariation.fileType
+        }], prompt, uploadedFiles[0]?.preview);
         setError(null);
         showNotification('🎬 EndFrame video generated successfully!', 'success');
         
@@ -2141,6 +2191,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
+      {/* Header */}
+      <Header 
+        onSignUpClick={handleSignUpClick}
+        onSignInClick={handleSignInClick}
+      />
+      
       {/* Semi-transparent overlay for content readability */}
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       
@@ -2183,6 +2239,15 @@ export default function Home() {
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'}`}>
           <div className="container mx-auto px-4 py-8">
+            {/* Usage Limit Banner */}
+            <UsageLimitBanner 
+              onSignUpClick={handleSignUpClick}
+              onSaveToAccountClick={handleSaveToAccountClick}
+            />
+            
+            {/* Usage Counter */}
+            <UsageCounter onSignUpClick={handleSignUpClick} />
+            
         {/* Funding Message - Above Header */}
         <div className="mb-4 bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-lg p-3 border border-gray-700 border-opacity-50">
           <div className="text-center">
@@ -3153,6 +3218,17 @@ export default function Home() {
                   <span className="text-sm lg:text-base">({gallery.length})</span>
                 </h2>
                 <div className="flex gap-1 lg:gap-2">
+                  {/* Development-only duplicate fix button */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <button
+                      onClick={removeDuplicates}
+                      className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-xs lg:text-sm"
+                      title="Remove duplicates (dev only)"
+                    >
+                      <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
+                      <span className="hidden sm:inline">Fix Duplicates</span>
+                    </button>
+                  )}
                   <button
                     onClick={clearGallery}
                     className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs lg:text-sm"
@@ -3180,9 +3256,11 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {gallery.map((item) => {
-                    const itemKey = `${item.id}-${item.timestamp}`;
+                  {gallery.map((item, index) => {
+                    // Create a more robust unique key that handles duplicates
+                    const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
+                    
                     
                     // Debug logging for video items
                     if (item.fileType === 'video') {
@@ -3813,6 +3891,13 @@ export default function Home() {
           </div>
         </div>
       )}
+      
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode={authModalMode}
+      />
     </div>
   );
 }
