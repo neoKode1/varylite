@@ -37,12 +37,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('Error getting session:', error)
-      } else {
-        setSession(session)
-        setUser(session?.user ?? null)
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('Error getting session:', error)
+          // Clear any invalid session data
+          setSession(null)
+          setUser(null)
+        } else {
+          setSession(session)
+          setUser(session?.user ?? null)
+          console.log('Initial session loaded:', session?.user?.email || 'No user')
+        }
+      } catch (error) {
+        console.error('Failed to get initial session:', error)
+        setSession(null)
+        setUser(null)
       }
       setLoading(false)
     }
@@ -53,15 +63,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-
-        // Handle user creation
-        if (session?.user) {
-          // User profile will be created automatically by the database trigger
-          console.log('User session:', session.user.email)
+        
+        // Handle different auth events
+        switch (event) {
+          case 'SIGNED_IN':
+            setSession(session)
+            setUser(session?.user ?? null)
+            console.log('User signed in:', session?.user?.email)
+            break
+          case 'SIGNED_OUT':
+            setSession(null)
+            setUser(null)
+            console.log('User signed out')
+            break
+          case 'TOKEN_REFRESHED':
+            setSession(session)
+            setUser(session?.user ?? null)
+            console.log('Token refreshed for:', session?.user?.email)
+            break
+          case 'USER_UPDATED':
+            setSession(session)
+            setUser(session?.user ?? null)
+            console.log('User updated:', session?.user?.email)
+            break
+          default:
+            setSession(session)
+            setUser(session?.user ?? null)
         }
+        
+        setLoading(false)
       }
     )
 
@@ -92,10 +122,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
+      
+      if (data.session) {
+        console.log('Sign in successful, session created')
+        // Force a session check to ensure state is updated
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        setSession(currentSession)
+        setUser(currentSession?.user ?? null)
+      }
+      
       return { error }
     } catch (error) {
       console.error('Sign in error:', error)

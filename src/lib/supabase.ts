@@ -7,8 +7,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false, // Disable to prevent redirect issues on mobile
-    flowType: 'pkce' // Use PKCE flow for better mobile compatibility
+    detectSessionInUrl: true, // Enable to handle auth redirects properly
+    flowType: 'implicit' // Use implicit flow for better compatibility
   }
 })
 
