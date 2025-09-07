@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { 
   User, 
   Settings, 
@@ -100,124 +101,254 @@ export default function ProfilePage() {
     }
   }, [user, router]);
 
-  // Mock profile data - replace with actual API call
+  // Load profile data from database
   useEffect(() => {
     if (user) {
-      // Simulate API call
-      setTimeout(() => {
-        setProfile({
-          id: user.id,
-          displayName: user.user_metadata?.full_name || 'VaryAI User',
-          username: user.user_metadata?.username || 'varyai_user',
-          email: user.email || '',
-          bio: 'Creative AI enthusiast exploring the possibilities of character generation!',
-          avatar: user.user_metadata?.avatar_url,
-          socialLinks: {
-            twitter: '',
-            instagram: '',
-            website: ''
-          },
-          preferences: {
-            defaultModel: 'runway-t2i',
-            defaultStyle: 'anime',
-            notifications: true,
-            publicProfile: true,
-            toastyNotifications: true
-          },
-          stats: {
-            totalGenerations: 47,
-            favoriteGenerations: 12,
-            accountCreated: '2024-01-15',
-            lastActive: '2024-09-07',
-            collections: 3
-          },
-          collections: [
-            {
-              id: '1',
-              name: 'Anime Characters',
-              description: 'My favorite anime-style character generations',
-              isPublic: true,
-              itemCount: 8,
-              createdAt: '2024-08-15'
-            },
-            {
-              id: '2',
-              name: 'Smurfs Collection',
-              description: 'Smurf-style character variations',
-              isPublic: false,
-              itemCount: 5,
-              createdAt: '2024-08-20'
-            },
-            {
-              id: '3',
-              name: 'Video Experiments',
-              description: 'EndFrame video generation tests',
-              isPublic: true,
-              itemCount: 3,
-              createdAt: '2024-09-01'
-            }
-          ],
-          favoritePresets: ['anime', 'smurfs', 'care-bears']
-        });
-
-        // Mock gallery items
-        setGalleryItems([
-          {
-            id: '1',
-            type: 'image',
-            url: '/api/placeholder/400/400',
-            title: 'Anime Warrior',
-            description: 'Generated with anime style preset',
-            isPublic: true,
-            isFavorite: true,
-            collectionId: '1',
-            createdAt: '2024-09-06',
-            generationModel: 'runway-t2i',
-            prompt: 'Apply anime style to the character'
-          },
-          {
-            id: '2',
-            type: 'image',
-            url: '/api/placeholder/400/400',
-            title: 'Smurf Character',
-            description: 'Blue smurf-style character',
-            isPublic: false,
-            isFavorite: false,
-            collectionId: '2',
-            createdAt: '2024-09-05',
-            generationModel: 'nano-banana',
-            prompt: 'Apply the Smurfs style to the character'
-          },
-          {
-            id: '3',
-            type: 'video',
-            url: '/api/placeholder/400/400',
-            title: 'Transformation Video',
-            description: 'EndFrame video generation',
-            isPublic: true,
-            isFavorite: true,
-            collectionId: '3',
-            createdAt: '2024-09-04',
-            generationModel: 'endframe',
-            prompt: 'Character transformation'
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
+      loadProfileData();
     }
   }, [user]);
 
-  const handleSaveProfile = async () => {
-    // TODO: Implement API call to save profile
-    console.log('Saving profile:', profile);
-    setIsEditing(false);
+  const loadProfileData = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Loading profile data...');
+      
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('No active session');
+      }
+
+      console.log('✅ Session found, fetching profile data...');
+
+      // Fetch profile data from API
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Profile API error:', response.status, errorText);
+        throw new Error(`Failed to fetch profile: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Profile data loaded successfully:', data);
+      
+      // Transform database data to component format
+      setProfile({
+        id: data.profile.id,
+        displayName: data.profile.name || 'VaryAI User',
+        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'varyai_user',
+        email: data.profile.email || '',
+        bio: 'Creative AI enthusiast exploring the possibilities of character generation!',
+        avatar: data.profile.profile_picture,
+        socialLinks: {
+          twitter: '',
+          instagram: '',
+          website: ''
+        },
+        preferences: {
+          defaultModel: data.profile.preferences?.defaultModel || 'runway-t2i',
+          defaultStyle: data.profile.preferences?.defaultStyle || 'anime',
+          notifications: data.profile.preferences?.notifications ?? true,
+          publicProfile: data.profile.preferences?.publicProfile ?? true,
+          toastyNotifications: data.profile.preferences?.toastyNotifications ?? true
+        },
+        stats: {
+          totalGenerations: data.profile.usage_stats?.total_generations || 0,
+          favoriteGenerations: 0,
+          accountCreated: data.profile.created_at || new Date().toISOString(),
+          lastActive: data.profile.usage_stats?.last_activity || new Date().toISOString(),
+          collections: 0
+        },
+        collections: [],
+        favoritePresets: []
+      });
+
+      // Set gallery items from API response
+      setGalleryItems(data.gallery.map((item: any) => ({
+        id: item.id,
+        type: item.file_type,
+        url: item.image_url || item.video_url || '/api/placeholder/400/400',
+        thumbnail: item.file_type === 'video' ? '/api/placeholder/200/200' : undefined,
+        title: item.description,
+        description: item.description,
+        isPublic: false, // Default to private
+        isFavorite: false, // Default to not favorite
+        collectionId: undefined,
+        createdAt: item.created_at,
+        generationModel: 'runway-t2i', // Default model
+        prompt: item.original_prompt
+      })));
+
+      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error loading profile:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        user: user?.id,
+        email: user?.email
+      });
+      setLoading(false);
+    }
   };
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSaveProfile = async () => {
+    if (!profile || !user) return;
+    
+    try {
+      setLoading(true);
+      
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Update profile via API
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profile.displayName,
+          profile_picture: profile.avatar,
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save profile');
+      }
+
+      const data = await response.json();
+      console.log('Profile saved successfully:', data);
+      setIsEditing(false);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement avatar upload
+    if (!file || !profile) return;
+
+    try {
+      setLoading(true);
       console.log('Uploading avatar:', file);
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error('Image size must be less than 2MB');
+      }
+
+      // Create a preview URL for immediate display
+      const previewUrl = URL.createObjectURL(file);
+      
+      // Update the profile state immediately with the preview
+      setProfile(prev => prev ? {
+        ...prev,
+        avatar: previewUrl
+      } : null);
+
+      // Compress and convert image to base64
+      const compressedBase64 = await new Promise<string>((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Set canvas size (max 200x200 for profile pictures)
+          const maxSize = 200;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% quality
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      console.log('Compressed image size:', compressedBase64.length, 'characters');
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Upload the avatar via the profile API
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profile.displayName,
+          profile_picture: compressedBase64, // Send compressed base64 data
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Avatar upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`Failed to upload avatar: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Avatar uploaded successfully:', data);
+
+      // Update with the actual URL from the server if provided
+      if (data.profile.profile_picture) {
+        setProfile(prev => prev ? {
+          ...prev,
+          avatar: data.profile.profile_picture
+        } : null);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setLoading(false);
+      
+      // Revert the preview on error
+      setProfile(prev => prev ? {
+        ...prev,
+        avatar: profile.avatar // Revert to original
+      } : null);
     }
   };
 
@@ -307,7 +438,20 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Profile not found</div>
+        <div className="text-center">
+          <div className="text-white text-xl mb-4">Profile not found</div>
+          <div className="text-gray-300 text-sm mb-4">
+            {user ? 'Unable to load your profile data.' : 'Please sign in to view your profile.'}
+          </div>
+          {user && (
+            <button
+              onClick={() => loadProfileData()}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Retry Loading Profile
+            </button>
+          )}
+        </div>
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, UserPlus, LogIn, Sparkles, Zap, Users, Heart } from 'lucide-react';
+import { AuthModal } from '@/components/AuthModal';
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -50,6 +51,19 @@ export default function LandingPage() {
             <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
               The first ever fully funded generation or AI app made by creators, led by creators.
             </p>
+            
+            {/* Sign In Option - Moved here */}
+            <div className="mb-6">
+              <p className="text-gray-300 mb-3">Already have an account?</p>
+              <button
+                onClick={handleSignIn}
+                className="flex items-center justify-center space-x-2 text-white border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-colors mx-auto"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>→ Sign In</span>
+              </button>
+            </div>
+            
             <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
               Transform your images and videos with the power of AI. Create stunning variations, 
               change backgrounds, and bring your creative vision to life - all supported by our amazing community.
@@ -101,17 +115,6 @@ export default function LandingPage() {
                           </div>
                         </div>
 
-              {/* Sign In Option */}
-                        <div>
-                <p className="text-gray-300 mb-2">Already have an account?</p>
-                              <button
-                  onClick={handleSignIn}
-                  className="flex items-center space-x-2 text-white border border-white border-opacity-30 px-6 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition-colors"
-                              >
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In</span>
-                              </button>
-                          </div>
                         </div>
 
             {/* Community Support */}
@@ -213,6 +216,13 @@ export default function LandingPage() {
                                   </div>
                           </div>
                         )}
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode={authMode}
+      />
     </div>
   );
 }

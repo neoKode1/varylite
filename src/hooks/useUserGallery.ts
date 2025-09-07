@@ -11,6 +11,7 @@ interface StoredVariation extends CharacterVariation {
   originalImagePreview?: string
   videoUrl?: string
   fileType?: 'image' | 'video'
+  databaseId?: string // Database primary key for deletion
 }
 
 interface UserGalleryHook {
@@ -54,7 +55,8 @@ export const useUserGallery = (): UserGalleryHook => {
         fileType: item.file_type,
         timestamp: new Date(item.created_at).getTime(),
         originalPrompt: item.original_prompt,
-        originalImagePreview: item.original_image_preview
+        originalImagePreview: item.original_image_preview,
+        databaseId: item.id // Preserve the database primary key
       }))
 
       setGallery(formattedGallery)
@@ -180,19 +182,28 @@ export const useUserGallery = (): UserGalleryHook => {
 
   const removeFromGallery = useCallback(async (variationId: string, timestamp: number) => {
     if (user) {
-      // Remove from database
+      // Find the item to get its database ID
+      const itemToDelete = gallery.find(item => item.id === variationId && item.timestamp === timestamp)
+      
+      if (!itemToDelete || !itemToDelete.databaseId) {
+        console.error('Item not found or missing database ID:', { variationId, timestamp })
+        return
+      }
+
+      // Remove from database using the primary key
       try {
         const { error } = await supabase
           .from('galleries')
           .delete()
-          .eq('user_id', user.id)
-          .eq('variation_id', variationId)
-          .eq('created_at', new Date(timestamp).toISOString())
+          .eq('id', itemToDelete.databaseId)
+          .eq('user_id', user.id) // Extra security check
 
         if (error) {
           console.error('Error removing from database:', error)
           return
         }
+        
+        console.log('Successfully deleted item from database:', itemToDelete.databaseId)
       } catch (error) {
         console.error('Error removing from database:', error)
         return
@@ -212,7 +223,7 @@ export const useUserGallery = (): UserGalleryHook => {
     }
 
     setGallery(prev => prev.filter(item => !(item.id === variationId && item.timestamp === timestamp)))
-  }, [user])
+  }, [user, gallery])
 
   const clearGallery = useCallback(async () => {
     if (user) {

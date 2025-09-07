@@ -109,7 +109,7 @@ export const useUsageTracking = (): UsageTrackingHook => {
 
   const trackUsage = useCallback(async (
     actionType: 'image_generation' | 'video_generation' | 'character_variation' | 'background_change',
-    serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini',
+    serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini' | 'veo3_fast' | 'minimax_2.0',
     metadata: any = {}
   ) => {
     try {

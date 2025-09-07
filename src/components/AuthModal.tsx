@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAnimatedError } from '@/hooks/useAnimatedError'
+import { useRouter } from 'next/navigation'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { signIn, signUp, resetPassword } = useAuth()
   const { showError } = useAnimatedError()
+  const router = useRouter()
   
   const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>(defaultMode)
   
@@ -99,6 +101,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           showError(`User Error: ${error.message}! TOASTY!`, 'toasty')
         } else {
           handleClose()
+          // Redirect to generate page after successful sign-in
+          router.push('/generate')
         }
       } else if (mode === 'signup') {
         const { error } = await signUp(formData.email, formData.password, formData.name)

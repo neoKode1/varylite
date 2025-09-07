@@ -5,7 +5,7 @@ import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Tras
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
 // Generation mode types
-type GenerationMode = 'nano-banana' | 'runway-t2i' | 'runway-video' | 'endframe';
+type GenerationMode = 'nano-banana' | 'runway-t2i' | 'runway-video' | 'endframe' | 'veo3-fast' | 'minimax-2.0';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -564,6 +564,7 @@ interface StoredVariation extends CharacterVariation {
   originalImagePreview?: string;
   videoUrl?: string; // For Runway video editing results
   fileType?: 'image' | 'video'; // Track if this is an image or video result
+  databaseId?: string; // Database primary key for deletion
 }
 
 export default function Home() {
@@ -594,6 +595,7 @@ export default function Home() {
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
   const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle'>('shot');
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
+  const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
   
   // Funding meter state
   const [fundingData, setFundingData] = useState({
@@ -706,7 +708,6 @@ export default function Home() {
       whoopeeButton.click();
     }
   };
-  const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null); // Track current generation mode
   const [textToImageTaskId, setTextToImageTaskId] = useState<string | null>(null); // Track text-to-image task ID
   const [textToImagePollingTimeout, setTextToImagePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
@@ -740,7 +741,7 @@ export default function Home() {
     } else if (hasImages && uploadedFiles.length >= 2) {
       return 'endframe';
     } else if (hasImages && uploadedFiles.length === 1) {
-      // Ambiguous case - could be nano-banana or runway-t2i
+      // Ambiguous case - could be nano-banana, runway-t2i, veo3-fast, or minimax-2.0
       return null; // Let user choose
     } else if (!hasImages && !hasVideos) {
       return 'runway-t2i';
@@ -761,6 +762,8 @@ export default function Home() {
     
     if (hasImages && uploadedFiles.length === 1) {
       modes.push('nano-banana');
+      modes.push('veo3-fast'); // Image-to-video with Veo3
+      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
     }
     
     if (hasVideos && !hasImages) {
@@ -773,6 +776,17 @@ export default function Home() {
     
     return modes;
   }, [uploadedFiles]);
+
+  // Auto-detect generation mode when files change
+  useEffect(() => {
+    const detectedMode = determineGenerationMode();
+    if (detectedMode !== null) {
+      setGenerationMode(detectedMode);
+    } else {
+      // For ambiguous cases, don't auto-set, let user choose
+      setGenerationMode(null);
+    }
+  }, [uploadedFiles, determineGenerationMode]);
 
   // Check video duration and show Toasty error if too long
   const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
@@ -2541,6 +2555,214 @@ export default function Home() {
   }, [textToImagePollingTimeout, showNotification, addToGallery, trackUsage]);
 
   // EndFrame generation function - works with two images (start and end frame)
+  // Handle Veo3 Fast image-to-video generation
+  const handleVeo3FastGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (uploadedFiles.length === 0) {
+      showAnimatedErrorNotification('User Error: Please upload an image first! TOASTY!', 'toasty');
+      return;
+    }
+
+    const imageFile = uploadedFiles.find(file => file.fileType === 'image');
+    if (!imageFile) {
+      showAnimatedErrorNotification('User Error: Please upload a valid image! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Veo3 Fast generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Uploading image to Veo3 Fast...'
+      });
+
+      const response = await fetch('/api/veo3-fast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          image_url: imageFile.preview,
+          duration: "8s",
+          generate_audio: true,
+          resolution: "720p"
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Veo3 Fast...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing result...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `veo3-${Date.now()}`,
+        description: `Veo3 Fast: ${prompt}`,
+        angle: 'Image-to-Video',
+        pose: 'Veo3 Fast Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Veo3 Fast generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Veo3 Fast'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  // Handle Minimax 2.0 image-to-video generation
+  const handleMinimax2Generation = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (uploadedFiles.length === 0) {
+      showAnimatedErrorNotification('User Error: Please upload an image first! TOASTY!', 'toasty');
+      return;
+    }
+
+    const imageFile = uploadedFiles.find(file => file.fileType === 'image');
+    if (!imageFile) {
+      showAnimatedErrorNotification('User Error: Please upload a valid image! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Minimax 2.0 generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Uploading image to Minimax 2.0...'
+      });
+
+      const response = await fetch('/api/minimax-2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          image_url: imageFile.preview,
+          duration: "8s",
+          generate_audio: true,
+          resolution: "720p"
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Minimax 2.0...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing result...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `minimax2-${Date.now()}`,
+        description: `Minimax 2.0: ${prompt}`,
+        angle: 'Image-to-Video',
+        pose: 'Minimax 2.0 Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Minimax 2.0 generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Minimax 2.0'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
   const handleEndFrameGeneration = async () => {
     if (uploadedFiles.length < 2) {
       setError('Please upload two images: one for the start frame and one for the end frame');
@@ -3012,6 +3234,8 @@ export default function Home() {
                       {mode === 'runway-t2i' && 'Generate Image'}
                       {mode === 'runway-video' && 'Process Video (Aleph)'}
                       {mode === 'endframe' && 'Generate Start → End Video'}
+                      {mode === 'veo3-fast' && 'Animate Image (Veo3 Fast)'}
+                      {mode === 'minimax-2.0' && 'Animate Image (Minimax 2.0)'}
                     </button>
                   ))}
                 </div>
@@ -3073,6 +3297,44 @@ export default function Home() {
                       <>
                         <Images className="w-5 h-5" />
                         Generate Character Variations (Nano Banana)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'veo3-fast' ? (
+                  // Veo3 Fast image-to-video
+                  <button
+                    onClick={handleVeo3FastGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Animate Image (Veo3 Fast)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'minimax-2.0' ? (
+                  // Minimax 2.0 image-to-video
+                  <button
+                    onClick={handleMinimax2Generation}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Animate Image (Minimax 2.0)
                       </>
                     )}
                   </button>

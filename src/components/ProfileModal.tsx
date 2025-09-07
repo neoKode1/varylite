@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   User, 
   Settings, 
@@ -25,6 +25,8 @@ import {
   FolderPlus
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { useUserGallery } from '@/hooks/useUserGallery';
 
 interface UserProfile {
   id: string;
@@ -83,17 +85,17 @@ interface ProfileModalProps {
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { gallery } = useUserGallery(); // Use real gallery data
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats'>('profile');
   const [loading, setLoading] = useState(false);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites' | 'public'>('all');
 
-  // Mock user profile data
+  // Real user profile data
   const [profile, setProfile] = useState<UserProfile>({
     id: user?.id || '1',
     displayName: user?.user_metadata?.name || 'User',
@@ -114,80 +116,230 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       toastyNotifications: true
     },
     stats: {
-      totalGenerations: 47,
-      favoriteGenerations: 12,
-      accountCreated: '2024-01-15',
+      totalGenerations: gallery.length,
+      favoriteGenerations: 0,
+      accountCreated: user?.created_at || '2024-01-15',
       lastActive: new Date().toISOString(),
-      collections: 3
+      collections: 0
     },
-    collections: [
-      {
-        id: '1',
-        name: 'My Favorites',
-        description: 'Best AI generations',
-        itemCount: 8,
-        isPublic: false
-      },
-      {
-        id: '2',
-        name: 'Character Variations',
-        description: 'Character style experiments',
-        itemCount: 15,
-        isPublic: true
-      },
-      {
-        id: '3',
-        name: 'Background Changes',
-        description: 'Background transformation tests',
-        itemCount: 12,
-        isPublic: false
-      }
-    ],
+    collections: [],
     favoritePresets: ['The Smurfs', 'Anime Style', 'Japanese Manga Style']
   });
 
-  // Mock gallery data
-  useEffect(() => {
-    setGalleryItems([
-      {
-        id: '1',
-        title: 'Smurf Character Variation',
-        description: 'Blue character with hood',
-        imageUrl: '/character-variation-1-variation-1.jpg',
-        fileType: 'image',
-        originalPrompt: 'Apply the Smurfs style to the character',
-        createdAt: '2024-01-15T10:30:00Z',
-        isFavorite: true,
-        isPublic: true
-      },
-      {
-        id: '2',
-        title: 'Anime Style Portrait',
-        description: 'Anime-style character portrait',
-        imageUrl: '/character-variation-2-variation-2.jpg',
-        fileType: 'image',
-        originalPrompt: 'Apply anime style to the character',
-        createdAt: '2024-01-14T15:45:00Z',
-        isFavorite: false,
-        isPublic: false
+  const loadProfileData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(prev => ({
+          ...prev,
+          displayName: data.profile.name || prev.displayName,
+          avatar: data.profile.profile_picture || prev.avatar,
+          bio: data.profile.bio || prev.bio,
+          socialLinks: {
+            ...prev.socialLinks,
+            ...data.profile.social_links
+          },
+          preferences: {
+            ...prev.preferences,
+            ...data.profile.preferences
+          },
+          stats: {
+            ...prev.stats,
+            totalGenerations: gallery.length,
+            lastActive: new Date().toISOString()
+          }
+        }));
       }
-    ]);
-  }, []);
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [gallery.length]);
+
+  // Load real profile data when modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      loadProfileData();
+    }
+  }, [isOpen, user, loadProfileData]);
+
+  // Convert real gallery data to ProfileModal format
+  const galleryItems: GalleryItem[] = gallery.map(item => ({
+    id: item.id,
+    title: item.description,
+    description: `${item.angle} - ${item.pose}`,
+    imageUrl: item.imageUrl,
+    videoUrl: item.videoUrl,
+    fileType: item.fileType || 'image',
+    originalPrompt: item.originalPrompt,
+    createdAt: new Date(item.timestamp).toISOString(),
+    isFavorite: false, // TODO: Add favorite functionality
+    isPublic: false,   // TODO: Add public/private functionality
+    collectionId: undefined
+  }));
 
   const handleSaveProfile = async () => {
-    setLoading(true);
-    // TODO: Save profile to database
-    setTimeout(() => {
-      setLoading(false);
+    if (!profile || !user) return;
+    
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profile.displayName,
+          profile_picture: profile.avatar,
+          bio: profile.bio,
+          social_links: profile.socialLinks,
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save profile');
+      }
+
+      const data = await response.json();
+      console.log('Profile saved successfully:', data);
       setIsEditing(false);
-    }, 1000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Upload avatar
-      console.log('Avatar upload:', file);
+    if (!file || !profile) return;
+
+    try {
+      setLoading(true);
+      console.log('Uploading avatar:', file);
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error('Image size must be less than 2MB');
+      }
+
+      // Create a preview URL for immediate display
+      const previewUrl = URL.createObjectURL(file);
+      
+      // Update the profile state immediately with the preview
+      setProfile(prev => ({
+        ...prev,
+        avatar: previewUrl
+      }));
+
+      // Compress and convert image to base64
+      const compressedBase64 = await new Promise<string>((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Set canvas size (max 200x200 for profile pictures)
+          const maxSize = 200;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% quality
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      console.log('Compressed image size:', compressedBase64.length, 'characters');
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Upload the avatar via the profile API
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profile.displayName,
+          profile_picture: compressedBase64, // Send compressed base64 data
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Avatar upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`Failed to upload avatar: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Avatar uploaded successfully:', data);
+
+      // Update with the actual URL from the server if provided
+      if (data.profile.profile_picture) {
+        setProfile(prev => ({
+          ...prev,
+          avatar: data.profile.profile_picture
+        }));
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setLoading(false);
+      
+      // Revert the preview on error
+      setProfile(prev => ({
+        ...prev,
+        avatar: profile.avatar // Revert to original
+      }));
     }
   };
 
@@ -210,16 +362,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     }
   };
 
+  // Note: Favorite and public toggle functionality would need to be implemented
+  // with database updates for the gallery items
   const handleToggleFavorite = (itemId: string) => {
-    setGalleryItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
-    ));
+    console.log('Toggle favorite for item:', itemId);
+    // TODO: Implement favorite functionality with database updates
   };
 
   const handleTogglePublic = (itemId: string) => {
-    setGalleryItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, isPublic: !item.isPublic } : item
-    ));
+    console.log('Toggle public for item:', itemId);
+    // TODO: Implement public/private functionality with database updates
   };
 
   const handleExportData = () => {
