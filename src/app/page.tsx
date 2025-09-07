@@ -2485,8 +2485,8 @@ export default function Home() {
       
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'}`}>
-          <div className="container mx-auto px-4 py-8">
+        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : ''}`}>
+          <div className="container mx-auto px-4 py-8 lg:px-8">
             {/* Usage Limit Banner */}
             <UsageLimitBanner 
               onSignUpClick={handleSignUpClick}
@@ -3502,9 +3502,14 @@ export default function Home() {
           </div>
         )}
 
+        {/* Mobile Gallery Backdrop */}
+        {showGallery && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setShowGallery(false)} />
+        )}
+        
         {/* Gallery Panel */}
         {showGallery && (
-          <div className="w-full lg:w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-t lg:border-t-0 lg:border-l border-gray-700 h-screen lg:h-screen overflow-y-auto">
+          <div className="w-full lg:w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-t lg:border-t-0 lg:border-l border-gray-700 h-screen lg:h-screen overflow-y-auto fixed lg:relative top-0 right-0 z-50 lg:z-auto transform lg:transform-none transition-transform duration-300 ease-in-out">
             <div className="p-4 lg:p-6">
               <div className="flex items-center justify-between mb-4 lg:mb-6">
                 <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
