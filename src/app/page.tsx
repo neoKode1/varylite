@@ -41,7 +41,7 @@ export default function LandingPage() {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-8">
-        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
+        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center space-y-8 lg:space-y-0 lg:space-x-12">
           {/* Logo - Left Side */}
           <div className="flex-shrink-0">
             <img
@@ -52,14 +52,14 @@ export default function LandingPage() {
         </div>
 
           {/* Content - Right Side */}
-          <div className="flex-1 text-left w-full lg:w-auto">
+          <div className="flex-1 text-center w-full lg:w-auto">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Welcome to VaryAI
           </h1>
-            <p className="text-xl text-gray-300 mb-4 max-w-2xl">
+            <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
               The first ever fully funded generation or AI app made by creators, led by creators.
             </p>
-            <p className="text-lg text-gray-400 mb-8 max-w-2xl">
+            <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
               Transform your images and videos with the power of AI. Create stunning variations, 
               change backgrounds, and bring your creative vision to life - all supported by our amazing community.
             </p>
@@ -145,12 +145,12 @@ export default function LandingPage() {
                 </div>
               
               {/* Donation Buttons */}
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
                 <a 
                   href="https://ko-fi.com/varyai" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   ⚡ Support on Ko-fi
                 </a>
@@ -158,7 +158,7 @@ export default function LandingPage() {
                   href="https://cash.app/$VaryAi" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   💚 Cash App
                 </a>
