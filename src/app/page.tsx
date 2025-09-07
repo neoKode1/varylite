@@ -278,6 +278,16 @@ const CHARACTER_STYLE_PROMPTS = [
     name: 'The Muppets',
     description: 'Beloved puppet characters from Jim Henson\'s iconic franchise, known for their humor, heart, and distinctive felt puppet aesthetic.',
     prompt: 'Apply the Muppets style to the character'
+  },
+  {
+    name: 'Anime Style',
+    description: 'Japanese animation style with large expressive eyes, vibrant colors, and dynamic character designs.',
+    prompt: 'Apply anime style to the character'
+  },
+  {
+    name: 'Japanese Manga Style',
+    description: 'Traditional Japanese comic book art style with detailed line work, dramatic expressions, and distinctive visual storytelling.',
+    prompt: 'Apply Japanese manga style to the character'
   }
 ];
 
