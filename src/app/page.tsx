@@ -654,6 +654,35 @@ export default function Home() {
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
   const [estimatedVideoTime, setEstimatedVideoTime] = useState<number>(120); // Default 2 minutes for gen4_aleph
   const [processingAction, setProcessingAction] = useState<string | null>(null); // Track which specific action is processing
+
+  // Content filtering function
+  const isBadContent = (content: string): boolean => {
+    const badContentIndicators = [
+      'NF SW',
+      'NSFW',
+      'not safe for work',
+      'inappropriate content',
+      'content policy violation',
+      'content blocked',
+      'generation failed',
+      'unsafe content',
+      'content rejected'
+    ];
+    
+    const lowerContent = content.toLowerCase();
+    return badContentIndicators.some(indicator => 
+      lowerContent.includes(indicator.toLowerCase())
+    );
+  };
+
+  // Show whoopee animation for rejected content
+  const showContentRejectedAnimation = () => {
+    // Trigger the whoopee animation
+    const whoopeeButton = document.querySelector('[data-whoopee="true"]') as HTMLButtonElement;
+    if (whoopeeButton) {
+      whoopeeButton.click();
+    }
+  };
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null); // Track current generation mode
   const [textToImageTaskId, setTextToImageTaskId] = useState<string | null>(null); // Track text-to-image task ID
   const [textToImagePollingTimeout, setTextToImagePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
@@ -1722,19 +1751,38 @@ export default function Home() {
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       const newVariations = data.variations || [];
-      setVariations(newVariations);
+      
+      // Filter out bad content variations
+      const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
+        const isBad = isBadContent(variation.description || '') || 
+                     isBadContent(variation.angle || '') || 
+                     isBadContent(variation.pose || '') ||
+                     isBadContent(prompt.trim());
+        
+        if (isBad) {
+          console.log('🚫 Bad content variation detected, filtering out:', variation.description);
+          showContentRejectedAnimation();
+        }
+        
+        return !isBad;
+      });
+      
+      setVariations(filteredVariations);
       
       // Track usage
       await trackUsage('character_variation', 'gemini', {
         prompt: prompt.trim(),
-        variations_count: newVariations.length,
+        variations_count: filteredVariations.length,
         file_type: uploadedFiles[0]?.fileType
       });
       
       // Add to gallery
-      if (newVariations.length > 0) {
-        addToGallery(newVariations, prompt.trim(), uploadedFiles[0]?.preview);
+      if (filteredVariations.length > 0) {
+        addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
         showNotification('🎨 Character variations generated successfully!', 'success');
+      } else if (newVariations.length > 0) {
+        // All variations were filtered out
+        showNotification('🚫 All generated content was filtered out due to content policy', 'error');
       }
       
       setTimeout(() => {
@@ -2260,6 +2308,20 @@ export default function Home() {
       if (data.status === 'completed' && data.videoUrl) {
         console.log('✅ EndFrame video completed:', data.videoUrl);
         
+        // Check for bad content in the response
+        if (isBadContent(data.videoUrl) || isBadContent(prompt.trim())) {
+          console.log('🚫 Bad content detected in EndFrame video, showing whoopee animation');
+          showContentRejectedAnimation();
+          setEndFrameProcessing(false);
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+          setEndFrameTaskId(null);
+          return;
+        }
+        
         // Add the completed video to gallery
         const endFrameVariation: StoredVariation = {
           id: `endframe-${Date.now()}`,
@@ -2359,6 +2421,19 @@ export default function Home() {
 
       if (data.status === 'completed' && data.imageUrl) {
         console.log('✅ Text-to-image completed:', data.imageUrl);
+        
+        // Check for bad content in the response
+        if (isBadContent(data.imageUrl) || isBadContent(originalPrompt)) {
+          console.log('🚫 Bad content detected, showing whoopee animation');
+          showContentRejectedAnimation();
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+          setGenerationMode(null);
+          return;
+        }
         
         // Create a variation object for the gallery
         const generatedVariation: CharacterVariation = {
@@ -2692,9 +2767,10 @@ export default function Home() {
                   🎭 Test
                 </button>
                 <button
-                  onClick={() => console.log('Test animation - dev only')}
+                  onClick={() => showAnimatedErrorNotification('User Error: Test Toasty animation! TOASTY!', 'toasty')}
                   className="flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium shadow-lg text-sm"
                   title="Test Toasty animation (dev only)"
+                  data-whoopee="true"
                 >
                   🥖 TOASTY
                 </button>
