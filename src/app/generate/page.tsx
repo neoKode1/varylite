@@ -2834,7 +2834,7 @@ export default function Home() {
                     <div>• {fundingData.usageStats.successfulRequests.toLocaleString()} images generated</div>
                     <div>• Current: {fundingData.usageStats.currentUsers} users → Base: ~{fundingData.usageStats.baseWeeklyProjection.toLocaleString()}/week</div>
                     <div>• Scaling: {fundingData.usageStats.scalingFactor}x growth → ~{fundingData.usageStats.weeklyProjection.toLocaleString()}/week</div>
-                    <div>• Weekly goal: ${fundingData.weeklyCost} (${fundingData.usageStats.costPerGeneration.toFixed(3)}/generation)</div>
+                    <div>• Weekly goal: ${fundingData.weeklyCost}</div>
                   </div>
                 </div>
               </div>
