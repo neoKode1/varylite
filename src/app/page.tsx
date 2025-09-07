@@ -593,11 +593,60 @@ export default function Home() {
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
   const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle'>('shot');
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
+  
+  // Funding meter state
+  const [fundingData, setFundingData] = useState({
+    current: 0,
+    goal: 300,
+    weeklyCost: 265, // Average of $230-$300
+    lastUpdated: new Date()
+  });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
   const [runwayTaskId, setRunwayTaskId] = useState<string | null>(null);
+
+  // Fetch Ko-fi funding data
+  const fetchKoFiData = async () => {
+    try {
+      const response = await fetch('/api/ko-fi');
+      const data = await response.json();
+      
+      setFundingData({
+        current: data.current,
+        goal: data.goal,
+        weeklyCost: data.weeklyCost,
+        lastUpdated: new Date(data.lastUpdated)
+      });
+    } catch (error) {
+      console.error('Failed to fetch Ko-fi data:', error);
+      // Keep existing data on error
+    }
+  };
+
+  // Calculate energy level (0-100%)
+  const getEnergyLevel = () => {
+    const percentage = (fundingData.current / fundingData.weeklyCost) * 100;
+    return Math.min(percentage, 100);
+  };
+
+  // Get energy status
+  const getEnergyStatus = () => {
+    const level = getEnergyLevel();
+    if (level >= 80) return { status: 'high', color: 'green', text: 'High Energy' };
+    if (level >= 50) return { status: 'medium', color: 'yellow', text: 'Medium Energy' };
+    if (level >= 20) return { status: 'low', color: 'orange', text: 'Low Energy' };
+    return { status: 'critical', color: 'red', text: 'Critical Energy' };
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchKoFiData();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchKoFiData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
   const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
@@ -2527,6 +2576,64 @@ export default function Home() {
               onSignUpClick={handleSignUpClick}
               onSaveToAccountClick={handleSaveToAccountClick}
             />
+
+            {/* Community Funding Meter */}
+            <div className="w-full max-w-4xl mx-auto px-4 mb-6">
+              <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-purple-500 border-opacity-30">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
+                    <h3 className="text-white font-semibold text-lg">Community Energy</h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-300 text-sm">Weekly Goal: ${fundingData.weeklyCost}</p>
+                    <p className="text-white font-medium">${fundingData.current} / ${fundingData.goal}</p>
+                  </div>
+                </div>
+                
+                {/* Energy Bar */}
+                <div className="relative">
+                  <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-500 ${
+                        getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                        getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                        getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                        'bg-gradient-to-r from-red-400 to-red-600'
+                      }`}
+                      style={{ width: `${getEnergyLevel()}%` }}
+                    ></div>
+                  </div>
+                  
+                  {/* Energy Status */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-medium ${
+                      getEnergyStatus().color === 'green' ? 'text-green-400' :
+                      getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
+                      getEnergyStatus().color === 'orange' ? 'text-orange-400' :
+                      'text-red-400'
+                    }`}>
+                      {getEnergyStatus().text} ({Math.round(getEnergyLevel())}%)
+                    </span>
+                    
+                    {getEnergyLevel() < 50 && (
+                      <a 
+                        href="https://ko-fi.com/varyai" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-full transition-colors"
+                      >
+                        ⚡ Boost Energy
+                      </a>
+                    )}
+                  </div>
+                </div>
+                
+                <p className="text-gray-400 text-xs mt-2">
+                  Community funding keeps VaryAI running smoothly. Every contribution helps! 💜
+                </p>
+              </div>
+            </div>
             
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
