@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { User, LogOut, Settings, UserPlus, LogIn } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
+import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
   onSignUpClick: () => void
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const router = useRouter()
 
   const handleSignOut = async () => {
     const { error } = await signOut()
@@ -103,6 +105,17 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
                         {user.email}
                       </div>
                     </div>
+                    
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        router.push('/profile')
+                      }}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Profile</span>
+                    </button>
                     
                     <button
                       onClick={() => {
