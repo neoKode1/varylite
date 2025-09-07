@@ -9,6 +9,19 @@ let fundingData = {
   donations: [] as any[]
 };
 
+// Helper function to format donation data
+const formatDonation = (data: any) => ({
+  id: data.message_id,
+  type: data.type,
+  amount: parseFloat(data.amount),
+  from_name: data.from_name || 'Anonymous',
+  message: data.message || '',
+  timestamp: data.timestamp,
+  is_subscription: data.is_subscription_payment || false,
+  tier_name: data.tier_name || null,
+  currency: data.currency || 'USD'
+});
+
 // Ko-fi webhook verification token
 const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN || '31c45be4-fa06-4c91-869c-6c0b199d5222';
 
@@ -55,17 +68,8 @@ export async function POST(request: NextRequest) {
     fundingData.current += amount;
     fundingData.lastUpdated = new Date().toISOString();
     
-    // Store donation details
-    fundingData.donations.push({
-      id: data.message_id,
-      type: paymentType,
-      amount: amount,
-      from_name: data.from_name,
-      message: data.message,
-      timestamp: data.timestamp,
-      is_subscription: data.is_subscription_payment,
-      tier_name: data.tier_name
-    });
+    // Store donation details using the formatted helper
+    fundingData.donations.push(formatDonation(data));
 
     // Keep only last 100 donations to prevent memory issues
     if (fundingData.donations.length > 100) {

@@ -14,6 +14,7 @@ import { useUserGallery } from '@/hooks/useUserGallery';
 import { Header } from '@/components/Header';
 import { AuthModal } from '@/components/AuthModal';
 import { UsageLimitBanner, UsageCounter } from '@/components/UsageLimitBanner';
+import { UserCounter } from '@/components/UserCounter';
 
 // Ko-fi widget types
 declare global {
@@ -2736,6 +2737,11 @@ export default function Home() {
             
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
+            
+            {/* User Counter */}
+            <div className="w-full max-w-4xl mx-auto px-4 mb-6">
+              <UserCounter />
+            </div>
             
         {/* Funding Message - Above Header */}
         <div className="mb-4 bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-lg p-3 border border-gray-700 border-opacity-50">

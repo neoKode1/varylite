@@ -24,7 +24,28 @@ export async function GET(request: NextRequest) {
       weeklyCost: 265,
       lastUpdated: new Date().toISOString(),
       status: 'mock',
-      donations: []
+      donations: [
+        {
+          id: 'mock-1',
+          type: 'Donation',
+          amount: 5.00,
+          from_name: 'Anonymous Supporter',
+          message: 'Great work on the AI tools!',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          is_subscription: false,
+          tier_name: null
+        },
+        {
+          id: 'mock-2',
+          type: 'Donation',
+          amount: 10.00,
+          from_name: 'AI Enthusiast',
+          message: 'Keep up the amazing work!',
+          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+          is_subscription: false,
+          tier_name: null
+        }
+      ]
     };
     
     return NextResponse.json(mockData);
