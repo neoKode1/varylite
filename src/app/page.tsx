@@ -257,6 +257,30 @@ const BACKGROUND_PROMPTS = [
 ];
 
 // Video-specific prompts organized by movie genres
+// Character Style Presets for Restyle tab
+const CHARACTER_STYLE_PROMPTS = [
+  {
+    name: 'The Smurfs',
+    description: 'Small, blue, communal beings from the animated series, each with a distinct trait (e.g., Brainy, Clumsy).',
+    prompt: 'Apply the Smurfs style to the character'
+  },
+  {
+    name: 'The Care Bears',
+    description: 'Colorful, emotional-themed bears from the 1980s franchise who spread caring and positivity.',
+    prompt: 'Apply the Care Bears style to the character'
+  },
+  {
+    name: 'The Gummi Bears',
+    description: 'Magical, medieval bear characters from Disney\'s Adventures of the Gummi Bears, who bounce and solve problems.',
+    prompt: 'Apply the Gummi Bears style to the character'
+  },
+  {
+    name: 'The Muppets',
+    description: 'Beloved puppet characters from Jim Henson\'s iconic franchise, known for their humor, heart, and distinctive felt puppet aesthetic.',
+    prompt: 'Apply the Muppets style to the character'
+  }
+];
+
 const VIDEO_PROMPTS = {
   // Action & Adventure
   action: [
@@ -548,7 +572,7 @@ export default function Home() {
   });
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showGallery, setShowGallery] = useState(true);
+  const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
   
   // Authentication UI state
@@ -557,6 +581,7 @@ export default function Home() {
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
+  const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle'>('shot');
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
@@ -2485,8 +2510,8 @@ export default function Home() {
       
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : ''}`}>
-          <div className="container mx-auto px-4 py-8 lg:px-8">
+        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : ''} flex flex-col items-center`}>
+          <div className="w-full max-w-4xl mx-auto px-4 py-8 lg:px-8">
             {/* Usage Limit Banner */}
             <UsageLimitBanner 
               onSignUpClick={handleSignUpClick}
@@ -2506,11 +2531,11 @@ export default function Home() {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-start mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20">
-          <h1 className="text-2xl lg:text-4xl font-bold text-white">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center items-center mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20 gap-4 lg:gap-0">
+          <h1 className="text-2xl lg:text-4xl font-bold text-white text-center lg:text-left">
             vARY<span className="text-gray-400">ai</span>
           </h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-center lg:justify-end">
             {/* Test Animated Errors Button - Remove in production */}
             {process.env.NODE_ENV === 'development' && (
               <>
@@ -2549,8 +2574,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center min-h-[70vh]">
-          <div className="max-w-2xl w-full">
+        <div className="flex items-center justify-center min-h-[70vh] w-full">
+          <div className="w-full max-w-2xl">
 
             {/* Main Input Area */}
             <div data-input-area>
@@ -2695,6 +2720,112 @@ export default function Home() {
             )}
             </div>
 
+            {/* Generate Button - Right below image upload */}
+            <div className="flex flex-col items-center gap-4 mt-6">
+              {/* Mode Selector - Show when ambiguous */}
+              {determineGenerationMode() === null && uploadedFiles.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                  {getAvailableModes().map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setGenerationMode(mode)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        generationMode === mode
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {mode === 'nano-banana' && 'Generate Character Variations (Nano Banana)'}
+                      {mode === 'runway-t2i' && 'Generate Image'}
+                      {mode === 'runway-video' && 'Process Video (Aleph)'}
+                      {mode === 'endframe' && 'Generate Start → End Video'}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Main Action Button */}
+              <div className="flex justify-center">
+                {hasVideoFiles ? (
+                  // Video files - automatically use ALEPH model
+                  <button
+                    onClick={handleRunwayVideoEditing}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Process Video (Aleph)
+                      </>
+                    )}
+                  </button>
+                ) : (generationMode === 'runway-t2i' || (uploadedFiles.length === 0 && !generationMode)) ? (
+                  // Text-to-image generation
+                  <button
+                    onClick={handleTextToImage}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing && generationMode === 'runway-t2i' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5" />
+                        Generate Image
+                      </>
+                    )}
+                  </button>
+                ) : processingMode === 'variations' || generationMode === 'nano-banana' ? (
+                  // Character variations - Nano Banana
+                  <button
+                    onClick={handleProcessCharacter}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Images className="w-5 h-5" />
+                        Generate Character Variations (Nano Banana)
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  // EndFrame processing
+                  <button
+                    onClick={handleEndFrameGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Generate Start → End Video
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Prompt Input - Always visible */}
             <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 mt-6">
               {uploadedFiles.length === 0 && (
@@ -2761,25 +2892,43 @@ export default function Home() {
                           {showVideoPrompts ? 'Hide Video Options' : 'Video Scene Options'}
                         </button>
                       ) : (
-                        <>
+                        <div className="flex flex-wrap gap-2 mb-4">
                           <button
-                            onClick={() => setShowExtendedPrompts(!showExtendedPrompts)}
-                            className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+                            onClick={() => setActivePresetTab('shot')}
+                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
+                              activePresetTab === 'shot' 
+                                ? 'bg-blue-600 text-white border-blue-500' 
+                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
+                            }`}
                           >
-                            {showExtendedPrompts ? 'Hide Shot Types' : 'More Shot Types'}
+                            📸 Shot Type
                           </button>
                           <button
-                            onClick={() => setShowBackgroundPrompts(!showBackgroundPrompts)}
-                            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors border border-green-500"
+                            onClick={() => setActivePresetTab('background')}
+                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
+                              activePresetTab === 'background' 
+                                ? 'bg-green-600 text-white border-green-500' 
+                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
+                            }`}
                           >
-                            {showBackgroundPrompts ? 'Hide Backgrounds' : 'Background Options'}
+                            🎨 Background Change
                           </button>
-                        </>
+                          <button
+                            onClick={() => setActivePresetTab('restyle')}
+                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
+                              activePresetTab === 'restyle' 
+                                ? 'bg-purple-600 text-white border-purple-500' 
+                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
+                            }`}
+                          >
+                            🎭 Restyle
+                          </button>
+                        </div>
                       )}
                     </div>
 
-                    {/* Extended Prompts */}
-                    {showExtendedPrompts && (
+                    {/* Preset Content */}
+                    {activePresetTab === 'shot' && (
                       <div className="mt-4 p-4 bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg border border-gray-600">
                         <h4 className="text-white text-sm font-medium mb-3 text-center">Professional Camera Angles & Shot Types</h4>
                         
@@ -2913,8 +3062,8 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Background Prompts */}
-                    {showBackgroundPrompts && (
+                    {/* Background Change Tab */}
+                    {activePresetTab === 'background' && (
                       <div className="mt-4 p-4 bg-green-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-green-600">
                         <h4 className="text-white text-sm font-medium mb-3 text-center">🎨 Background Removal & Replacement Options</h4>
                         
@@ -3095,6 +3244,27 @@ export default function Home() {
                       </div>
                     )}
 
+                    {/* Restyle Tab */}
+                    {activePresetTab === 'restyle' && (
+                      <div className="mt-4 p-4 bg-purple-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-purple-600">
+                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎭 Character Style Presets</h4>
+                        <p className="text-gray-300 text-xs text-center mb-4">Apply iconic character styles to transform your character</p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {CHARACTER_STYLE_PROMPTS.map((style) => (
+                            <button
+                              key={style.name}
+                              onClick={() => setPrompt(style.prompt)}
+                              className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 transition-colors text-left"
+                            >
+                              <h5 className="text-purple-400 font-medium text-sm mb-1">{style.name}</h5>
+                              <p className="text-gray-300 text-xs leading-relaxed">{style.description}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Video Prompts - Only show when video files are detected */}
                     {hasVideoFiles && showVideoPrompts && (
                       <div className="mt-4 p-4 bg-purple-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-purple-600">
@@ -3211,203 +3381,21 @@ export default function Home() {
                 </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-col items-center gap-4 mt-6">
-                    {/* Mode Selector - Show when ambiguous */}
-                    {determineGenerationMode() === null && uploadedFiles.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-2 mb-4">
-                        {getAvailableModes().map((mode) => (
-                          <button
-                            key={mode}
-                            onClick={() => setGenerationMode(mode)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              generationMode === mode
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            {mode === 'nano-banana' && 'Generate Character Variations (Nano Banana)'}
-                            {mode === 'runway-t2i' && 'Generate Image'}
-                            {mode === 'runway-video' && 'Process Video (Aleph)'}
-                            {mode === 'endframe' && 'Generate Start → End Video'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Main Action Button */}
-                  <div className="flex justify-center">
-                    {hasVideoFiles ? (
-                      // Video files - automatically use ALEPH model
-                      <button
-                        onClick={handleRunwayVideoEditing}
-                        disabled={processing.isProcessing || !prompt.trim()}
-                        className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {processing.isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            {processing.currentStep}
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="w-5 h-5" />
-                            Process Video (Aleph)
-                          </>
-                        )}
-                      </button>
-                      ) : (generationMode === 'runway-t2i' || (uploadedFiles.length === 0 && !generationMode)) ? (
-                        // Text-to-image generation
-                        <button
-                          onClick={handleTextToImage}
-                          disabled={processing.isProcessing || !prompt.trim()}
-                          className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                        >
-                          {processing.isProcessing && generationMode === 'runway-t2i' ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              {processing.currentStep}
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-5 h-5" />
-                              Generate Image
-                            </>
-                          )}
-                        </button>
-                      ) : processingMode === 'variations' || generationMode === 'nano-banana' ? (
-                      // Character variations - Nano Banana
-                      <button
-                        onClick={handleProcessCharacter}
-                        disabled={processing.isProcessing || !prompt.trim()}
-                        className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {processing.isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            {processing.currentStep}
-                          </>
-                        ) : (
-                          <>
-                            <Images className="w-5 h-5" />
-                            Generate Character Variations (Nano Banana)
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      // EndFrame processing
-                      <button
-                        onClick={handleEndFrameGeneration}
-                        disabled={endFrameProcessing || processing.isProcessing || uploadedFiles.length < 2 || !prompt.trim()}
-                        className="px-8 py-4 bg-transparent text-white border-2 border-green-600 rounded-lg font-semibold text-lg hover:bg-green-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {endFrameProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Generating Video...
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="w-5 h-5" />
-                            Generate Start → End Video
-                          </>
-                        )}
-                      </button>
-                    )}
-                    </div>
-                  </div>
-
-                  {processing.isProcessing && (
-                    <div className="w-full bg-gray-600 rounded-full h-2">
-                      <div
-                        className="bg-white h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${processing.progress}%` }}
-                      ></div>
-                    </div>
-                  )}
-
-                  {/* EndFrame Progress Bar */}
-                  {endFrameProcessing && (
-                    <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-green-500 border-opacity-20">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {processing.currentStep === 'Generation Successful!' ? (
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs">✓</span>
-                            </div>
-                          ) : (
-                            <Loader2 className="w-5 h-5 animate-spin text-green-500" />
-                          )}
-                          <span className="text-white font-medium">EndFrame Video Generation</span>
-                        </div>
-                        <span className="text-green-400 text-sm font-mono">
-                          {endFrameTaskId ? `Task: ${endFrameTaskId.slice(-8)}` : 'Starting...'}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-600 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            processing.currentStep === 'Generation Successful!' 
-                              ? 'bg-green-500' 
-                              : 'bg-green-500 animate-pulse'
-                          }`}
-                          style={{ 
-                            width: processing.currentStep === 'Generation Successful!' ? '100%' : '75%' 
-                          }}
-                        ></div>
-                      </div>
-                      <p className="text-gray-300 text-sm mt-2 text-center">
-                        {processing.currentStep || 'Generating video from start to end frame...'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Video Generation Progress */}
-                  {runwayTaskId && videoGenerationStartTime && (
-                    <div className="mt-4 p-4 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg border border-white border-opacity-20">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-5 h-5 animate-spin text-white" />
-                          <span className="text-white font-medium">Video Generation in Progress</span>
-                        </div>
-                        <span className="text-gray-300 text-sm">
-                          {(() => {
-                            const elapsed = Math.round((Date.now() - videoGenerationStartTime) / 1000);
-                            const remaining = Math.max(0, estimatedVideoTime - elapsed);
-                            return `${elapsed}s elapsed, ~${remaining}s remaining`;
-                          })()}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
-                          style={{ 
-                            width: `${Math.min(100, ((Date.now() - videoGenerationStartTime) / 1000 / estimatedVideoTime) * 100)}%` 
-                          }}
-                        ></div>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-400 text-center">
-                        Estimated time: {estimatedVideoTime}s • Model: {runwayTaskId ? 'Aleph' : 'Unknown'}
-                      </div>
-                    </div>
-                  )}
-            </div>
           </div>
         </div>
 
         {/* Error Display */}
-        {error && (
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="bg-red-900 bg-opacity-90 backdrop-blur-sm border border-red-700 rounded-lg p-4 mb-8">
-              <p className="text-red-300">{error}</p>
+          {error && (
+            <div className="w-full max-w-4xl mx-auto px-4 mt-8">
+              <div className="bg-red-900 bg-opacity-90 backdrop-blur-sm border border-red-700 rounded-lg p-4 mb-8">
+                <p className="text-red-300">{error}</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Results Section */}
-        {variations.length > 0 && (
-          <div className="max-w-6xl mx-auto px-4 mt-12">
+          {/* Results Section */}
+          {variations.length > 0 && (
+            <div className="w-full max-w-4xl mx-auto px-4 mt-8">
             <h2 className="text-2xl font-semibold mb-8 text-white text-center bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">Character Variations</h2>
             
             {/* Info message if no images are generated */}
@@ -3500,7 +3488,8 @@ export default function Home() {
               ))}
             </div>
           </div>
-        )}
+          )}
+        </div>
 
         {/* Mobile Gallery Backdrop */}
         {showGallery && (
