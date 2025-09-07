@@ -18,8 +18,13 @@ export async function GET(request: NextRequest) {
     
     console.log(`💰 Using fal.com balance: $${balance}`);
     
-    // Calculate energy level based on your weekly cost
-    const weeklyCost = 300; // Your weekly operational cost
+    // Calculate energy level based on actual usage data
+    // From fal.ai analytics (Sep 2-6, 2025): 4,216 total requests, 3,323 successful
+    // Extrapolating to weekly: ~5,900 requests/week, ~4,650 successful/week
+    // Actual cost per successful generation: $0.039 per image
+    const weeklyProjection = 4650; // ~4,650 successful generations/week
+    const costPerGeneration = 0.039; // $0.039 per image
+    const weeklyCost = Math.round(weeklyProjection * costPerGeneration); // ~$181.35
     const energyLevel = Math.min((balance / weeklyCost) * 100, 100);
     
     // Determine energy status
@@ -50,7 +55,15 @@ export async function GET(request: NextRequest) {
       energyColor: energyColor,
       energyText: energyText,
       lastUpdated: new Date().toISOString(),
-      source: 'fal.com'
+      source: 'fal.com',
+      usageStats: {
+        totalRequests: 4216,
+        successfulRequests: 3323,
+        successRate: 79,
+        period: 'Sep 2-6, 2025',
+        weeklyProjection: weeklyProjection,
+        costPerGeneration: costPerGeneration
+      }
     });
 
   } catch (error) {

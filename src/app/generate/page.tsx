@@ -598,10 +598,18 @@ export default function Home() {
   // Funding meter state
   const [fundingData, setFundingData] = useState({
     current: 0,
-    goal: 300,
-    weeklyCost: 265, // Average of $230-$300
+    goal: 181,
+    weeklyCost: 181, // Updated based on actual usage: ~4,650 generations × $0.039 = ~$181
     lastUpdated: new Date(),
-    donations: [] as any[]
+    donations: [] as any[],
+    usageStats: {
+      totalRequests: 0,
+      successfulRequests: 0,
+      successRate: 0,
+      period: '',
+      weeklyProjection: 0,
+      costPerGeneration: 0
+    }
   });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
@@ -620,7 +628,15 @@ export default function Home() {
         goal: data.goal,
         weeklyCost: data.weeklyCost,
         lastUpdated: new Date(data.lastUpdated),
-        donations: [] // No donations for fal.com balance
+        donations: [], // No donations for fal.com balance
+        usageStats: data.usageStats || {
+          totalRequests: 0,
+          successfulRequests: 0,
+          successRate: 0,
+          period: '',
+          weeklyProjection: 0,
+          costPerGeneration: 0
+        }
       });
     } catch (error) {
       console.error('Failed to fetch fal.com balance data:', error);
@@ -2801,6 +2817,21 @@ export default function Home() {
 
         <div className="flex items-center justify-center min-h-[70vh] w-full">
           <div className="w-full max-w-2xl">
+
+            {/* Usage Statistics - Left Corner */}
+            {fundingData.usageStats.totalRequests > 0 && (
+              <div className="mb-4 p-3 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
+                <div className="text-xs text-blue-200">
+                  <div className="font-semibold text-blue-100 mb-1">📊 Usage Analytics ({fundingData.usageStats.period})</div>
+                  <div className="space-y-1">
+                    <div>• {fundingData.usageStats.totalRequests.toLocaleString()} total requests ({fundingData.usageStats.successRate}% success)</div>
+                    <div>• {fundingData.usageStats.successfulRequests.toLocaleString()} images generated</div>
+                    <div>• Weekly projection: ~{fundingData.usageStats.weeklyProjection.toLocaleString()} generations</div>
+                    <div>• Weekly goal: ${fundingData.weeklyCost} (${fundingData.usageStats.costPerGeneration.toFixed(3)}/generation)</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Main Input Area */}
             <div data-input-area>
