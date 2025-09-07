@@ -41,18 +41,9 @@ export default function LandingPage() {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-8">
-        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center space-y-8 lg:space-y-0 lg:space-x-12">
-          {/* Logo - Left Side */}
-          <div className="flex-shrink-0">
-            <img
-              src="/b39d569d-2c0e-4f3a-9ff0-d0d58b7a185d_removalai_preview.png"
-              alt="VaryAI Logo"
-              className="w-64 h-64 rounded-lg shadow-lg"
-                  />
-        </div>
-
-          {/* Content - Right Side */}
-          <div className="flex-1 text-center w-full lg:w-auto">
+        <div className="w-full max-w-4xl mx-auto flex items-center justify-center">
+          {/* Content - Centered */}
+          <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Welcome to VaryAI
           </h1>
@@ -134,7 +125,7 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">$21.73</div>
+                  <div className="text-2xl font-bold text-green-400">$41.73</div>
                   <div className="text-xs text-gray-400">Raised</div>
                   </div>
                 <div className="text-gray-400">/</div>
@@ -164,9 +155,9 @@ export default function LandingPage() {
                 </a>
                     </div>
                   </div>
-                    </div>
-                            </div>
-                        </div>
+                </div>
+              </div>
+            </div>
 
       {/* Character Variation Image - Bottom Right */}
       <div className="fixed bottom-6 right-6 z-30">
