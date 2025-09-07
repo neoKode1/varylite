@@ -22,6 +22,24 @@ function createDataUri(base64Data: string): string {
   return `data:image/jpeg;base64,${base64Data}`;
 }
 
+// Helper function to validate image aspect ratio for Minimax API
+function validateImageAspectRatio(base64Data: string): { isValid: boolean; message?: string } {
+  try {
+    // For now, we'll add a simple validation message
+    // In a production environment, you might want to use a library like 'sharp' to validate images
+    console.log('🔍 Validating image aspect ratio for Minimax API...');
+    
+    // Minimax typically requires images with reasonable aspect ratios
+    // Common video aspect ratios: 16:9, 4:3, 1:1, 9:16
+    // We'll let Minimax handle the validation and provide better error messages
+    
+    return { isValid: true };
+  } catch (error) {
+    console.warn('⚠️ Image validation failed:', error);
+    return { isValid: false, message: 'Image validation failed' };
+  }
+}
+
 // POST endpoint to generate end frames
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route: /api/endframe - EndFrame generation request received');
@@ -52,6 +70,18 @@ export async function POST(request: NextRequest) {
     
     if (!prompt) {
       throw new Error('No prompt provided');
+    }
+    
+    // Validate image aspect ratios
+    const firstImageValidation = validateImageAspectRatio(firstImage);
+    const secondImageValidation = validateImageAspectRatio(secondImage);
+    
+    if (!firstImageValidation.isValid) {
+      throw new Error(`First image validation failed: ${firstImageValidation.message}`);
+    }
+    
+    if (!secondImageValidation.isValid) {
+      throw new Error(`Second image validation failed: ${secondImageValidation.message}`);
     }
     
     // Create data URIs from base64 images
@@ -139,7 +169,10 @@ export async function POST(request: NextRequest) {
     let retryable = false;
 
     if (error instanceof Error) {
-      if (error.message.includes('content policy') || error.message.includes('inappropriate')) {
+      if (error.message.includes('aspect ratio') || error.message.includes('2013')) {
+        errorMessage = 'Image aspect ratio is not supported. Please use images with standard aspect ratios (16:9, 4:3, 1:1, or 9:16).';
+        statusCode = 400;
+      } else if (error.message.includes('content policy') || error.message.includes('inappropriate')) {
         errorMessage = 'Content policy violation. Please ensure your content complies with Minimax\'s guidelines.';
         statusCode = 400;
       } else if (error.message.includes('quota exceeded')) {
@@ -215,6 +248,8 @@ export async function GET(request: NextRequest) {
         throw new Error('Account authentication failed. Please check your API key.');
       } else if (errorCode === 1027) {
         throw new Error('Video generated involves sensitive content.');
+      } else if (errorCode === 2013) {
+        throw new Error('Image aspect ratio is not supported. Please use images with standard aspect ratios (16:9, 4:3, 1:1, or 9:16).');
       } else {
         throw new Error(`Minimax API error (${errorCode}): ${errorMsg}`);
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
@@ -549,6 +549,7 @@ export default function Home() {
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(true);
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
   
   // Authentication UI state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -679,13 +680,14 @@ export default function Home() {
     showNotification('🔄 Retrying video load...', 'info');
   }, [showNotification]);
 
-  // Validate video URL format
+  // Validate video URL format and accessibility
   const isValidVideoUrl = useCallback((url: string): boolean => {
     if (!url) return false;
     
     // Check if it's a valid URL
     try {
       const urlObj = new URL(url);
+      
       // Check for common video file extensions or video content types
       const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
       const hasVideoExtension = videoExtensions.some(ext => urlObj.pathname.toLowerCase().endsWith(ext));
@@ -695,6 +697,14 @@ export default function Home() {
       
       // Check if it's a proxy URL (our API endpoints)
       const isProxyUrl = url.includes('/api/');
+      
+      // Check if it's a legacy URL that might be invalid (pre-database era)
+      const isLegacyUrl = url.includes('runway') || url.includes('fal.ai') || url.includes('minimax');
+      
+      // If it's a legacy URL, be more cautious and don't show errors
+      if (isLegacyUrl) {
+        return false; // Don't try to load legacy URLs to avoid error messages
+      }
       
       return hasVideoExtension || isDataUrl || isProxyUrl;
     } catch {
@@ -778,7 +788,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error saving to account:', error);
-      showAnimatedErrorNotification('Network Error: Failed to save work! TOASTY!', 'toasty');
+      console.error('Network Error: Failed to save work!');
     }
   };
 
@@ -797,6 +807,19 @@ export default function Home() {
 
   // Get all gallery images with URLs for navigation
   const galleryImagesWithUrls = gallery.filter(item => item.imageUrl);
+  
+  // Filter gallery items based on selected filter
+  const filteredGallery = useMemo(() => {
+    switch (galleryFilter) {
+      case 'images':
+        return gallery.filter(item => item.imageUrl && !item.videoUrl);
+      case 'videos':
+        return gallery.filter(item => item.videoUrl);
+      case 'all':
+      default:
+        return gallery;
+    }
+  }, [gallery, galleryFilter]);
 
   // Handle full-screen image viewing
   const handleImageClick = useCallback((imageUrl: string) => {
@@ -1649,11 +1672,11 @@ export default function Home() {
         if (message.includes('service unavailable') || message.includes('503')) {
           userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
           retryable = true;
-          showAnimatedErrorNotification('Network Error: AI service overloaded! TOASTY!', 'toasty');
+          console.error('Network Error: AI service overloaded!');
         } else if (message.includes('timeout') || message.includes('504')) {
           userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
           retryable = true;
-          showAnimatedErrorNotification('Network Error: Request timed out! TOASTY!', 'toasty');
+          console.error('Network Error: Request timed out!');
         } else if (message.includes('rate limit') || message.includes('429')) {
           userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
           retryable = true;
@@ -1668,7 +1691,7 @@ export default function Home() {
           showAnimatedErrorNotification('User Error: Invalid request! TOASTY!', 'toasty');
         } else {
           userMessage = err.message;
-          showAnimatedErrorNotification('Network Error: Something went wrong! TOASTY!', 'toasty');
+          console.error('Network Error: Something went wrong!');
         }
       }
       
@@ -2503,7 +2526,7 @@ export default function Home() {
                   🎭 Test
                 </button>
                 <button
-                  onClick={() => showAnimatedErrorNotification('Network Error: Test TOASTY animation!', 'toasty')}
+                  onClick={() => console.log('Test animation - dev only')}
                   className="flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium shadow-lg text-sm"
                   title="Test Toasty animation (dev only)"
                 >
@@ -2677,7 +2700,7 @@ export default function Home() {
               {uploadedFiles.length === 0 && (
                 <div className="text-center mb-4 p-3 bg-purple-600 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-lg">
                   <p className="text-purple-300 text-sm">
-                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using gen4_image
+                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using Gen 4
                   </p>
                 </div>
               )}
@@ -3205,7 +3228,7 @@ export default function Home() {
                             }`}
                           >
                             {mode === 'nano-banana' && 'Generate Character Variations (Nano Banana)'}
-                            {mode === 'runway-t2i' && 'Generate Image from Text (Gen 4)'}
+                            {mode === 'runway-t2i' && 'Generate Image'}
                             {mode === 'runway-video' && 'Process Video (Aleph)'}
                             {mode === 'endframe' && 'Generate Start → End Video'}
                           </button>
@@ -3249,7 +3272,7 @@ export default function Home() {
                           ) : (
                             <>
                               <Sparkles className="w-5 h-5" />
-                              Generate Image from Text (Gen 4)
+                              Generate Image
                             </>
                           )}
                         </button>
@@ -3488,7 +3511,7 @@ export default function Home() {
                   <Images className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                   <span className="hidden sm:inline">Gallery</span>
                   <span className="sm:hidden">Gallery</span>
-                  <span className="text-sm lg:text-base">({gallery.length})</span>
+                  <span className="text-sm lg:text-base">({filteredGallery.length})</span>
                 </h2>
                 <div className="flex gap-1 lg:gap-2">
                   {/* Development-only duplicate fix button */}
@@ -3521,15 +3544,57 @@ export default function Home() {
                 </div>
               </div>
 
-              {gallery.length === 0 ? (
+              {/* Gallery Filter Toggle */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setGalleryFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    galleryFilter === 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  All ({gallery.length})
+                </button>
+                <button
+                  onClick={() => setGalleryFilter('images')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    galleryFilter === 'images'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Images ({gallery.filter(item => item.imageUrl && !item.videoUrl).length})
+                </button>
+                <button
+                  onClick={() => setGalleryFilter('videos')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    galleryFilter === 'videos'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Videos ({gallery.filter(item => item.videoUrl).length})
+                </button>
+              </div>
+
+              {filteredGallery.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">
                   <Images className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No variations yet</p>
-                  <p className="text-sm">Generated character variations will appear here</p>
+                  <p className="text-lg mb-2">
+                    {galleryFilter === 'images' ? 'No images yet' : 
+                     galleryFilter === 'videos' ? 'No videos yet' : 
+                     'No variations yet'}
+                  </p>
+                  <p className="text-sm">
+                    {galleryFilter === 'images' ? 'Generated images will appear here' : 
+                     galleryFilter === 'videos' ? 'Generated videos will appear here' : 
+                     'Generated character variations will appear here'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {gallery.map((item, index) => {
+                  {filteredGallery.map((item: any, index: number) => {
                     // Create a more robust unique key that handles duplicates
                     const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
@@ -3600,27 +3665,27 @@ export default function Home() {
                                           switch (error.code) {
                                             case MediaError.MEDIA_ERR_ABORTED:
                                               console.warn('🎬 Video loading was aborted');
-                                              showAnimatedErrorNotification('Network Error: Video loading was interrupted! TOASTY!', 'toasty');
+                                               console.error('Network Error: Video loading was interrupted!');
                                               break;
                                             case MediaError.MEDIA_ERR_NETWORK:
                                               console.warn('🎬 Network error while loading video');
-                                              showAnimatedErrorNotification('Network Error: Network connection lost! TOASTY!', 'toasty');
+                                              console.error('Network Error: Network connection lost!');
                                               break;
                                             case MediaError.MEDIA_ERR_DECODE:
                                               console.warn('🎬 Video format not supported or corrupted');
-                                              showAnimatedErrorNotification('User Error: Video format not supported! TOASTY!', 'toasty');
+                                              console.error('Legacy video format error - silent handling');
                                               break;
                                             case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
                                               console.warn('🎬 Video format not supported');
-                                              showAnimatedErrorNotification('User Error: Video format not supported! TOASTY!', 'toasty');
+                                              console.error('Legacy video format error - silent handling');
                                               break;
                                             default:
                                               console.warn('🎬 Unknown video error');
-                                              showAnimatedErrorNotification('Network Error: Something went wrong! TOASTY!', 'toasty');
+                                               console.error('Network Error: Something went wrong!');
                                           }
                                         } else {
                                           console.warn('🎬 Video failed to load (no error details)');
-                                          showAnimatedErrorNotification('Network Error: Video failed to load! TOASTY!', 'toasty');
+                                          console.error('Network Error: Video failed to load!');
                                         }
                                         
                                         // Track this video as failed
