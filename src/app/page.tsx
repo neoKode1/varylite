@@ -125,7 +125,7 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">$41.73</div>
+                  <div className="text-2xl font-bold text-green-400">$40.34</div>
                   <div className="text-xs text-gray-400">Raised</div>
                   </div>
                 <div className="text-gray-400">/</div>

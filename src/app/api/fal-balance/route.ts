@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
         // For now, we'll use a mock balance since fal.ai balance API endpoint is not publicly documented
         // TODO: Replace with actual fal.ai balance API when available
-        // Updated balance to $41.73
-        const balance = 41.73;
+        // Updated balance to $354.74
+        const balance = 354.74;
     
     console.log(`💰 Using fal.com balance: $${balance}`);
     
