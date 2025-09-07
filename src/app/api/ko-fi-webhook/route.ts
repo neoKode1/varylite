@@ -10,7 +10,15 @@ let fundingData = {
 };
 
 // Ko-fi webhook verification token
-const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN || 'cf7b3498-d9fb-4759-a13e-806142db6fe9';
+const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN || '31c45be4-fa06-4c91-869c-6c0b199d5222';
+
+// Ko-fi configuration
+const KOFI_CONFIG = {
+  pageUrl: 'https://ko-fi.com/varyai',
+  weeklyGoal: 300,
+  weeklyCost: 265,
+  webhookUrl: 'https://vary-ai.vercel.app/api/ko-fi-webhook'
+};
 
 export async function POST(request: NextRequest) {
   try {
