@@ -24,7 +24,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden w-full">
       {/* Video Background */}
                         <video
         autoPlay
@@ -40,8 +40,8 @@ export default function LandingPage() {
       <div className="absolute inset-0 bg-black bg-opacity-60 z-10"></div>
 
       {/* Content */}
-      <div className="relative z-20 min-h-screen flex items-center justify-start px-8">
-        <div className="max-w-6xl mx-auto flex items-center space-x-12">
+      <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-8">
+        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
           {/* Logo - Left Side */}
           <div className="flex-shrink-0">
             <img
@@ -49,13 +49,13 @@ export default function LandingPage() {
               alt="VaryAI Logo"
               className="w-64 h-64 rounded-lg shadow-lg"
                   />
-                </div>
-                
+        </div>
+
           {/* Content - Right Side */}
-          <div className="flex-1 text-left">
+          <div className="flex-1 text-left w-full lg:w-auto">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Welcome to VaryAI
-            </h1>
+          </h1>
             <p className="text-xl text-gray-300 mb-4 max-w-2xl">
               The first ever fully funded generation or AI app made by creators, led by creators.
             </p>
@@ -70,18 +70,18 @@ export default function LandingPage() {
                 <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-3" />
                 <h3 className="text-white font-semibold mb-2">AI-Powered Generation</h3>
                 <p className="text-gray-300 text-sm">Create stunning variations with advanced AI models</p>
-                    </div>
+                        </div>
               <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                 <Zap className="w-8 h-8 text-blue-400 mx-auto mb-3" />
                 <h3 className="text-white font-semibold mb-2">Lightning Fast</h3>
                 <p className="text-gray-300 text-sm">Generate results in seconds, not minutes</p>
-                    </div>
+                            </div>
               <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                 <Users className="w-8 h-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-white font-semibold mb-2">Community Driven</h3>
                 <p className="text-gray-300 text-sm">Built by developers, for the community</p>
                           </div>
-                        </div>
+                      </div>
 
             {/* Call to Action */}
             <div className="space-y-4">
@@ -92,21 +92,21 @@ export default function LandingPage() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                              <button
+                        <button
                     onClick={handleSkipToGeneration}
                     className="flex items-center justify-center space-x-2 bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-                              >
+                        >
                     <Play className="w-5 h-5" />
                     <span>Start Generating (3 Free)</span>
-                              </button>
+                        </button>
 
-                              <button
+                        <button
                     onClick={handleSignUp}
                     className="flex items-center justify-center space-x-2 bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors"
-                              >
+                        >
                     <UserPlus className="w-5 h-5" />
                     <span>Get Unlimited Access</span>
-                              </button>
+                        </button>
                           </div>
                         </div>
 
@@ -162,11 +162,11 @@ export default function LandingPage() {
                 >
                   💚 Cash App
                 </a>
-              </div>
-              </div>
-                      </div>
                     </div>
                   </div>
+                    </div>
+                            </div>
+                        </div>
 
       {/* Character Variation Image - Bottom Right */}
       <div className="fixed bottom-6 right-6 z-30">
