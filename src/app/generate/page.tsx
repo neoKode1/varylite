@@ -598,8 +598,8 @@ export default function Home() {
   // Funding meter state
   const [fundingData, setFundingData] = useState({
     current: 0,
-    goal: 181,
-    weeklyCost: 181, // Updated based on actual usage: ~4,650 generations × $0.039 = ~$181
+    goal: 363,
+    weeklyCost: 363, // Updated with scaling projection: ~9,300 generations × $0.039 = ~$363
     lastUpdated: new Date(),
     donations: [] as any[],
     usageStats: {
@@ -608,7 +608,10 @@ export default function Home() {
       successRate: 0,
       period: '',
       weeklyProjection: 0,
-      costPerGeneration: 0
+      costPerGeneration: 0,
+      currentUsers: 0,
+      scalingFactor: 0,
+      baseWeeklyProjection: 0
     }
   });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
@@ -635,7 +638,10 @@ export default function Home() {
           successRate: 0,
           period: '',
           weeklyProjection: 0,
-          costPerGeneration: 0
+          costPerGeneration: 0,
+          currentUsers: 0,
+          scalingFactor: 0,
+          baseWeeklyProjection: 0
         }
       });
     } catch (error) {
@@ -2822,11 +2828,12 @@ export default function Home() {
             {fundingData.usageStats.totalRequests > 0 && (
               <div className="mb-4 p-3 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
                 <div className="text-xs text-blue-200">
-                  <div className="font-semibold text-blue-100 mb-1">📊 Usage Analytics ({fundingData.usageStats.period})</div>
+                  <div className="font-semibold text-blue-100 mb-1">📊 Usage Analytics & Scaling Projection ({fundingData.usageStats.period})</div>
                   <div className="space-y-1">
                     <div>• {fundingData.usageStats.totalRequests.toLocaleString()} total requests ({fundingData.usageStats.successRate}% success)</div>
                     <div>• {fundingData.usageStats.successfulRequests.toLocaleString()} images generated</div>
-                    <div>• Weekly projection: ~{fundingData.usageStats.weeklyProjection.toLocaleString()} generations</div>
+                    <div>• Current: {fundingData.usageStats.currentUsers} users → Base: ~{fundingData.usageStats.baseWeeklyProjection.toLocaleString()}/week</div>
+                    <div>• Scaling: {fundingData.usageStats.scalingFactor}x growth → ~{fundingData.usageStats.weeklyProjection.toLocaleString()}/week</div>
                     <div>• Weekly goal: ${fundingData.weeklyCost} (${fundingData.usageStats.costPerGeneration.toFixed(3)}/generation)</div>
                   </div>
                 </div>
