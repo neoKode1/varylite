@@ -57,7 +57,7 @@ export default function LandingPage() {
               Welcome to VaryAI
             </h1>
             <p className="text-xl text-gray-300 mb-4 max-w-2xl">
-              The first ever fully funded community creator free app.
+              The first ever fully funded generation or AI app made by creators, led by creators.
             </p>
             <p className="text-lg text-gray-400 mb-8 max-w-2xl">
               Transform your images and videos with the power of AI. Create stunning variations, 
@@ -132,17 +132,37 @@ export default function LandingPage() {
               <p className="text-gray-300 text-sm mb-4">
                 Help keep VaryAI running and growing. Every contribution helps us create more amazing AI tools!
               </p>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 mb-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-400">$21.73</div>
                   <div className="text-xs text-gray-400">Raised</div>
                   </div>
                 <div className="text-gray-400">/</div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">$300</div>
+                  <div className="text-2xl font-bold text-white">$363</div>
                   <div className="text-xs text-gray-400">Goal</div>
                   </div>
                 </div>
+              
+              {/* Donation Buttons */}
+              <div className="flex gap-3 justify-center">
+                <a 
+                  href="https://ko-fi.com/varyai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                >
+                  ⚡ Support on Ko-fi
+                </a>
+                <a 
+                  href="https://cash.app/$VaryAi" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                >
+                  💚 Cash App
+                </a>
+              </div>
               </div>
                       </div>
                     </div>

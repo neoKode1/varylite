@@ -33,20 +33,20 @@ export async function GET(request: NextRequest) {
     // Determine energy status
     let energyStatus = 'critical';
     let energyColor = 'red';
-    let energyText = 'Critical Energy';
+    let energyText = 'Could be worse, Could be a CPP';
     
     if (energyLevel >= 80) {
       energyStatus = 'high';
       energyColor = 'green';
-      energyText = 'High Energy';
+      energyText = 'Scaling on the Way';
     } else if (energyLevel >= 50) {
       energyStatus = 'medium';
       energyColor = 'yellow';
-      energyText = 'Medium Energy';
+      energyText = 'Everything is Cool';
     } else if (energyLevel >= 20) {
       energyStatus = 'low';
       energyColor = 'orange';
-      energyText = 'Low Energy';
+      energyText = 'Keep Creating';
     }
 
     return NextResponse.json({
@@ -78,12 +78,12 @@ export async function GET(request: NextRequest) {
     // Return fallback data on error
     return NextResponse.json({
       current: 0,
-      goal: 300,
-      weeklyCost: 300,
+      goal: 363,
+      weeklyCost: 363,
       energyLevel: 0,
       energyStatus: 'critical',
       energyColor: 'red',
-      energyText: 'Critical Energy',
+      energyText: 'Could be worse, Could be a CPP',
       lastUpdated: new Date().toISOString(),
       source: 'fal.com',
       error: 'Failed to fetch balance'

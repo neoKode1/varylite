@@ -2717,14 +2717,24 @@ export default function Home() {
                     </span>
                     
                     {getEnergyLevel() < 80 && (
-                      <a 
-                        href="https://ko-fi.com/varyai" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-full transition-colors"
-                      >
-                        ⚡ Boost Energy
-                      </a>
+                      <div className="flex gap-2">
+                        <a 
+                          href="https://ko-fi.com/varyai" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-full transition-colors"
+                        >
+                          ⚡ Ko-fi
+                        </a>
+                        <a 
+                          href="https://cash.app/$VaryAi" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors"
+                        >
+                          💚 Cash App
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
