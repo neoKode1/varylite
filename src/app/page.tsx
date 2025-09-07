@@ -599,7 +599,8 @@ export default function Home() {
     current: 0,
     goal: 300,
     weeklyCost: 265, // Average of $230-$300
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    donations: [] as any[]
   });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
@@ -617,7 +618,8 @@ export default function Home() {
         current: data.current,
         goal: data.goal,
         weeklyCost: data.weeklyCost,
-        lastUpdated: new Date(data.lastUpdated)
+        lastUpdated: new Date(data.lastUpdated),
+        donations: data.donations || []
       });
     } catch (error) {
       console.error('Failed to fetch Ko-fi data:', error);
@@ -2632,6 +2634,28 @@ export default function Home() {
                 <p className="text-gray-400 text-xs mt-2">
                   Community funding keeps VaryAI running smoothly. Every contribution helps! 💜
                 </p>
+                
+                {/* Recent Donations */}
+                {fundingData.donations.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-600">
+                    <h4 className="text-gray-300 text-sm font-medium mb-2">Recent Supporters</h4>
+                    <div className="space-y-1 max-h-20 overflow-y-auto">
+                      {fundingData.donations.slice(-3).map((donation, index) => (
+                        <div key={donation.id || index} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-300">
+                            {donation.from_name} 
+                            {donation.is_subscription && (
+                              <span className="text-purple-400 ml-1">⭐</span>
+                            )}
+                          </span>
+                          <span className="text-green-400 font-medium">
+                            ${donation.amount}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             

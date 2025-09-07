@@ -2,41 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Ko-fi API endpoint for goal data
-    // You'll need to replace this with your actual Ko-fi API key and endpoint
-    const koFiApiKey = process.env.KOFI_API_KEY;
-    const koFiUserId = process.env.KOFI_USER_ID; // Your Ko-fi user ID
+    // Fetch data from the webhook endpoint
+    const webhookResponse = await fetch(`${request.nextUrl.origin}/api/ko-fi-webhook`);
     
-    if (!koFiApiKey || !koFiUserId) {
-      // Return mock data if API keys are not configured
-      const mockData = {
-        current: Math.floor(Math.random() * 300),
-        goal: 300,
-        weeklyCost: 265,
-        lastUpdated: new Date().toISOString(),
-        status: 'mock'
-      };
-      
-      return NextResponse.json(mockData);
+    if (webhookResponse.ok) {
+      const webhookData = await webhookResponse.json();
+      return NextResponse.json({
+        current: webhookData.current,
+        goal: webhookData.goal,
+        weeklyCost: webhookData.weeklyCost,
+        lastUpdated: webhookData.lastUpdated,
+        status: 'live',
+        donations: webhookData.donations
+      });
     }
-
-    // Actual Ko-fi API call would go here
-    // const response = await fetch(`https://api.ko-fi.com/v1/goals/${koFiUserId}`, {
-    //   headers: {
-    //     'Authorization': `Bearer ${koFiApiKey}`,
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
     
-    // const data = await response.json();
-    
-    // For now, return mock data
+    // Fallback to mock data if webhook is not available
     const mockData = {
-      current: Math.floor(Math.random() * 300),
+      current: Math.floor(Math.random() * 100),
       goal: 300,
       weeklyCost: 265,
       lastUpdated: new Date().toISOString(),
-      status: 'live'
+      status: 'mock',
+      donations: []
     };
     
     return NextResponse.json(mockData);
@@ -50,7 +38,8 @@ export async function GET(request: NextRequest) {
       goal: 300,
       weeklyCost: 265,
       lastUpdated: new Date().toISOString(),
-      status: 'error'
+      status: 'error',
+      donations: []
     };
     
     return NextResponse.json(fallbackData);
