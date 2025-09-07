@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAnimatedError } from '@/hooks/useAnimatedError'
@@ -20,6 +20,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { showError } = useAnimatedError()
   
   const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>(defaultMode)
+  
+  // Update mode when defaultMode prop changes
+  useEffect(() => {
+    setMode(defaultMode)
+  }, [defaultMode])
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({

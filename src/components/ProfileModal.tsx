@@ -1,0 +1,800 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { 
+  User, 
+  Settings, 
+  Heart, 
+  Download, 
+  Share2, 
+  Edit3, 
+  Camera, 
+  Mail, 
+  Globe, 
+  Twitter, 
+  Instagram,
+  Save,
+  X,
+  Trash2,
+  Eye,
+  EyeOff,
+  Star,
+  Clock,
+  BarChart3,
+  UserPlus,
+  FolderPlus
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface UserProfile {
+  id: string;
+  displayName: string;
+  username: string;
+  email: string;
+  bio: string;
+  avatar?: string;
+  socialLinks: {
+    twitter?: string;
+    instagram?: string;
+    website?: string;
+  };
+  preferences: {
+    defaultModel: string;
+    defaultStyle: string;
+    notifications: boolean;
+    publicProfile: boolean;
+    toastyNotifications: boolean;
+  };
+  stats: {
+    totalGenerations: number;
+    favoriteGenerations: number;
+    accountCreated: string;
+    lastActive: string;
+    collections: number;
+  };
+  collections: Array<{
+    id: string;
+    name: string;
+    description: string;
+    itemCount: number;
+    isPublic: boolean;
+  }>;
+  favoritePresets: string[];
+}
+
+interface GalleryItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  fileType: 'image' | 'video';
+  originalPrompt: string;
+  createdAt: string;
+  isFavorite: boolean;
+  isPublic: boolean;
+  collectionId?: string;
+}
+
+interface ProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats'>('profile');
+  const [loading, setLoading] = useState(false);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [showCreateCollection, setShowCreateCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites' | 'public'>('all');
+
+  // Mock user profile data
+  const [profile, setProfile] = useState<UserProfile>({
+    id: user?.id || '1',
+    displayName: user?.user_metadata?.name || 'User',
+    username: user?.email?.split('@')[0] || 'user',
+    email: user?.email || 'user@example.com',
+    bio: 'AI enthusiast and creative explorer',
+    avatar: undefined,
+    socialLinks: {
+      twitter: '',
+      instagram: '',
+      website: ''
+    },
+    preferences: {
+      defaultModel: 'runway-t2i',
+      defaultStyle: 'realistic',
+      notifications: true,
+      publicProfile: false,
+      toastyNotifications: true
+    },
+    stats: {
+      totalGenerations: 47,
+      favoriteGenerations: 12,
+      accountCreated: '2024-01-15',
+      lastActive: new Date().toISOString(),
+      collections: 3
+    },
+    collections: [
+      {
+        id: '1',
+        name: 'My Favorites',
+        description: 'Best AI generations',
+        itemCount: 8,
+        isPublic: false
+      },
+      {
+        id: '2',
+        name: 'Character Variations',
+        description: 'Character style experiments',
+        itemCount: 15,
+        isPublic: true
+      },
+      {
+        id: '3',
+        name: 'Background Changes',
+        description: 'Background transformation tests',
+        itemCount: 12,
+        isPublic: false
+      }
+    ],
+    favoritePresets: ['The Smurfs', 'Anime Style', 'Japanese Manga Style']
+  });
+
+  // Mock gallery data
+  useEffect(() => {
+    setGalleryItems([
+      {
+        id: '1',
+        title: 'Smurf Character Variation',
+        description: 'Blue character with hood',
+        imageUrl: '/character-variation-1-variation-1.jpg',
+        fileType: 'image',
+        originalPrompt: 'Apply the Smurfs style to the character',
+        createdAt: '2024-01-15T10:30:00Z',
+        isFavorite: true,
+        isPublic: true
+      },
+      {
+        id: '2',
+        title: 'Anime Style Portrait',
+        description: 'Anime-style character portrait',
+        imageUrl: '/character-variation-2-variation-2.jpg',
+        fileType: 'image',
+        originalPrompt: 'Apply anime style to the character',
+        createdAt: '2024-01-14T15:45:00Z',
+        isFavorite: false,
+        isPublic: false
+      }
+    ]);
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    // TODO: Save profile to database
+    setTimeout(() => {
+      setLoading(false);
+      setIsEditing(false);
+    }, 1000);
+  };
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // TODO: Upload avatar
+      console.log('Avatar upload:', file);
+    }
+  };
+
+  const handleCreateCollection = () => {
+    if (newCollectionName.trim()) {
+      const newCollection = {
+        id: Date.now().toString(),
+        name: newCollectionName,
+        description: newCollectionDescription,
+        itemCount: 0,
+        isPublic: false
+      };
+      setProfile(prev => ({
+        ...prev,
+        collections: [...prev.collections, newCollection]
+      }));
+      setNewCollectionName('');
+      setNewCollectionDescription('');
+      setShowCreateCollection(false);
+    }
+  };
+
+  const handleToggleFavorite = (itemId: string) => {
+    setGalleryItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
+    ));
+  };
+
+  const handleTogglePublic = (itemId: string) => {
+    setGalleryItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, isPublic: !item.isPublic } : item
+    ));
+  };
+
+  const handleExportData = () => {
+    const data = {
+      profile,
+      gallery: galleryItems,
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'varyai-profile-export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredGalleryItems = galleryItems.filter(item => {
+    switch (galleryFilter) {
+      case 'favorites':
+        return item.isFavorite;
+      case 'public':
+        return item.isPublic;
+      default:
+        return true;
+    }
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <h2 className="text-2xl font-bold text-white">Profile</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-700">
+          {[
+            { id: 'profile', label: 'Profile', icon: User },
+            { id: 'gallery', label: 'Gallery', icon: Heart },
+            { id: 'settings', label: 'Settings', icon: Settings },
+            { id: 'stats', label: 'Stats', icon: BarChart3 }
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id as any)}
+              className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === id
+                  ? 'text-white border-b-2 border-purple-500'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              {/* Avatar Section */}
+              <div className="flex items-center space-x-6">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    {profile.avatar ? (
+                      <img src={profile.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-12 h-12 text-white" />
+                    )}
+                  </div>
+                  {isEditing && (
+                    <label className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 cursor-pointer hover:bg-purple-700 transition-colors">
+                      <Camera className="w-4 h-4 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{profile.displayName}</h3>
+                  <p className="text-gray-400">@{profile.username}</p>
+                  <p className="text-gray-400 text-sm">{profile.email}</p>
+                </div>
+              </div>
+
+              {/* Profile Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.displayName}
+                      onChange={(e) => setProfile(prev => ({ ...prev, displayName: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    />
+                  ) : (
+                    <p className="text-white">{profile.displayName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                  {isEditing ? (
+                    <textarea
+                      value={profile.bio}
+                      onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    />
+                  ) : (
+                    <p className="text-white">{profile.bio}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-4">Social Links</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Twitter</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={profile.socialLinks.twitter}
+                        onChange={(e) => setProfile(prev => ({ 
+                          ...prev, 
+                          socialLinks: { ...prev.socialLinks, twitter: e.target.value }
+                        }))}
+                        placeholder="@username"
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      />
+                    ) : (
+                      <p className="text-white">{profile.socialLinks.twitter || 'Not set'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Instagram</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={profile.socialLinks.instagram}
+                        onChange={(e) => setProfile(prev => ({ 
+                          ...prev, 
+                          socialLinks: { ...prev.socialLinks, instagram: e.target.value }
+                        }))}
+                        placeholder="@username"
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      />
+                    ) : (
+                      <p className="text-white">{profile.socialLinks.instagram || 'Not set'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={profile.socialLinks.website}
+                        onChange={(e) => setProfile(prev => ({ 
+                          ...prev, 
+                          socialLinks: { ...prev.socialLinks, website: e.target.value }
+                        }))}
+                        placeholder="https://example.com"
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      />
+                    ) : (
+                      <p className="text-white">{profile.socialLinks.website || 'Not set'}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-4">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={loading}
+                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancel</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'gallery' && (
+            <div className="space-y-6">
+              {/* Gallery Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <h3 className="text-lg font-semibold text-white">My Gallery</h3>
+                  <div className="flex space-x-2">
+                    {['all', 'favorites', 'public'].map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => setGalleryFilter(filter as any)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          galleryFilter === filter
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCreateCollection(true)}
+                  className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  <span>New Collection</span>
+                </button>
+              </div>
+
+              {/* Collections */}
+              <div>
+                <h4 className="text-md font-semibold text-white mb-3">Collections</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {profile.collections.map((collection) => (
+                    <div key={collection.id} className="bg-gray-800 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-white">{collection.name}</h5>
+                        <span className="text-xs text-gray-400">{collection.itemCount} items</span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-2">{collection.description}</p>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          collection.isPublic ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+                        }`}>
+                          {collection.isPublic ? 'Public' : 'Private'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gallery Items */}
+              <div>
+                <h4 className="text-md font-semibold text-white mb-3">Recent Items</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredGalleryItems.map((item) => (
+                    <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden">
+                      <div className="aspect-square bg-gray-700 flex items-center justify-center">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-gray-400">No preview</div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h5 className="font-medium text-white mb-1">{item.title}</h5>
+                        <p className="text-sm text-gray-400 mb-2">{item.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleToggleFavorite(item.id)}
+                              className={`p-1 rounded ${
+                                item.isFavorite ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'
+                              }`}
+                            >
+                              <Star className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleTogglePublic(item.id)}
+                              className={`p-1 rounded ${
+                                item.isPublic ? 'text-green-400' : 'text-gray-400 hover:text-green-400'
+                              }`}
+                            >
+                              {item.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          <button className="text-gray-400 hover:text-white">
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              {/* Generation Preferences */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Generation Preferences</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Model</label>
+                    <select
+                      value={profile.preferences.defaultModel}
+                      onChange={(e) => setProfile(prev => ({
+                        ...prev,
+                        preferences: { ...prev.preferences, defaultModel: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="runway-t2i">Runway T2I</option>
+                      <option value="nano-banana">Nano Banana</option>
+                      <option value="minimax-endframe">Minimax Endframe</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Style</label>
+                    <select
+                      value={profile.preferences.defaultStyle}
+                      onChange={(e) => setProfile(prev => ({
+                        ...prev,
+                        preferences: { ...prev.preferences, defaultStyle: e.target.value }
+                      }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="realistic">Realistic</option>
+                      <option value="anime">Anime</option>
+                      <option value="cartoon">Cartoon</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notification Settings */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Notifications</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white">Email Notifications</h4>
+                      <p className="text-sm text-gray-400">Receive updates about new features</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.preferences.notifications}
+                        onChange={(e) => setProfile(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, notifications: e.target.checked }
+                        }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white">Toasty Sound</h4>
+                      <p className="text-sm text-gray-400">Play sound when generation completes</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.preferences.toastyNotifications}
+                        onChange={(e) => setProfile(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, toastyNotifications: e.target.checked }
+                        }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white">Public Profile</h4>
+                      <p className="text-sm text-gray-400">Make your profile visible to others</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={profile.preferences.publicProfile}
+                        onChange={(e) => setProfile(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, publicProfile: e.target.checked }
+                        }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Favorite Presets */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Favorite Presets</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.favoritePresets.map((preset) => (
+                    <span key={preset} className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm">
+                      {preset}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Data Management */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Data Management</h3>
+                <div className="space-y-4">
+                  <button
+                    onClick={handleExportData}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Export Data</span>
+                  </button>
+                  <button className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Account</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'stats' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Usage Statistics</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-600 rounded-lg">
+                      <BarChart3 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">{profile.stats.totalGenerations}</p>
+                      <p className="text-sm text-gray-400">Total Generations</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-yellow-600 rounded-lg">
+                      <Star className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">{profile.stats.favoriteGenerations}</p>
+                      <p className="text-sm text-gray-400">Favorites</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <UserPlus className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">{new Date(profile.stats.accountCreated).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-400">Account Created</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-600 rounded-lg">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">{new Date(profile.stats.lastActive).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-400">Last Active</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Collections</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {profile.collections.map((collection) => (
+                    <div key={collection.id} className="bg-gray-700 rounded-lg p-4">
+                      <h5 className="font-medium text-white mb-2">{collection.name}</h5>
+                      <p className="text-sm text-gray-400 mb-2">{collection.description}</p>
+                      <p className="text-lg font-bold text-purple-400">{collection.itemCount} items</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Create Collection Modal */}
+        {showCreateCollection && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-white mb-4">Create New Collection</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Collection Name</label>
+                  <input
+                    type="text"
+                    value={newCollectionName}
+                    onChange={(e) => setNewCollectionName(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    placeholder="Enter collection name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                  <textarea
+                    value={newCollectionDescription}
+                    onChange={(e) => setNewCollectionDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    placeholder="Enter collection description"
+                  />
+                </div>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={handleCreateCollection}
+                    className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => setShowCreateCollection(false)}
+                    className="flex-1 bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

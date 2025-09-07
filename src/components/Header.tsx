@@ -5,6 +5,7 @@ import { User, LogOut, Settings, UserPlus, LogIn } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
+import { ProfileModal } from './ProfileModal'
 
 interface HeaderProps {
   onSignUpClick: () => void
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -109,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
                     <button
                       onClick={() => {
                         setShowUserMenu(false)
-                        router.push('/profile')
+                        setShowProfileModal(true)
                       }}
                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                     >
@@ -150,6 +152,12 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
           onClick={() => setShowUserMenu(false)}
         />
       )}
+
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </header>
   )
 }
