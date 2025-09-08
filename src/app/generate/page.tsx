@@ -5,7 +5,17 @@ import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Tras
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
 // Generation mode types
-type GenerationMode = 'nano-banana' | 'runway-t2i' | 'runway-video' | 'endframe' | 'veo3-fast' | 'minimax-2.0';
+type GenerationMode = 
+  | 'nano-banana' 
+  | 'runway-t2i' 
+  | 'runway-video' 
+  | 'endframe' 
+  | 'veo3-fast' 
+  | 'minimax-2.0'
+  | 'cling-2.1-master'
+  | 'veo3-fast-t2v'
+  | 'minimax-2-t2v'
+  | 'cling-2.1-master-t2v';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -762,8 +772,16 @@ export default function Home() {
     
     if (hasImages && uploadedFiles.length === 1) {
       modes.push('nano-banana');
-      modes.push('veo3-fast'); // Image-to-video with Veo3
+      // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
       modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+      modes.push('cling-2.1-master'); // Image-to-video with Cling 2.1 Master
+    }
+    
+    // Add text-to-video modes when no images are uploaded
+    if (!hasImages && !hasVideos) {
+      modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
+      modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
+      modes.push('cling-2.1-master-t2v'); // Text-to-video with Cling 2.1 Master
     }
     
     if (hasVideos && !hasImages) {
@@ -2763,6 +2781,398 @@ export default function Home() {
     }
   };
 
+  // Handle Cling 2.1 Master image-to-video generation
+  const handleClingMasterGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    const imageFile = uploadedFiles.find(file => file.fileType === 'image');
+    if (!imageFile) {
+      showAnimatedErrorNotification('User Error: Please upload a valid image! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Cling 2.1 Master generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Uploading image to Cling 2.1 Master...'
+      });
+
+      const response = await fetch('/api/cling-2.1-master', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          image_url: imageFile.preview,
+          duration: "5",
+          negative_prompt: "blur, distort, and low quality",
+          cfg_scale: 0.5
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Cling 2.1 Master...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing video...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `cling-master-${Date.now()}`,
+        description: `Cling 2.1 Master: ${prompt}`,
+        angle: 'Image-to-Video',
+        pose: 'Cling 2.1 Master Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Cling 2.1 Master generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Cling 2.1 Master'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  // Handle Veo3 Fast text-to-video generation
+  const handleVeo3FastT2VGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt for text-to-video generation');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Veo3 Fast text-to-video generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Processing prompt with Veo3 Fast...'
+      });
+
+      const response = await fetch('/api/veo3-fast-t2v', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          duration: "8s",
+          generate_audio: true,
+          resolution: "720p"
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Veo3 Fast...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing video...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `veo3-t2v-${Date.now()}`,
+        description: `Veo3 Fast T2V: ${prompt}`,
+        angle: 'Text-to-Video',
+        pose: 'Veo3 Fast T2V Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Veo3 Fast T2V generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Veo3 Fast T2V'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  // Handle Minimax 2.0 text-to-video generation
+  const handleMinimax2T2VGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt for text-to-video generation');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Minimax 2.0 text-to-video generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Processing prompt with Minimax 2.0...'
+      });
+
+      const response = await fetch('/api/minimax-2-t2v', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          duration: "5",
+          aspect_ratio: "16:9",
+          negative_prompt: "blur, distort, and low quality",
+          cfg_scale: 0.5
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Minimax 2.0...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing video...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `minimax-t2v-${Date.now()}`,
+        description: `Minimax 2.0 T2V: ${prompt}`,
+        angle: 'Text-to-Video',
+        pose: 'Minimax 2.0 T2V Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Minimax 2.0 T2V generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Minimax 2.0 T2V'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  // Handle Cling 2.1 Master text-to-video generation
+  const handleClingMasterT2VGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt for text-to-video generation');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Cling 2.1 Master text-to-video generation...'
+    });
+
+    try {
+      setProcessing({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Processing prompt with Cling 2.1 Master...'
+      });
+
+      const response = await fetch('/api/cling-2.1-master-t2v', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          duration: "5",
+          aspect_ratio: "16:9",
+          negative_prompt: "blur, distort, and low quality",
+          cfg_scale: 0.5
+        }),
+      });
+
+      setProcessing({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating video with Cling 2.1 Master...'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 90,
+        currentStep: 'Processing video...'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `cling-t2v-${Date.now()}`,
+        description: `Cling 2.1 Master T2V: ${prompt}`,
+        angle: 'Text-to-Video',
+        pose: 'Cling 2.1 Master T2V Generated',
+        videoUrl: data.videoUrl,
+        fileType: 'video'
+      };
+
+      setVariations(prev => [generatedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Cling 2.1 Master T2V generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Cling 2.1 Master T2V'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
   const handleEndFrameGeneration = async () => {
     if (uploadedFiles.length < 2) {
       setError('Please upload two images: one for the start frame and one for the end frame');
@@ -3236,6 +3646,10 @@ export default function Home() {
                       {mode === 'endframe' && 'Generate Start → End Video'}
                       {mode === 'veo3-fast' && 'Animate Image (Veo3 Fast)'}
                       {mode === 'minimax-2.0' && 'Animate Image (Minimax 2.0)'}
+                      {mode === 'cling-2.1-master' && 'Animate Image (Cling 2.1 Master)'}
+                      {mode === 'veo3-fast-t2v' && 'Generate Video (Veo3 Fast T2V)'}
+                      {mode === 'minimax-2-t2v' && 'Generate Video (Minimax 2.0 T2V)'}
+                      {mode === 'cling-2.1-master-t2v' && 'Generate Video (Cling 2.1 Master T2V)'}
                     </button>
                   ))}
                 </div>
@@ -3301,23 +3715,13 @@ export default function Home() {
                     )}
                   </button>
                 ) : generationMode === 'veo3-fast' ? (
-                  // Veo3 Fast image-to-video
+                  // Veo3 Fast image-to-video - DISABLED IN PRODUCTION
                   <button
-                    onClick={handleVeo3FastGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    disabled={true}
+                    className="px-8 py-4 bg-gray-500 text-gray-300 rounded-lg font-semibold text-lg cursor-not-allowed flex items-center justify-center gap-2 shadow-lg opacity-50"
                   >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Animate Image (Veo3 Fast)
-                      </>
-                    )}
+                    <Camera className="w-5 h-5" />
+                    Animate Image (Veo3 Fast) - Temporarily Disabled
                   </button>
                 ) : generationMode === 'minimax-2.0' ? (
                   // Minimax 2.0 image-to-video
@@ -3335,6 +3739,82 @@ export default function Home() {
                       <>
                         <Camera className="w-5 h-5" />
                         Animate Image (Minimax 2.0)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'cling-2.1-master' ? (
+                  // Cling 2.1 Master image-to-video
+                  <button
+                    onClick={handleClingMasterGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Animate Image (Cling 2.1 Master)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'veo3-fast-t2v' ? (
+                  // Veo3 Fast text-to-video
+                  <button
+                    onClick={handleVeo3FastT2VGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Generate Video (Veo3 Fast T2V)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'minimax-2-t2v' ? (
+                  // Minimax 2.0 text-to-video
+                  <button
+                    onClick={handleMinimax2T2VGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Generate Video (Minimax 2.0 T2V)
+                      </>
+                    )}
+                  </button>
+                ) : generationMode === 'cling-2.1-master-t2v' ? (
+                  // Cling 2.1 Master text-to-video
+                  <button
+                    onClick={handleClingMasterT2VGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    {processing.isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Generate Video (Cling 2.1 Master T2V)
                       </>
                     )}
                   </button>
