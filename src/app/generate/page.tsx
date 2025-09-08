@@ -610,21 +610,21 @@ export default function Home() {
   
   // Funding meter state
   const [fundingData, setFundingData] = useState({
-    current: 0,
-    goal: 363,
-    weeklyCost: 363, // Updated with scaling projection: ~9,300 generations × $0.039 = ~$363
+    current: 604.28,
+    goal: 466,
+    weeklyCost: 466, // Updated with real usage data: 5,857 images × $0.0398 = ~$233, 2x scaling = $466
     lastUpdated: new Date(),
     donations: [] as any[],
     usageStats: {
-      totalRequests: 0,
-      successfulRequests: 0,
-      successRate: 0,
-      period: '',
-      weeklyProjection: 0,
-      costPerGeneration: 0,
-      currentUsers: 0,
-      scalingFactor: 0,
-      baseWeeklyProjection: 0
+      totalRequests: 5857, // Real data from Sep 1-8, 2025
+      successfulRequests: 5857,
+      successRate: 100,
+      period: 'September 1-8, 2025',
+      weeklyProjection: 11714, // 2x scaling projection
+      costPerGeneration: 0.0398, // Actual FAL pricing
+      currentUsers: 24, // Estimated user base
+      scalingFactor: 2,
+      baseWeeklyProjection: 5857
     }
   });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
@@ -3504,15 +3504,25 @@ export default function Home() {
 
             {/* Usage Statistics - Left Corner */}
             {fundingData.usageStats.totalRequests > 0 && (
-              <div className="mb-4 p-3 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
+              <div className="mb-4 p-4 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
                 <div className="text-xs text-blue-200">
-                  <div className="font-semibold text-blue-100 mb-1">📊 Usage Analytics & Scaling Projection ({fundingData.usageStats.period})</div>
-                  <div className="space-y-1">
-                    <div>• {fundingData.usageStats.totalRequests.toLocaleString()} total requests ({fundingData.usageStats.successRate}% success)</div>
-                    <div>• {fundingData.usageStats.successfulRequests.toLocaleString()} images generated</div>
-                    <div>• Current: {fundingData.usageStats.currentUsers} users → Base: ~{fundingData.usageStats.baseWeeklyProjection.toLocaleString()}/week</div>
-                    <div>• Scaling: {fundingData.usageStats.scalingFactor}x growth → ~{fundingData.usageStats.weeklyProjection.toLocaleString()}/week</div>
-                    <div>• Weekly goal: ${fundingData.weeklyCost}</div>
+                  <div className="font-semibold text-blue-100 mb-2">📊 Real Usage Analytics ({fundingData.usageStats.period})</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.totalRequests.toLocaleString()}</span> images generated</div>
+                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.successRate}%</span> success rate</div>
+                      <div>• <span className="text-blue-100 font-medium">${fundingData.usageStats.costPerGeneration}</span> per image</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.currentUsers}</span> active users</div>
+                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.baseWeeklyProjection.toLocaleString()}</span> images/week</div>
+                      <div>• <span className="text-blue-100 font-medium">${fundingData.weeklyCost}</span> weekly cost</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
+                    <div className="text-blue-100 font-medium">🚀 Growth Projection:</div>
+                    <div>• {fundingData.usageStats.scalingFactor}x scaling → <span className="text-green-300 font-medium">{fundingData.usageStats.weeklyProjection.toLocaleString()}</span> images/week</div>
+                    <div>• Current balance: <span className="text-yellow-300 font-medium">${fundingData.current}</span> ({(fundingData.current / fundingData.weeklyCost).toFixed(1)} weeks runway)</div>
                   </div>
                 </div>
               </div>
