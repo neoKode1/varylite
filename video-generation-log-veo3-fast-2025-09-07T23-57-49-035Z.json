@@ -1,0 +1,156 @@
+{
+  "modelName": "veo3-fast",
+  "startTime": "2025-09-07T23:57:48.997Z",
+  "endTime": "2025-09-07T23:57:49.035Z",
+  "totalDuration": 38,
+  "testConfig": {
+    "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+    "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+    "duration": "8s",
+    "generate_audio": true,
+    "resolution": "720p"
+  },
+  "phases": [
+    {
+      "name": "Pre-request Validation",
+      "startTime": 1757289468999,
+      "logs": [],
+      "endTime": 1757289469000,
+      "duration": 1
+    },
+    {
+      "name": "API Request Submission",
+      "startTime": 1757289469000,
+      "logs": []
+    }
+  ],
+  "pollingUpdates": [],
+  "logs": [
+    {
+      "timestamp": "2025-09-07T23:57:48.998Z",
+      "elapsed": "1ms",
+      "level": "INFO",
+      "message": "🎬 Starting comprehensive test for Veo3 Fast",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:48.998Z",
+      "elapsed": "1ms",
+      "level": "INFO",
+      "message": "Test configuration:",
+      "data": {
+        "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+        "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+        "duration": "8s",
+        "generate_audio": true,
+        "resolution": "720p"
+      }
+    },
+    {
+      "timestamp": "2025-09-07T23:57:48.999Z",
+      "elapsed": "2ms",
+      "level": "PHASE",
+      "message": "Starting phase: Pre-request Validation",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:48.999Z",
+      "elapsed": "2ms",
+      "level": "INFO",
+      "message": "Validating test data...",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:48.999Z",
+      "elapsed": "2ms",
+      "level": "SUCCESS",
+      "message": "Test data validation passed",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.000Z",
+      "elapsed": "3ms",
+      "level": "SUCCESS",
+      "message": "Completed phase: Pre-request Validation (1ms)",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.000Z",
+      "elapsed": "3ms",
+      "level": "PHASE",
+      "message": "Starting phase: API Request Submission",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.000Z",
+      "elapsed": "3ms",
+      "level": "INFO",
+      "message": "Submitting video generation request...",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.000Z",
+      "elapsed": "3ms",
+      "level": "INFO",
+      "message": "Note: This will use Fal.ai's internal polling mechanism via fal.subscribe()",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.001Z",
+      "elapsed": "4ms",
+      "level": "INFO",
+      "message": "Making request to: http://localhost:3000/api/veo3-fast",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.001Z",
+      "elapsed": "4ms",
+      "level": "INFO",
+      "message": "Request payload:",
+      "data": {
+        "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+        "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+        "duration": "8s",
+        "generate_audio": true,
+        "resolution": "720p"
+      }
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.027Z",
+      "elapsed": "30ms",
+      "level": "INFO",
+      "message": "Sending request...",
+      "data": null
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.034Z",
+      "elapsed": "37ms",
+      "level": "ERROR",
+      "message": "Request failed",
+      "data": {
+        "error": "connect ECONNREFUSED ::1:3000",
+        "code": "ECONNREFUSED"
+      }
+    },
+    {
+      "timestamp": "2025-09-07T23:57:49.034Z",
+      "elapsed": "37ms",
+      "level": "ERROR",
+      "message": "Test failed with exception",
+      "data": {
+        "error": "connect ECONNREFUSED ::1:3000",
+        "stack": "Error: connect ECONNREFUSED ::1:3000\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1615:16)"
+      }
+    }
+  ],
+  "summary": {
+    "totalLogs": 14,
+    "successCount": 2,
+    "errorCount": 2,
+    "warningCount": 0,
+    "pollingCount": 0,
+    "phasesCompleted": 2,
+    "pollingUpdates": 0,
+    "totalDuration": 38
+  }
+}

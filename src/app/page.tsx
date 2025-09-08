@@ -44,7 +44,16 @@ export default function LandingPage() {
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-8">
         <div className="w-full max-w-4xl mx-auto flex items-center justify-center">
           {/* Content - Centered */}
-          <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg">
+          <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg relative">
+            {/* Logo Background */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 rounded-lg"
+              style={{
+                backgroundImage: 'url(/b39d569d-2c0e-4f3a-9ff0-d0d58b7a185d_removalai_preview.png)'
+              }}
+            ></div>
+            {/* Content overlay */}
+            <div className="relative z-10">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Welcome to VaryAI
           </h1>
@@ -161,6 +170,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+            </div> {/* Close content overlay */}
 
       {/* Character Variation Image - Bottom Right */}
       <div className="fixed bottom-6 right-6 z-30">

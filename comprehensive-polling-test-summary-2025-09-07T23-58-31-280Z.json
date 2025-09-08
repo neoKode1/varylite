@@ -1,0 +1,325 @@
+{
+  "timestamp": "2025-09-07T23:58:31.280Z",
+  "testType": "Comprehensive Video Generation Test with Polling",
+  "totalDuration": 10058,
+  "testConfig": {
+    "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+    "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+    "duration": "8s",
+    "generate_audio": true,
+    "resolution": "720p"
+  },
+  "results": [
+    {
+      "model": "Veo3 Fast",
+      "status": "ERROR",
+      "error": "connect ECONNREFUSED ::1:3000",
+      "logs": [
+        {
+          "timestamp": "2025-09-07T23:58:21.220Z",
+          "elapsed": "1ms",
+          "level": "INFO",
+          "message": "🎬 Starting comprehensive test for Veo3 Fast",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.221Z",
+          "elapsed": "1ms",
+          "level": "INFO",
+          "message": "Test configuration:",
+          "data": {
+            "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+            "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+            "duration": "8s",
+            "generate_audio": true,
+            "resolution": "720p"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.221Z",
+          "elapsed": "1ms",
+          "level": "PHASE",
+          "message": "Starting phase: Pre-request Validation",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.221Z",
+          "elapsed": "1ms",
+          "level": "INFO",
+          "message": "Validating test data...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "2ms",
+          "level": "SUCCESS",
+          "message": "Test data validation passed",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "2ms",
+          "level": "SUCCESS",
+          "message": "Completed phase: Pre-request Validation (1ms)",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "2ms",
+          "level": "PHASE",
+          "message": "Starting phase: API Request Submission",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "2ms",
+          "level": "INFO",
+          "message": "Submitting video generation request...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "2ms",
+          "level": "INFO",
+          "message": "Note: This will use Fal.ai's internal polling mechanism via fal.subscribe()",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.222Z",
+          "elapsed": "3ms",
+          "level": "INFO",
+          "message": "Making request to: http://localhost:3000/api/veo3-fast",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.223Z",
+          "elapsed": "3ms",
+          "level": "INFO",
+          "message": "Request payload:",
+          "data": {
+            "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+            "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+            "duration": "8s",
+            "generate_audio": true,
+            "resolution": "720p"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.241Z",
+          "elapsed": "21ms",
+          "level": "INFO",
+          "message": "Sending request...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.247Z",
+          "elapsed": "27ms",
+          "level": "ERROR",
+          "message": "Request failed",
+          "data": {
+            "error": "connect ECONNREFUSED ::1:3000",
+            "code": "ECONNREFUSED"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.248Z",
+          "elapsed": "28ms",
+          "level": "ERROR",
+          "message": "Test failed with exception",
+          "data": {
+            "error": "connect ECONNREFUSED ::1:3000",
+            "stack": "Error: connect ECONNREFUSED ::1:3000\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1615:16)"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.249Z",
+          "elapsed": "29ms",
+          "level": "SUCCESS",
+          "message": "Comprehensive logs saved to: video-generation-log-veo3-fast-2025-09-07T23-58-21-248Z.json",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:21.249Z",
+          "elapsed": "29ms",
+          "level": "INFO",
+          "message": "Comprehensive logging completed. Log file: video-generation-log-veo3-fast-2025-09-07T23-58-21-248Z.json",
+          "data": null
+        }
+      ],
+      "phases": [
+        {
+          "name": "Pre-request Validation",
+          "startTime": 1757289501221,
+          "logs": [],
+          "endTime": 1757289501222,
+          "duration": 1
+        },
+        {
+          "name": "API Request Submission",
+          "startTime": 1757289501222,
+          "logs": []
+        }
+      ],
+      "pollingUpdates": []
+    },
+    {
+      "model": "Minimax 2.0",
+      "status": "ERROR",
+      "error": "connect ECONNREFUSED ::1:3000",
+      "logs": [
+        {
+          "timestamp": "2025-09-07T23:58:31.264Z",
+          "elapsed": "0ms",
+          "level": "INFO",
+          "message": "🎬 Starting comprehensive test for Minimax 2.0",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.264Z",
+          "elapsed": "0ms",
+          "level": "INFO",
+          "message": "Test configuration:",
+          "data": {
+            "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+            "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+            "duration": "8s",
+            "generate_audio": true,
+            "resolution": "720p"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "PHASE",
+          "message": "Starting phase: Pre-request Validation",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "INFO",
+          "message": "Validating test data...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "SUCCESS",
+          "message": "Test data validation passed",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "SUCCESS",
+          "message": "Completed phase: Pre-request Validation (0ms)",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "PHASE",
+          "message": "Starting phase: API Request Submission",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.265Z",
+          "elapsed": "1ms",
+          "level": "INFO",
+          "message": "Submitting video generation request...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.266Z",
+          "elapsed": "2ms",
+          "level": "INFO",
+          "message": "Note: This will use Fal.ai's internal polling mechanism via fal.subscribe()",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.266Z",
+          "elapsed": "2ms",
+          "level": "INFO",
+          "message": "Making request to: http://localhost:3000/api/minimax-2",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.266Z",
+          "elapsed": "2ms",
+          "level": "INFO",
+          "message": "Request payload:",
+          "data": {
+            "prompt": "A person waves hello and smiles warmly at the camera, then turns to look at something off-screen",
+            "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+            "duration": "8s",
+            "generate_audio": true,
+            "resolution": "720p"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.275Z",
+          "elapsed": "11ms",
+          "level": "INFO",
+          "message": "Sending request...",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.276Z",
+          "elapsed": "12ms",
+          "level": "ERROR",
+          "message": "Request failed",
+          "data": {
+            "error": "connect ECONNREFUSED ::1:3000",
+            "code": "ECONNREFUSED"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.276Z",
+          "elapsed": "12ms",
+          "level": "ERROR",
+          "message": "Test failed with exception",
+          "data": {
+            "error": "connect ECONNREFUSED ::1:3000",
+            "stack": "Error: connect ECONNREFUSED ::1:3000\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1615:16)"
+          }
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.277Z",
+          "elapsed": "13ms",
+          "level": "SUCCESS",
+          "message": "Comprehensive logs saved to: video-generation-log-minimax-2.0-2025-09-07T23-58-31-276Z.json",
+          "data": null
+        },
+        {
+          "timestamp": "2025-09-07T23:58:31.278Z",
+          "elapsed": "14ms",
+          "level": "INFO",
+          "message": "Comprehensive logging completed. Log file: video-generation-log-minimax-2.0-2025-09-07T23-58-31-276Z.json",
+          "data": null
+        }
+      ],
+      "phases": [
+        {
+          "name": "Pre-request Validation",
+          "startTime": 1757289511265,
+          "logs": [],
+          "endTime": 1757289511265,
+          "duration": 0
+        },
+        {
+          "name": "API Request Submission",
+          "startTime": 1757289511265,
+          "logs": []
+        }
+      ],
+      "pollingUpdates": []
+    }
+  ],
+  "summary": {
+    "totalTests": 2,
+    "successful": 0,
+    "failed": 0,
+    "errors": 2,
+    "totalPollingUpdates": 0
+  }
+}
