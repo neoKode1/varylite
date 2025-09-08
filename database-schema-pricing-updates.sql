@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS public.model_costs (
 
 -- Insert default tier limits
 INSERT INTO public.tier_limits (tier, monthly_generations, daily_generations, allowed_models, overage_rate, price) VALUES
-('free', 10, 3, '["nano-banana", "runway-t2i", "veo3-fast", "minimax-2.0", "kling-2.1-master", "runway-video"]', 0.05, NULL),
-('pro', 50, 20, '["nano-banana", "runway-t2i", "veo3-fast", "minimax-2.0", "kling-2.1-master", "runway-video"]', 0.05, 14.99),
-('premium', 100, 50, '["nano-banana", "runway-t2i", "veo3-fast", "minimax-2.0", "kling-2.1-master", "runway-video", "seedance-pro"]', 0.04, 19.99)
+('free', 0, 0, '["nano-banana", "runway-t2i", "minimax-2.0", "kling-2.1-master", "veo3-fast", "runway-video", "seedance-pro"]', 0.05, NULL),
+('light', 50, 20, '["nano-banana", "runway-t2i", "minimax-2.0", "kling-2.1-master", "veo3-fast", "runway-video"]', 0.05, 14.99),
+('heavy', 100, 50, '["nano-banana", "runway-t2i", "minimax-2.0", "kling-2.1-master", "veo3-fast", "runway-video", "seedance-pro"]', 0.04, 19.99)
 ON CONFLICT (tier) DO UPDATE SET
   monthly_generations = EXCLUDED.monthly_generations,
   daily_generations = EXCLUDED.daily_generations,
@@ -101,6 +101,23 @@ BEGIN
   UPDATE public.users 
   SET monthly_generations = 0, last_reset_date = NOW()
   WHERE DATE_TRUNC('month', last_reset_date) < DATE_TRUNC('month', CURRENT_DATE);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create function to increment user usage counters
+CREATE OR REPLACE FUNCTION increment_user_usage(
+  user_id UUID,
+  overage_charge DECIMAL(10,2) DEFAULT 0.00
+)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.users 
+  SET 
+    monthly_generations = monthly_generations + 1,
+    daily_generations = daily_generations + 1,
+    overage_charges = overage_charges + overage_charge,
+    updated_at = NOW()
+  WHERE id = user_id;
 END;
 $$ LANGUAGE plpgsql;
 

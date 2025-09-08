@@ -5,12 +5,12 @@ export interface StripeConfig {
   secretKey: string;
   webhookSecret: string;
   priceIds: {
-    pro: string;
-    premium: string;
+    light: string;
+    heavy: string;
   };
   productIds: {
-    pro: string;
-    premium: string;
+    light: string;
+    heavy: string;
   };
 }
 
@@ -34,7 +34,7 @@ export interface StripeSubscription {
   cancelAtPeriodEnd: boolean;
   priceId: string;
   productId: string;
-  tier: 'pro' | 'premium';
+  tier: 'light' | 'heavy';
 }
 
 export interface StripeWebhookEvent {
@@ -48,7 +48,7 @@ export interface StripeWebhookEvent {
 
 export interface CreateCheckoutSessionRequest {
   userId: string;
-  tier: 'pro' | 'premium';
+  tier: 'light' | 'heavy';
   successUrl: string;
   cancelUrl: string;
 }
@@ -84,11 +84,11 @@ export interface WebhookHandler {
 // Default Stripe configuration (will be overridden by environment variables)
 export const DEFAULT_STRIPE_CONFIG: Partial<StripeConfig> = {
   priceIds: {
-    pro: 'price_pro_monthly', // Will be set from environment
-    premium: 'price_premium_monthly', // Will be set from environment
+    light: 'price_light_monthly', // Will be set from environment
+    heavy: 'price_heavy_monthly', // Will be set from environment
   },
   productIds: {
-    pro: 'prod_pro_tier', // Will be set from environment
-    premium: 'prod_premium_tier', // Will be set from environment
+    light: 'prod_light_tier', // Will be set from environment
+    heavy: 'prod_heavy_tier', // Will be set from environment
   },
 };

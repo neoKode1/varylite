@@ -35,8 +35,21 @@ export async function GET(request: NextRequest) {
     
     console.log('✅ User authenticated:', user.id, user.email);
 
+    // Create a new Supabase client with the user's JWT token for RLS
+    const userSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
+    );
+
     // Get user profile from database
-    let { data: profile, error: profileError } = await supabase
+    let { data: profile, error: profileError } = await userSupabase
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -46,7 +59,7 @@ export async function GET(request: NextRequest) {
     if (profileError && profileError.code === 'PGRST116') {
       console.log('Profile not found, creating new profile for user:', user.id);
       
-      const { data: newProfile, error: createError } = await supabase
+      const { data: newProfile, error: createError } = await userSupabase
         .from('users')
         .insert({
           id: user.id,
@@ -79,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's gallery items
-    const { data: galleryItems, error: galleryError } = await supabase
+    const { data: galleryItems, error: galleryError } = await userSupabase
       .from('galleries')
       .select('*')
       .eq('user_id', user.id)

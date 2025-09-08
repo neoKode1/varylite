@@ -142,7 +142,8 @@ export const useUserGallery = (): UserGalleryHook => {
       timestamp: baseTimestamp + index, // Ensure each variation has a unique timestamp
       originalPrompt,
       originalImagePreview,
-      fileType: variation.videoUrl ? 'video' : 'image'
+      // Fix: Properly determine file type based on what's actually present
+      fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
     }))
 
     if (user) {

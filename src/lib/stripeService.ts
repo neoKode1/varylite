@@ -20,7 +20,7 @@ export class StripeService {
   constructor(config: StripeConfig) {
     this.config = config;
     this.stripe = new Stripe(config.secretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-08-27.basil',
     });
   }
 
@@ -103,10 +103,10 @@ export class StripeService {
         userId: data.user_id,
         subscriptionId: subscription?.id,
         subscriptionStatus: subscription?.status as any,
-        currentPeriodEnd: subscription?.current_period_end 
-          ? new Date(subscription.current_period_end * 1000).toISOString()
+        currentPeriodEnd: (subscription as any)?.current_period_end 
+          ? new Date((subscription as any).current_period_end * 1000).toISOString()
           : undefined,
-        cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
+        cancelAtPeriodEnd: (subscription as any)?.cancel_at_period_end || false,
       };
 
     } catch (error) {
@@ -357,8 +357,8 @@ export class StripeService {
    */
   private async handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
     try {
-      if (invoice.subscription) {
-        const subscription = await this.stripe.subscriptions.retrieve(invoice.subscription as string);
+      if ((invoice as any).subscription) {
+        const subscription = await this.stripe.subscriptions.retrieve((invoice as any).subscription as string);
         const userId = subscription.metadata.userId;
 
         if (userId) {
@@ -389,8 +389,8 @@ export class StripeService {
    */
   private async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     try {
-      if (invoice.subscription) {
-        const subscription = await this.stripe.subscriptions.retrieve(invoice.subscription as string);
+      if ((invoice as any).subscription) {
+        const subscription = await this.stripe.subscriptions.retrieve((invoice as any).subscription as string);
         const userId = subscription.metadata.userId;
 
         if (userId) {
@@ -421,12 +421,12 @@ export function createStripeService(): StripeService {
     secretKey: process.env.STRIPE_SECRET_KEY || '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     priceIds: {
-      pro: process.env.STRIPE_PRO_PRICE_ID || '',
-      premium: process.env.STRIPE_PREMIUM_PRICE_ID || '',
+      light: process.env.STRIPE_LIGHT_PRICE_ID || '',
+      heavy: process.env.STRIPE_HEAVY_PRICE_ID || '',
     },
     productIds: {
-      pro: process.env.STRIPE_PRO_PRODUCT_ID || '',
-      premium: process.env.STRIPE_PREMIUM_PRODUCT_ID || '',
+      light: process.env.STRIPE_LIGHT_PRODUCT_ID || '',
+      heavy: process.env.STRIPE_HEAVY_PRODUCT_ID || '',
     },
   };
 

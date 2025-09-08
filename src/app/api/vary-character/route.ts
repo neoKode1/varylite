@@ -546,7 +546,8 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             return {
               ...variation,
-              imageUrl: result.data.images[0]?.url || undefined
+              imageUrl: result.data.images[0]?.url || undefined,
+              fileType: 'image' // Nano Banana generates images, not videos
             };
           } catch (error) {
             console.error(`❌ Failed to generate image for ${variation.angle}:`, error);
@@ -563,12 +564,20 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                 };
               }
             }
-            return variation; // Return without image URL if generation fails
+            return {
+              ...variation,
+              fileType: 'image' // Even if generation fails, this is still an image request
+            }; // Return without image URL if generation fails
           }
         })
       );
     } else {
       console.log('📝 Returning descriptions only (no FAL_KEY configured)');
+      // Set fileType to image for all variations when no FAL_KEY is configured
+      variationsWithImages = variations.map(variation => ({
+        ...variation,
+        fileType: 'image' as const
+      }));
     }
 
     console.log('🎉 API request completed successfully!');
@@ -706,7 +715,8 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
         id: `variation-${variationCount + 1}`,
         description: trimmedSection,
         angle: angle,
-        pose: pose
+        pose: pose,
+        fileType: 'image' as const
       });
 
       variationCount++;
@@ -727,7 +737,8 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
           id: `variation-${index + 1}`,
           description: paragraph.trim(),
           angle: `Variation ${index + 1}`,
-          pose: `Custom Pose ${index + 1}`
+          pose: `Custom Pose ${index + 1}`,
+          fileType: 'image' as const
         });
       });
     }
@@ -740,7 +751,8 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
         id: `variation-${index + 1}`,
         description: `Character variation ${index + 1}: Show the same character with different styling while maintaining all original design elements, clothing, and features.`,
         angle: `Variation ${index + 1}`,
-        pose: `Custom Pose ${index + 1}`
+        pose: `Custom Pose ${index + 1}`,
+        fileType: 'image' as const
       });
     }
 
@@ -755,25 +767,29 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
         id: 'variation-1',
         description: 'Character variation 1: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 1',
-        pose: 'Custom Pose 1'
+        pose: 'Custom Pose 1',
+        fileType: 'image' as const
       },
       {
         id: 'variation-2',
         description: 'Character variation 2: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 2',
-        pose: 'Custom Pose 2'
+        pose: 'Custom Pose 2',
+        fileType: 'image' as const
       },
       {
         id: 'variation-3',
         description: 'Character variation 3: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 3',
-        pose: 'Custom Pose 3'
+        pose: 'Custom Pose 3',
+        fileType: 'image' as const
       },
       {
         id: 'variation-4',
         description: 'Character variation 4: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 4',
-        pose: 'Custom Pose 4'
+        pose: 'Custom Pose 4',
+        fileType: 'image' as const
       }
     ];
   }

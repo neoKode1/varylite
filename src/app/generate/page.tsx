@@ -279,7 +279,7 @@ const CHARACTER_STYLE_PROMPTS = [
   {
     name: 'The Care Bears',
     description: 'Colorful, emotional-themed bears from the 1980s franchise who spread caring and positivity.',
-    prompt: 'Apply the Care Bears style to the character'
+    prompt: 'Make character into Care Bear style'
   },
   {
     name: 'The Gummi Bears',
@@ -610,7 +610,7 @@ export default function Home() {
   
   // Funding meter state
   const [fundingData, setFundingData] = useState({
-    current: 595.95,
+    current: 421.58, // Stripe revenue ($654.69) - FAL costs already spent ($233.11)
     goal: 466,
     weeklyCost: 466, // Updated with real usage data: 5,857 images × $0.0398 = ~$233, 2x scaling = $466
     lastUpdated: new Date(),

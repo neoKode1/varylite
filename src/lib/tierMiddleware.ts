@@ -77,7 +77,7 @@ export async function checkTierLimits(
 
     // Check if user meets required tier
     if (requiredTier) {
-      const tierHierarchy = { free: 0, pro: 1, premium: 2 };
+      const tierHierarchy = { free: 0, light: 1, heavy: 2 };
       const userTierLevel = tierHierarchy[tierCheck.tier];
       const requiredTierLevel = tierHierarchy[requiredTier];
 

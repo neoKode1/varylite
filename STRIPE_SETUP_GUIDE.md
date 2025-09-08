@@ -10,26 +10,26 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Stripe Product and Price IDs
-STRIPE_PRO_PRODUCT_ID=prod_...
-STRIPE_PRO_PRICE_ID=price_...
-STRIPE_PREMIUM_PRODUCT_ID=prod_...
-STRIPE_PREMIUM_PRICE_ID=price_...
+# Stripe Product and Price IDs (with your naming)
+STRIPE_LIGHT_PRODUCT_ID=prod_...
+STRIPE_LIGHT_PRICE_ID=price_...
+STRIPE_HEAVY_PRODUCT_ID=prod_...
+STRIPE_HEAVY_PRICE_ID=price_...
 ```
 
 ## 📋 Stripe Dashboard Setup Steps
 
 ### 1. Create Products in Stripe Dashboard
 
-#### **Pro Tier Product**
-- **Name**: "VaryAI Pro"
-- **Description**: "Unlimited access to core AI models with 50 generations/month"
+#### **Light Tier Product**
+- **Name**: "VaryAI Light"
+- **Description**: "Unlimited access to core AI models with 50 generations/month. Includes Nano Banana, Runway T2I, VEO3 Fast, Minimax 2.0, Kling 2.1 Master, and Runway Video."
 - **Price**: $14.99/month (recurring)
 - **Billing**: Monthly
 
-#### **Premium Tier Product**
-- **Name**: "VaryAI Premium"
-- **Description**: "Unlimited access to all AI models with 100 generations/month"
+#### **Heavy Tier Product**
+- **Name**: "VaryAI Heavy"
+- **Description**: "Unlimited access to all AI models with 100 generations/month. Includes all Light features plus Seedance Pro for advanced video generation."
 - **Price**: $19.99/month (recurring)
 - **Billing**: Monthly
 

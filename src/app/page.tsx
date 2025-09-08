@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, UserPlus, LogIn, Sparkles, Zap, Users, Heart } from 'lucide-react';
 import { AuthModal } from '@/components/AuthModal';
+import { UserGrowthCounter } from '@/components/UserGrowthCounter';
 
 export default function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -70,7 +71,7 @@ export default function LandingPage() {
             </p>
 
             {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
                 <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-3" />
                 <h3 className="text-white font-semibold mb-2">AI-Powered Generation</h3>
@@ -87,6 +88,11 @@ export default function LandingPage() {
                 <p className="text-gray-300 text-sm">Built by developers, for the community</p>
                           </div>
                       </div>
+
+            {/* User Growth Counter */}
+            <div className="mb-12">
+              <UserGrowthCounter />
+            </div>
 
             {/* Call to Action */}
             <div className="space-y-4">

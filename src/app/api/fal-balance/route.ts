@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
         // For now, we'll use a mock balance since fal.ai balance API endpoint is not publicly documented
         // TODO: Replace with actual fal.ai balance API when available
-  // Updated balance to $595.95
-  const balance = 595.95;
+  // Updated balance from Stripe revenue data (Sep 5-8, 2025)
+  const balance = 654.69; // Total gross activity from Stripe
     
     console.log(`💰 Using fal.com balance: $${balance}`);
     

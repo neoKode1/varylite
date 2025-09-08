@@ -69,8 +69,60 @@ export class PricingService {
         };
       }
 
-      // Check daily limit
-      if (user.daily_generations >= tierConfig.dailyGenerations) {
+      // Special logic for free tier
+      if (tier === 'free') {
+        // Check if this is a premium model (expensive models)
+        const premiumModels = ['veo3-fast', 'runway-video', 'seedance-pro'];
+        const isPremiumModel = premiumModels.includes(model);
+        
+        if (isPremiumModel) {
+          // Check premium model limit (5 per month - conservative approach)
+          const premiumModelLimit = (tierConfig as any).premiumModelLimit || 5;
+          
+          // Get premium model usage for this month
+          const { data: premiumUsage } = await supabase
+            .from('user_usage_tracking')
+            .select('id')
+            .eq('user_id', userId)
+            .in('model', premiumModels)
+            .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
+          
+          const currentPremiumUsage = premiumUsage?.length || 0;
+          
+          if (currentPremiumUsage >= premiumModelLimit) {
+            return {
+              canGenerate: false,
+              reason: 'Premium model monthly limit reached',
+              tier,
+              remainingGenerations: 0,
+              isOverage: false,
+              overageRate: 0,
+            };
+          }
+          
+          return {
+            canGenerate: true,
+            reason: 'Within premium model limits',
+            tier,
+            remainingGenerations: premiumModelLimit - currentPremiumUsage,
+            isOverage: false,
+            overageRate: 0,
+          };
+        } else {
+          // Nano Banana and other cheap models are unlimited for free tier
+          return {
+            canGenerate: true,
+            reason: 'Unlimited for free tier',
+            tier,
+            remainingGenerations: -1, // -1 means unlimited
+            isOverage: false,
+            overageRate: 0,
+          };
+        }
+      }
+
+      // Check daily limit for paid tiers
+      if (tierConfig.dailyGenerations > 0 && user.daily_generations >= tierConfig.dailyGenerations) {
         return {
           canGenerate: false,
           reason: 'Daily limit reached',
@@ -81,8 +133,8 @@ export class PricingService {
         };
       }
 
-      // Check monthly limit
-      if (user.monthly_generations >= tierConfig.monthlyGenerations) {
+      // Check monthly limit for paid tiers
+      if (tierConfig.monthlyGenerations > 0 && user.monthly_generations >= tierConfig.monthlyGenerations) {
         return {
           canGenerate: true,
           reason: 'Monthly limit reached, but can use overage',
@@ -94,11 +146,15 @@ export class PricingService {
       }
 
       // User can generate within limits
+      const remainingGenerations = tierConfig.monthlyGenerations > 0 
+        ? tierConfig.monthlyGenerations - user.monthly_generations
+        : -1; // -1 means unlimited
+
       return {
         canGenerate: true,
         reason: 'Within limits',
         tier,
-        remainingGenerations: tierConfig.monthlyGenerations - user.monthly_generations,
+        remainingGenerations,
         isOverage: false,
         overageRate: tierConfig.overageRate,
       };
@@ -125,15 +181,10 @@ export class PricingService {
       const overageCharge = isOverage ? this.config.tiers[tier].overageRate : 0;
 
       // Update user usage counters
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          monthly_generations: supabase.raw('monthly_generations + 1'),
-          daily_generations: supabase.raw('daily_generations + 1'),
-          overage_charges: supabase.raw(`overage_charges + ${overageCharge}`),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
+      const { error: updateError } = await supabase.rpc('increment_user_usage', {
+        user_id: userId,
+        overage_charge: overageCharge
+      });
 
       if (updateError) {
         console.error('Error updating user usage:', updateError);
