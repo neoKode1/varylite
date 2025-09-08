@@ -874,7 +874,7 @@ export default function Home() {
       const isDataUrl = url.startsWith('data:video/');
       
       // Check if it's a proxy URL (our API endpoints)
-      const isProxyUrl = url.includes('/api/');
+      const isProxyUrl = url.includes('/api/') || url.includes('/api/video-proxy');
       
       // Check if it's a legacy URL that might be invalid (pre-database era)
       const isLegacyUrl = url.includes('runway') || url.includes('fal.ai') || url.includes('minimax');
@@ -887,6 +887,24 @@ export default function Home() {
       return hasVideoExtension || isDataUrl || isProxyUrl;
     } catch {
       return false;
+    }
+  }, []);
+
+  // Proxy video URL to avoid ORB blocking
+  const getProxiedVideoUrl = useCallback((originalUrl: string): string => {
+    // Check if URL needs proxying (external domains that might be blocked)
+    try {
+      const url = new URL(originalUrl);
+      const needsProxy = !url.hostname.includes('vary-ai.vercel.app') && 
+                        !url.hostname.includes('localhost') &&
+                        !url.hostname.includes('127.0.0.1');
+      
+      if (needsProxy) {
+        return `/api/video-proxy?url=${encodeURIComponent(originalUrl)}`;
+      }
+      return originalUrl;
+    } catch {
+      return originalUrl;
     }
   }, []);
 
@@ -4713,7 +4731,7 @@ export default function Home() {
                                     {isValidVideoUrl(item.videoUrl) ? (
                                     <video
                                       key={`${item.videoUrl || 'no-url'}-${item.videoUrl && failedVideos.has(item.videoUrl) ? 'failed' : 'loading'}`}
-                                      src={item.videoUrl}
+                                      src={getProxiedVideoUrl(item.videoUrl)}
                                       className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
                                       controls
                                       muted
@@ -4731,6 +4749,7 @@ export default function Home() {
                                           networkState: videoElement.networkState,
                                           readyState: videoElement.readyState,
                                           videoUrl: item.videoUrl,
+                                          proxiedUrl: getProxiedVideoUrl(item.videoUrl),
                                           videoSrc: videoElement.src
                                         });
                                         }

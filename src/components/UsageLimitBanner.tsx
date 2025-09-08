@@ -80,14 +80,14 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({ onSignUpClick }) => 
   // Don't show counter if user has no generations left
   if (remainingGenerations === 0) return null
 
-  const progressPercentage = ((usageStats.totalGenerations / 3) * 100)
+  const progressPercentage = ((usageStats.totalGenerations / 10) * 100)
 
   return (
     <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-300">
-            Free generations for all models: {usageStats.totalGenerations}/3
+            Free generations for all models: {usageStats.totalGenerations}/10
           </span>
           <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
             Try it free!

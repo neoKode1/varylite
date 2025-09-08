@@ -19,15 +19,15 @@ export async function GET(request: NextRequest) {
     console.log(`💰 Using fal.com balance: $${balance}`);
     
     // Calculate energy level based on actual usage data with scaling projection
-    // From fal.ai analytics (Sep 2-6, 2025): 4,216 total requests, 3,323 successful
+    // From fal.ai analytics (Sep 1-8, 2025): 5,857 images generated, $233.11 cost
     // Current: 24 users, growing trend from Sep 7, 2025 signups
-    // Scaling projection: 2x users = 2x usage = ~9,300 generations/week
-    // Actual cost per successful generation: $0.039 per image
-    const baseWeeklyProjection = 4650; // Current ~4,650 successful generations/week
+    // Scaling projection: 2x users = 2x usage = ~11,714 images/week
+    // Actual cost per successful generation: $0.0398 per image
+    const baseWeeklyProjection = 5857; // Current ~5,857 images/week (Sep 1-8 data)
     const scalingFactor = 2; // Plan for 2x growth (48 users)
-    const weeklyProjection = baseWeeklyProjection * scalingFactor; // ~9,300 generations/week
-    const costPerGeneration = 0.039; // $0.039 per image
-    const weeklyCost = Math.round(weeklyProjection * costPerGeneration); // ~$363
+    const weeklyProjection = baseWeeklyProjection * scalingFactor; // ~11,714 images/week
+    const costPerGeneration = 0.0398; // $0.0398 per image (actual FAL cost)
+    const weeklyCost = Math.round(weeklyProjection * costPerGeneration); // ~$466
     const energyLevel = Math.min((balance / weeklyCost) * 100, 100);
     
     // Determine energy status

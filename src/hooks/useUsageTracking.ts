@@ -22,7 +22,7 @@ interface UsageTrackingHook {
   isAnonymous: boolean
 }
 
-const ANONYMOUS_LIMIT = 3 // 3 generations for anonymous users
+const ANONYMOUS_LIMIT = 10 // 10 generations for anonymous users (increased from 3)
 
 export const useUsageTracking = (): UsageTrackingHook => {
   const { user } = useAuth()
