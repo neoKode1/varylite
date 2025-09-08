@@ -1,71 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 
-// Configure Fal AI
-if (process.env.FAL_KEY) {
-  console.log('🔧 Configuring Fal AI with key...');
-  fal.config({
-    credentials: process.env.FAL_KEY
-  });
-  console.log('✅ Fal AI configured successfully');
-} else {
-  console.log('❌ No FAL_KEY found for configuration');
-}
+// Configure FAL client
+fal.config({
+  credentials: process.env.FAL_KEY,
+});
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  const requestId = `minimax-2-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const requestId = `kling-t2v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   try {
-    console.log(`🚀 [${requestId}] Minimax 2.0 I2V - Request started`);
+    console.log(`🚀 [${requestId}] Kling 2.1 Master T2V - Request started`);
     
-    const { prompt, image_url, duration = "8s", generate_audio = true, resolution = "720p" } = await request.json();
+    const body = await request.json();
+    const { prompt, duration = "5", aspect_ratio = "16:9", negative_prompt = "blur, distort, and low quality", cfg_scale = 0.5 } = body;
 
     console.log(`📋 [${requestId}] Request parameters:`, {
       prompt: prompt?.substring(0, 100) + (prompt?.length > 100 ? '...' : ''),
-      image_url: image_url ? 'Provided' : 'Missing',
       duration,
-      generate_audio,
-      resolution,
+      aspect_ratio,
+      negative_prompt,
+      cfg_scale,
       timestamp: new Date().toISOString()
     });
 
-    if (!prompt || !image_url) {
-      console.error(`❌ [${requestId}] Validation failed: Prompt and image_url are required`);
+    if (!prompt) {
+      console.error(`❌ [${requestId}] Validation failed: Prompt is required`);
       return NextResponse.json(
-        { error: 'Prompt and image_url are required' },
+        { error: 'Prompt is required' },
         { status: 400 }
       );
     }
 
-    if (!process.env.FAL_KEY) {
-      console.error(`❌ [${requestId}] Configuration failed: FAL API key not configured`);
-      return NextResponse.json(
-        { error: 'FAL API key not configured' },
-        { status: 500 }
-      );
-    }
-
-    console.log(`🎬 [${requestId}] Starting Minimax 2.0 generation...`);
+    console.log(`🎬 [${requestId}] Starting Kling 2.1 Master text-to-video generation...`);
     console.log(`📝 [${requestId}] Prompt: ${prompt}`);
-    console.log(`🖼️ [${requestId}] Image URL: ${image_url}`);
     console.log(`⏱️ [${requestId}] Duration: ${duration}`);
-    console.log(`🔊 [${requestId}] Generate Audio: ${generate_audio}`);
-    console.log(`📺 [${requestId}] Resolution: ${resolution}`);
+    console.log(`📐 [${requestId}] Aspect Ratio: ${aspect_ratio}`);
+    console.log(`🎛️ [${requestId}] CFG Scale: ${cfg_scale}`);
 
     console.log(`🔄 [${requestId}] Submitting to FAL API...`);
     const falStartTime = Date.now();
     
-    // Use FAL client for Minimax 2.0
-    // Note: Update the model name when Minimax 2.0 is available on FAL
-    const result = await fal.subscribe("fal-ai/minimax/video-generation", {
+    // Use fal.subscribe for automatic polling
+    const result = await fal.subscribe("fal-ai/kling-video/v2.1/master/text-to-video", {
       input: {
         prompt,
-        image_url,
         duration,
-        generate_audio,
-        resolution,
-        model: 'minimax-2.0'
+        aspect_ratio,
+        negative_prompt,
+        cfg_scale
       },
       logs: true,
       onQueueUpdate: (update) => {
@@ -73,7 +57,7 @@ export async function POST(request: NextRequest) {
         console.log(`🔄 [${requestId}] Queue update - Status: ${update.status}, Queue time: ${queueTime}ms`);
         
         if (update.status === "IN_PROGRESS") {
-          console.log(`🔄 [${requestId}] Minimax 2.0 generation in progress...`);
+          console.log(`🔄 [${requestId}] Kling 2.1 Master T2V generation in progress...`);
           if (update.logs) {
             update.logs.map((log) => {
               console.log(`📝 [${requestId}] FAL Log: ${log.message}`);
@@ -87,14 +71,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!result.data || !result.data.video || !result.data.video.url) {
-      throw new Error('Minimax 2.0 did not return a video URL.');
-    }
-
     const totalTime = Date.now() - startTime;
     const falTime = Date.now() - falStartTime;
     
-    console.log(`✅ [${requestId}] Minimax 2.0 generation completed!`);
+    console.log(`✅ [${requestId}] Kling 2.1 Master T2V generation completed!`);
     console.log(`🎥 [${requestId}] Video URL: ${result.data.video.url}`);
     console.log(`⏱️ [${requestId}] Total time: ${totalTime}ms, FAL time: ${falTime}ms`);
     console.log(`🆔 [${requestId}] FAL Request ID: ${result.requestId}`);
@@ -103,14 +83,16 @@ export async function POST(request: NextRequest) {
       success: true,
       videoUrl: result.data.video.url,
       requestId: result.requestId,
-      model: 'minimax-2.0',
+      model: 'kling-2.1-master-t2v',
+      duration: duration,
+      prompt: prompt,
       processingTime: totalTime,
       falRequestId: result.requestId
     });
 
   } catch (error) {
     const totalTime = Date.now() - startTime;
-    console.error(`❌ [${requestId}] Minimax 2.0 generation error after ${totalTime}ms:`, error);
+    console.error(`❌ [${requestId}] Kling 2.1 Master T2V generation error after ${totalTime}ms:`, error);
     console.error(`❌ [${requestId}] Error details:`, {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -119,7 +101,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { 
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Failed to generate video with Kling 2.1 Master T2V',
+        details: error instanceof Error ? error.message : 'Unknown error',
         requestId,
         processingTime: totalTime
       },

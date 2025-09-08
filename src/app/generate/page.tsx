@@ -12,10 +12,11 @@ type GenerationMode =
   | 'endframe' 
   | 'veo3-fast' 
   | 'minimax-2.0'
-  | 'cling-2.1-master'
+  | 'kling-2.1-master'
+  | 'seedance-pro'
   | 'veo3-fast-t2v'
   | 'minimax-2-t2v'
-  | 'cling-2.1-master-t2v';
+  | 'kling-2.1-master-t2v';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -774,14 +775,14 @@ export default function Home() {
       modes.push('nano-banana');
       // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
       modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
-      modes.push('cling-2.1-master'); // Image-to-video with Cling 2.1 Master
+      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
     }
     
     // Add text-to-video modes when no images are uploaded
     if (!hasImages && !hasVideos) {
       modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
       modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
-      modes.push('cling-2.1-master-t2v'); // Text-to-video with Cling 2.1 Master
+      modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
     }
     
     if (hasVideos && !hasImages) {
@@ -2781,8 +2782,8 @@ export default function Home() {
     }
   };
 
-  // Handle Cling 2.1 Master image-to-video generation
-  const handleClingMasterGeneration = async () => {
+  // Handle Kling 2.1 Master image-to-video generation
+  const handleKlingMasterGeneration = async () => {
     if (!canGenerate) {
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
@@ -2797,17 +2798,17 @@ export default function Home() {
     setProcessing({
       isProcessing: true,
       progress: 0,
-      currentStep: 'Starting Cling 2.1 Master generation...'
+      currentStep: 'Starting Kling 2.1 Master generation...'
     });
 
     try {
       setProcessing({
         isProcessing: true,
         progress: 30,
-        currentStep: 'Uploading image to Cling 2.1 Master...'
+        currentStep: 'Uploading image to Kling 2.1 Master...'
       });
 
-      const response = await fetch('/api/cling-2.1-master', {
+      const response = await fetch('/api/kling-2.1-master', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2824,7 +2825,7 @@ export default function Home() {
       setProcessing({
         isProcessing: true,
         progress: 70,
-        currentStep: 'Generating video with Cling 2.1 Master...'
+        currentStep: 'Generating video with Kling 2.1 Master...'
       });
 
       const data = await response.json();
@@ -2842,9 +2843,9 @@ export default function Home() {
       // Create a variation object for the gallery
       const generatedVariation: CharacterVariation = {
         id: `cling-master-${Date.now()}`,
-        description: `Cling 2.1 Master: ${prompt}`,
+        description: `Kling 2.1 Master: ${prompt}`,
         angle: 'Image-to-Video',
-        pose: 'Cling 2.1 Master Generated',
+        pose: 'Kling 2.1 Master Generated',
         videoUrl: data.videoUrl,
         fileType: 'video'
       };
@@ -2870,8 +2871,8 @@ export default function Home() {
       }, 2000);
 
     } catch (error) {
-      console.error('Cling 2.1 Master generation error:', error);
-      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Cling 2.1 Master'} TOASTY!`, 'toasty');
+      console.error('Kling 2.1 Master generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Kling 2.1 Master'} TOASTY!`, 'toasty');
       setProcessing({
         isProcessing: false,
         progress: 0,
@@ -3075,8 +3076,8 @@ export default function Home() {
     }
   };
 
-  // Handle Cling 2.1 Master text-to-video generation
-  const handleClingMasterT2VGeneration = async () => {
+  // Handle Kling 2.1 Master text-to-video generation
+  const handleKlingMasterT2VGeneration = async () => {
     if (!canGenerate) {
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
@@ -3090,14 +3091,14 @@ export default function Home() {
     setProcessing({
       isProcessing: true,
       progress: 0,
-      currentStep: 'Starting Cling 2.1 Master text-to-video generation...'
+      currentStep: 'Starting Kling 2.1 Master text-to-video generation...'
     });
 
     try {
       setProcessing({
         isProcessing: true,
         progress: 30,
-        currentStep: 'Processing prompt with Cling 2.1 Master...'
+        currentStep: 'Processing prompt with Kling 2.1 Master...'
       });
 
       const response = await fetch('/api/cling-2.1-master-t2v', {
@@ -3117,7 +3118,7 @@ export default function Home() {
       setProcessing({
         isProcessing: true,
         progress: 70,
-        currentStep: 'Generating video with Cling 2.1 Master...'
+        currentStep: 'Generating video with Kling 2.1 Master...'
       });
 
       const data = await response.json();
@@ -3135,9 +3136,9 @@ export default function Home() {
       // Create a variation object for the gallery
       const generatedVariation: CharacterVariation = {
         id: `cling-t2v-${Date.now()}`,
-        description: `Cling 2.1 Master T2V: ${prompt}`,
+        description: `Kling 2.1 Master T2V: ${prompt}`,
         angle: 'Text-to-Video',
-        pose: 'Cling 2.1 Master T2V Generated',
+        pose: 'Kling 2.1 Master T2V Generated',
         videoUrl: data.videoUrl,
         fileType: 'video'
       };
@@ -3163,8 +3164,8 @@ export default function Home() {
       }, 2000);
 
     } catch (error) {
-      console.error('Cling 2.1 Master T2V generation error:', error);
-      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Cling 2.1 Master T2V'} TOASTY!`, 'toasty');
+      console.error('Kling 2.1 Master T2V generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Kling 2.1 Master T2V'} TOASTY!`, 'toasty');
       setProcessing({
         isProcessing: false,
         progress: 0,
@@ -3627,31 +3628,74 @@ export default function Home() {
 
             {/* Generate Button - Right below image upload */}
             <div className="flex flex-col items-center gap-4 mt-6">
-              {/* Mode Selector - Show when ambiguous */}
-              {determineGenerationMode() === null && uploadedFiles.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-4">
-                  {getAvailableModes().map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setGenerationMode(mode)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        generationMode === mode
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {mode === 'nano-banana' && 'Generate Character Variations (Nano Banana)'}
-                      {mode === 'runway-t2i' && 'Generate Image'}
-                      {mode === 'runway-video' && 'Process Video (Aleph)'}
-                      {mode === 'endframe' && 'Generate Start → End Video'}
-                      {mode === 'veo3-fast' && 'Animate Image (Veo3 Fast)'}
-                      {mode === 'minimax-2.0' && 'Animate Image (Minimax 2.0)'}
-                      {mode === 'cling-2.1-master' && 'Animate Image (Cling 2.1 Master)'}
-                      {mode === 'veo3-fast-t2v' && 'Generate Video (Veo3 Fast T2V)'}
-                      {mode === 'minimax-2-t2v' && 'Generate Video (Minimax 2.0 T2V)'}
-                      {mode === 'cling-2.1-master-t2v' && 'Generate Video (Cling 2.1 Master T2V)'}
-                    </button>
-                  ))}
+              {/* Model Selector - Dropdown System */}
+              {uploadedFiles.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-3 mb-4">
+                  {/* Image-to-Video Models Dropdown */}
+                  {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
+                    <div className="relative">
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-all appearance-none pr-8 cursor-pointer"
+                      >
+                        <option value="">Select Image-to-Video Model</option>
+                        <option value="nano-banana">Nano Banana (Character Variations)</option>
+                        <option value="minimax-2.0">Minimax 2.0 (Image-to-Video)</option>
+                        <option value="kling-2.1-master">Kling 2.1 Master (Image-to-Video)</option>
+                        <option value="seedance-pro">Seedance 1.0 Pro (Image-to-Video)</option>
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                    </div>
+                  )}
+
+                  {/* Text-to-Video Models Dropdown */}
+                  {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
+                    <div className="relative">
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all appearance-none pr-8 cursor-pointer"
+                      >
+                        <option value="">Select Text-to-Video Model</option>
+                        <option value="runway-t2i">Runway T2I (Text-to-Image)</option>
+                        <option value="veo3-fast-t2v">Veo3 Fast (Text-to-Video)</option>
+                        <option value="minimax-2-t2v">Minimax 2.0 (Text-to-Video)</option>
+                        <option value="kling-2.1-master-t2v">Kling 2.1 Master (Text-to-Video)</option>
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                    </div>
+                  )}
+
+                  {/* Video Processing Dropdown */}
+                  {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
+                    <div className="relative">
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-all appearance-none pr-8 cursor-pointer"
+                      >
+                        <option value="">Select Video Processing Model</option>
+                        <option value="runway-video">Runway Aleph (Video Processing)</option>
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                    </div>
+                  )}
+
+                  {/* EndFrame Processing Dropdown */}
+                  {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
+                    <div className="relative">
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-all appearance-none pr-8 cursor-pointer"
+                      >
+                        <option value="">Select EndFrame Model</option>
+                        <option value="endframe">EndFrame (Start → End Video)</option>
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3742,10 +3786,10 @@ export default function Home() {
                       </>
                     )}
                   </button>
-                ) : generationMode === 'cling-2.1-master' ? (
-                  // Cling 2.1 Master image-to-video
+                ) : generationMode === 'kling-2.1-master' ? (
+                  // Kling 2.1 Master image-to-video
                   <button
-                    onClick={handleClingMasterGeneration}
+                    onClick={handleKlingMasterGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
                     className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                   >
@@ -3757,7 +3801,7 @@ export default function Home() {
                     ) : (
                       <>
                         <Camera className="w-5 h-5" />
-                        Animate Image (Cling 2.1 Master)
+                        Animate Image (Kling 2.1 Master)
                       </>
                     )}
                   </button>
@@ -3799,10 +3843,10 @@ export default function Home() {
                       </>
                     )}
                   </button>
-                ) : generationMode === 'cling-2.1-master-t2v' ? (
-                  // Cling 2.1 Master text-to-video
+                ) : generationMode === 'kling-2.1-master-t2v' ? (
+                  // Kling 2.1 Master text-to-video
                   <button
-                    onClick={handleClingMasterT2VGeneration}
+                    onClick={handleKlingMasterT2VGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
                     className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                   >
@@ -3814,7 +3858,7 @@ export default function Home() {
                     ) : (
                       <>
                         <Camera className="w-5 h-5" />
-                        Generate Video (Cling 2.1 Master T2V)
+                        Generate Video (Kling 2.1 Master T2V)
                       </>
                     )}
                   </button>
