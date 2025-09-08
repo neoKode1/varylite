@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
         // For now, we'll use a mock balance since fal.ai balance API endpoint is not publicly documented
         // TODO: Replace with actual fal.ai balance API when available
-  // Updated balance to $604.28
-  const balance = 604.28;
+  // Updated balance to $595.95
+  const balance = 595.95;
     
     console.log(`💰 Using fal.com balance: $${balance}`);
     
@@ -69,19 +69,7 @@ export async function GET(request: NextRequest) {
       energyStatus: energyStatus,
       energyColor: energyColor,
       energyText: energyText,
-      lastUpdated: new Date().toISOString(),
-      source: 'fal.com',
-      usageStats: {
-        totalRequests: 4216,
-        successfulRequests: 3323,
-        successRate: 79,
-        period: 'Sep 2-6, 2025',
-        weeklyProjection: weeklyProjection,
-        costPerGeneration: costPerGeneration,
-        currentUsers: 24,
-        scalingFactor: scalingFactor,
-        baseWeeklyProjection: baseWeeklyProjection
-      }
+      source: 'fal.com'
     });
 
   } catch (error) {

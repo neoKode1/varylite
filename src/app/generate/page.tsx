@@ -610,7 +610,7 @@ export default function Home() {
   
   // Funding meter state
   const [fundingData, setFundingData] = useState({
-    current: 604.28,
+    current: 595.95,
     goal: 466,
     weeklyCost: 466, // Updated with real usage data: 5,857 images × $0.0398 = ~$233, 2x scaling = $466
     lastUpdated: new Date(),
