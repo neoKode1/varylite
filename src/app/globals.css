@@ -2,6 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-specific optimizations */
+@layer base {
+  /* Prevent zoom on iOS when focusing inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Improve touch targets for mobile */
+  button,
+  select,
+  input[type="file"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better touch handling */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Prevent text selection on buttons */
+  button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Improve dropdown appearance on mobile */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Better focus states for mobile */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  }
+}
+
 /* Custom background image */
 body {
   background-image: url('/background-smileys.svg');

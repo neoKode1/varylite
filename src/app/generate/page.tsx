@@ -739,6 +739,13 @@ export default function Home() {
 
   // Show animated error function
   const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty' = 'toasty') => {
+    // Mobile-specific error handling
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile && message.includes('User Error')) {
+      // Make mobile errors more user-friendly
+      message = message.replace('User Error: ', 'Mobile Tip: ');
+    }
+    
     showAnimatedError(message, errorType);
   }, [showAnimatedError]);
 
@@ -1727,11 +1734,21 @@ export default function Home() {
     console.log('📁 Files selected:', files ? files.length : 0, files ? Array.from(files).map(f => ({ name: f.name, type: f.type, size: f.size })) : []);
     
     if (files && files.length > 0) {
+      // Mobile-specific validation
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Check file size more strictly on mobile
+        const oversizedFiles = Array.from(files).filter(file => file.size > 10 * 1024 * 1024); // 10MB limit
+        if (oversizedFiles.length > 0) {
+          showNotification('Mobile Error: File too large. Please use files under 10MB on mobile.', 'error');
+          return;
+        }
+      }
       handleFileUpload(Array.from(files));
       // Reset the input so the same file can be selected again
       e.target.value = '';
     }
-  }, [handleFileUpload]);
+  }, [handleFileUpload, showNotification]);
 
   const handleProcessCharacter = async () => {
     if (uploadedFiles.length === 0 || !prompt.trim()) {
@@ -3487,7 +3504,7 @@ export default function Home() {
             <div data-input-area>
               {uploadedFiles.length === 0 ? (
               <div
-                className="border-2 border-white rounded-lg p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm"
+                className="border-2 border-white rounded-lg p-8 sm:p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm min-h-[200px] flex flex-col items-center justify-center"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => document.getElementById('file-input')?.click()}
@@ -3516,7 +3533,7 @@ export default function Home() {
             ) : (
               <div className="space-y-6">
                 {/* Multiple Files Preview */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white border-opacity-20">
                   {uploadedFiles.map((file, index) => (
                     <div 
                       key={index} 
@@ -3633,11 +3650,12 @@ export default function Home() {
                 <div className="flex flex-wrap justify-center gap-3 mb-4">
                   {/* Image-to-Video Models Dropdown */}
                   {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
-                    <div className="relative">
+                    <div className="relative w-full max-w-sm">
                       <select
                         value={generationMode || ''}
                         onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-all appearance-none pr-8 cursor-pointer"
+                        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg text-base font-medium hover:bg-purple-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select Image-to-Video Model</option>
                         <option value="nano-banana">Nano Banana (Character Variations)</option>
@@ -3645,17 +3663,18 @@ export default function Home() {
                         <option value="kling-2.1-master">Kling 2.1 Master (Image-to-Video)</option>
                         <option value="seedance-pro">Seedance 1.0 Pro (Image-to-Video)</option>
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
                   )}
 
                   {/* Text-to-Video Models Dropdown */}
                   {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
-                    <div className="relative">
+                    <div className="relative w-full max-w-sm">
                       <select
                         value={generationMode || ''}
                         onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all appearance-none pr-8 cursor-pointer"
+                        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg text-base font-medium hover:bg-blue-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select Text-to-Video Model</option>
                         <option value="runway-t2i">Runway T2I (Text-to-Image)</option>
@@ -3663,37 +3682,39 @@ export default function Home() {
                         <option value="minimax-2-t2v">Minimax 2.0 (Text-to-Video)</option>
                         <option value="kling-2.1-master-t2v">Kling 2.1 Master (Text-to-Video)</option>
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
                   )}
 
                   {/* Video Processing Dropdown */}
                   {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
-                    <div className="relative">
+                    <div className="relative w-full max-w-sm">
                       <select
                         value={generationMode || ''}
                         onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-all appearance-none pr-8 cursor-pointer"
+                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg text-base font-medium hover:bg-green-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50"
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select Video Processing Model</option>
                         <option value="runway-video">Runway Aleph (Video Processing)</option>
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
                   )}
 
                   {/* EndFrame Processing Dropdown */}
                   {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
-                    <div className="relative">
+                    <div className="relative w-full max-w-sm">
                       <select
                         value={generationMode || ''}
                         onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-all appearance-none pr-8 cursor-pointer"
+                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg text-base font-medium hover:bg-orange-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-50"
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select EndFrame Model</option>
                         <option value="endframe">EndFrame (Start → End Video)</option>
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
                   )}
                 </div>
@@ -3725,7 +3746,7 @@ export default function Home() {
                   <button
                     onClick={handleTextToImage}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing && generationMode === 'runway-t2i' ? (
                       <>
@@ -3772,7 +3793,7 @@ export default function Home() {
                   <button
                     onClick={handleMinimax2Generation}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3791,7 +3812,7 @@ export default function Home() {
                   <button
                     onClick={handleKlingMasterGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3810,7 +3831,7 @@ export default function Home() {
                   <button
                     onClick={handleVeo3FastT2VGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3829,7 +3850,7 @@ export default function Home() {
                   <button
                     onClick={handleMinimax2T2VGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3848,7 +3869,7 @@ export default function Home() {
                   <button
                     onClick={handleKlingMasterT2VGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3867,7 +3888,7 @@ export default function Home() {
                   <button
                     onClick={handleEndFrameGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
@@ -3921,8 +3942,9 @@ export default function Home() {
                     ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
                     : "Describe the angle or pose variations you want..."
                 }
-                className="w-full p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-lg"
+                className="w-full p-4 sm:p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-base sm:text-lg"
                 rows={4}
+                style={{ fontSize: '16px' }} // Prevents zoom on iOS
               />
             </div>
 
