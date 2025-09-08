@@ -44,16 +44,7 @@ export default function LandingPage() {
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-8">
         <div className="w-full max-w-4xl mx-auto flex items-center justify-center">
           {/* Content - Centered */}
-          <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg relative">
-            {/* Logo Background */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 rounded-lg"
-              style={{
-                backgroundImage: 'url(/b39d569d-2c0e-4f3a-9ff0-d0d58b7a185d_removalai_preview.png)'
-              }}
-            ></div>
-            {/* Content overlay */}
-            <div className="relative z-10">
+          <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Welcome to VaryAI
           </h1>
@@ -170,21 +161,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            </div> {/* Close content overlay */}
 
-      {/* Character Variation Image - Bottom Right */}
-      <div className="fixed bottom-6 right-6 z-30">
-                      <div className="relative">
-                        <img
-            src="/b39d569d-2c0e-4f3a-9ff0-d0d58b7a185d_removalai_preview.png"
-            alt="AI Generated Content Preview"
-            className="w-96 h-96 rounded-lg shadow-lg hover:scale-105 transition-transform duration-300 opacity-85"
-          />
-          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-            AI Generated
-                      </div>
-                          </div>
-                      </div>
 
       {/* Simple Auth Modal */}
       {showAuthModal && (
