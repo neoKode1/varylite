@@ -4,6 +4,12 @@ A cutting-edge AI-powered Next.js application that generates stunning character 
 
 ## 🖼️ Application Preview
 
+### Main Interface
+![VaryAI Main Interface](main-interface-screenshot.png)
+
+*VaryAI main interface - featuring the community energy meter, analytics dashboard, and modern dark UI with transparent elements*
+
+### Character Variation System
 ![VaryAI Application Screenshot](Screenshot%20(2190).webp)
 
 *VaryAI in action - showcasing the modern dark UI, multi-image upload system, and interactive gallery with full-screen navigation*
@@ -21,6 +27,18 @@ A cutting-edge AI-powered Next.js application that generates stunning character 
 *Comprehensive view of VaryAI's features: multi-image processing, character variations, gallery management, and full-screen navigation capabilities*
 
 ## ✨ Features
+
+### 🏠 **Main Interface & Dashboard**
+- **Community Energy Meter**: Real-time FAL AI balance tracking with donation links
+- **Analytics Dashboard**: User statistics, generation counts, and performance metrics
+- **Transparent UI**: Modern glass-morphism design with blur effects
+- **Navigation**: Seamless access to generate, community, and profile features
+
+### 🌟 **Community Features**
+- **Tha Communita**: Interactive message board with posts, comments, and likes
+- **Image Sharing**: Drag & drop image uploads with full-screen viewing
+- **User Profiles**: Display names, avatars, and post attribution
+- **Real-time Updates**: Live post feeds and community engagement
 
 ### 🎨 **Multi-Image Upload System**
 - **Multiple file support**: Upload face shots, body shots, and reference images simultaneously

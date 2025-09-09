@@ -3696,8 +3696,7 @@ export default function Home() {
         <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
           <div className="text-blue-100 font-medium">🚀 Model Performance:</div>
           <div>• <span className="text-green-300 font-medium">{userStats.usageBreakdown.nano_banana.toLocaleString()}</span> Nano Banana ({((userStats.usageBreakdown.nano_banana / userStats.totalGenerations) * 100).toFixed(1)}%)</div>
-          <div>• <span className="text-orange-300 font-medium">{userStats.usageBreakdown.video_generations}</span> Video generations</div>
-          <div>• <span className="text-red-300 font-medium">{userStats.usageBreakdown.minimax_endframe}</span> Minimax 2.0 videos</div>
+          <div>• <span className="text-orange-300 font-medium">{userStats.usageBreakdown.minimax_endframe}</span> Video generations (Minimax 2.0)</div>
           <div>• <span className="text-purple-300 font-medium">{userStats.usageBreakdown.gemini}</span> Gemini generations</div>
         </div>
                 </div>

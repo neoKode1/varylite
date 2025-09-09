@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
           recentActivity: 150,
           usageBreakdown: {
             image_generations: 6910,
-            video_generations: 40,
+            video_generations: 18,
             character_variations: 0,
             background_changes: 0,
             nano_banana: 6910,
             runway_aleph: 0,
-            minimax_endframe: 0,
-            gemini: 0
+            minimax_endframe: 18,
+            gemini: 376
           },
           growthRates: {
             daily: '10.64', // 5 new users out of 47 total
