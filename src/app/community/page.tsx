@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles, Trash2, MoreVertical } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
 import { useRouter } from 'next/navigation';
@@ -504,6 +504,35 @@ export default function CommunityPage() {
     setShowAuthModal(true);
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!user) return;
+    
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/community/posts?post_id=${postId}&user_id=${user.id}`, {
+        method: 'DELETE'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove the post from the local state
+        setPosts(prev => prev.filter(post => post.id !== postId));
+        console.log('Post deleted successfully');
+      } else {
+        console.error('Failed to delete post:', data.error);
+        alert(`Failed to delete post: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Error deleting post. Please try again.');
+    }
+  };
+
   return (
     <div 
       className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative"
@@ -714,10 +743,25 @@ export default function CommunityPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-white">{post.userName}</span>
-                    <span className="text-gray-400 text-sm">•</span>
-                    <span className="text-gray-400 text-sm">{formatTimeAgo(post.created_at)}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-white">{post.userName}</span>
+                      <span className="text-gray-400 text-sm">•</span>
+                      <span className="text-gray-400 text-sm">{formatTimeAgo(post.created_at)}</span>
+                    </div>
+                    
+                    {/* Post Actions Menu - Only show for user's own posts */}
+                    {user && post.user_id === user.id && (
+                      <div className="relative">
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                          title="Delete post"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <p className="text-gray-200 mb-3 leading-relaxed">{post.content}</p>
                   

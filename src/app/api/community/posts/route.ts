@@ -84,3 +84,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { searchParams } = new URL(request.url);
+    const postId = searchParams.get('post_id');
+    const userId = searchParams.get('user_id');
+
+    if (!postId || !userId) {
+      return NextResponse.json({ error: 'Post ID and User ID required' }, { status: 400 });
+    }
+
+    // First, verify the user owns this post
+    const { data: post, error: fetchError } = await supabase
+      .from('community_posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching post:', fetchError);
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (post.user_id !== userId) {
+      return NextResponse.json({ error: 'Unauthorized to delete this post' }, { status: 403 });
+    }
+
+    // Delete the post (cascade will handle related comments and interactions)
+    const { error: deleteError } = await supabase
+      .from('community_posts')
+      .delete()
+      .eq('id', postId);
+
+    if (deleteError) {
+      console.error('Error deleting post:', deleteError);
+      return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
+    }
+
+    // Track analytics
+    await supabase
+      .from('analytics_events')
+      .insert({
+        event_type: 'community_post_deleted',
+        user_id: userId,
+        metadata: {
+          post_id: postId
+        }
+      });
+
+    return NextResponse.json({ success: true, message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error in DELETE /api/community/posts:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
