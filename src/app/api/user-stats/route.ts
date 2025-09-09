@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
-          totalUsers: 50, // Updated to match actual Supabase count
+          totalUsers: 52, // Updated to match actual Supabase count
           activeUsers: 12,
           newUsers24h: 5,
           totalGenerations: 6910,

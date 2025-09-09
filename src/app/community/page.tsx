@@ -167,7 +167,7 @@ export default function CommunityPage() {
   });
 
   const [userStats, setUserStats] = useState({
-    totalUsers: 50,
+    totalUsers: 52,
     activeUsers: 17,
     newUsers24h: 12,
     totalGenerations: 439,
@@ -268,7 +268,7 @@ export default function CommunityPage() {
       
       if (data.success && data.data) {
         setUserStats({
-          totalUsers: data.data.totalUsers || 24,
+          totalUsers: data.data.totalUsers || 52,
           activeUsers: data.data.activeUsers || 8,
           newUsers24h: data.data.newUsers24h || 3,
           totalGenerations: data.data.totalGenerations || 6910,

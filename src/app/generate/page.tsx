@@ -684,7 +684,7 @@ export default function Home() {
 
   // User stats state for App Performance Analytics
   const [userStats, setUserStats] = useState({
-    totalUsers: 47,
+    totalUsers: 52,
     activeUsers: 12,
     newUsers24h: 5,
     totalGenerations: 6910,
