@@ -70,6 +70,16 @@ export default function CommunityPage() {
       type: 'artist'
     },
     {
+      id: 'grimfel',
+      name: 'Grimfel',
+      handle: '@GrimfelOfficial',
+      role: 'Preset Designer / Digital Artist',
+      contribution: 'Collaborated on features and restyled presets, especially for background changes',
+      avatar: null,
+      social: 'https://x.com/GrimfelOfficial',
+      type: 'contributor'
+    },
+    {
       id: 'feature-advisor-1',
       name: 'Feature Advisor',
       handle: '@example',
@@ -1159,6 +1169,7 @@ export default function CommunityPage() {
                       ) : (
                         <div className={`w-full h-full rounded-full flex items-center justify-center ${
                           collaborator.type === 'artist' ? 'bg-gradient-to-r from-purple-500 to-blue-500' :
+                          collaborator.type === 'contributor' ? 'bg-gradient-to-r from-indigo-500 to-purple-500' :
                           collaborator.type === 'advisor' ? 'bg-gradient-to-r from-green-500 to-teal-500' :
                           'bg-gradient-to-r from-orange-500 to-red-500'
                         }`}>
