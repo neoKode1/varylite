@@ -632,6 +632,36 @@ export default function Home() {
       }
     }
   });
+
+  // User stats state for App Performance Analytics
+  const [userStats, setUserStats] = useState({
+    totalUsers: 47,
+    activeUsers: 12,
+    newUsers24h: 5,
+    totalGenerations: 6910,
+    recentActivity: 150,
+    usageBreakdown: {
+      image_generations: 6910,
+      video_generations: 40,
+      character_variations: 0,
+      background_changes: 0,
+      nano_banana: 6910,
+      runway_aleph: 0,
+      minimax_endframe: 0,
+      gemini: 0
+    },
+    growthRates: {
+      daily: '10.64',
+      weekly: '25.00'
+    },
+    engagement: {
+      avgGenerationsPerUser: '147.0',
+      activeUserPercentage: '25.5'
+    },
+    lastUpdated: new Date().toISOString(),
+    period: 'Loading...'
+  });
+
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState<number>(0);
@@ -674,6 +704,20 @@ export default function Home() {
     }
   };
 
+  // Fetch user stats data for App Performance Analytics
+  const fetchUserStats = async () => {
+    try {
+      const response = await fetch('/api/user-stats');
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setUserStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+    }
+  };
+
   // Calculate energy level (0-100%) based on FAL balance for community support
   const getEnergyLevel = () => {
     const currentBalance = fundingData.current; // Current FAL balance
@@ -694,8 +738,12 @@ export default function Home() {
   // Fetch data on component mount
   useEffect(() => {
     fetchFundingData();
+    fetchUserStats();
     // Refresh every 2 minutes to keep meter updated
-    const interval = setInterval(fetchFundingData, 2 * 60 * 1000);
+    const interval = setInterval(() => {
+      fetchFundingData();
+      fetchUserStats();
+    }, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
   const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -3629,29 +3677,29 @@ export default function Home() {
           <div className="w-full max-w-2xl">
 
             {/* Usage Statistics - Left Corner */}
-            {fundingData.usageStats.totalRequests > 0 && (
+            {userStats.totalGenerations > 0 && (
               <div className="mb-4 p-4 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
                 <div className="text-xs text-blue-200">
-        <div className="font-semibold text-blue-100 mb-2">📊 App Performance Analytics (September 2025)</div>
+        <div className="font-semibold text-blue-100 mb-2">📊 App Performance Analytics ({userStats.period})</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="space-y-1">
-            <div>• <span className="text-blue-100 font-medium">6,445</span> total generations</div>
-            <div>• <span className="text-blue-100 font-medium">75%</span> success rate</div>
-            <div>• <span className="text-blue-100 font-medium">14.06s</span> avg response time</div>
+            <div>• <span className="text-blue-100 font-medium">{userStats.totalGenerations.toLocaleString()}</span> total generations</div>
+            <div>• <span className="text-blue-100 font-medium">{userStats.engagement.activeUserPercentage}%</span> active users</div>
+            <div>• <span className="text-blue-100 font-medium">{userStats.totalUsers}</span> total users</div>
           </div>
           <div className="space-y-1">
-            <div>• <span className="text-blue-100 font-medium">20</span> active customers</div>
-            <div>• <span className="text-blue-100 font-medium">4,834</span> successful generations</div>
-            <div>• <span className="text-blue-100 font-medium">Peak: 3,900</span> daily requests</div>
+            <div>• <span className="text-blue-100 font-medium">{userStats.activeUsers}</span> active customers</div>
+            <div>• <span className="text-blue-100 font-medium">{userStats.recentActivity}</span> recent activity</div>
+            <div>• <span className="text-blue-100 font-medium">+{userStats.newUsers24h}</span> new today</div>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
           <div className="text-blue-100 font-medium">🚀 Model Performance:</div>
-          <div>• <span className="text-green-300 font-medium">6,433</span> Nano Banana (99.8%)</div>
-          <div>• <span className="text-orange-300 font-medium">8</span> Veo3 Fast videos</div>
-          <div>• <span className="text-red-300 font-medium">4</span> Minimax 2.0 videos</div>
-          <div>• <span className="text-purple-300 font-medium">0.25</span> Seedance Pro videos</div>
-          <div>• Current balance: <span className="text-yellow-300 font-medium">$677.67</span> (2.6 months runway)</div>
+          <div>• <span className="text-green-300 font-medium">{userStats.usageBreakdown.nano_banana.toLocaleString()}</span> Nano Banana ({((userStats.usageBreakdown.nano_banana / userStats.totalGenerations) * 100).toFixed(1)}%)</div>
+          <div>• <span className="text-orange-300 font-medium">{userStats.usageBreakdown.video_generations}</span> Video generations</div>
+          <div>• <span className="text-red-300 font-medium">{userStats.usageBreakdown.minimax_endframe}</span> Minimax 2.0 videos</div>
+          <div>• <span className="text-purple-300 font-medium">{userStats.usageBreakdown.gemini}</span> Gemini generations</div>
+          <div>• Current balance: <span className="text-yellow-300 font-medium">${fundingData.current.toFixed(2)}</span> (FAL AI balance)</div>
         </div>
                 </div>
               </div>
