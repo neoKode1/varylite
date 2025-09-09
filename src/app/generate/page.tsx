@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle } from 'lucide-react';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
@@ -4130,8 +4130,81 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Mobile Floating Input - Match Community Page Style */}
+            <div className="mobile-chat-interface md:hidden">
+              <div className="mobile-input-container">
+                {/* Image Upload Slots - Mobile */}
+                {uploadedFiles.length > 0 && (
+                  <div className="flex gap-2 mb-3 overflow-x-auto">
+                    {uploadedFiles.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="relative flex-shrink-0 transition-all duration-200"
+                      >
+                        <img
+                          src={file.preview}
+                          alt={`Image ${index + 1}`}
+                          className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
+                        />
+                        <button
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          title="Remove image"
+                        >
+                          <X className="w-2 h-2" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <textarea
+                  id="prompt-mobile"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={
+                    hasVideoFiles 
+                      ? "Describe the scene changes..." 
+                      : processingMode === 'endframe'
+                      ? "Describe the transition..."
+                      : uploadedFiles.length === 0
+                      ? "Describe the image you want to generate..."
+                      : "Describe the variations you want..."
+                  }
+                  className="mobile-chat-input"
+                  rows={1}
+                  style={{ fontSize: '16px' }}
+                />
+                
+                <div className="flex items-center gap-2">
+                  {/* Upload Button */}
+                  <button
+                    onClick={() => document.getElementById('file-input')?.click()}
+                    className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"
+                    title="Upload images"
+                  >
+                    <Upload className="w-4 h-4 text-white" />
+                  </button>
+                  
+                  {/* Generate Button */}
+                  <button
+                    onClick={uploadedFiles.length === 0 ? handleTextToImage : hasVideoFiles ? handleRunwayVideoEditing : handleCharacterVariation}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="mobile-send-button"
+                    title="Generate"
+                  >
+                    {processing.isProcessing ? (
+                      <Loader2 className="mobile-send-icon animate-spin" />
+                    ) : (
+                      <ArrowRight className="mobile-send-icon" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Desktop Floating Input - Full Width, Fixed to Bottom */}
-            <div className="generate-floating-input">
+            <div className="generate-floating-input hidden md:block">
               {/* All components in a compact wrap layout */}
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 {/* Image Upload Slots - Compact */}
@@ -4408,8 +4481,8 @@ export default function Home() {
                     )}
                               </button>
                 )}
-                          </div>
-                          </div>
+              </div>
+            </div>
 
         
         {/* Bottom Gallery Panel */}
