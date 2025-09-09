@@ -43,8 +43,8 @@ export async function GET() {
            console.log('🔍 [COMMUNITY POSTS] User IDs to fetch profiles for:', userIds);
            
            const { data: profiles, error: profilesError } = await supabase
-             .from('profiles')
-             .select('id, display_name, avatar_url, username')
+             .from('users')
+             .select('id, name, profile_picture, email')
              .in('id', userIds);
 
            console.log('👥 [COMMUNITY POSTS] Profiles fetched:', { 
@@ -56,19 +56,65 @@ export async function GET() {
 
            // If no profiles found, let's check if users exist in auth.users
            if (!profiles || profiles.length === 0) {
-             console.log('⚠️ [COMMUNITY POSTS] No profiles found, checking auth.users...');
+             console.log('⚠️ [COMMUNITY POSTS] No profiles found in users table, checking auth.users...');
              const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
              console.log('👤 [COMMUNITY POSTS] Auth users:', { 
                count: authUsers?.users?.length || 0,
                error: authError ? authError.message : null
              });
+             
+             // Try to create missing user profiles
+             if (authUsers?.users && authUsers.users.length > 0) {
+               console.log('🔄 [COMMUNITY POSTS] Attempting to create missing user profiles...');
+               for (const authUser of authUsers.users) {
+                 const existingUser = profiles?.find(p => p.id === authUser.id);
+                 if (!existingUser) {
+                   try {
+                     const { error: insertError } = await supabase
+                       .from('users')
+                       .insert({
+                         id: authUser.id,
+                         email: authUser.email,
+                         name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'VaryAI User',
+                         profile_picture: authUser.user_metadata?.avatar_url,
+                         bio: 'AI enthusiast and creative explorer',
+                         preferences: {},
+                         usage_stats: {
+                           total_generations: 0,
+                           image_generations: 0,
+                           video_generations: 0,
+                           character_variations: 0,
+                           background_changes: 0,
+                           last_activity: null
+                         }
+                       });
+                     
+                     if (insertError) {
+                       console.log(`⚠️ [COMMUNITY POSTS] Could not create profile for ${authUser.id}:`, insertError.message);
+                     } else {
+                       console.log(`✅ [COMMUNITY POSTS] Created profile for user ${authUser.id}`);
+                     }
+                   } catch (error) {
+                     console.log(`⚠️ [COMMUNITY POSTS] Error creating profile for ${authUser.id}:`, error);
+                   }
+                 }
+               }
+             }
            }
 
       // Merge posts with profiles
-      const postsWithProfiles = posts.map(post => ({
-        ...post,
-        profiles: profiles?.find(profile => profile.id === post.user_id) || null
-      }));
+      const postsWithProfiles = posts.map(post => {
+        const userProfile = profiles?.find(profile => profile.id === post.user_id);
+        return {
+          ...post,
+          profiles: userProfile ? {
+            id: userProfile.id,
+            display_name: userProfile.name,
+            username: userProfile.email?.split('@')[0] || 'user',
+            avatar_url: userProfile.profile_picture
+          } : null
+        };
+      });
 
       console.log('✅ [COMMUNITY POSTS] Returning posts with profiles:', postsWithProfiles.length);
       return NextResponse.json({ success: true, data: postsWithProfiles });

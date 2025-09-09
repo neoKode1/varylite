@@ -26,20 +26,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
     }
 
-    // Fetch user profiles for comments
-    if (comments && comments.length > 0) {
-      const userIds = [...new Set(comments.map(comment => comment.user_id))];
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url, username')
-        .in('id', userIds);
+         // Fetch user profiles for comments
+         if (comments && comments.length > 0) {
+           const userIds = [...new Set(comments.map(comment => comment.user_id))];
+           
+           const { data: profiles, error: profilesError } = await supabase
+             .from('users')
+             .select('id, name, profile_picture, email')
+             .in('id', userIds);
 
-      // Merge comments with profiles
-      const commentsWithProfiles = comments.map(comment => ({
-        ...comment,
-        profiles: profiles?.find(profile => profile.id === comment.user_id) || null
-      }));
+           // Merge comments with profiles
+           const commentsWithProfiles = comments.map(comment => {
+             const userProfile = profiles?.find(profile => profile.id === comment.user_id);
+             return {
+               ...comment,
+               profiles: userProfile ? {
+                 id: userProfile.id,
+                 display_name: userProfile.name,
+                 username: userProfile.email?.split('@')[0] || 'user',
+                 avatar_url: userProfile.profile_picture
+               } : null
+             };
+           });
 
       return NextResponse.json({ success: true, data: commentsWithProfiles });
     }
