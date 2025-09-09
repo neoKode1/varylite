@@ -90,6 +90,16 @@ export default function CommunityPage() {
       type: 'advisor'
     },
     {
+      id: 'pastor',
+      name: 'Pastor',
+      handle: '@FussyPastor',
+      role: 'Product Director',
+      contribution: 'Helps with product design, workflow, and development ideas',
+      avatar: null,
+      social: 'https://x.com/FussyPastor',
+      type: 'advisor'
+    },
+    {
       id: 'community-moderator',
       name: 'Community Helper',
       handle: '@helper',
