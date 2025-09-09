@@ -639,12 +639,7 @@ export default function CommunityPage() {
     setSelectedImage(null);
   };
 
-  // Header handlers
-  const handleSignUp = () => {
-    setAuthModalMode('signup');
-    setShowAuthModal(true);
-  };
-
+  // Header handlers (reusing existing functions)
   const handleSignIn = () => {
     setAuthModalMode('signin');
     setShowAuthModal(true);
