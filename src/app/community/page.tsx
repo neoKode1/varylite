@@ -144,7 +144,7 @@ export default function CommunityPage() {
   ];
 
   const [fundingData, setFundingData] = useState({
-    current: 10.10,
+    current: 6.28,
     goal: 550,
     weeklyCost: 550,
     lastUpdated: new Date(),
@@ -234,7 +234,7 @@ export default function CommunityPage() {
       const data = await response.json();
       
       setFundingData({
-        current: data.current || 10.10,
+        current: data.current || 6.28,
         goal: data.goal || 550,
         weeklyCost: data.weeklyCost || 550,
         lastUpdated: new Date(data.lastUpdated || new Date()),
