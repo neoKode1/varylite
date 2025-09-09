@@ -597,7 +597,51 @@ export default function Home() {
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
+
+  // Community Energy Meter state
+  const [isEnergyMeterExpanded, setIsEnergyMeterExpanded] = useState(false);
+  const [isEnergyMeterHovered, setIsEnergyMeterHovered] = useState(false);
+  const [hasBeenClicked, setHasBeenClicked] = useState(false);
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
+  
+  // Handle Community Energy Meter interactions
+  const handleEnergyMeterClick = () => {
+    if (!hasBeenClicked) {
+      // First click - navigate to community page
+      setHasBeenClicked(true);
+      router.push('/community');
+    } else {
+      // Subsequent clicks - toggle expansion
+      setIsEnergyMeterExpanded(!isEnergyMeterExpanded);
+    }
+  };
+
+  // Handle hover events
+  const handleEnergyMeterMouseEnter = () => {
+    setIsEnergyMeterHovered(true);
+  };
+
+  const handleEnergyMeterMouseLeave = () => {
+    setIsEnergyMeterHovered(false);
+  };
+
+  // Handle click away to close the modal (only when expanded, not hovered)
+  const handleClickAway = (event: MouseEvent) => {
+    const target = event.target as Element;
+    const energyMeter = document.querySelector('[data-energy-meter]');
+    
+    if (energyMeter && !energyMeter.contains(target)) {
+      setIsEnergyMeterExpanded(false);
+    }
+  };
+
+  // Add click-away event listener (only when expanded, not just hovered)
+  useEffect(() => {
+    if (isEnergyMeterExpanded && !isEnergyMeterHovered) {
+      document.addEventListener('mousedown', handleClickAway);
+      return () => document.removeEventListener('mousedown', handleClickAway);
+    }
+  }, [isEnergyMeterExpanded, isEnergyMeterHovered]);
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
@@ -614,7 +658,7 @@ export default function Home() {
   
   // Community funding meter state (shows FAL balance for community support)
   const [fundingData, setFundingData] = useState({
-    current: 57.85, // Current FAL balance (community sees this)
+    current: 19.85, // Current FAL balance (community sees this)
     goal: 550, // Weekly cost projection for 2x growth
     weeklyCost: 550, // Updated with real usage data: 13,820 images × $0.0398 = ~$550
     lastUpdated: new Date(),
@@ -680,7 +724,7 @@ export default function Home() {
       const data = await response.json();
       
       setFundingData({
-        current: data.current || 57.85, // Current FAL balance
+        current: data.current || 19.85, // Current FAL balance
         goal: data.goal || 550, // Weekly cost projection
         weeklyCost: data.weeklyCost || 550,
         lastUpdated: new Date(data.lastUpdated || new Date()),
@@ -3561,74 +3605,127 @@ export default function Home() {
         onSignInClick={handleSignInClick}
       />
       
-      {/* Floating Funding Meter */}
-      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40">
+      {/* Collapsible Community Energy Meter */}
+      <div 
+        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-40" 
+        data-energy-meter
+        onMouseEnter={handleEnergyMeterMouseEnter}
+        onMouseLeave={handleEnergyMeterMouseLeave}
+      >
+        {/* Thermometer Tab (Always Visible) */}
         <div 
-          onClick={() => router.push('/community')}
-          className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-xl p-4 border border-purple-500 border-opacity-30 cursor-pointer hover:scale-105 transition-all duration-300 shadow-2xl min-w-[200px]"
+          onClick={handleEnergyMeterClick}
+          className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-r-xl p-2 cursor-pointer hover:scale-105 transition-all duration-300 shadow-2xl border border-purple-500 border-opacity-30 border-l-0"
         >
-          {/* Energy Meter */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
-                <span className="text-white text-sm font-medium">Community Energy</span>
-              </div>
-              <MessageCircle className="w-4 h-4 text-gray-300" />
+          {/* Vertical Thermometer */}
+          <div className="flex flex-col items-center space-y-2">
+            <div className="text-white text-xs font-medium" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+              {hasBeenClicked ? 'Community' : 'Energy'}
             </div>
             
-            {/* Energy Bar */}
-            <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+            {/* Vertical Energy Bar */}
+            <div className="w-3 h-16 bg-gray-700 rounded-full relative overflow-hidden">
               <div 
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                  getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                  getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                  'bg-gradient-to-r from-red-400 to-red-600'
+                className={`w-full rounded-full transition-all duration-500 ${
+                  getEnergyStatus().status === 'high' ? 'bg-gradient-to-t from-green-400 to-green-600' :
+                  getEnergyStatus().status === 'medium' ? 'bg-gradient-to-t from-yellow-400 to-yellow-600' :
+                  getEnergyStatus().status === 'low' ? 'bg-gradient-to-t from-orange-400 to-orange-600' :
+                  'bg-gradient-to-t from-red-400 to-red-600'
                 }`}
-                style={{ width: `${getEnergyLevel()}%` }}
+                style={{ height: `${getEnergyLevel()}%` }}
               ></div>
             </div>
             
-            <div className="text-center">
-              <span className={`text-xs font-medium ${
-                getEnergyStatus().color === 'green' ? 'text-green-400' :
-                getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
-                getEnergyStatus().color === 'orange' ? 'text-orange-400' :
-                'text-red-400'
-              }`}>
-                {Math.round(getEnergyLevel())}% • ${fundingData.current.toFixed(2)}
-              </span>
+            <div className="text-white text-xs font-bold">
+              {Math.round(getEnergyLevel())}%
             </div>
+            {!hasBeenClicked && (
+              <div className="text-yellow-400 text-xs animate-pulse">
+                Hover or Click!
+              </div>
+            )}
           </div>
-          
-          {/* Donation Buttons */}
-          <div className="space-y-2">
-            <a
-              href="https://ko-fi.com/varyai"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="w-full px-3 py-2 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
-              title="Weekly Injection - Funds take time to be released"
-            >
-              ⚡ Weekly Injection
-            </a>
-            <a
-              href="https://cash.app/$VaryAi"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="w-full px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
-              title="Daily Injection - Funds go directly into the pot"
-            >
-              💚 Daily Injection
-            </a>
-          </div>
-          
-          {/* Click hint */}
-          <div className="text-center mt-2">
-            <span className="text-gray-400 text-xs">Click to view community</span>
+        </div>
+
+        {/* Expanded Meter (Slides out to the right on hover or click) */}
+        <div className={`absolute left-full top-0 ml-2 transition-all duration-300 ease-in-out ${
+          (isEnergyMeterExpanded || isEnergyMeterHovered)
+            ? 'translate-x-0 opacity-100' 
+            : '-translate-x-full opacity-0 pointer-events-none'
+        }`}>
+          {/* Backdrop for click-away functionality (only when clicked, not hovered) */}
+          {isEnergyMeterExpanded && !isEnergyMeterHovered && (
+            <div 
+              className="fixed inset-0 -z-10"
+              onClick={() => setIsEnergyMeterExpanded(false)}
+            />
+          )}
+          <div 
+            className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-r-xl p-3 sm:p-4 border border-purple-500 border-opacity-30 border-l-0 shadow-2xl min-w-[180px] sm:min-w-[200px]"
+          >
+            {/* Energy Meter */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
+                  <span className="text-white text-sm font-medium">Community Energy</span>
+                </div>
+                <MessageCircle className="w-4 h-4 text-gray-300" />
+              </div>
+              
+              {/* Energy Bar */}
+              <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                    getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                    getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                    'bg-gradient-to-r from-red-400 to-red-600'
+                  }`}
+                  style={{ width: `${getEnergyLevel()}%` }}
+                ></div>
+              </div>
+              
+              <div className="text-center">
+                <span className={`text-xs font-medium ${
+                  getEnergyStatus().color === 'green' ? 'text-green-400' :
+                  getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
+                  getEnergyStatus().color === 'orange' ? 'text-orange-400' :
+                  'text-red-400'
+                }`}>
+                  {Math.round(getEnergyLevel())}% • ${fundingData.current.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {/* Donation Buttons */}
+            <div className="space-y-2">
+              <a
+                href="https://ko-fi.com/varyai"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full px-3 py-2 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
+                title="Weekly Injection - Funds take time to be released"
+              >
+                ⚡ Weekly Injection
+              </a>
+              <a
+                href="https://cash.app/$VaryAi"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
+                title="Daily Injection - Funds go directly into the pot"
+              >
+                💚 Daily Injection
+              </a>
+            </div>
+            
+            {/* Click hint */}
+            <div className="text-center mt-2">
+              <span className="text-gray-400 text-xs">Click to view community</span>
+            </div>
           </div>
         </div>
       </div>
@@ -3638,8 +3735,8 @@ export default function Home() {
       
       {/* Custom Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
-          <div className={`px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm ${
+        <div className="fixed top-4 right-2 sm:right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+          <div className={`px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-[calc(100vw-1rem)] sm:max-w-sm ${
             notification.type === 'error' 
               ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
               : notification.type === 'success'
@@ -3739,8 +3836,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center min-h-[70vh] w-full">
-          <div className="w-full max-w-2xl">
+        <div className="flex items-center justify-center min-h-[70vh] w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat">
+          <div className="w-full max-w-2xl mx-auto">
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
@@ -3769,46 +3866,30 @@ export default function Home() {
               </div>
             )}
 
-            {/* Main Input Area */}
-            <div data-input-area>
-              {uploadedFiles.length === 0 ? (
-              <div
-                className="border-2 border-white rounded-lg p-8 sm:p-16 text-center hover:border-gray-300 transition-colors cursor-pointer bg-black bg-opacity-40 backdrop-blur-sm min-h-[200px] flex flex-col items-center justify-center"
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onClick={() => document.getElementById('file-input')?.click()}
-                onPaste={(e) => handlePaste(e as any)}
-                tabIndex={0}
-              >
-                <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-lg font-medium text-white mb-2">
-                  Drag & drop your files here
-                </p>
-                <p className="text-gray-400">
-                  or click to browse files {ENABLE_VIDEO_FEATURES ? '(Images: JPG, PNG - max 10MB | Videos: MP4, MOV - max 100MB for video-to-video editing)' : '(Images: JPG, PNG - max 10MB)'}
-                </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  💡 Tip: You can paste text into the prompt field or paste images/videos into slots (Ctrl+V) or drag & drop files
-                </p>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
-                  multiple
-                  className="hidden"
-                  onChange={handleFileInputChange}
-                />
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Multiple Files Preview */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white border-opacity-20">
+
+
+            {/* Prompt Input - Always visible on desktop, hidden on mobile */}
+            <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 mt-6 desktop-prompt-input">
+              {uploadedFiles.length === 0 && (
+                <div className="text-center mb-4 p-3 bg-purple-600 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-lg">
+                  <p className="text-purple-300 text-sm">
+                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using Gen 4
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Floating Input - Full Width, Fixed to Bottom */}
+            <div className="generate-floating-input">
+                {/* Multiple Files Preview with Slots - Same as Large Uploader */}
+                <div className="flex gap-2 mb-3 overflow-x-auto">
+                  {/* Existing files */}
                   {uploadedFiles.map((file, index) => (
                     <div 
                       key={index} 
-                      className={`relative transition-all duration-200 ${
+                      className={`relative flex-shrink-0 transition-all duration-200 ${
                         dragOverSlot === index 
-                          ? 'ring-4 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
+                          ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
                           : ''
                       }`}
                       onDrop={(e) => handleSlotDrop(e, index)}
@@ -3822,29 +3903,28 @@ export default function Home() {
                         <img
                           src={file.preview}
                           alt={`Character ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg shadow-lg"
+                          className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
                         />
                       ) : (
                         <video
                           src={file.preview}
-                          className="w-full h-32 object-contain rounded-lg shadow-lg bg-black"
-                          controls
+                          className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
                           muted
                         />
                       )}
                       <button
                         onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                         title="Remove file"
                       >
                         <X className="w-3 h-3" />
                       </button>
-                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
                         {file.fileType.toUpperCase()} {index + 1}
                       </div>
                       {dragOverSlot === index && (
                         <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                          <div className="text-white text-sm font-medium bg-blue-600 px-3 py-1 rounded">
+                          <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
                             Drop here
                           </div>
                         </div>
@@ -3858,12 +3938,12 @@ export default function Home() {
                     return (
                       <div
                         key={`empty-${slotIndex}`}
-                        className={`border-2 border-dashed border-white rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-gray-300 transition-all duration-200 ${
+                        className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-12 h-12 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
                           dragOverSlot === slotIndex 
-                            ? 'ring-4 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
+                            ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
                             : ''
                         }`}
-                        onClick={() => document.getElementById('add-more-files-input')?.click()}
+                        onClick={() => document.getElementById('file-input')?.click()}
                         onDrop={(e) => handleSlotDrop(e, slotIndex)}
                         onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
                         onDragLeave={handleSlotDragLeave}
@@ -3871,368 +3951,93 @@ export default function Home() {
                         data-slot-area
                         tabIndex={0}
                       >
-                        <div className="text-center">
-                          <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-400 text-sm">Slot {slotIndex + 1}</p>
-                          <p className="text-gray-500 text-xs">Drop, click, or paste</p>
-                        </div>
+                        <Plus className="w-4 h-4 text-gray-400" />
                         {dragOverSlot === slotIndex && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                            <div className="text-white text-sm font-medium bg-blue-600 px-3 py-1 rounded">
-                              Drop here
+                            <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
+                              Drop
                             </div>
                           </div>
                         )}
                       </div>
                     );
                   })}
-                  
-                  {/* Hidden file input for adding more files */}
-                  <input
-                    id="add-more-files-input"
-                    type="file"
-                    accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
-                    multiple
-                    className="hidden"
-                    onChange={handleFileInputChange}
-                  />
                 </div>
                 
-                {/* Clear All Button */}
-                <div className="flex justify-center">
+                <textarea
+                  id="prompt"
+                  data-prompt-field="true"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={
+                    hasVideoFiles 
+                      ? "Describe the scene changes, background modifications, or prop changes you want..." 
+                      : processingMode === 'endframe'
+                      ? "Describe the transition or transformation between your start and end frames..."
+                      : uploadedFiles.length === 0
+                      ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
+                      : "Describe the angle or pose variations you want..."
+                  }
+                  className="generate-floating-textarea"
+                  rows={1}
+                  style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                />
+                
+                <div className="generate-floating-buttons">
+                  {/* File Upload Button */}
                   <button
-                    onClick={() => setUploadedFiles([])}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                    onClick={() => document.getElementById('file-input')?.click()}
+                    className="generate-floating-upload-button"
+                    title="Upload files"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                    Clear All Files
+                    <Upload className="generate-floating-upload-icon" />
                   </button>
-                </div>
-              </div>
-            )}
-            </div>
-
-            {/* Generate Button - Right below image upload */}
-            <div className="flex flex-col items-center gap-4 mt-6">
-              {/* Model Selector - Dropdown System */}
-              {uploadedFiles.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3 mb-4">
-                  {/* Image-to-Video Models Dropdown */}
-                  {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
-                    <div className="relative w-full max-w-sm">
-                      <select
-                        value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg text-base font-medium hover:bg-purple-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
-                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                      >
-                        <option value="">Select Model</option>
-                        <option value="nano-banana">🍌 Nano Banana (Character Variations)</option>
-                        <option value="minimax-2.0">🎬 Minimax 2.0 (Image-to-Video)</option>
-                        <option value="kling-2.1-master">🎥 Kling 2.1 Master (Image-to-Video)</option>
-                        <option value="veo3-fast">⚡ Veo3 Fast (Image-to-Video)</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
-                    </div>
-                  )}
-
-                  {/* Text-to-Video Models Dropdown */}
-                  {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
-                    <div className="relative w-full max-w-sm">
-                      <select
-                        value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg text-base font-medium hover:bg-blue-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
-                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                      >
-                        <option value="">Select Model</option>
-                        <option value="runway-t2i">🎨 Runway T2I (Text-to-Image)</option>
-                        <option value="veo3-fast-t2v">⚡ Veo3 Fast (Text-to-Video)</option>
-                        <option value="minimax-2-t2v">🎬 Minimax 2.0 (Text-to-Video)</option>
-                        <option value="kling-2.1-master-t2v">🎥 Kling 2.1 Master (Text-to-Video)</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
-                    </div>
-                  )}
-
-                  {/* Video Processing Dropdown */}
-                  {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
-                    <div className="relative w-full max-w-sm">
-                      <select
-                        value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg text-base font-medium hover:bg-green-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50"
-                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                      >
-                        <option value="">Select Model</option>
-                        <option value="runway-video">Runway Aleph (Video Processing)</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
-                    </div>
-                  )}
-
-                  {/* EndFrame Processing Dropdown */}
-                  {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
-                    <div className="relative w-full max-w-sm">
-                      <select
-                        value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg text-base font-medium hover:bg-orange-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-50"
-                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                      >
-                        <option value="">Select Model</option>
-                        <option value="endframe">EndFrame (Start → End Video)</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Main Action Button */}
-              <div className="flex justify-center">
-                {hasVideoFiles ? (
-                  // Video files - automatically use ALEPH model
-                  <button
-                    onClick={handleRunwayVideoEditing}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Process Video (Aleph)
-                      </>
-                    )}
-                  </button>
-                ) : (generationMode === 'runway-t2i' || (uploadedFiles.length === 0 && !generationMode)) ? (
-                  // Text-to-image generation
+                  
+                  {/* Generate Button */}
+                  {uploadedFiles.length === 0 ? (
+                    // Text-to-Image generation
                   <button
                     onClick={handleTextToImage}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing && generationMode === 'runway-t2i' ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5" />
-                        Generate Image
-                      </>
-                    )}
-                  </button>
-                ) : generationMode === 'nano-banana' ? (
-                  // Character variations - Nano Banana
-                  <button
-                    onClick={handleProcessCharacter}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="px-8 py-4 bg-white text-black rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                      className="generate-floating-send-button"
+                      title="Generate Image"
                   >
                     {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {timeRemaining !== null ? (
-                          <span>{processing.currentStep} ({timeRemaining}s)</span>
-                        ) : (
-                          processing.currentStep
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Images className="w-5 h-5" />
-                        Generate Character Variations (Nano Banana)
-                      </>
+                        <Loader2 className="generate-floating-icon animate-spin" />
+                      ) : (
+                        <Camera className="generate-floating-icon" />
                     )}
                   </button>
-                ) : generationMode === 'veo3-fast' ? (
-                  // Veo3 Fast image-to-video - FULLY ENABLED
+                  ) : hasVideoFiles ? (
+                    // Video generation
                   <button
-                    onClick={handleVeo3FastGeneration}
+                      onClick={handleRunwayVideoEditing}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing && generationMode === 'veo3-fast' ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Animate Image (Veo3 Fast)
-                      </>
-                    )}
-                  </button>
-                ) : generationMode === 'minimax-2.0' ? (
-                  // Minimax 2.0 image-to-video
-                  <button
-                    onClick={handleMinimax2Generation}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
+                      className="generate-floating-send-button"
+                      title="Generate Video"
                   >
                     {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {timeRemaining !== null ? (
-                          <span>{processing.currentStep} ({timeRemaining}s)</span>
-                        ) : (
-                          processing.currentStep
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Animate Image (Minimax 2.0)
-                      </>
+                        <Loader2 className="generate-floating-icon animate-spin" />
+                      ) : (
+                        <Camera className="generate-floating-icon" />
                     )}
                   </button>
-                ) : generationMode === 'kling-2.1-master' ? (
-                  // Kling 2.1 Master image-to-video
+                  ) : (
+                    // Character variations
                   <button
-                    onClick={handleKlingMasterGeneration}
+                      onClick={handleCharacterVariation}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
+                      className="generate-floating-send-button"
+                      title="Generate Variation"
                   >
                     {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Animate Image (Kling 2.1 Master)
-                      </>
-                    )}
-                  </button>
-                ) : generationMode === 'veo3-fast-t2v' ? (
-                  // Veo3 Fast text-to-video
-                  <button
-                    onClick={handleVeo3FastT2VGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Generate Video (Veo3 Fast T2V)
-                      </>
-                    )}
-                  </button>
-                ) : generationMode === 'minimax-2-t2v' ? (
-                  // Minimax 2.0 text-to-video
-                  <button
-                    onClick={handleMinimax2T2VGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Generate Video (Minimax 2.0 T2V)
-                      </>
-                    )}
-                  </button>
-                ) : generationMode === 'kling-2.1-master-t2v' ? (
-                  // Kling 2.1 Master text-to-video
-                  <button
-                    onClick={handleKlingMasterT2VGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Generate Video (Kling 2.1 Master T2V)
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  // EndFrame processing
-                  <button
-                    onClick={handleEndFrameGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
-                  >
-                    {processing.isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-5 h-5" />
-                        Generate Start → End Video
-                      </>
+                        <Loader2 className="generate-floating-icon animate-spin" />
+                      ) : (
+                        <Camera className="generate-floating-icon" />
                     )}
                   </button>
                 )}
               </div>
-            </div>
-
-            {/* Prompt Input - Always visible */}
-            <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 mt-6">
-              {uploadedFiles.length === 0 && (
-                <div className="text-center mb-4 p-3 bg-purple-600 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-lg">
-                  <p className="text-purple-300 text-sm">
-                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using Gen 4
-                  </p>
-                </div>
-              )}
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="prompt" className="text-white font-medium text-lg">
-                  Prompt
-                </label>
-                <button
-                  onClick={() => setShowPromptGuide(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-                  title="Open Prompt Guide"
-                >
-                  <span>📸</span>
-                  <span>Help</span>
-                </button>
-              </div>
-              <textarea
-                id="prompt"
-                data-prompt-field="true"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={
-                  hasVideoFiles 
-                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
-                    : processingMode === 'endframe'
-                    ? "Describe the transition or transformation between your start and end frames..."
-                    : uploadedFiles.length === 0
-                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
-                    : "Describe the angle or pose variations you want..."
-                }
-                className="w-full p-4 sm:p-6 border-2 border-white rounded-lg bg-transparent text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 resize-none text-base sm:text-lg"
-                rows={4}
-                style={{ fontSize: '16px' }} // Prevents zoom on iOS
-              />
             </div>
 
             {/* Prompt Examples - Always visible */}
@@ -5598,6 +5403,178 @@ export default function Home() {
         </div>
       )}
       
+      {/* Mobile Chat Interface - Modern Full Width Design */}
+      <div className="mobile-chat-interface">
+        <div className="mobile-input-container">
+          {/* Multiple Files Preview with Slots - Same as Large Uploader */}
+          <div className="flex gap-2 mb-3 overflow-x-auto">
+            {/* Existing files */}
+            {uploadedFiles.map((file, index) => (
+              <div 
+                key={index} 
+                className={`relative flex-shrink-0 transition-all duration-200 ${
+                  dragOverSlot === index 
+                    ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
+                    : ''
+                }`}
+                onDrop={(e) => handleSlotDrop(e, index)}
+                onDragOver={(e) => handleSlotDragOver(e, index)}
+                onDragLeave={handleSlotDragLeave}
+                onPaste={(e) => handleSlotPaste(e as any, index)}
+                data-slot-area
+                tabIndex={0}
+              >
+                {file.fileType === 'image' ? (
+                  <img
+                    src={file.preview}
+                    alt={`Character ${index + 1}`}
+                    className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
+                  />
+                ) : (
+                  <video
+                    src={file.preview}
+                    className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
+                    muted
+                  />
+                )}
+                <button
+                  onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                  title="Remove file"
+                >
+                  <X className="w-2 h-2" />
+                </button>
+                <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
+                  {file.fileType.toUpperCase()} {index + 1}
+                </div>
+                {dragOverSlot === index && (
+                  <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <div className="text-white text-xs font-medium bg-blue-600 px-1 py-0.5 rounded">
+                      Drop
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {/* Empty slots for drag and drop */}
+            {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
+              const slotIndex = uploadedFiles.length + index;
+              return (
+                <div
+                  key={`empty-${slotIndex}`}
+                  className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-10 h-10 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
+                    dragOverSlot === slotIndex 
+                      ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
+                      : ''
+                  }`}
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  onDrop={(e) => handleSlotDrop(e, slotIndex)}
+                  onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
+                  onDragLeave={handleSlotDragLeave}
+                  onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
+                  data-slot-area
+                  tabIndex={0}
+                >
+                  <Plus className="w-3 h-3 text-gray-400" />
+                  {dragOverSlot === slotIndex && (
+                    <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                      <div className="text-white text-xs font-medium bg-blue-600 px-1 py-0.5 rounded">
+                        Drop
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Mobile Text Input */}
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={
+                  hasVideoFiles 
+                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
+                    : processingMode === 'endframe'
+                    ? "Describe the transition or transformation between your start and end frames..."
+                    : uploadedFiles.length === 0
+                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
+                    : "Describe the angle or pose variations you want..."
+                }
+                className="mobile-chat-input"
+            rows={1}
+                style={{ fontSize: '16px' }} // Prevents zoom on iOS
+              />
+          
+          <div className="flex items-center gap-2">
+            {/* File Upload Button */}
+            <button
+              onClick={() => document.getElementById('file-input')?.click()}
+              className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"
+              title="Upload files"
+            >
+              <Upload className="w-4 h-4 text-white" />
+            </button>
+            
+            {/* Modern Send Button */}
+              {uploadedFiles.length === 0 ? (
+                // Text-to-Image generation
+                <button
+                  onClick={handleTextToImage}
+                  disabled={processing.isProcessing || !prompt.trim()}
+                className="mobile-send-button"
+                title="Generate Image"
+                >
+                  {processing.isProcessing ? (
+                  <Loader2 className="mobile-send-icon animate-spin" />
+                  ) : (
+                  <Camera className="mobile-send-icon" />
+                  )}
+                </button>
+              ) : hasVideoFiles ? (
+              // Video generation
+                <button
+                  onClick={handleRunwayVideoEditing}
+                  disabled={processing.isProcessing || !prompt.trim()}
+                className="mobile-send-button"
+                title="Generate Video"
+                >
+                  {processing.isProcessing ? (
+                  <Loader2 className="mobile-send-icon animate-spin" />
+                  ) : (
+                  <Camera className="mobile-send-icon" />
+                  )}
+                </button>
+              ) : (
+                // Character variations
+                <button
+                  onClick={handleCharacterVariation}
+                  disabled={processing.isProcessing || !prompt.trim()}
+                className="mobile-send-button"
+                title="Generate Variation"
+                >
+                  {processing.isProcessing ? (
+                  <Loader2 className="mobile-send-icon animate-spin" />
+                  ) : (
+                  <Camera className="mobile-send-icon" />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Mobile File Upload Input */}
+          <input
+            id="file-input"
+            type="file"
+            accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
+            multiple
+            className="hidden"
+            onChange={handleFileInputChange}
+          />
+      </div>
+
       {/* Authentication Modal */}
       <AuthModal
         isOpen={showAuthModal}

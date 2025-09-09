@@ -188,6 +188,14 @@ function categorizeError(error: Error): { category: string; retryable: boolean; 
     };
   }
   
+  if (message.includes('prohibited_content') || message.includes('blocked due to prohibited content')) {
+    return {
+      category: 'prohibited_content',
+      retryable: false,
+      userMessage: 'Content blocked due to policy restrictions. Please try a different prompt.'
+    };
+  }
+  
   // Default case
   return {
     category: 'unknown',
@@ -625,8 +633,8 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
       } else if (error.message.includes('invalid api key') || error.message.includes('authentication')) {
         errorMessage = 'Authentication failed. Please check your API configuration.';
         statusCode = 401;
-      } else if (error.message.includes('content policy violation')) {
-        errorMessage = 'The request was blocked due to content policy violations.';
+      } else if (error.message.includes('content policy violation') || error.message.includes('prohibited_content') || error.message.includes('blocked due to prohibited content')) {
+        errorMessage = 'The request was blocked due to content policy violations. Please try a different prompt.';
         statusCode = 400;
       } else if (error.message.includes('timeout') || error.message.includes('network error')) {
         errorMessage = 'Request timed out. Please check your connection and try again.';
@@ -712,7 +720,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       }
 
       variations.push({
-        id: `variation-${variationCount + 1}`,
+        id: `variation-${variationCount + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         description: trimmedSection,
         angle: angle,
         pose: pose,
@@ -734,7 +742,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       paragraphs.forEach((paragraph, index) => {
         // Preserve user's original prompt instead of using generic fallbacks
         variations.push({
-          id: `variation-${index + 1}`,
+          id: `variation-${index + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           description: paragraph.trim(),
           angle: `Variation ${index + 1}`,
           pose: `Custom Pose ${index + 1}`,
@@ -748,7 +756,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       const index = variations.length;
       
       variations.push({
-        id: `variation-${index + 1}`,
+        id: `variation-${index + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         description: `Character variation ${index + 1}: Show the same character with different styling while maintaining all original design elements, clothing, and features.`,
         angle: `Variation ${index + 1}`,
         pose: `Custom Pose ${index + 1}`,
@@ -762,30 +770,31 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
     console.error('Error parsing Gemini response:', error);
     
     // Return fallback variations if parsing completely fails
+    const timestamp = Date.now();
     return [
       {
-        id: 'variation-1',
+        id: `variation-1-${timestamp}`,
         description: 'Character variation 1: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 1',
         pose: 'Custom Pose 1',
         fileType: 'image' as const
       },
       {
-        id: 'variation-2',
+        id: `variation-2-${timestamp}`,
         description: 'Character variation 2: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 2',
         pose: 'Custom Pose 2',
         fileType: 'image' as const
       },
       {
-        id: 'variation-3',
+        id: `variation-3-${timestamp}`,
         description: 'Character variation 3: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 3',
         pose: 'Custom Pose 3',
         fileType: 'image' as const
       },
       {
-        id: 'variation-4',
+        id: `variation-4-${timestamp}`,
         description: 'Character variation 4: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 4',
         pose: 'Custom Pose 4',
