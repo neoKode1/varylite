@@ -47,6 +47,7 @@ export default function CommunityPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | 'reset'>('signin');
@@ -543,6 +544,14 @@ export default function CommunityPage() {
     }
   };
 
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const handleCloseImageModal = () => {
+    setSelectedImage(null);
+  };
+
   return (
     <div 
       className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative"
@@ -780,13 +789,17 @@ export default function CommunityPage() {
                     <div className="mb-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {post.images.map((image, index) => (
-                          <div key={index} className="relative group">
+                          <div key={index} className="relative group cursor-pointer" onClick={() => handleImageClick(image)}>
                             <img 
                               src={image} 
                               alt={`Post image ${index + 1}`}
-                              className="w-full h-48 object-cover rounded-lg border border-gray-600 border-opacity-30"
+                              className="w-full h-48 object-cover rounded-lg border border-gray-600 border-opacity-30 transition-transform duration-200 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <Image className="w-8 h-8 text-white" />
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1038,6 +1051,29 @@ export default function CommunityPage() {
           </div>
         )}
       </div>
+
+      {/* Full-Screen Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
+          onClick={handleCloseImageModal}
+        >
+          <div className="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center">
+            <img 
+              src={selectedImage} 
+              alt="Full screen view"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={handleCloseImageModal}
+              className="absolute top-4 right-4 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Authentication Modal */}
       <AuthModal
