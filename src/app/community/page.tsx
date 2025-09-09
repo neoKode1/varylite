@@ -8,17 +8,35 @@ import { useRouter } from 'next/navigation';
 
 interface Post {
   id: string;
-  userId: string;
+  user_id: string;
   userName: string;
   userAvatar?: string;
   content: string;
   images?: string[];
-  timestamp: Date;
-  likes: number;
-  reposts: number;
-  comments: number;
+  created_at: string;
+  likes_count: number;
+  reposts_count: number;
+  comments_count: number;
   isLiked: boolean;
   isReposted: boolean;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
+interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  userName?: string;
+  userAvatar?: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  };
 }
 
 export default function CommunityPage() {
@@ -32,6 +50,10 @@ export default function CommunityPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | 'reset'>('signin');
+  const [selectedPost, setSelectedPost] = useState<string | null>(null);
+  const [comments, setComments] = useState<{ [postId: string]: Comment[] }>({});
+  const [newComment, setNewComment] = useState<{ [postId: string]: string }>({});
+  const [isCommenting, setIsCommenting] = useState<{ [postId: string]: boolean }>({});
   const [fundingData, setFundingData] = useState({
     current: 57.85,
     goal: 550,
@@ -65,6 +87,46 @@ export default function CommunityPage() {
     lastUpdated: new Date(),
     period: 'Loading...'
   });
+
+  // Fetch posts from API
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch('/api/community/posts');
+      const data = await response.json();
+      
+      if (data.success) {
+        const postsWithUserInfo = data.data.map((post: any) => ({
+          ...post,
+          userName: post.profiles?.full_name || post.user_id?.split('@')[0] || 'Anonymous',
+          userAvatar: post.profiles?.avatar_url,
+          isLiked: false, // Will be updated based on user interactions
+          isReposted: false
+        }));
+        setPosts(postsWithUserInfo);
+      }
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+    }
+  };
+
+  // Fetch comments for a specific post
+  const fetchComments = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/community/comments?post_id=${postId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const commentsWithUserInfo = data.data.map((comment: any) => ({
+          ...comment,
+          userName: comment.profiles?.full_name || comment.user_id?.split('@')[0] || 'Anonymous',
+          userAvatar: comment.profiles?.avatar_url
+        }));
+        setComments(prev => ({ ...prev, [postId]: commentsWithUserInfo }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch comments:', error);
+    }
+  };
 
   // Fetch funding data
   const fetchFundingData = async () => {
@@ -138,59 +200,16 @@ export default function CommunityPage() {
     return { status: 'critical', color: 'red', text: 'Critical Energy' };
   };
 
-  // Load sample posts and fetch data
+  // Load posts and fetch data
   useEffect(() => {
-    const samplePosts: Post[] = [
-      {
-        id: '1',
-        userId: 'user1',
-        userName: 'CreativeArtist',
-        userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-        content: 'Just created an amazing character variation with VaryAI! The Nano Banana model is incredible for character design. 🎨✨',
-        images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop'],
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        likes: 12,
-        reposts: 3,
-        comments: 5,
-        isLiked: false,
-        isReposted: false
-      },
-      {
-        id: '2',
-        userId: 'user2',
-        userName: 'VideoCreator',
-        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-        content: 'Veo3 Fast is a game changer! Generated a stunning video from my artwork in just minutes. The quality is mind-blowing! 🚀',
-        images: ['https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop'],
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        likes: 8,
-        reposts: 2,
-        comments: 3,
-        isLiked: true,
-        isReposted: false
-      },
-      {
-        id: '3',
-        userId: 'user3',
-        userName: 'AICreator',
-        userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-        content: 'Love how the community supports VaryAI! The funding meter shows we\'re all in this together. Keep creating! 💜',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-        likes: 15,
-        reposts: 7,
-        comments: 8,
-        isLiked: false,
-        isReposted: true
-      }
-    ];
-    setPosts(samplePosts);
-    
     // Fetch initial data
+    fetchPosts();
     fetchFundingData();
     fetchUserStats();
     
     // Set up real-time polling every 30 seconds
     const interval = setInterval(() => {
+      fetchPosts();
       fetchFundingData();
       fetchUserStats();
     }, 30000);
@@ -204,57 +223,215 @@ export default function CommunityPage() {
 
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Upload images first if any
+      let uploadedImageUrls: string[] = [];
+      if (uploadedImages.length > 0) {
+        for (const imageDataUrl of uploadedImages) {
+          // Convert data URL to blob
+          const response = await fetch(imageDataUrl);
+          const blob = await response.blob();
+          
+          // Create form data for upload
+          const formData = new FormData();
+          formData.append('file', blob, `image-${Date.now()}.jpg`);
+          formData.append('user_id', user.id);
+          
+          const uploadResponse = await fetch('/api/community/upload', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const uploadData = await uploadResponse.json();
+          if (uploadData.success) {
+            uploadedImageUrls.push(uploadData.data.url);
+          }
+        }
+      }
+      
+      // Create the post
+      const postResponse = await fetch('/api/community/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: newPost.trim(),
+          images: uploadedImageUrls,
+          user_id: user.id
+        })
+      });
+      
+      const postData = await postResponse.json();
+      
+      if (postData.success) {
+        // Refresh posts to get the latest data
+        await fetchPosts();
+        setNewPost('');
+        setUploadedImages([]);
+      } else {
+        console.error('Failed to create post:', postData.error);
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!user) return;
     
-    const newPostData: Post = {
-      id: Date.now().toString(),
-      userId: user.id,
-      userName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
-      userAvatar: user.user_metadata?.avatar_url,
-      content: newPost.trim(),
-      images: uploadedImages.length > 0 ? uploadedImages : undefined,
-      timestamp: new Date(),
-      likes: 0,
-      reposts: 0,
-      comments: 0,
-      isLiked: false,
-      isReposted: false
-    };
-
-    setPosts(prev => [newPostData, ...prev]);
-    setNewPost('');
-    setUploadedImages([]);
-    setIsLoading(false);
+    try {
+      const response = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          user_id: user.id,
+          interaction_type: 'like'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update the post in the local state
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                isLiked: data.data.isNewInteraction,
+                likes_count: data.data.post.likes_count
+              }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
   };
 
-  const handleLike = (postId: string) => {
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { 
-            ...post, 
-            isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1
-          }
-        : post
-    ));
+  const handleRepost = async (postId: string) => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          user_id: user.id,
+          interaction_type: 'repost'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update the post in the local state
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                isReposted: data.data.isNewInteraction,
+                reposts_count: data.data.post.reposts_count
+              }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error('Error handling repost:', error);
+    }
   };
 
-  const handleRepost = (postId: string) => {
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { 
-            ...post, 
-            isReposted: !post.isReposted,
-            reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1
-          }
-        : post
-    ));
+  const handleShare = async (postId: string) => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          user_id: user.id,
+          interaction_type: 'share'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // You could show a success message or update UI here
+        console.log('Post shared successfully');
+      }
+    } catch (error) {
+      console.error('Error handling share:', error);
+    }
   };
 
-  const formatTimeAgo = (date: Date) => {
+  const handleComment = async (postId: string) => {
+    if (!user || !newComment[postId]?.trim()) return;
+    
+    setIsCommenting(prev => ({ ...prev, [postId]: true }));
+    
+    try {
+      const response = await fetch('/api/community/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          content: newComment[postId].trim(),
+          user_id: user.id
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Clear the comment input
+        setNewComment(prev => ({ ...prev, [postId]: '' }));
+        
+        // Refresh comments for this post
+        await fetchComments(postId);
+        
+        // Update post comment count
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { ...post, comments_count: post.comments_count + 1 }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    } finally {
+      setIsCommenting(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const toggleComments = (postId: string) => {
+    if (selectedPost === postId) {
+      setSelectedPost(null);
+    } else {
+      setSelectedPost(postId);
+      if (!comments[postId]) {
+        fetchComments(postId);
+      }
+    }
+  };
+
+  const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const targetDate = typeof date === 'string' ? new Date(date) : date;
+    const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
     
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
@@ -531,7 +708,7 @@ export default function CommunityPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-semibold text-white">{post.userName}</span>
                     <span className="text-gray-400 text-sm">•</span>
-                    <span className="text-gray-400 text-sm">{formatTimeAgo(post.timestamp)}</span>
+                    <span className="text-gray-400 text-sm">{formatTimeAgo(post.created_at)}</span>
                   </div>
                   <p className="text-gray-200 mb-3 leading-relaxed">{post.content}</p>
                   
@@ -562,12 +739,15 @@ export default function CommunityPage() {
                       }`}
                     >
                       <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} />
-                      {post.likes}
+                      {post.likes_count}
                     </button>
                     
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 text-sm transition-colors">
+                    <button 
+                      onClick={() => toggleComments(post.id)}
+                      className="flex items-center gap-2 text-gray-400 hover:text-blue-400 text-sm transition-colors"
+                    >
                       <MessageCircle className="w-4 h-4" />
-                      {post.comments}
+                      {post.comments_count}
                     </button>
                     
                     <button
@@ -577,9 +757,90 @@ export default function CommunityPage() {
                       }`}
                     >
                       <Share2 className={`w-4 h-4 ${post.isReposted ? 'fill-current' : ''}`} />
-                      {post.reposts}
+                      {post.reposts_count}
                     </button>
                   </div>
+
+                  {/* Comments Section */}
+                  {selectedPost === post.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-700 border-opacity-30">
+                      {/* Comments List */}
+                      {comments[post.id] && comments[post.id].length > 0 && (
+                        <div className="space-y-3 mb-4">
+                          {comments[post.id].map((comment) => (
+                            <div key={comment.id} className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {comment.userAvatar ? (
+                                  <img 
+                                    src={comment.userAvatar} 
+                                    alt={comment.userName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                    <User className="w-4 h-4 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-white text-sm">{comment.userName}</span>
+                                  <span className="text-gray-400 text-xs">•</span>
+                                  <span className="text-gray-400 text-xs">{formatTimeAgo(comment.created_at)}</span>
+                                </div>
+                                <p className="text-gray-200 text-sm">{comment.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Comment Input */}
+                      {user && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {user.user_metadata?.avatar_url ? (
+                              <img 
+                                src={user.user_metadata.avatar_url} 
+                                alt={user.user_metadata?.full_name || 'User'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-white" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              type="text"
+                              value={newComment[post.id] || ''}
+                              onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
+                              placeholder="Write a comment..."
+                              className="flex-1 bg-gray-700 bg-opacity-30 border border-gray-600 border-opacity-30 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleComment(post.id);
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => handleComment(post.id)}
+                              disabled={!newComment[post.id]?.trim() || isCommenting[post.id]}
+                              className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              {isCommenting[post.id] ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Send className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
