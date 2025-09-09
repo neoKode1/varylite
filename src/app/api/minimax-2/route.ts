@@ -63,13 +63,17 @@ export async function POST(request: NextRequest) {
       prompt_optimizer
     });
     
-    const { request_id } = await fal.queue.submit("fal-ai/minimax/hailuo-02/pro/image-to-video", {
+    const requestPayload = {
       input: {
         prompt,
         image_url,
         prompt_optimizer: true
       }
-    });
+    };
+    
+    console.log(`📤 [${requestId}] Request payload:`, JSON.stringify(requestPayload, null, 2));
+    
+    const { request_id } = await fal.queue.submit("fal-ai/minimax/hailuo-02/pro/image-to-video", requestPayload);
     
     console.log(`🆔 [${requestId}] FAL Request ID: ${request_id}`);
     
@@ -146,6 +150,18 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const totalTime = Date.now() - startTime;
     console.error(`❌ [${requestId}] Minimax 2.0 generation error after ${totalTime}ms:`, error);
+    
+    // Log detailed error information
+    if (error.status) {
+      console.error(`❌ [${requestId}] Error status:`, error.status);
+    }
+    if (error.body) {
+      console.error(`❌ [${requestId}] Error body:`, JSON.stringify(error.body, null, 2));
+    }
+    if (error.message) {
+      console.error(`❌ [${requestId}] Error message:`, error.message);
+    }
+    
     console.error(`❌ [${requestId}] Error details:`, {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -155,10 +171,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Internal server error',
+        status: error.status,
+        body: error.body,
         requestId,
         processingTime: totalTime
       },
-      { status: 500 }
+      { status: error.status || 500 }
     );
   }
 }

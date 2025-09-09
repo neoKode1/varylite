@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const falStartTime = Date.now();
     
     // Step 1: Submit request to FAL AI
-    const { request_id } = await fal.queue.submit("fal-ai/veo3/fast/image-to-video", {
+    const requestPayload = {
       input: {
         prompt,
         image_url,
@@ -48,7 +48,11 @@ export async function POST(request: NextRequest) {
         generate_audio,
         resolution
       }
-    });
+    };
+    
+    console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
+    
+    const { request_id } = await fal.queue.submit("fal-ai/veo3/fast/image-to-video", requestPayload);
 
     // Step 2: Poll for status with exponential backoff
     let status = null;
@@ -127,17 +131,30 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Veo3 Fast generation error:', error);
     
+    // Log detailed error information
+    if (error.status) {
+      console.error('❌ Error status:', error.status);
+    }
+    if (error.body) {
+      console.error('❌ Error body:', JSON.stringify(error.body, null, 2));
+    }
+    if (error.message) {
+      console.error('❌ Error message:', error.message);
+    }
+    
     // Get balance status even on error to help diagnose issues
     const balanceStatus = await getBalanceStatus();
     
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Internal server error',
+        status: error.status,
+        body: error.body,
         balanceStatus: balanceStatus.status,
         balanceError: balanceStatus.lastError,
         balanceLastChecked: balanceStatus.lastChecked
       },
-      { status: 500 }
+      { status: error.status || 500 }
     );
   }
 }
