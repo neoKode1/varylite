@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
+import { useRouter } from 'next/navigation';
 
 interface Post {
   id: string;
@@ -22,6 +23,7 @@ interface Post {
 
 export default function CommunityPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -335,11 +337,22 @@ export default function CommunityPage() {
       <div className="bg-black bg-opacity-10 backdrop-blur-md border-b border-purple-500 border-opacity-20 relative z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/generate')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg"
+                title="Back to Generate"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="font-medium">Generate</span>
+                <Sparkles className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-white">Tha Communita</h1>
               </div>
-              <h1 className="text-2xl font-bold text-white">Tha Communita</h1>
             </div>
             <div className="text-right">
               <div className="text-gray-300 text-sm">Community Members</div>
