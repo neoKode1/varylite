@@ -145,24 +145,24 @@ export default function CommunityPage() {
 
   const [fundingData, setFundingData] = useState({
     current: 6.28,
-    goal: 550,
-    weeklyCost: 550,
+    goal: 1000, // Updated goal based on actual usage
+    weeklyCost: 250, // Updated based on $35/day average
     lastUpdated: new Date(),
     usageStats: {
-      totalRequests: 6910,
-      successfulRequests: 6910,
+      totalRequests: 7090, // Updated from CSV data
+      successfulRequests: 7090,
       successRate: 100,
-      period: 'September 1-8, 2025',
-      weeklyProjection: 13820,
+      period: 'September 1-9, 2025',
+      weeklyProjection: 10000, // Updated projection
       costPerGeneration: 0.0398,
       currentUsers: 24,
       scalingFactor: 2,
-      baseWeeklyProjection: 6910,
+      baseWeeklyProjection: 7090,
       modelBreakdown: {
-        nanoBanana: 6910,
-        videoModels: 40.25,
-        totalImages: 6910,
-        totalVideoSeconds: 40.25
+        nanoBanana: 7090, // Updated from CSV
+        videoModels: 134, // Updated from CSV (134 video seconds)
+        totalImages: 7090,
+        totalVideoSeconds: 134
       }
     }
   });
@@ -235,24 +235,24 @@ export default function CommunityPage() {
       
       setFundingData({
         current: data.current || 6.28,
-        goal: data.goal || 550,
-        weeklyCost: data.weeklyCost || 550,
+        goal: data.goal || 1000,
+        weeklyCost: data.weeklyCost || 250,
         lastUpdated: new Date(data.lastUpdated || new Date()),
         usageStats: {
-          totalRequests: data.usageStats?.totalRequests || 6910,
-          successfulRequests: data.usageStats?.successfulRequests || 6910,
+          totalRequests: data.usageStats?.totalRequests || 7090,
+          successfulRequests: data.usageStats?.successfulRequests || 7090,
           successRate: data.usageStats?.successRate || 100,
-          period: data.usageStats?.period || 'September 1-8, 2025',
-          weeklyProjection: data.usageStats?.weeklyProjection || 13820,
+          period: data.usageStats?.period || 'September 1-9, 2025',
+          weeklyProjection: data.usageStats?.weeklyProjection || 10000,
           costPerGeneration: data.usageStats?.costPerGeneration || 0.0398,
           currentUsers: data.usageStats?.currentUsers || 24,
           scalingFactor: data.usageStats?.scalingFactor || 2,
-          baseWeeklyProjection: data.usageStats?.baseWeeklyProjection || 6910,
+          baseWeeklyProjection: data.usageStats?.baseWeeklyProjection || 7090,
           modelBreakdown: {
-            nanoBanana: data.usageStats?.modelBreakdown?.nanoBanana || 6910,
-            videoModels: data.usageStats?.modelBreakdown?.videoModels || 40.25,
-            totalImages: data.usageStats?.modelBreakdown?.totalImages || 6910,
-            totalVideoSeconds: data.usageStats?.modelBreakdown?.totalVideoSeconds || 40.25
+            nanoBanana: data.usageStats?.modelBreakdown?.nanoBanana || 7090,
+            videoModels: data.usageStats?.modelBreakdown?.videoModels || 134,
+            totalImages: data.usageStats?.modelBreakdown?.totalImages || 7090,
+            totalVideoSeconds: data.usageStats?.modelBreakdown?.totalVideoSeconds || 134
           }
         }
       });
@@ -718,6 +718,36 @@ export default function CommunityPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
+        {/* Critical Balance Warning */}
+        {getEnergyLevel() < 5 && (
+          <div className="mb-6">
+            <div className="bg-gradient-to-r from-red-900 to-red-800 bg-opacity-90 backdrop-blur-md rounded-lg p-4 border-2 border-red-500 border-opacity-50 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl">🚨</div>
+                <div>
+                  <h3 className="text-white font-bold text-lg">CRITICAL BALANCE ALERT</h3>
+                  <p className="text-red-200 text-sm">
+                    Current balance: ${fundingData.current.toFixed(2)} | 
+                    Daily usage: ~$35 | 
+                    Runway: Less than 1 day
+                  </p>
+                  <p className="text-red-100 text-xs mt-1">
+                    Service may be interrupted without immediate funding. Please support the community!
+                  </p>
+                </div>
+                <a 
+                  href="https://ko-fi.com/varyai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors"
+                >
+                  🚨 URGENT SUPPORT
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Community Funding Meter */}
         <div className="mb-6">
           <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-40 backdrop-blur-md rounded-lg p-4 border border-purple-500 border-opacity-20">
@@ -789,7 +819,7 @@ export default function CommunityPage() {
                 ? "⚡ Good energy levels. Keep creating! Data based on real-time usage." 
                 : getEnergyLevel() >= 20 
                 ? "💡 Energy running low. Community support helps keep VaryAI running! Data based on real-time usage." 
-                : "💜 Low energy. Your support helps keep the community thriving! Data based on real-time usage."
+                : "🚨 CRITICAL: Balance extremely low! Service may be interrupted soon. Immediate support needed! Data based on real-time usage."
               }
             </p>
           </div>
