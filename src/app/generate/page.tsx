@@ -3860,49 +3860,119 @@ export default function Home() {
             {/* Mobile Floating Input - Match Community Page Style */}
             <div className="mobile-chat-interface md:hidden">
               <div className="mobile-input-container">
-                {/* Image Upload Slots - Mobile */}
-                {uploadedFiles.length > 0 && (
-                  <div className="flex gap-2 mb-3 overflow-x-auto">
-                    {uploadedFiles.map((file, index) => (
-                      <div 
-                        key={index} 
-                        className="relative flex-shrink-0 transition-all duration-200"
-                      >
-                        <img
-                          src={file.preview}
-                          alt={`Image ${index + 1}`}
-                          className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
-                        />
-                        <button
-                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                          title="Remove image"
+                {/* Top Div: 4 Image Upload Slots + Model Selection */}
+                <div className="mb-3">
+                  <div className="flex gap-2 items-center overflow-x-auto">
+                    {/* 4 Image Upload Slots - Mobile */}
+                    <div className="flex gap-2 flex-shrink-0">
+                      {/* Filled slots */}
+                      {uploadedFiles.map((file, index) => (
+                        <div 
+                          key={index} 
+                          className="relative flex-shrink-0 transition-all duration-200"
                         >
-                          <X className="w-2 h-2" />
-                        </button>
-                      </div>
-                    ))}
+                          {file.fileType === 'image' ? (
+                            <img
+                              src={file.preview}
+                              alt={`Image ${index + 1}`}
+                              className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
+                            />
+                          ) : (
+                            <video
+                              src={file.preview}
+                              className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
+                              muted
+                            />
+                          )}
+                          <button
+                            onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                            title="Remove image"
+                          >
+                            <X className="w-2 h-2" />
+                          </button>
+                          <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
+                            {file.fileType.toUpperCase()}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Empty slots for upload */}
+                      {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
+                        const slotIndex = uploadedFiles.length + index;
+                        return (
+                          <div
+                            key={`empty-${slotIndex}`}
+                            className="border-2 border-dashed border-white border-opacity-30 rounded-lg w-12 h-12 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0"
+                            onClick={() => document.getElementById('file-input')?.click()}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                document.getElementById('file-input')?.click();
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Upload image to slot ${slotIndex + 1}`}
+                          >
+                            <Plus className="w-4 h-4 text-gray-400" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Model Selection - Inline with image slots */}
+                    {uploadedFiles.length > 0 && (
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        className="px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200 flex-shrink-0 min-w-[120px]"
+                      >
+                        <option value="">Select Model</option>
+                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
+                          <>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="runway-t2i">Runway T2I</option>
+                          </>
+                        )}
+                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length > 1 && (
+                          <>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="runway-t2i">Runway T2I</option>
+                          </>
+                        )}
+                        {uploadedFiles.some(file => file.fileType === 'video') && (
+                          <>
+                            <option value="veo3-fast">Veo3 Fast</option>
+                            <option value="minimax-2.0">Minimax 2.0</option>
+                            <option value="kling-2.1-master">Kling 2.1</option>
+                          </>
+                        )}
+                      </select>
+                    )}
                   </div>
-                )}
+                  
+                  {/* Text Input - Directly below the top container */}
+                  <textarea
+                    id="prompt-mobile"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder={
+                      hasVideoFiles 
+                        ? "Describe the scene changes..." 
+                        : processingMode === 'endframe'
+                        ? "Describe the transition..."
+                        : uploadedFiles.length === 0
+                        ? "Describe the image you want to generate..."
+                        : "Describe the variations you want..."
+                    }
+                    className="mobile-chat-input mt-3"
+                    rows={1}
+                    style={{ fontSize: '16px' }}
+                  />
+                </div>
                 
-                <textarea
-                  id="prompt-mobile"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    hasVideoFiles 
-                      ? "Describe the scene changes..." 
-                      : processingMode === 'endframe'
-                      ? "Describe the transition..."
-                      : uploadedFiles.length === 0
-                      ? "Describe the image you want to generate..."
-                      : "Describe the variations you want..."
-                  }
-                  className="mobile-chat-input"
-                  rows={1}
-                  style={{ fontSize: '16px' }}
-                />
-                
+                {/* Bottom Container: Action Buttons */}
                 <div className="flex items-center gap-2">
                   {/* Upload Button */}
                   <button

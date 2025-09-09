@@ -122,6 +122,16 @@
     -webkit-overflow-scrolling: touch !important;
   }
   
+  /* Hide scrollbar for mobile header */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Opera */
+  }
+
   /* Modern Mobile Chat Interface - Inspired by WhatsApp/Telegram */
   @media (max-width: 768px) {
     
