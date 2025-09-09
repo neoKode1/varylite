@@ -132,14 +132,14 @@ export async function POST(request: NextRequest) {
     console.error('❌ Veo3 Fast generation error:', error);
     
     // Log detailed error information
-    if (error.status) {
-      console.error('❌ Error status:', error.status);
+    if (error && typeof error === 'object' && 'status' in error) {
+      console.error('❌ Error status:', (error as any).status);
     }
-    if (error.body) {
-      console.error('❌ Error body:', JSON.stringify(error.body, null, 2));
+    if (error && typeof error === 'object' && 'body' in error) {
+      console.error('❌ Error body:', JSON.stringify((error as any).body, null, 2));
     }
-    if (error.message) {
-      console.error('❌ Error message:', error.message);
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.error('❌ Error message:', (error as any).message);
     }
     
     // Get balance status even on error to help diagnose issues
@@ -148,13 +148,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Internal server error',
-        status: error.status,
-        body: error.body,
+        status: (error as any)?.status || 'unknown',
+        body: (error as any)?.body || null,
         balanceStatus: balanceStatus.status,
         balanceError: balanceStatus.lastError,
         balanceLastChecked: balanceStatus.lastChecked
       },
-      { status: error.status || 500 }
+      { status: (error as any)?.status || 500 }
     );
   }
 }

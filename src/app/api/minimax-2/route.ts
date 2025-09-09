@@ -152,14 +152,14 @@ export async function POST(request: NextRequest) {
     console.error(`❌ [${requestId}] Minimax 2.0 generation error after ${totalTime}ms:`, error);
     
     // Log detailed error information
-    if (error.status) {
-      console.error(`❌ [${requestId}] Error status:`, error.status);
+    if (error && typeof error === 'object' && 'status' in error) {
+      console.error(`❌ [${requestId}] Error status:`, (error as any).status);
     }
-    if (error.body) {
-      console.error(`❌ [${requestId}] Error body:`, JSON.stringify(error.body, null, 2));
+    if (error && typeof error === 'object' && 'body' in error) {
+      console.error(`❌ [${requestId}] Error body:`, JSON.stringify((error as any).body, null, 2));
     }
-    if (error.message) {
-      console.error(`❌ [${requestId}] Error message:`, error.message);
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.error(`❌ [${requestId}] Error message:`, (error as any).message);
     }
     
     console.error(`❌ [${requestId}] Error details:`, {
@@ -171,12 +171,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Internal server error',
-        status: error.status,
-        body: error.body,
+        status: (error as any)?.status || 'unknown',
+        body: (error as any)?.body || null,
         requestId,
         processingTime: totalTime
       },
-      { status: error.status || 500 }
+      { status: (error as any)?.status || 500 }
     );
   }
 }

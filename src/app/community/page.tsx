@@ -143,7 +143,7 @@ export default function CommunityPage() {
   ];
 
   const [fundingData, setFundingData] = useState({
-    current: 57.85,
+    current: 40.34,
     goal: 550,
     weeklyCost: 550,
     lastUpdated: new Date(),
@@ -233,7 +233,7 @@ export default function CommunityPage() {
       const data = await response.json();
       
       setFundingData({
-        current: data.current || 57.85,
+        current: data.current || 40.34,
         goal: data.goal || 550,
         weeklyCost: data.weeklyCost || 550,
         lastUpdated: new Date(data.lastUpdated || new Date()),
@@ -640,10 +640,6 @@ export default function CommunityPage() {
   };
 
   // Header handlers (reusing existing functions)
-  const handleSignIn = () => {
-    setAuthModalMode('signin');
-    setShowAuthModal(true);
-  };
 
   return (
     <div 
