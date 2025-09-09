@@ -132,19 +132,8 @@ export default function AnimatedError({
         return (
           <div className={`relative ${animationPhase === 'enter' ? 'animate-toasty-enter' : animationPhase === 'exit' ? 'animate-toasty-exit' : 'animate-toasty-bounce'}`}>
             <div className="flex items-center justify-center">
-              <img 
-                src="/Toasty_mk3.JPG.webp" 
-                alt="Toasty from Mortal Kombat"
-                className="w-16 h-16 object-contain"
-                style={{ 
-                  filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))',
-                  animation: animationPhase === 'idle' ? 'toasty-glow 2s ease-in-out infinite' : 'none'
-                }}
-              />
-            </div>
-            {/* "TOASTY!" text */}
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-400 animate-bounce">
-              TOASTY!
+              {/* Just show a warning icon since the main image is in the tag */}
+              <div className="text-2xl animate-pulse">⚠️</div>
             </div>
           </div>
         );
@@ -156,21 +145,54 @@ export default function AnimatedError({
 
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
-      <div className="bg-red-600 bg-opacity-95 backdrop-blur-sm border border-red-500 rounded-lg p-4 max-w-sm shadow-lg">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              {renderAnimation()}
+      <div className="relative">
+        {/* Main oval/cylinder notification body */}
+        <div className="bg-red-600 bg-opacity-95 backdrop-blur-sm border border-red-500 rounded-full px-6 py-3 max-w-sm shadow-lg relative overflow-hidden">
+          {/* Cylinder effect with gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-red-500 to-red-700 rounded-full opacity-80"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 rounded-full"></div>
+          
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                {renderAnimation()}
+              </div>
+              <p className="text-white text-sm font-medium leading-tight">{message}</p>
             </div>
-            <p className="text-white text-sm font-medium">{message}</p>
+            <button
+              onClick={handleClose}
+              className="text-white hover:text-gray-200 transition-colors flex-shrink-0 bg-red-700 hover:bg-red-800 rounded-full p-1"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
+        
+        {/* Image tag popping out from the side */}
+        {type === 'toasty' && (
+          <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 z-10">
+            <div className="relative">
+              {/* Tag background */}
+              <div className="bg-yellow-400 rounded-full p-2 shadow-lg border-2 border-yellow-300">
+                <img 
+                  src="/Toasty_mk3.JPG.webp" 
+                  alt="Toasty from Mortal Kombat"
+                  className="w-12 h-12 object-contain rounded-full"
+                  style={{ 
+                    filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.9))',
+                    animation: animationPhase === 'idle' ? 'toasty-glow 2s ease-in-out infinite' : 'none'
+                  }}
+                />
+              </div>
+              {/* Tag connector line */}
+              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-0.5 bg-yellow-400"></div>
+              {/* "TOASTY!" text above the tag */}
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-400 animate-bounce whitespace-nowrap">
+                TOASTY!
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

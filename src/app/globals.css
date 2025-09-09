@@ -106,6 +106,20 @@
   
   /* Modern Mobile Chat Interface - Inspired by WhatsApp/Telegram */
   @media (max-width: 768px) {
+    /* Reposition Ko-fi support button in mobile view */
+    #kofi-widget-iframe {
+      bottom: 80px !important; /* Position above the floating input */
+      left: 16px !important;
+      right: auto !important;
+    }
+    
+    /* Alternative selector for Ko-fi button */
+    [id*="kofi"], [class*="kofi"], [id*="ko-fi"], [class*="ko-fi"] {
+      bottom: 80px !important;
+      left: 16px !important;
+      right: auto !important;
+    }
+    
     .mobile-chat-interface {
       position: fixed !important;
       bottom: 0 !important;
@@ -400,6 +414,13 @@
       font-family: inherit !important;
     }
     
+    .generate-floating-textarea:focus {
+      outline: none !important;
+      border: none !important;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.1) !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+    }
+    
     .generate-floating-textarea::placeholder {
       color: rgba(255, 255, 255, 0.6) !important;
       font-size: 16px !important;
@@ -411,6 +432,49 @@
       gap: 8px !important;
       margin-top: 12px !important;
       width: 100% !important;
+    }
+    
+    /* Model selection dropdown - integrated styling */
+    .generate-floating-input select {
+      background: black !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 8px !important;
+      color: white !important;
+      font-size: 14px !important;
+      backdrop-filter: blur(10px) !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .generate-floating-input select:focus {
+      outline: none !important;
+      border-color: rgba(139, 92, 246, 0.6) !important;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+    }
+    
+    .generate-floating-input select:hover {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    /* Dropdown options styling */
+    .generate-floating-input select option {
+      background: black !important;
+      color: white !important;
+      padding: 8px 12px !important;
+    }
+    
+    .generate-floating-input select option:hover,
+    .generate-floating-input select option:focus,
+    .generate-floating-input select option:checked {
+      background: white !important;
+      color: black !important;
+    }
+    
+    /* Model selection container */
+    .generate-floating-input .flex.items-center.gap-3 {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-bottom: 12px !important;
     }
     
     .generate-floating-send-button {

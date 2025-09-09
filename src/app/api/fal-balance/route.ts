@@ -20,27 +20,11 @@ async function getRealFalBalance() {
     return balanceCache.data;
   }
 
-  console.log('🔄 Getting manual FAL AI balance...');
+  console.log('🔄 Getting real FAL AI balance...');
   
-              // Manual balance - updated by user as needed
-              const manualBalance = 35.87; // Current actual FAL AI balance
-  const balanceStatus = 'healthy';
-  
-  console.log(`💰 Using manual balance: $${manualBalance}`);
-  
-  const balanceData = {
-    balance: manualBalance,
-    status: balanceStatus,
-    lastError: null,
-    lastChecked: new Date().toISOString()
-  };
-  
-  // Update cache
-  balanceCache.data = balanceData;
-  balanceCache.lastUpdated = Date.now();
-  
-  console.log(`✅ FAL AI balance check completed: $${manualBalance} (Status: ${balanceStatus})`);
-  return balanceData;
+  // Return null to indicate no mock data should be used
+  // The community energy balance should use manually updated values
+  return null;
 }
 
 export async function GET(request: NextRequest) {
@@ -56,6 +40,15 @@ export async function GET(request: NextRequest) {
 
     // Get real-time balance data
     const balanceData = await getRealFalBalance();
+    
+    // If no real balance data available, return error
+    if (!balanceData) {
+      return NextResponse.json(
+        { error: 'FAL balance data not available - using manual community energy balance instead' },
+        { status: 503 }
+      );
+    }
+    
     const balance = balanceData.balance;
     const balanceStatus = balanceData.status;
     const lastError = balanceData.lastError;

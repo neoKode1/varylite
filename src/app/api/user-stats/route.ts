@@ -9,46 +9,12 @@ export async function GET(request: NextRequest) {
       hasSupabaseKey: !!process.env.SUPABASE_KEY
     });
     
-    // Check if environment variables are available
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_KEY) {
-      console.warn('⚠️ [UserStats] Supabase environment variables not configured, returning fallback data');
-      return NextResponse.json({
-        success: true,
-        data: {
-          totalUsers: 52, // Updated to match actual Supabase count
-          activeUsers: 12,
-          newUsers24h: 5,
-          totalGenerations: 6910,
-          recentActivity: 150,
-          usageBreakdown: {
-            image_generations: 6910,
-            video_generations: 18,
-            character_variations: 0,
-            background_changes: 0,
-            nano_banana: 6910,
-            runway_aleph: 0,
-            minimax_endframe: 18,
-            gemini: 376
-          },
-          growthRates: {
-            daily: '10.64', // 5 new users out of 47 total
-            weekly: '25.00'
-          },
-          engagement: {
-            avgGenerationsPerUser: '147.0', // 6910 / 47
-            activeUserPercentage: '25.5' // 12 active out of 47
-          },
-          lastUpdated: new Date().toISOString(),
-          period: 'Fallback data - Supabase not configured'
-        }
-      });
-    }
-
-    // Create a server-side Supabase client only when environment variables are available
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_KEY
-    );
+    // Use hardcoded Supabase configuration (same as client-side)
+    const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo'
+    
+    // Create a server-side Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Get current timestamp and calculate time ranges
     const now = new Date();

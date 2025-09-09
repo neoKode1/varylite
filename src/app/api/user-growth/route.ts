@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create Supabase client with fallback for build time
-const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_KEY 
-  ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_KEY)
-  : null;
+// Create Supabase client with hardcoded configuration (same as client-side)
+const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo'
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request: NextRequest) {
   try {
     console.log('📊 [UserGrowth] Fetching 24-hour user growth data...');
     
-    // Check if Supabase is configured
-    if (!supabase) {
-      console.warn('⚠️ [UserGrowth] Supabase not configured, returning fallback data');
-      return NextResponse.json({
-        success: true,
-        data: {
-          newUsers24h: 12, // Fallback data
-          timestamp: new Date().toISOString(),
-          period: 'Fallback data - Supabase not configured'
-        }
-      });
-    }
+    // Supabase is now configured with hardcoded values
     
     // Calculate 24 hours ago timestamp
     const twentyFourHoursAgo = new Date();

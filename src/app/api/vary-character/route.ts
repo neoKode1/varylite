@@ -188,14 +188,6 @@ function categorizeError(error: Error): { category: string; retryable: boolean; 
     };
   }
   
-  if (message.includes('prohibited_content') || message.includes('blocked due to prohibited content')) {
-    return {
-      category: 'prohibited_content',
-      retryable: false,
-      userMessage: 'Content blocked due to policy restrictions. Please try a different prompt.'
-    };
-  }
-  
   // Default case
   return {
     category: 'unknown',
@@ -634,7 +626,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
         errorMessage = 'Authentication failed. Please check your API configuration.';
         statusCode = 401;
       } else if (error.message.includes('content policy violation') || error.message.includes('prohibited_content') || error.message.includes('blocked due to prohibited content')) {
-        errorMessage = 'The request was blocked due to content policy violations. Please try a different prompt.';
+        errorMessage = 'Content blocked due to policy restrictions. Please try a different prompt or image.';
         statusCode = 400;
       } else if (error.message.includes('timeout') || error.message.includes('network error')) {
         errorMessage = 'Request timed out. Please check your connection and try again.';

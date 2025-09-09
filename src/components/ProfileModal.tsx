@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   User, 
   Settings, 
@@ -85,7 +85,7 @@ interface ProfileModalProps {
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const { gallery } = useUserGallery(); // Use real gallery data
+  const { gallery, removeDuplicates } = useUserGallery(); // Use real gallery data
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats'>('profile');
   const [loading, setLoading] = useState(false);
@@ -94,6 +94,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites' | 'public'>('all');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [settingsChanged, setSettingsChanged] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Real user profile data
   const [profile, setProfile] = useState<UserProfile>({
@@ -160,6 +165,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             lastActive: new Date().toISOString()
           }
         }));
+        
+        // Set background image if available
+        if (data.profile.background_image) {
+          setBackgroundImage(data.profile.background_image);
+        }
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
@@ -172,12 +182,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   useEffect(() => {
     if (isOpen && user) {
       loadProfileData();
+      // Remove any duplicates from the gallery to prevent React key errors
+      removeDuplicates();
     }
-  }, [isOpen, user, loadProfileData]);
+  }, [isOpen, user, loadProfileData, removeDuplicates]);
 
-  // Convert real gallery data to ProfileModal format
-  const galleryItems: GalleryItem[] = gallery.map(item => ({
-    id: item.id,
+  // Convert real gallery data to ProfileModal format and ensure unique keys
+  const galleryItems: GalleryItem[] = gallery.map((item, index) => ({
+    id: `${item.id}-${item.timestamp}-${index}`, // Ensure unique keys by combining ID, timestamp, and index
     title: item.description,
     description: `${item.angle} - ${item.pose}`,
     imageUrl: item.imageUrl,
@@ -226,6 +238,198 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       console.error('Error saving profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!profile || !user) return;
+    
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+
+      setSettingsChanged(false);
+      setNotification({
+        type: 'success',
+        message: 'Settings saved successfully!'
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to save settings. Please try again.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-save settings with debounce
+  useEffect(() => {
+    if (settingsChanged) {
+      // Clear existing timeout
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+      
+      // Set new timeout for auto-save (2 seconds delay)
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        handleSaveSettings();
+      }, 2000);
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [settingsChanged, profile.preferences]);
+
+  const handleBackgroundImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      console.log('Uploading background image:', file);
+
+      // Validate file size (max 5MB for background images)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Background image size must be less than 5MB');
+      }
+
+      // Create a preview URL for immediate display
+      const previewUrl = URL.createObjectURL(file);
+      setBackgroundImage(previewUrl);
+
+      // Compress and convert image to base64
+      const compressedBase64 = await new Promise<string>((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Set canvas size (max 1200x800 for background images)
+          const maxWidth = 1200;
+          const maxHeight = 800;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      console.log('Compressed background image size:', compressedBase64.length, 'characters');
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Upload the background image via the profile API
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profile.displayName,
+          profile_picture: profile.avatar,
+          background_image: compressedBase64, // Send compressed base64 data
+          preferences: profile.preferences
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Background image upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        
+        // Provide more specific error messages based on status code
+        let errorMessage = 'Failed to upload background image';
+        if (response.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (response.status === 413) {
+          errorMessage = 'Background image is too large. Please use a smaller image.';
+        } else if (response.status === 415) {
+          errorMessage = 'Invalid file type. Please use a valid image file.';
+        } else if (response.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.details) {
+          errorMessage = errorData.details;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('Background image uploaded successfully:', data);
+
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: 'Background image uploaded successfully!'
+      });
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error uploading background image:', error);
+      setLoading(false);
+      
+      // Show error notification
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to upload background image'
+      });
+      
+      // Revert the preview on error
+      setBackgroundImage(null);
     }
   };
 
@@ -316,7 +520,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           statusText: response.statusText,
           error: errorData
         });
-        throw new Error(`Failed to upload avatar: ${errorData.error || response.statusText}`);
+        
+        // Provide more specific error messages based on status code
+        let errorMessage = 'Failed to upload avatar';
+        if (response.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (response.status === 413) {
+          errorMessage = 'Image file is too large. Please use a smaller image.';
+        } else if (response.status === 415) {
+          errorMessage = 'Invalid file type. Please use a valid image file.';
+        } else if (response.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.details) {
+          errorMessage = errorData.details;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -330,10 +551,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         }));
       }
 
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: 'Avatar uploaded successfully!'
+      });
+
       setLoading(false);
     } catch (error) {
       console.error('Error uploading avatar:', error);
       setLoading(false);
+      
+      // Show error notification
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to upload avatar'
+      });
       
       // Revert the preview on error
       setProfile(prev => ({
@@ -374,6 +607,133 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     // TODO: Implement public/private functionality with database updates
   };
 
+  const handleDeleteItem = async (itemId: string) => {
+    if (!user) return;
+    
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Extract the original variation ID from the composite key
+      // The key format is: ${item.id}-${item.timestamp}-${index}
+      const originalVariationId = itemId.split('-').slice(0, -2).join('-'); // Remove timestamp and index parts
+      
+      // Find the corresponding gallery item to get the database ID
+      const galleryItem = gallery.find(item => item.id === originalVariationId);
+      if (!galleryItem) {
+        throw new Error('Item not found');
+      }
+
+      // Delete from database using the database ID
+      const { error } = await supabase
+        .from('galleries')
+        .delete()
+        .eq('id', galleryItem.databaseId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw new Error('Failed to delete item');
+      }
+
+      setNotification({
+        type: 'success',
+        message: 'Item deleted successfully!'
+      });
+
+      // Refresh gallery data
+      // The useUserGallery hook should automatically refresh
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to delete item. Please try again.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!user || selectedItems.length === 0) return;
+    
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete ${selectedItems.length} item(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Extract database IDs from the composite keys
+      const databaseIds: string[] = [];
+      for (const itemId of selectedItems) {
+        // Extract the original variation ID from the composite key
+        const originalVariationId = itemId.split('-').slice(0, -2).join('-');
+        
+        // Find the corresponding gallery item to get the database ID
+        const galleryItem = gallery.find(item => item.id === originalVariationId);
+        if (galleryItem && galleryItem.databaseId) {
+          databaseIds.push(galleryItem.databaseId);
+        }
+      }
+
+      if (databaseIds.length === 0) {
+        throw new Error('No valid items found to delete');
+      }
+
+      // Delete multiple items from database
+      const { error } = await supabase
+        .from('galleries')
+        .delete()
+        .in('id', databaseIds)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw new Error('Failed to delete items');
+      }
+
+      setNotification({
+        type: 'success',
+        message: `${selectedItems.length} item(s) deleted successfully!`
+      });
+
+      // Clear selection and exit selection mode
+      setSelectedItems([]);
+      setIsSelectionMode(false);
+
+      // Refresh gallery data
+      // The useUserGallery hook should automatically refresh
+    } catch (error) {
+      console.error('Error deleting items:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to delete items. Please try again.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectItem = (itemId: string) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
   const handleExportData = () => {
     const data = {
       profile,
@@ -404,16 +764,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div className="mobile-modal-container bg-black bg-opacity-50">
-      <div className="mobile-modal-content bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
+      <div 
+        className="mobile-modal-content bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl overflow-hidden relative"
+        style={{
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/Screenshot (2488).png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gray-900 bg-opacity-80 rounded-lg"></div>
+        <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <h2 className="text-2xl font-bold text-white">Profile</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* Background Image Upload Button */}
+            <label className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg cursor-pointer transition-colors">
+              <Camera className="w-4 h-4" />
+              <span className="text-sm">Background</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageUpload}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -453,17 +837,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <User className="w-12 h-12 text-white" />
                     )}
                   </div>
-                  {isEditing && (
-                    <label className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 cursor-pointer hover:bg-purple-700 transition-colors">
-                      <Camera className="w-4 h-4 text-white" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
+                  <label className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 cursor-pointer hover:bg-purple-700 transition-colors">
+                    <Camera className="w-4 h-4 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white">{profile.displayName}</h3>
@@ -618,13 +1000,49 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowCreateCollection(true)}
-                  className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  <FolderPlus className="w-4 h-4" />
-                  <span>New Collection</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  {isSelectionMode ? (
+                    <>
+                      {selectedItems.length > 0 && (
+                        <button
+                          onClick={handleBulkDelete}
+                          disabled={loading}
+                          className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete ({selectedItems.length})</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsSelectionMode(false);
+                          setSelectedItems([]);
+                        }}
+                        className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                        <span>Cancel</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setIsSelectionMode(true)}
+                        className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span>Select</span>
+                      </button>
+                      <button
+                        onClick={() => setShowCreateCollection(true)}
+                        className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                      >
+                        <FolderPlus className="w-4 h-4" />
+                        <span>New Collection</span>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Collections */}
@@ -655,7 +1073,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <h4 className="text-md font-semibold text-white mb-3">Recent Items</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredGalleryItems.map((item) => (
-                    <div key={item.id} className="bg-gray-800 rounded-lg overflow-hidden">
+                    <div key={item.id} className={`bg-gray-800 rounded-lg overflow-hidden relative ${isSelectionMode ? 'cursor-pointer' : ''}`}>
+                      {isSelectionMode && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(item.id)}
+                            onChange={() => handleSelectItem(item.id)}
+                            className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500"
+                          />
+                        </div>
+                      )}
                       <div className="aspect-square bg-gray-700 flex items-center justify-center">
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
@@ -673,6 +1101,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`p-1 rounded ${
                                 item.isFavorite ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'
                               }`}
+                              title="Toggle favorite"
                             >
                               <Star className="w-4 h-4" />
                             </button>
@@ -681,11 +1110,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`p-1 rounded ${
                                 item.isPublic ? 'text-green-400' : 'text-gray-400 hover:text-green-400'
                               }`}
+                              title="Toggle public/private"
                             >
                               {item.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                             </button>
+                            {!isSelectionMode && (
+                              <button
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="p-1 rounded text-gray-400 hover:text-red-400"
+                                title="Delete item"
+                                disabled={loading}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
-                          <button className="text-gray-400 hover:text-white">
+                          <button className="text-gray-400 hover:text-white" title="Download">
                             <Download className="w-4 h-4" />
                           </button>
                         </div>
@@ -707,10 +1147,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <label className="block text-sm font-medium text-gray-300 mb-2">Default Model</label>
                     <select
                       value={profile.preferences.defaultModel}
-                      onChange={(e) => setProfile(prev => ({
-                        ...prev,
-                        preferences: { ...prev.preferences, defaultModel: e.target.value }
-                      }))}
+                      onChange={(e) => {
+                        setProfile(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, defaultModel: e.target.value }
+                        }));
+                        setSettingsChanged(true);
+                      }}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
                     >
                       <option value="runway-t2i">Runway T2I</option>
@@ -723,10 +1166,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <label className="block text-sm font-medium text-gray-300 mb-2">Default Style</label>
                     <select
                       value={profile.preferences.defaultStyle}
-                      onChange={(e) => setProfile(prev => ({
-                        ...prev,
-                        preferences: { ...prev.preferences, defaultStyle: e.target.value }
-                      }))}
+                      onChange={(e) => {
+                        setProfile(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, defaultStyle: e.target.value }
+                        }));
+                        setSettingsChanged(true);
+                      }}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
                     >
                       <option value="realistic">Realistic</option>
@@ -750,10 +1196,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <input
                         type="checkbox"
                         checked={profile.preferences.notifications}
-                        onChange={(e) => setProfile(prev => ({
-                          ...prev,
-                          preferences: { ...prev.preferences, notifications: e.target.checked }
-                        }))}
+                        onChange={(e) => {
+                          setProfile(prev => ({
+                            ...prev,
+                            preferences: { ...prev.preferences, notifications: e.target.checked }
+                          }));
+                          setSettingsChanged(true);
+                        }}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
@@ -769,10 +1218,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <input
                         type="checkbox"
                         checked={profile.preferences.toastyNotifications}
-                        onChange={(e) => setProfile(prev => ({
-                          ...prev,
-                          preferences: { ...prev.preferences, toastyNotifications: e.target.checked }
-                        }))}
+                        onChange={(e) => {
+                          setProfile(prev => ({
+                            ...prev,
+                            preferences: { ...prev.preferences, toastyNotifications: e.target.checked }
+                          }));
+                          setSettingsChanged(true);
+                        }}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
@@ -788,10 +1240,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <input
                         type="checkbox"
                         checked={profile.preferences.publicProfile}
-                        onChange={(e) => setProfile(prev => ({
-                          ...prev,
-                          preferences: { ...prev.preferences, publicProfile: e.target.checked }
-                        }))}
+                        onChange={(e) => {
+                          setProfile(prev => ({
+                            ...prev,
+                            preferences: { ...prev.preferences, publicProfile: e.target.checked }
+                          }));
+                          setSettingsChanged(true);
+                        }}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
@@ -799,6 +1254,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </div>
                 </div>
               </div>
+
+              {/* Save Settings Button - Bottom Right */}
+              {settingsChanged && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={loading}
+                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{loading ? 'Saving...' : 'Save'}</span>
+                  </button>
+                </div>
+              )}
 
               {/* Favorite Presets */}
               <div>
@@ -829,6 +1298,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </button>
                 </div>
               </div>
+
+              {/* Bottom Save Button - Right Corner */}
+              {settingsChanged && (
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={loading}
+                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{loading ? 'Saving...' : 'Save Settings'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -946,6 +1429,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             </div>
           </div>
         )}
+
+        {/* Notification Toast */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+            <div className={`px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm ${
+              notification.type === 'error' 
+                ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
+                : notification.type === 'success'
+                ? 'bg-green-600 bg-opacity-90 border-green-500 text-white'
+                : 'bg-blue-600 bg-opacity-90 border-blue-500 text-white'
+            }`}>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{notification.message}</p>
+                <button
+                  onClick={() => setNotification(null)}
+                  className="ml-3 text-white hover:text-gray-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

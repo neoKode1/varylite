@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_KEY!;
+// Use hardcoded Supabase configuration (same as client-side)
+const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 [COMMUNITY UPLOAD] POST request received');
     
-    // Check if Supabase is configured
-    if (!supabaseUrl || !supabaseKey) {
-      console.log('❌ [COMMUNITY UPLOAD] Supabase not configured, returning mock upload success');
-      return NextResponse.json({ 
-        success: true, 
-        data: { 
-          url: 'https://via.placeholder.com/400x300?text=Upload+Coming+Soon',
-          fileName: 'mock-upload-' + Date.now()
-        } 
-      });
-    }
-
     console.log('✅ [COMMUNITY UPLOAD] Supabase configured, creating client');
     const supabase = createClient(supabaseUrl, supabaseKey);
     

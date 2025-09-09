@@ -3881,8 +3881,8 @@ export default function Home() {
 
             {/* Desktop Floating Input - Full Width, Fixed to Bottom */}
             <div className="generate-floating-input">
-                {/* Multiple Files Preview with Slots - Same as Large Uploader */}
-                <div className="flex gap-2 mb-3 overflow-x-auto">
+                {/* Multiple Files Preview with Slots - Horizontal Layout */}
+                <div className="flex gap-2 mb-3 overflow-x-auto flex-wrap">
                   {/* Existing files */}
                   {uploadedFiles.map((file, index) => (
                     <div 
@@ -3914,10 +3914,10 @@ export default function Home() {
                       )}
                       <button
                         onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                         title="Remove file"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-2 h-2" />
                       </button>
                       <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
                         {file.fileType.toUpperCase()} {index + 1}
@@ -3964,14 +3964,18 @@ export default function Home() {
                   })}
                 </div>
                 
-                {/* Model Selection Dropdown */}
+                {/* Model Selection Dropdown - Compact & Integrated */}
                 {uploadedFiles.length > 0 && (
-                  <div className="mb-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-white text-sm font-medium whitespace-nowrap">Model:</span>
                     <select
                       value={generationMode || ''}
                       onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                      className="w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 border-opacity-30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
-                      style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                      className="flex-1 px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
+                      style={{ 
+                        fontSize: '14px',
+                        minHeight: '36px'
+                      }}
                     >
                       <option value="">Select Model</option>
                       {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
@@ -4020,15 +4024,6 @@ export default function Home() {
                 />
                 
                 <div className="generate-floating-buttons">
-                  {/* File Upload Button */}
-                  <button
-                    onClick={() => document.getElementById('file-input')?.click()}
-                    className="generate-floating-upload-button"
-                    title="Upload files"
-                  >
-                    <Upload className="generate-floating-upload-icon" />
-                  </button>
-                  
                   {/* Generate Button */}
                   {uploadedFiles.length === 0 ? (
                     // Text-to-Image generation
@@ -5475,7 +5470,7 @@ export default function Home() {
                 )}
                 <button
                   onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                   title="Remove file"
                 >
                   <X className="w-2 h-2" />
