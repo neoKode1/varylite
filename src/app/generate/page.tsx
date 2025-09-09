@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle } from 'lucide-react';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
@@ -18,6 +18,8 @@ type GenerationMode =
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
+import { AnalyticsUpdater } from '@/components/AnalyticsUpdater';
+import { HelpModal } from '@/components/HelpModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useUserGallery } from '@/hooks/useUserGallery';
 import { Header } from '@/components/Header';
@@ -168,18 +170,18 @@ const BACKGROUND_PROMPTS = [
   'Change background to a dreamlike landscape with giant potatoes - Potato Cult preset',
   
   // Halloween Horror Movie Themes
-  'Change background to Camp Crystal Lake from Friday the 13th - Horror Movie Filter',
-  'Change background to Elm Street neighborhood from Nightmare on Elm Street - Horror Movie preset',
-  'Change background to Haddonfield from Halloween movie - Horror Movie Filter',
-  'Change background to Amityville Horror house exterior - Horror Movie preset',
-  'Change background to Overlook Hotel from The Shining - Horror Movie Filter',
-  'Change background to Bates Motel from Psycho - Horror Movie preset',
-  'Change background to Derry from IT - Horror Movie Filter',
-  'Change background to Silent Hill foggy streets - Horror Movie preset',
-  'Change background to haunted graveyard with fog - Horror Movie Filter',
-  'Change background to abandoned asylum with flickering lights - Horror Movie preset',
-  'Change background to cursed cabin in the woods - Horror Movie Filter',
-  'Change background to Victorian haunted mansion - Horror Movie preset',
+  'Change background to spooky lake setting - Horror Movie Filter',
+  'Change background to dark neighborhood street - Horror Movie preset',
+  'Change background to suburban Halloween setting - Horror Movie Filter',
+  'Change background to eerie house exterior - Horror Movie preset',
+  'Change background to mysterious hotel exterior - Horror Movie Filter',
+  'Change background to vintage motel setting - Horror Movie preset',
+  'Change background to small town setting - Horror Movie Filter',
+  'Change background to foggy street scene - Horror Movie preset',
+  'Change background to misty graveyard - Horror Movie Filter',
+  'Change background to abandoned building with lights - Horror Movie preset',
+  'Change background to forest cabin setting - Horror Movie Filter',
+  'Change background to Victorian mansion exterior - Horror Movie preset',
   
   // Thanksgiving Themes
   'Change background to cozy Thanksgiving dining room - Thanksgiving Filter',
@@ -271,33 +273,83 @@ const BACKGROUND_PROMPTS = [
 const CHARACTER_STYLE_PROMPTS = [
   {
     name: 'The Smurfs',
-    description: 'Small, blue, communal beings from the animated series, each with a distinct trait (e.g., Brainy, Clumsy).',
-    prompt: 'Apply the Smurfs style to the character'
+    description: 'Small, blue, communal beings from the Smurfs franchise, each with a distinct trait - can be cartoon or realistic style.',
+    prompt: 'Transform character into Smurfs style while preserving user\'s original vision and prompt details'
   },
   {
-    name: 'The Care Bears',
-    description: 'Colorful, emotional-themed bears from the 1980s franchise who spread caring and positivity.',
-    prompt: 'Make character into Care Bear style'
+    name: 'The Vary Bears',
+    description: 'Colorful, emotional-themed bears from the 1980s franchise who spread caring and positivity - can be cartoon or realistic style.',
+    prompt: 'Transform character into Care Bears style while maintaining user\'s specific prompt requirements and character details'
   },
   {
-    name: 'The Gummi Bears',
-    description: 'Magical, medieval bear characters from Disney\'s Adventures of the Gummi Bears, who bounce and solve problems.',
-    prompt: 'Apply the Gummi Bears style to the character'
+    name: 'The Vary Gummies',
+    description: 'Magical, medieval bear characters from Disney\'s Adventures of the Gummi Bears - can be cartoon or realistic style.',
+    prompt: 'Transform character into Gummi Bears style while preserving user\'s original prompt and character specifications'
   },
   {
     name: 'The Muppets',
-    description: 'Beloved puppet characters from Jim Henson\'s iconic franchise, known for their humor, heart, and distinctive felt puppet aesthetic.',
-    prompt: 'Apply the Muppets style to the character'
+    description: 'Beloved puppet characters from Jim Henson\'s iconic franchise, with distinctive felt puppet aesthetic - can be cartoon or realistic style.',
+    prompt: 'Transform character into Muppets style while adhering to user\'s prompt details and maintaining character essence'
   },
   {
     name: 'Anime Style',
-    description: 'Japanese animation style with large expressive eyes, vibrant colors, and dynamic character designs.',
-    prompt: 'Apply anime style to the character'
+    description: 'Authentic Japanese anime drawing style inspired by famous anime artists like Hayao Miyazaki, Akira Toriyama, and Osamu Tezuka.',
+    prompt: 'Transform character into authentic Japanese anime drawing style in the artistic tradition of Hayao Miyazaki, Akira Toriyama, and Osamu Tezuka - create as a hand-drawn anime illustration, not realistic photo while preserving user\'s original prompt and character vision'
   },
   {
     name: 'Japanese Manga Style',
-    description: 'Traditional Japanese comic book art style with detailed line work, dramatic expressions, and distinctive visual storytelling.',
-    prompt: 'Apply Japanese manga style to the character'
+    description: 'Traditional Japanese manga drawing style inspired by legendary manga artists like Eiichiro Oda, Masashi Kishimoto, and Kentaro Miura.',
+    prompt: 'Transform character into authentic Japanese manga drawing style in the artistic tradition of Eiichiro Oda, Masashi Kishimoto, and Kentaro Miura - create as a hand-drawn manga illustration, not realistic photo while maintaining user\'s specific prompt requirements and character details'
+  },
+  {
+    name: 'Hellraiser',
+    description: 'Realistic live-action gothic horror aesthetic featuring dark, leather-clad, and atmospheric styling.',
+    prompt: 'Make into Pinhead from Hellraiser style while preserving user\'s original prompt and character vision'
+  },
+  {
+    name: 'Nightmare on Elm Street',
+    description: 'Photo-realistic dark fantasy styling featuring twisted, dreamlike, and atmospheric aesthetics.',
+    prompt: 'Make into Freddy Krueger style while adhering to user\'s prompt details and maintaining character essence'
+  },
+  {
+    name: 'Friday the 13th',
+    description: 'Realistic live-action classic horror aesthetic featuring campy, dark, and suspenseful styling.',
+    prompt: 'Make into Jason Voorhees style while preserving user\'s original prompt and character specifications'
+  },
+  {
+    name: 'Garbage Pail Kids',
+    description: 'Photo-realistic parody trading card aesthetic featuring exaggerated, humorous, and quirky character designs like actual Garbage Pail Kids cards.',
+    prompt: 'Transform character into realistic Garbage Pail Kids trading card style with gross-out parody elements while maintaining user\'s prompt details'
+  },
+  {
+    name: 'Gremlins',
+    description: 'Realistic live-action version of mischievous creatures from the Gremlins franchise, featuring small, furry, and playful character designs.',
+    prompt: 'Transform character into realistic Gremlins style while preserving user\'s original vision and prompt details'
+  },
+  {
+    name: 'The Varyfiers',
+    description: 'Photo-realistic dark horror aesthetic featuring intense, atmospheric, and dramatic visual styling.',
+    prompt: 'Transform character into Terrifier style while maintaining user\'s specific prompt requirements and character details'
+  },
+  {
+    name: 'The Animaniacs',
+    description: 'Realistic live-action version of classic Warner Bros. animation style featuring zany, colorful, and comedic character designs.',
+    prompt: 'Transform character into realistic Animaniacs style while adhering to user\'s prompt details and maintaining character essence'
+  },
+  {
+    name: 'The Simpsons',
+    description: 'Photo-realistic version of iconic yellow-skinned characters from Matt Groening\'s The Simpsons, with realistic character designs.',
+    prompt: 'Transform character into realistic Simpsons style while preserving user\'s original prompt and character vision'
+  },
+  {
+    name: 'Family Guy',
+    description: 'Realistic live-action version of adult animation style from Seth MacFarlane\'s Family Guy, with realistic character designs.',
+    prompt: 'Transform character into realistic Family Guy style while maintaining user\'s specific prompt requirements and character details'
+  },
+  {
+    name: 'Adventure Time',
+    description: 'Photo-realistic version of whimsical animation style from Pendleton Ward\'s Adventure Time, with realistic fantastical character designs.',
+    prompt: 'Transform character into realistic Adventure Time style while preserving user\'s original prompt and character specifications'
   }
 ];
 
@@ -319,10 +371,10 @@ const VIDEO_PROMPTS = {
     'Change the scene to a underwater exploration mission',
     'Change the scene to a helicopter rescue operation',
     'Change the scene to a secret agent infiltration',
-    'Change the props to include weapons and tactical gear',
+    'Change the props to include tactical gear and equipment',
     'Change the props to include survival equipment',
     'Change the props to include high-tech gadgets',
-    'Change the props to include military vehicles',
+    'Change the props to include adventure vehicles',
     'Change the props to include adventure gear'
   ],
   
@@ -344,7 +396,7 @@ const VIDEO_PROMPTS = {
     'Change the scene to a flight on a magical creature',
     'Change the scene to a battle against dark forces',
     'Change the props to include magical staffs and wands',
-    'Change the props to include enchanted armor and weapons',
+    'Change the props to include enchanted armor and shields',
     'Change the props to include mystical artifacts and crystals',
     'Change the props to include spell books and potions',
     'Change the props to include magical creatures and familiars'
@@ -362,12 +414,12 @@ const VIDEO_PROMPTS = {
     'Change the background to a time travel laboratory',
     'Change the background to an underwater research facility',
     'Change the background to a space elevator reaching the stars',
-    'Change the scene to a space battle with laser weapons',
+    'Change the scene to a space adventure with laser effects',
     'Change the scene to a time travel experiment',
     'Change the scene to an alien first contact meeting',
     'Change the scene to a cybernetic enhancement procedure',
     'Change the scene to a virtual reality adventure',
-    'Change the props to include futuristic weapons and gadgets',
+    'Change the props to include futuristic gadgets and tools',
     'Change the props to include space suits and helmets',
     'Change the props to include holographic interfaces',
     'Change the props to include robotic companions',
@@ -652,8 +704,10 @@ export default function Home() {
   const [showExtendedPrompts, setShowExtendedPrompts] = useState(false);
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
-  const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle'>('shot');
+  const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle' | null>(null);
+  const [showPresetModal, setShowPresetModal] = useState(false);
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
   
   // Community funding meter state (shows FAL balance for community support)
@@ -900,7 +954,7 @@ export default function Home() {
   }, []);
 
   // Show animated error function
-  const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty' = 'toasty') => {
+  const showAnimatedErrorNotification = useCallback((message: string, errorType: 'farting-man' | 'mortal-kombat' | 'bouncing-error' | 'shake-error' | 'toasty' | 'success' = 'toasty') => {
     // Mobile-specific error handling
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile && message.includes('User Error')) {
@@ -908,8 +962,12 @@ export default function Home() {
       message = message.replace('User Error: ', 'Mobile Tip: ');
     }
     
+    if (errorType === 'success') {
+      showNotification(message, 'success');
+    } else {
     showAnimatedError(message, errorType);
-  }, [showAnimatedError]);
+    }
+  }, [showAnimatedError, showNotification]);
 
   // Determine generation mode based on uploaded files
   const determineGenerationMode = useCallback((): GenerationMode | null => {
@@ -1155,6 +1213,33 @@ export default function Home() {
 
   // Get all gallery images with URLs for navigation
   const galleryImagesWithUrls = gallery.filter(item => item.imageUrl);
+
+  // Gallery navigation functions
+  const navigateImage = useCallback((direction: number) => {
+    if (galleryImagesWithUrls.length === 0) return;
+    
+    setFullScreenImageIndex(prev => {
+      const newIndex = prev + direction;
+      if (newIndex < 0) return galleryImagesWithUrls.length - 1;
+      if (newIndex >= galleryImagesWithUrls.length) return 0;
+      return newIndex;
+    });
+  }, [galleryImagesWithUrls.length]);
+
+  // Delete from gallery function
+  const handleDeleteFromGallery = useCallback(async (id: string) => {
+    try {
+      // Find the item in gallery and remove it
+      const itemToRemove = gallery.find(item => item.id === id);
+      if (itemToRemove) {
+        removeFromGallery(itemToRemove.id, itemToRemove.timestamp);
+        showAnimatedErrorNotification('Image deleted from gallery', 'success');
+      }
+    } catch (error) {
+      console.error('Error deleting from gallery:', error);
+      showAnimatedErrorNotification('Error deleting image from gallery', 'toasty');
+    }
+  }, [removeFromGallery, gallery]);
   
   // Filter gallery items based on selected filter
   const filteredGallery = useMemo(() => {
@@ -3782,7 +3867,9 @@ export default function Home() {
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
             
-        {/* Funding Message - Above Header */}
+        {/* Fixed Header Components - Below main header */}
+        <div className="fixed-header-components">
+          {/* Funding Message */}
         <div className="mb-4 bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-lg p-3 border border-gray-700 border-opacity-50">
           <div className="text-center">
             <p className="text-gray-300 text-sm font-medium">
@@ -3791,7 +3878,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header */}
+          {/* vARYai Header */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center items-center mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20 gap-4 lg:gap-0">
           <h1 className="text-2xl lg:text-4xl font-bold text-white text-center lg:text-left">
             vARY<span className="text-gray-400">ai</span>
@@ -3833,10 +3920,11 @@ export default function Home() {
               {showGallery ? 'Hide' : 'Show'}
             </span>
           </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center min-h-[70vh] w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat">
+        <div className="flex items-center justify-center min-h-[70vh] w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat main-content-with-padding">
           <div className="w-full max-w-2xl mx-auto">
 
             {/* Usage Statistics - Left Corner */}
@@ -3866,24 +3954,188 @@ export default function Home() {
               </div>
             )}
 
+                  {hasVideoFiles && (
+                    <button
+                      onClick={() => setShowVideoPrompts(!showVideoPrompts)}
+                      className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors border border-purple-500"
+                    >
+                      <span>
+                        {showVideoPrompts ? 'Hide Video Options' : 'Video Scene Options'}
+                      </span>
+                    </button>
+                  )}
+              </div>
+              </div>
+            </div>
 
-
-            {/* Prompt Input - Always visible on desktop, hidden on mobile */}
-            <div className="space-y-4 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 mt-6 desktop-prompt-input">
-              {uploadedFiles.length === 0 && (
-                <div className="text-center mb-4 p-3 bg-purple-600 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-lg">
-                  <p className="text-purple-300 text-sm">
-                    💡 <strong>Text-to-Image Mode:</strong> Enter a description below to generate an image from text using Gen 4
-                  </p>
+            {/* 2x2 Generation Panel - Fixed above text input */}
+            <div className="generation-panel">
+              <h2>New generations</h2>
+              <div className="generation-grid">
+                {/* Slot 1 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
+                >
+                  {variations[0] && (
+                    <div className="relative w-full h-full">
+                      {variations[0].fileType === 'video' ? (
+                        <video
+                          src={variations[0].videoUrl || variations[0].imageUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          onCanPlay={() => {
+                            const video = document.querySelector(`video[src="${variations[0].videoUrl || variations[0].imageUrl}"]`);
+                            if (video) {
+                              video.classList.add('animate-blur-in');
+                            }
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={variations[0].imageUrl}
+                          alt="Generated variation 1"
+                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.opacity = '1';
+                            img.style.filter = 'blur(0px)';
+                          }}
+                          style={{
+                            filter: 'blur(10px)',
+                            opacity: '0'
+                          }}
+                        />
+                      )}
+              </div>
+                  )}
                 </div>
-              )}
+
+                {/* Slot 2 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
+                >
+                  {variations[1] && (
+                    <div className="relative w-full h-full">
+                      {variations[1].fileType === 'video' ? (
+                        <video
+                          src={variations[1].videoUrl || variations[1].imageUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          onCanPlay={() => {
+                            const video = document.querySelector(`video[src="${variations[1].videoUrl || variations[1].imageUrl}"]`);
+                            if (video) {
+                              video.classList.add('animate-blur-in');
+                            }
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={variations[1].imageUrl}
+                          alt="Generated variation 2"
+                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.opacity = '1';
+                            img.style.filter = 'blur(0px)';
+                          }}
+                          style={{
+                            filter: 'blur(10px)',
+                            opacity: '0'
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Slot 3 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
+                >
+                  {variations[2] && (
+                    <div className="relative w-full h-full">
+                      {variations[2].fileType === 'video' ? (
+                        <video
+                          src={variations[2].videoUrl || variations[2].imageUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          onCanPlay={() => {
+                            const video = document.querySelector(`video[src="${variations[2].videoUrl || variations[2].imageUrl}"]`);
+                            if (video) {
+                              video.classList.add('animate-blur-in');
+                            }
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={variations[2].imageUrl}
+                          alt="Generated variation 3"
+                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.opacity = '1';
+                            img.style.filter = 'blur(0px)';
+                          }}
+                          style={{
+                            filter: 'blur(10px)',
+                            opacity: '0'
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Slot 4 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
+                >
+                  {variations[3] && (
+                    <div className="relative w-full h-full">
+                      {variations[3].fileType === 'video' ? (
+                        <video
+                          src={variations[3].videoUrl || variations[3].imageUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          onCanPlay={() => {
+                            const video = document.querySelector(`video[src="${variations[3].videoUrl || variations[3].imageUrl}"]`);
+                            if (video) {
+                              video.classList.add('animate-blur-in');
+                            }
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={variations[3].imageUrl}
+                          alt="Generated variation 4"
+                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.opacity = '1';
+                            img.style.filter = 'blur(0px)';
+                          }}
+                          style={{
+                            filter: 'blur(10px)',
+                            opacity: '0'
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Desktop Floating Input - Full Width, Fixed to Bottom */}
             <div className="generate-floating-input">
-                {/* Multiple Files Preview with Slots - Horizontal Layout */}
-                <div className="flex gap-2 mb-3 overflow-x-auto flex-wrap">
-                  {/* Existing files */}
+              {/* All components in a compact wrap layout */}
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                {/* Image Upload Slots - Compact */}
+                <div className="flex gap-1">
                   {uploadedFiles.map((file, index) => (
                     <div 
                       key={index} 
@@ -3896,36 +4148,44 @@ export default function Home() {
                       onDragOver={(e) => handleSlotDragOver(e, index)}
                       onDragLeave={handleSlotDragLeave}
                       onPaste={(e) => handleSlotPaste(e as any, index)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          document.getElementById('file-input')?.click();
+                        }
+                      }}
                       data-slot-area
                       tabIndex={0}
+                      role="button"
+                      aria-label={`Replace image in slot ${index + 1}`}
                     >
                       {file.fileType === 'image' ? (
                         <img
                           src={file.preview}
                           alt={`Character ${index + 1}`}
-                          className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
+                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
                         />
                       ) : (
                         <video
                           src={file.preview}
-                          className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
+                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
                           muted
                         />
                       )}
                       <button
                         onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                        className="absolute -top-2 -right-2 w-1 h-1 bg-red-500 bg-opacity-80 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10 border border-white border-opacity-50"
                         title="Remove file"
                       >
-                        <X className="w-2 h-2" />
+                        <X className="w-0.5 h-0.5" />
                       </button>
                       <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
-                        {file.fileType.toUpperCase()} {index + 1}
+                        {file.fileType.toUpperCase()}
                       </div>
                       {dragOverSlot === index && (
                         <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
                           <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
-                            Drop here
+                            Drop
                           </div>
                         </div>
                       )}
@@ -3938,7 +4198,7 @@ export default function Home() {
                     return (
                       <div
                         key={`empty-${slotIndex}`}
-                        className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-12 h-12 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
+                        className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
                           dragOverSlot === slotIndex 
                             ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
                             : ''
@@ -3948,8 +4208,16 @@ export default function Home() {
                         onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
                         onDragLeave={handleSlotDragLeave}
                         onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            document.getElementById('file-input')?.click();
+                          }
+                        }}
                         data-slot-area
                         tabIndex={0}
+                        role="button"
+                        aria-label={`Upload image to slot ${slotIndex + 1}`}
                       >
                         <Plus className="w-4 h-4 text-gray-400" />
                         {dragOverSlot === slotIndex && (
@@ -3964,789 +4232,210 @@ export default function Home() {
                   })}
                 </div>
                 
-                {/* Model Selection Dropdown - Compact & Integrated */}
-                {uploadedFiles.length > 0 && (
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-white text-sm font-medium whitespace-nowrap">Model:</span>
-                    <select
-                      value={generationMode || ''}
-                      onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-                      className="flex-1 px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
+                {/* Model Selection - Compact */}
+              {uploadedFiles.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white text-xs font-medium whitespace-nowrap">Model:</span>
+                      <select
+                        value={generationMode || ''}
+                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                      className="px-2 py-1 bg-transparent border border-white border-opacity-20 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
                       style={{ 
-                        fontSize: '14px',
-                        minHeight: '36px'
+                        fontSize: '12px',
+                        minHeight: '28px',
+                        minWidth: '100px',
+                        maxWidth: '150px'
                       }}
-                    >
-                      <option value="">Select Model</option>
+                      >
+                        <option value="">Select Model</option>
                       {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
                         <>
-                          <option value="nano-banana">🍌 Nano Banana (Character Variations)</option>
-                          <option value="minimax-2.0">🎬 Minimax 2.0 (Image-to-Video)</option>
-                          <option value="kling-2.1-master">🎥 Kling 2.1 Master (Image-to-Video)</option>
-                          <option value="veo3-fast">⚡ Veo3 Fast (Image-to-Video)</option>
+                          <option value="nano-banana">🍌 Nano Banana</option>
+                          <option value="minimax-2.0">🎬 Minimax 2.0</option>
+                          <option value="kling-2.1-master">🎥 Kling 2.1</option>
+                          <option value="veo3-fast">⚡ Veo3 Fast</option>
                         </>
                       )}
                       {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
-                        <option value="runway-video">Runway Aleph (Video Processing)</option>
+                        <option value="runway-video">Runway Aleph</option>
                       )}
                       {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
-                        <option value="endframe">EndFrame (Start → End Video)</option>
+                        <option value="endframe">EndFrame</option>
                       )}
-                      {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
+                  {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
                         <>
-                          <option value="runway-t2i">🎨 Runway T2I (Text-to-Image)</option>
-                          <option value="veo3-fast-t2v">⚡ Veo3 Fast (Text-to-Video)</option>
-                          <option value="minimax-2-t2v">🎬 Minimax 2.0 (Text-to-Video)</option>
-                          <option value="kling-2.1-master-t2v">🎥 Kling 2.1 Master (Text-to-Video)</option>
+                          <option value="runway-t2i">🎨 Runway T2I</option>
+                          <option value="veo3-fast-t2v">⚡ Veo3 Fast T2V</option>
+                          <option value="minimax-2-t2v">🎬 Minimax 2.0 T2V</option>
+                          <option value="kling-2.1-master-t2v">🎥 Kling 2.1 T2V</option>
                         </>
                       )}
-                    </select>
-                  </div>
-                )}
-                
-                <textarea
-                  id="prompt"
-                  data-prompt-field="true"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    hasVideoFiles 
-                      ? "Describe the scene changes, background modifications, or prop changes you want..." 
-                      : processingMode === 'endframe'
-                      ? "Describe the transition or transformation between your start and end frames..."
-                      : uploadedFiles.length === 0
-                      ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
-                      : "Describe the angle or pose variations you want..."
-                  }
-                  className="generate-floating-textarea"
-                  rows={1}
-                  style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                />
-                
-                <div className="generate-floating-buttons">
-                  {/* Generate Button */}
-                  {uploadedFiles.length === 0 ? (
-                    // Text-to-Image generation
+                      </select>
+                    </div>
+                  )}
+
+                {/* Quick Shot Presets Dropdown - Compact */}
+                <div className="relative">
+                      <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setPrompt(e.target.value);
+                        e.target.value = ''; // Reset selection
+                      }
+                    }}
+                    className="px-3 py-1 text-xs bg-white text-black rounded-full hover:bg-gray-100 transition-colors appearance-none cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-purple-500 pr-6"
+                    style={{ 
+                      borderRadius: '20px',
+                      minWidth: '140px'
+                    }}
+                  >
+                    <option value="">Quick Shot Presets</option>
+                    {BASIC_PROMPTS.map((example) => (
+                      <option key={example} value={example}>
+                        {example}
+                      </option>
+                    ))}
+                      </select>
+                  {/* Custom dropdown arrow */}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    </div>
+                </div>
+
+                {/* Preset Buttons - Compact */}
+                <div className="flex gap-1">
                   <button
+                    onClick={() => {
+                      setActivePresetTab('shot');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    📸 Shot
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('background');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    🎨 Background
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('restyle');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    🎭 Restyle
+                  </button>
+                  <button
+                    onClick={() => setShowHelpModal(true)}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-blue-800 text-white border-blue-600 hover:bg-blue-700"
+                  >
+                    Prompt Help
+                  </button>
+              </div>
+            </div>
+
+
+              {/* Text input at the bottom */}
+              <textarea
+                id="prompt"
+                data-prompt-field="true"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={
+                  hasVideoFiles 
+                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
+                    : processingMode === 'endframe'
+                    ? "Describe the transition or transformation between your start and end frames..."
+                    : uploadedFiles.length === 0
+                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
+                    : "Describe the angle or pose variations you want..."
+                }
+                className="generate-floating-textarea"
+                rows={1}
+                style={{ fontSize: '16px' }} // Prevents zoom on iOS
+              />
+              
+              <div className="generate-floating-buttons">
+                {/* Generate Button */}
+                {uploadedFiles.length === 0 ? (
+                  // Text-to-Image generation
+                        <button
                     onClick={handleTextToImage}
                     disabled={processing.isProcessing || !prompt.trim()}
-                      className="generate-floating-send-button"
-                      title="Generate Image"
+                    className="generate-floating-send-button"
+                    title="Generate Image"
                   >
                     {processing.isProcessing ? (
-                        <Loader2 className="generate-floating-icon animate-spin" />
-                      ) : (
-                        <Camera className="generate-floating-icon" />
+                      <Loader2 className="generate-floating-icon animate-spin" />
+                    ) : (
+                      <Camera className="generate-floating-icon" />
                     )}
-                  </button>
-                  ) : hasVideoFiles ? (
-                    // Video generation
-                  <button
-                      onClick={handleRunwayVideoEditing}
+                              </button>
+                ) : hasVideoFiles ? (
+                  // Video generation
+                              <button
+                    onClick={handleRunwayVideoEditing}
                     disabled={processing.isProcessing || !prompt.trim()}
-                      className="generate-floating-send-button"
-                      title="Generate Video"
+                    className="generate-floating-send-button"
+                    title="Generate Video"
                   >
                     {processing.isProcessing ? (
-                        <Loader2 className="generate-floating-icon animate-spin" />
-                      ) : (
-                        <Camera className="generate-floating-icon" />
+                      <Loader2 className="generate-floating-icon animate-spin" />
+                    ) : (
+                      <Camera className="generate-floating-icon" />
                     )}
-                  </button>
-                  ) : (
-                    // Character variations
-                  <button
-                      onClick={handleCharacterVariation}
+                          </button>
+                ) : (
+                  // Character variations
+                          <button
+                    onClick={handleCharacterVariation}
                     disabled={processing.isProcessing || !prompt.trim()}
-                      className="generate-floating-send-button"
-                      title="Generate Variation"
+                    className="generate-floating-send-button"
+                    title="Generate Variation"
                   >
                     {processing.isProcessing ? (
-                        <Loader2 className="generate-floating-icon animate-spin" />
-                      ) : (
-                        <Camera className="generate-floating-icon" />
+                      <Loader2 className="generate-floating-icon animate-spin" />
+                    ) : (
+                      <Camera className="generate-floating-icon" />
                     )}
-                  </button>
+                              </button>
                 )}
-              </div>
-            </div>
-
-            {/* Prompt Examples - Always visible */}
-            <div className="space-y-4 mt-6">
-                    {/* Basic Prompts */}
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {BASIC_PROMPTS.map((example) => (
-                        <button
-                          key={example}
-                          onClick={() => setPrompt(example)}
-                          className="px-3 py-1 text-sm bg-white text-black rounded-full hover:bg-gray-100 transition-colors"
-                        >
-                          {example}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* More Button - Show different options based on file type */}
-                    <div className="flex justify-center gap-2">
-                      {hasVideoFiles ? (
-                        <button
-                          onClick={() => setShowVideoPrompts(!showVideoPrompts)}
-                          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors border border-purple-500"
-                        >
-                          {showVideoPrompts ? 'Hide Video Options' : 'Video Scene Options'}
-                        </button>
-                      ) : (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <button
-                            onClick={() => setActivePresetTab('shot')}
-                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
-                              activePresetTab === 'shot' 
-                                ? 'bg-blue-600 text-white border-blue-500' 
-                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
-                            }`}
-                          >
-                            📸 Shot Type
-                          </button>
-                          <button
-                            onClick={() => setActivePresetTab('background')}
-                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
-                              activePresetTab === 'background' 
-                                ? 'bg-green-600 text-white border-green-500' 
-                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
-                            }`}
-                          >
-                            🎨 Background Change
-                          </button>
-                          <button
-                            onClick={() => setActivePresetTab('restyle')}
-                            className={`px-4 py-2 text-sm rounded-lg transition-colors border ${
-                              activePresetTab === 'restyle' 
-                                ? 'bg-purple-600 text-white border-purple-500' 
-                                : 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700'
-                            }`}
-                          >
-                            🎭 Restyle
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Preset Content */}
-                    {activePresetTab === 'shot' && (
-                      <div className="mt-4 p-4 bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg border border-gray-600">
-                        <h4 className="text-white text-sm font-medium mb-3 text-center">Professional Camera Angles & Shot Types</h4>
-                        
-                        {/* Close-up shots */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Close-up Shots</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(0, 3).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
                           </div>
-                        </div>
-
-                        {/* Angle variations */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Angle Variations</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(3, 8).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
                           </div>
-                        </div>
 
-                        {/* Distance variations */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Distance & Framing</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(8, 13).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Dynamic angles */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Dynamic Perspectives</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(13, 18).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Artistic perspectives */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Artistic & Cinematic</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(18, 24).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Professional lighting setups */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Professional Lighting</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(24, 36).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full hover:bg-orange-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Cinematic styling elements */}
-                        <div className="mb-4">
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Cinematic Styling</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(36, 50).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Dynamic poses and composition */}
-                        <div>
-                          <h5 className="text-gray-300 text-xs font-medium mb-2">Dynamic Poses & Composition</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {EXTENDED_PROMPTS.slice(50).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Background Change Tab */}
-                    {activePresetTab === 'background' && (
-                      <div className="mt-4 p-4 bg-green-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-green-600">
-                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎨 Background Removal & Replacement Options</h4>
-                        
-                        {/* Tab Navigation */}
-                        <div className="flex flex-wrap gap-1 mb-4 p-1 bg-gray-800 rounded-lg">
-                          <button
-                            onClick={() => setActiveBackgroundTab('removal')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'removal' 
-                                ? 'bg-red-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🗑️ Removal
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('studio')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'studio' 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🏢 Studio
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('natural')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'natural' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🌿 Natural
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('indoor')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'indoor' 
-                                ? 'bg-purple-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🏠 Indoor
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('creative')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'creative' 
-                                ? 'bg-pink-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🎨 Creative
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('themed')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'themed' 
-                                ? 'bg-yellow-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🎭 Themed
-                          </button>
-                          <button
-                            onClick={() => setActiveBackgroundTab('style')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              activeBackgroundTab === 'style' 
-                                ? 'bg-red-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            🎨 Style
-                          </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="min-h-[200px]">
-                          {activeBackgroundTab === 'removal' && (
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'studio' && (
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(8, 16).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'natural' && (
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(16, 26).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'indoor' && (
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(26, 36).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'creative' && (
-                          <div className="flex flex-wrap gap-2">
-                            {BACKGROUND_PROMPTS.slice(36, 46).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded-full hover:bg-pink-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'themed' && (
-                          <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(46, 56).map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => setPrompt(example)}
-                                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                          )}
-
-                          {activeBackgroundTab === 'style' && (
-                            <div className="flex flex-wrap gap-2">
-                              {BACKGROUND_PROMPTS.slice(56).map((example) => (
-                                <button
-                                  key={example}
-                                  onClick={() => setPrompt(example)}
-                                  className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
-                                >
-                                  {example}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Restyle Tab */}
-                    {activePresetTab === 'restyle' && (
-                      <div className="mt-4 p-4 bg-purple-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-purple-600">
-                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎭 Character Style Presets</h4>
-                        <p className="text-gray-300 text-xs text-center mb-4">Apply iconic character styles to transform your character</p>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {CHARACTER_STYLE_PROMPTS.map((style) => (
-                            <button
-                              key={style.name}
-                              onClick={() => setPrompt(style.prompt)}
-                              className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 transition-colors text-left"
-                            >
-                              <h5 className="text-purple-400 font-medium text-sm mb-1">{style.name}</h5>
-                              <p className="text-gray-300 text-xs leading-relaxed">{style.description}</p>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Video Prompts - Only show when video files are detected */}
-                    {hasVideoFiles && showVideoPrompts && (
-                      <div className="mt-4 p-4 bg-purple-900 bg-opacity-90 backdrop-blur-sm rounded-lg border border-purple-600">
-                        <h4 className="text-white text-sm font-medium mb-3 text-center">🎬 Video Scene & Background Options</h4>
-                        
-                        {/* Genre Selection */}
-                        <div className="mb-4">
-                          <h5 className="text-purple-300 text-xs font-medium mb-2">Choose Movie Genre:</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.keys(VIDEO_PROMPTS).map((genre) => (
-                              <button
-                                key={genre}
-                                onClick={() => setSelectedVideoGenre(selectedVideoGenre === genre ? null : genre)}
-                                className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                                  selectedVideoGenre === genre
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-purple-200 text-purple-800 hover:bg-purple-300'
-                                }`}
-                              >
-                                {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Genre-specific prompts */}
-                        {selectedVideoGenre && VIDEO_PROMPTS[selectedVideoGenre as keyof typeof VIDEO_PROMPTS] && (
-                          <div className="space-y-3">
-                            <h5 className="text-purple-300 text-xs font-medium">
-                              {selectedVideoGenre.charAt(0).toUpperCase() + selectedVideoGenre.slice(1)} Scene Options:
-                            </h5>
-                            <div className="flex flex-wrap gap-2">
-                              {VIDEO_PROMPTS[selectedVideoGenre as keyof typeof VIDEO_PROMPTS].map((prompt) => (
-                                <button
-                                  key={prompt}
-                                  onClick={() => setPrompt(prompt)}
-                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                                >
-                                  {prompt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Quick background changes */}
-                        {!selectedVideoGenre && (
-                          <div className="space-y-3">
-                            <h5 className="text-purple-300 text-xs font-medium">Quick Background Changes:</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                'Change the background to a mountain scenic area',
-                                'Change the background to underwater',
-                                'Change the background to a circus',
-                                'Change the background to a cave',
-                                'Change the background to the islands',
-                                'Change the background to a futuristic city',
-                                'Change the background to a magical forest',
-                                'Change the background to a space station'
-                              ].map((prompt) => (
-                                <button
-                                  key={prompt}
-                                  onClick={() => setPrompt(prompt)}
-                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
-                                >
-                                  {prompt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-            </div>
-          </div>
-
-            {/* Processing Mode Selection - Only show when not video and multiple images available */}
-            {!hasVideoFiles && uploadedFiles.length >= 2 && (
-              <div className="flex justify-center mb-4">
-                <div className="bg-gray-800 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-gray-600">
-                  <div className="text-center mb-3">
-                    <h3 className="text-white text-sm font-medium mb-1">Choose Processing Mode:</h3>
-                    <p className="text-gray-300 text-xs">
-                      {processingMode === 'variations' 
-                        ? "Generate multiple character variations from your images (Nano Banana)" 
-                        : "Generate video from start frame (left) → end frame (right) transition (End Frame by Minimax)"
-                      }
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setProcessingMode('variations')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        processingMode === 'variations'
-                          ? 'bg-white text-black'
-                          : 'bg-transparent text-white hover:bg-gray-700'
-                      }`}
-                    >
-                      <Images className="w-4 h-4 inline mr-2" />
-                      Character Variations
-                    </button>
-                    <button
-                      onClick={() => setProcessingMode('endframe')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        processingMode === 'endframe'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-transparent text-white hover:bg-green-600 hover:text-white'
-                      }`}
-                    >
-                      <Camera className="w-4 h-4 inline mr-2" />
-                      Start → End Video
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Error Display */}
-          {error && (
-            <div className="w-full max-w-4xl mx-auto px-4 mt-8">
-              <div className="bg-red-900 bg-opacity-90 backdrop-blur-sm border border-red-700 rounded-lg p-4 mb-8">
-                <p className="text-red-300">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Results Section */}
-          {variations.length > 0 && (
-            <div className="w-full max-w-4xl mx-auto px-4 mt-8">
-            <h2 className="text-2xl font-semibold mb-8 text-white text-center bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">Character Variations</h2>
-            
-            {/* Info message if no images are generated */}
-            {variations.length > 0 && !variations.some(v => v.imageUrl) && (
-              <div className="bg-blue-900 bg-opacity-90 backdrop-blur-sm border border-blue-700 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-300" />
-                  <p className="text-blue-200 font-medium">Character descriptions generated!</p>
-                </div>
-                <p className="text-blue-300 text-sm mt-1">
-                  Add your FAL_KEY to your .env.local file to generate actual character images.
-                </p>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {variations.map((variation) => (
-                <div
-                  key={variation.id}
-                  className="border border-white rounded-lg p-6 hover:border-gray-300 transition-colors bg-black bg-opacity-40 backdrop-blur-sm"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-semibold text-lg text-white">
-                        {variation.angle}
-                      </h3>
-                      <p className="text-sm text-gray-400">{variation.pose}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => variation.imageUrl && handleVaryImage(variation.imageUrl, prompt)}
-                        className="flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-                        disabled={!variation.imageUrl || processing.isProcessing}
-                        title="Create new variations from this image"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Vary
-                      </button>
-                      <button
-                        onClick={() => handleDownloadVariation(variation)}
-                        className="flex items-center gap-1 px-3 py-1 bg-white text-black rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
-                        style={{ touchAction: 'manipulation' }}
-                        title="Download variation description"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">Save</span>
-                        <span className="sm:hidden">Save</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {variation.imageUrl ? (
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <img
-                          src={variation.imageUrl}
-                          alt={`${variation.angle} - ${variation.pose}`}
-                          className="w-full h-48 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => handleImageClick(variation.imageUrl!)}
-                        />
-                      </div>
-                      <div className="bg-gray-800 rounded-lg p-3">
-                        <p className="text-gray-300 text-xs leading-relaxed">
-                          {variation.description}
-                        </p>
-                        {variation.description.includes('blocked by content policy') && (
-                          <div className="mt-2 p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
-                            <p className="text-yellow-300 text-xs">
-                              ⚠️ Image generation was restricted. Only text description available.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <p className="text-gray-300 text-sm leading-relaxed">
-                        {variation.description}
-                      </p>
-                      {variation.description.includes('blocked by content policy') && (
-                        <div className="mt-2 p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
-                          <p className="text-yellow-300 text-xs">
-                            ⚠️ Image generation was restricted. Only text description available.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          )}
-        </div>
-
-        {/* Mobile Gallery Backdrop */}
-        {showGallery && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setShowGallery(false)} />
-        )}
         
-        {/* Gallery Panel */}
+        {/* Bottom Gallery Panel */}
         {showGallery && (
-          <div className="w-full lg:w-1/3 bg-gray-800 bg-opacity-90 backdrop-blur-sm border-t lg:border-t-0 lg:border-l border-gray-700 h-screen lg:h-screen overflow-y-auto fixed lg:relative top-0 right-0 z-50 lg:z-auto transform lg:transform-none transition-transform duration-300 ease-in-out">
-            <div className="p-4 lg:p-6">
-              <div className="flex items-center justify-between mb-4 lg:mb-6">
-                <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
-                  <Images className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
-                  <span className="hidden sm:inline">Gallery</span>
-                  <span className="sm:hidden">Gallery</span>
-                  <span className="text-sm lg:text-base">({filteredGallery.length})</span>
+          <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-sm border-t border-gray-700 z-30 max-h-[60vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
+                  <Images className="w-6 h-6 text-white" />
+                  Gallery ({filteredGallery.length})
                 </h2>
-                <div className="flex gap-1 lg:gap-2">
-                  {/* Development-only duplicate fix button */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <button
-                      onClick={removeDuplicates}
-                      className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-xs lg:text-sm"
-                      title="Remove duplicates (dev only)"
-                    >
-                      <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
-                      <span className="hidden sm:inline">Fix Duplicates</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={clearGallery}
-                    className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs lg:text-sm"
-                    title="Clear all"
-                  >
-                    <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
-                    <span className="hidden sm:inline">Clear</span>
-                  </button>
                   <button
                     onClick={() => setShowGallery(false)}
-                    className="flex items-center gap-1 px-2 lg:px-3 py-1 bg-white text-black rounded hover:bg-gray-100 transition-colors text-xs lg:text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
                     title="Hide gallery"
                   >
-                    <X className="w-3 h-3 lg:w-4 lg:h-4" />
-                    <span className="hidden sm:inline">Hide</span>
+                  <X className="w-4 h-4" />
+                  Hide Gallery
                   </button>
-                </div>
               </div>
 
               {/* Gallery Filter Toggle */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-3 mb-6">
                 <button
                   onClick={() => setGalleryFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     galleryFilter === 'all'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -4756,7 +4445,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => setGalleryFilter('images')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     galleryFilter === 'images'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -4766,7 +4455,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => setGalleryFilter('videos')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     galleryFilter === 'videos'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -4776,331 +4465,91 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* Gallery Content - Two Column Layout */}
               {filteredGallery.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <Images className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">
-                    {galleryFilter === 'images' ? 'No images yet' : 
-                     galleryFilter === 'videos' ? 'No videos yet' : 
-                     'No variations yet'}
-                  </p>
-                  <p className="text-sm">
-                    {galleryFilter === 'images' ? 'Generated images will appear here' : 
-                     galleryFilter === 'videos' ? 'Generated videos will appear here' : 
-                     'Generated character variations will appear here'}
-                  </p>
+                <div className="text-center py-12">
+                  <Images className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg">No images in gallery yet</p>
+                  <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {filteredGallery.map((item: any, index: number) => {
                     // Create a more robust unique key that handles duplicates
                     const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
                     
-                    
-                    // Debug logging for video items
-                    if (item.fileType === 'video') {
-                      console.log('🎬 Rendering video item:', item);
-                      console.log('🎬 Video URL:', item.videoUrl);
-                    }
-                    
                     return (
-                      <div
-                        key={itemKey}
-                        className="border border-gray-600 rounded-lg p-3 hover:shadow-md transition-shadow bg-gray-700 bg-opacity-80 backdrop-blur-sm"
-                      >
-                        {/* Header with title, timestamp, and remove button */}
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-white text-sm truncate">
-                              {item.angle}
-                            </h3>
-                            <p className="text-xs text-gray-400">
-                              {new Date(item.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => removeFromGallery(item.id, item.timestamp)}
-                            className="text-gray-400 hover:text-red-400 transition-colors ml-2 flex-shrink-0"
-                            title="Remove from gallery"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                                                    {/* Image or Video */}
-                            {item.imageUrl || item.videoUrl ? (
-                              <div className="space-y-3">
-                                {item.fileType === 'video' && item.videoUrl ? (
+                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600 hover:bg-gray-700 transition-colors">
+                        <div className="flex flex-col gap-4">
+                          {/* Image/Video Preview */}
                                   <div className="relative">
-                                    {isValidVideoUrl(item.videoUrl) ? (
+                            {item.fileType === 'video' ? (
                                     <video
-                                      key={`${item.videoUrl || 'no-url'}-${item.videoUrl && failedVideos.has(item.videoUrl) ? 'failed' : 'loading'}`}
-                                      src={getProxiedVideoUrl(item.videoUrl)}
-                                      className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-black"
-                                      controls
+                                src={item.videoUrl}
+                                className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                                onClick={() => setFullScreenImage(item.videoUrl)}
                                       muted
-                                      onClick={(e) => e.stopPropagation()}
-                                      onError={(e) => {
-                                        const videoElement = e.target as HTMLVideoElement;
-                                        const error = videoElement.error;
-                                        
-                                        // Only log detailed errors in development
-                                        if (process.env.NODE_ENV === 'development') {
-                                        console.error('🎬 Video load error:', {
-                                          error: error,
-                                          errorCode: error?.code,
-                                          errorMessage: error?.message,
-                                          networkState: videoElement.networkState,
-                                          readyState: videoElement.readyState,
-                                          videoUrl: item.videoUrl,
-                                          proxiedUrl: getProxiedVideoUrl(item.videoUrl),
-                                          videoSrc: videoElement.src
-                                        });
-                                        }
-                                        
-                                        // Handle different error types with user-friendly messages
-                                        if (error) {
-                                          switch (error.code) {
-                                            case MediaError.MEDIA_ERR_ABORTED:
-                                              console.warn('🎬 Video loading was aborted');
-                                               console.error('Network Error: Video loading was interrupted!');
-                                              break;
-                                            case MediaError.MEDIA_ERR_NETWORK:
-                                              console.warn('🎬 Network error while loading video');
-                                              console.error('Network Error: Network connection lost!');
-                                              break;
-                                            case MediaError.MEDIA_ERR_DECODE:
-                                              console.warn('🎬 Video format not supported or corrupted');
-                                              console.error('Legacy video format error - silent handling');
-                                              break;
-                                            case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                                              console.warn('🎬 Video format not supported');
-                                              console.error('Legacy video format error - silent handling');
-                                              break;
-                                            default:
-                                              console.warn('🎬 Unknown video error');
-                                               console.error('Network Error: Something went wrong!');
-                                          }
-                                        } else {
-                                          console.warn('🎬 Video failed to load (no error details)');
-                                          console.error('Network Error: Video failed to load!');
-                                        }
-                                        
-                                        // Track this video as failed
-                                        if (item.videoUrl) {
-                                          setFailedVideos(prev => new Set(prev).add(item.videoUrl!));
-                                        }
-                                      }}
-                                      onLoadStart={() => console.log('🎬 Video loading started:', item.videoUrl)}
-                                      onCanPlay={() => console.log('🎬 Video can play:', item.videoUrl)}
                                     />
                                     ) : (
-                                      <div className="w-full h-32 bg-gray-800 rounded-lg flex items-center justify-center">
-                                        <div className="text-center text-gray-400">
-                                          <div className="text-sm font-medium mb-1">Invalid Video URL</div>
-                                          <div className="text-xs">URL format not supported</div>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {/* Video status info */}
-                                    <div className="text-xs text-gray-400 mt-1">
-                                      {item.videoUrl ? (
-                                        isValidVideoUrl(item.videoUrl) ? (
-                                          <span className="text-green-400">✓ Valid video URL</span>
-                                        ) : (
-                                          <span className="text-yellow-400">⚠ Invalid video URL format</span>
-                                        )
-                                      ) : (
-                                        <span className="text-red-400">✗ No video URL</span>
-                                      )}
+                              <img
+                                src={item.imageUrl}
+                                alt="Gallery item"
+                                className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                                onClick={() => setFullScreenImage(item.imageUrl)}
+                              />
+                            )}
+                            <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                              {item.fileType?.toUpperCase() || 'IMAGE'}
                                     </div>
-                                    {/* Fallback for failed video loads */}
-                                    {failedVideos.has(item.videoUrl) && (
-                                      <div className="absolute inset-0 bg-gray-800 bg-opacity-75 rounded-lg flex items-center justify-center">
-                                        <div className="text-center text-white">
-                                          <div className="text-sm font-medium mb-2">Video failed to load</div>
-                                          <div className="text-xs text-gray-300 mb-3">
-                                            This may be due to network issues or video format compatibility
                                           </div>
+
+                          {/* Content */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-400">
+                                {new Date(item.timestamp).toLocaleDateString()}
+                              </span>
                                           <div className="flex gap-2">
                                           <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (item.videoUrl) {
-                                                retryVideo(item.videoUrl);
-                                              }
-                                            }}
-                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-                                          >
-                                            Retry
+                                  onClick={() => {
+                                    if (isExpanded) {
+                                      setExpandedPrompts(prev => {
+                                        const newSet = new Set(prev);
+                                        newSet.delete(itemKey);
+                                        return newSet;
+                                      });
+                                    } else {
+                                      setExpandedPrompts(prev => new Set([...prev, itemKey]));
+                                    }
+                                  }}
+                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                                >
+                                  {isExpanded ? 'Hide' : 'Show'} Prompt
                                           </button>
                                             <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (item.videoUrl) {
-                                                  window.open(item.videoUrl, '_blank');
-                                                }
-                                              }}
-                                              className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors"
-                                            >
-                                              Open in New Tab
+                                  onClick={() => handleDeleteFromGallery(item.id)}
+                                  className="text-sm text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  Delete
                                           </button>
                                           </div>
                                         </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <img
-                                    src={item.imageUrl}
-                                    alt={`${item.angle} - ${item.pose}`}
-                                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                    onClick={() => handleImageClick(item.imageUrl!)}
-                                  />
-                                )}
-                            
-                            {/* Collapsible prompt section */}
-                            <div className="space-y-2">
-                              {/* Original prompt - always visible but compact */}
-                              <div className="bg-gray-600 bg-opacity-50 rounded p-2">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-xs text-gray-300 font-medium">
-                                    Original Prompt:
-                                  </p>
-                                  <button
-                                    onClick={() => togglePromptExpansion(itemKey)}
-                                    className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 p-1 rounded touch-manipulation"
-                                    title={isExpanded ? "Hide details" : "Show details"}
-                                  >
-                                    <span className="text-xs">
-                                      {isExpanded ? "Hide" : "Show"}
-                                    </span>
-                                    {isExpanded ? (
-                                      <ChevronUp className="w-3 h-3" />
-                                    ) : (
-                                      <ChevronDown className="w-3 h-3" />
-                                    )}
-                                  </button>
-                                </div>
-                                <p className="text-xs text-gray-300 mt-1 line-clamp-2">
-                                  &ldquo;{item.originalPrompt}&rdquo;
-                                </p>
-                              </div>
 
-                              {/* Expanded details */}
                               {isExpanded && (
-                                <div className="bg-gray-700 bg-opacity-80 backdrop-blur-sm rounded p-3 space-y-2">
-                                  <div>
-                                    <p className="text-xs text-gray-400 font-medium mb-1">AI Description:</p>
-                                    <p className="text-xs text-gray-300 leading-relaxed">
-                                      {item.description}
-                                    </p>
-                                  </div>
-                                  {item.description.includes('blocked by content policy') && (
-                                    <div className="p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
-                                      <p className="text-yellow-300 text-xs">
-                                        ⚠️ Image generation was restricted
+                              <div className="bg-gray-800 p-3 rounded-lg">
+                                <p className="text-sm text-gray-300">
+                                  {item.prompt}
                                       </p>
                                     </div>
                                   )}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Action buttons */}
-                            <div className="flex gap-2">
-                              {item.fileType === 'video' ? (
-                                <button
-                                  onClick={() => handleDownloadVideo(item.videoUrl!, item.originalPrompt)}
-                                  className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
-                                  style={{ touchAction: 'manipulation' }}
-                                >
-                                  <Download className="w-4 h-4" />
-                                  <span className="hidden sm:inline">Download Video</span>
-                                  <span className="sm:hidden">Download</span>
-                                </button>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={() => handleEditImage(item.imageUrl!, item.originalPrompt)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium touch-manipulation disabled:opacity-50"
-                                    disabled={processingAction?.startsWith('edit') || processing.isProcessing}
-                                  >
-                                    {processingAction?.startsWith('edit') ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Edit className="w-4 h-4" />
-                                    )}
-                                    {processingAction?.startsWith('edit') ? 'Loading...' : 'Edit'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleVaryImage(item.imageUrl!, item.originalPrompt)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium touch-manipulation disabled:opacity-50"
-                                    disabled={processingAction?.startsWith('vary') || processing.isProcessing}
-                                  >
-                                    {processingAction?.startsWith('vary') ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Sparkles className="w-4 h-4" />
-                                    )}
-                                    {processingAction?.startsWith('vary') ? 'Processing...' : 'Vary'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDownloadVariation(item)}
-                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-3 bg-white text-black rounded hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium touch-manipulation min-h-[44px]"
-                                    style={{ touchAction: 'manipulation' }}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Download</span>
-                                    <span className="sm:hidden">Save</span>
-                                  </button>
-                                </>
-                              )}
+                            
+                            <div className="text-sm text-gray-400 space-y-1">
+                              {item.angle && <div>Angle: {item.angle}</div>}
+                              {item.pose && <div>Pose: {item.pose}</div>}
                             </div>
                           </div>
-                        ) : (
-                          /* Text-only variation (no image) */
-                          <div className="bg-gray-700 rounded p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs text-gray-400 font-medium">
-                                Text Description:
-                              </p>
-                              <button
-                                onClick={() => togglePromptExpansion(itemKey)}
-                                className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 p-1 rounded touch-manipulation"
-                                title={isExpanded ? "Hide details" : "Show details"}
-                              >
-                                <span className="text-xs">
-                                  {isExpanded ? "Hide" : "Show"}
-                                </span>
-                                {isExpanded ? (
-                                  <ChevronUp className="w-3 h-3" />
-                                ) : (
-                                  <ChevronDown className="w-3 h-3" />
-                                )}
-                              </button>
                             </div>
-                            <p className="text-xs text-gray-300 leading-relaxed line-clamp-3">
-                              {item.description}
-                            </p>
-                            {isExpanded && (
-                              <div className="mt-2 pt-2 border-t border-gray-600">
-                                <p className="text-xs text-gray-400 font-medium mb-1">Original Prompt:</p>
-                                <p className="text-xs text-gray-300">
-                                  &ldquo;{item.originalPrompt}&rdquo;
-                                </p>
-                              </div>
-                            )}
-                            {item.description.includes('blocked by content policy') && (
-                              <div className="mt-2 p-2 bg-yellow-900 bg-opacity-50 rounded border border-yellow-600">
-                                <p className="text-yellow-300 text-xs">
-                                  ⚠️ Image generation was restricted
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -5110,6 +4559,15 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Analytics Updater - Remove this after updating */}
+      <AnalyticsUpdater />
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
 
       {/* Full-Screen Image Modal */}
       {fullScreenImage && (
@@ -5125,54 +4583,46 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
             />
             
-            {/* Navigation Arrows */}
+            {/* Close button */}
+                          <button
+              onClick={closeFullScreen}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2"
+            >
+              <X className="w-6 h-6" />
+                          </button>
+
+            {/* Navigation arrows */}
             {galleryImagesWithUrls.length > 1 && (
               <>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    goToPrevious();
+                    navigateImage(-1);
                   }}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-3 hover:bg-opacity-70 transition-colors"
-                  title="Previous image (Left arrow)"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2"
+                  disabled={fullScreenImageIndex === 0}
                 >
-                  <ChevronLeft className="w-8 h-8" />
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    goToNext();
+                    navigateImage(1);
                   }}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-3 hover:bg-opacity-70 transition-colors"
-                  title="Next image (Right arrow)"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2"
+                  disabled={fullScreenImageIndex === galleryImagesWithUrls.length - 1}
                 >
-                  <ChevronRight className="w-8 h-8" />
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </>
             )}
 
-            {/* Close Button */}
-            <button
-              onClick={closeFullScreen}
-              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-3 hover:bg-opacity-70 transition-colors"
-              title="Close (Press Esc)"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Image Info */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg text-sm">
-              <div className="text-center">
+            {/* Image counter */}
                 {galleryImagesWithUrls.length > 1 && (
-                  <div className="mb-1">
-                    {fullScreenImageIndex + 1} of {galleryImagesWithUrls.length}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                {fullScreenImageIndex + 1} / {galleryImagesWithUrls.length}
                   </div>
                 )}
-                <div>
-                  Click outside, press ESC to close{galleryImagesWithUrls.length > 1 ? ', or use arrow keys to navigate' : ''}
-                </div>
-              </div>
-            </div>
 
             {/* Current Image Details */}
             {galleryImagesWithUrls[fullScreenImageIndex] && (
@@ -5204,407 +4654,70 @@ export default function Home() {
                 </button>
               </div>
               
-              <div className="space-y-6 text-gray-300">
-                {/* Understanding Camera Angles */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">🎯 Understanding Camera Angles</h3>
-                  <div className="bg-gray-800 p-4 rounded-lg">
-                    <h4 className="font-medium text-green-400 mb-2">✅ What Works Best:</h4>
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>Images with environmental context (characters in rooms, landscapes, scenes)</li>
-                      <li>Images with clear ground planes (floors, surfaces, horizons)</li>
-                      <li>Images with spatial relationships (objects in environments)</li>
-                    </ul>
-                    
-                    <h4 className="font-medium text-red-400 mb-2 mt-4">❌ What Doesn&apos;t Work Well:</h4>
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>Single isolated objects (skulls, floating heads, objects without context)</li>
-                      <li>Flat images (logos, text, 2D graphics)</li>
-                      <li>Images without spatial reference (close-ups without environment)</li>
-                    </ul>
+              {/* Prompt Guide Content */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Camera Angles</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-md font-medium text-gray-300 mb-2">Basic Angles</h4>
+                          <div className="flex flex-wrap gap-2">
+                        {BASIC_PROMPTS.slice(0, 5).map((example) => (
+                              <button
+                                key={example}
+                            onClick={() => {
+                              setPrompt(example);
+                              setShowPromptGuide(false);
+                            }}
+                            className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
                   </div>
-                </section>
-
-                {/* Camera Angle Presets */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">📐 Camera Angle Presets Explained</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">🐛 Worm&apos;s Eye View</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Characters or objects in environments with clear ground planes</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Worm&apos;s eye view of a character standing in a modern living room&quot;</p>
-                        <p className="text-green-400">✅ &quot;Low angle looking up at a person in a forest clearing&quot;</p>
-                        <p className="text-red-400">❌ &quot;Worm&apos;s eye view of a skull&quot; (no spatial context)</p>
                       </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Needs a ground plane and spatial context to create the dramatic low-angle perspective.</p>
+                    <div>
+                      <h4 className="text-md font-medium text-gray-300 mb-2">Advanced Angles</h4>
+                          <div className="flex flex-wrap gap-2">
+                        {EXTENDED_PROMPTS.slice(0, 5).map((example) => (
+                              <button
+                                key={example}
+                            onClick={() => {
+                              setPrompt(example);
+                              setShowPromptGuide(false);
+                            }}
+                            className="px-3 py-1 text-sm bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
                     </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">👤 Side Profile</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Any character or object with clear side features</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Side profile of a character looking left&quot;</p>
-                        <p className="text-green-400">✅ &quot;Profile view of a person in a park&quot;</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Works with most images as it focuses on the side features.</p>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">📐 3/4 Angle View</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Characters or objects where you want to show depth</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;3/4 angle of a character in a studio&quot;</p>
-                        <p className="text-green-400">✅ &quot;Three-quarter view of a person in an office&quot;</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Creates depth and dimension by showing multiple sides.</p>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">🔙 Back View</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Characters or objects with interesting back features</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Back view of a character walking away&quot;</p>
-                        <p className="text-green-400">✅ &quot;Rear perspective of a person in a hallway&quot;</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Focuses on the back features and creates mystery.</p>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">📉 Low Angle View</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Any character or object (more flexible than worm&apos;s eye)</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Low angle view of a character&quot;</p>
-                        <p className="text-green-400">✅ &quot;Looking up at a person&quot;</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> More flexible than worm&apos;s eye view, works with most images.</p>
-                    </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-400 mb-2">📈 High Angle View</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Characters or objects where you want to show the top</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;High angle view of a character&quot;</p>
-                        <p className="text-green-400">✅ &quot;Looking down at a person&quot;</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2"><strong>Why it works:</strong> Shows the top features and creates a different perspective.</p>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Background Changes */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">🎨 Background Change Presets</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-purple-400 mb-2">🗑️ Background Removal</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Any image where you want to isolate the subject</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Remove the background, keep only the character&quot;</p>
-                        <p className="text-green-400">✅ &quot;Transparent background, focus on the subject&quot;</p>
                       </div>
                     </div>
+                    </div>
 
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-purple-400 mb-2">🔄 Background Replacement</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Images with clear subjects that can be separated from background</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Change background to a modern office&quot;</p>
-                        <p className="text-green-400">✅ &quot;Replace background with a forest scene&quot;</p>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Background Changes</h3>
+                          <div className="flex flex-wrap gap-2">
+                    {BACKGROUND_PROMPTS.slice(0, 8).map((example) => (
+                              <button
+                                key={example}
+                        onClick={() => {
+                          setPrompt(example);
+                          setShowPromptGuide(false);
+                        }}
+                        className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
                       </div>
                     </div>
-
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium text-purple-400 mb-2">🌍 Environmental Context</h4>
-                      <p className="mb-2"><strong>Best for:</strong> Adding spatial context to isolated objects</p>
-                      <div className="space-y-1">
-                        <p className="text-green-400">✅ &quot;Place the character in a luxurious hotel lobby&quot;</p>
-                        <p className="text-green-400">✅ &quot;Add the object to a modern kitchen counter&quot;</p>
                       </div>
                     </div>
-                  </div>
-                </section>
-
-                {/* Pro Tips */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">💡 Pro Tips</h3>
-                  
-                  <div className="bg-gray-800 p-4 rounded-lg">
-                    <h4 className="font-medium text-yellow-400 mb-2">For Camera Angles:</h4>
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>Think about the environment - What would the camera be standing on?</li>
-                      <li>Consider the subject&apos;s position - Are they standing, sitting, or in a specific pose?</li>
-                      <li>Add spatial context - Include environmental details in your prompt</li>
-                      <li>Use descriptive language - &quot;character standing in a room&quot; vs just &quot;character&quot;</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-gray-800 p-4 rounded-lg mt-4">
-                    <h4 className="font-medium text-yellow-400 mb-2">Combining Both:</h4>
-                    <ol className="list-decimal list-inside space-y-1 ml-4">
-                      <li>Start with the environment - &quot;Character in a modern living room&quot;</li>
-                      <li>Add the camera angle - &quot;from a low angle looking up&quot;</li>
-                      <li>Include the pose - &quot;character standing confidently&quot;</li>
-                      <li>Add details - &quot;with dramatic lighting and shadows&quot;</li>
-                    </ol>
-                  </div>
-                </section>
-
-                {/* Quick Reference */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">🎯 Quick Reference</h3>
-                  
-                  <div className="bg-gray-800 p-4 rounded-lg overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-600">
-                          <th className="text-left py-2 text-white">Camera Angle</th>
-                          <th className="text-left py-2 text-white">Best For</th>
-                          <th className="text-left py-2 text-white">Needs Environment?</th>
-                          <th className="text-left py-2 text-white">Example</th>
-                        </tr>
-                      </thead>
-                      <tbody className="space-y-2">
-                        <tr className="border-b border-gray-700">
-                          <td className="py-2 text-blue-400">Worm&apos;s Eye View</td>
-                          <td className="py-2">Characters in scenes</td>
-                          <td className="py-2 text-green-400">✅ Yes</td>
-                          <td className="py-2">&quot;Character in a room, looking up&quot;</td>
-                        </tr>
-                        <tr className="border-b border-gray-700">
-                          <td className="py-2 text-blue-400">Side Profile</td>
-                          <td className="py-2">Any character</td>
-                          <td className="py-2 text-red-400">❌ No</td>
-                          <td className="py-2">&quot;Side view of a person&quot;</td>
-                        </tr>
-                        <tr className="border-b border-gray-700">
-                          <td className="py-2 text-blue-400">3/4 Angle</td>
-                          <td className="py-2">Showing depth</td>
-                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
-                          <td className="py-2">&quot;Angled view of a character&quot;</td>
-                        </tr>
-                        <tr className="border-b border-gray-700">
-                          <td className="py-2 text-blue-400">Back View</td>
-                          <td className="py-2">Interesting backs</td>
-                          <td className="py-2 text-red-400">❌ No</td>
-                          <td className="py-2">&quot;Rear view of a person&quot;</td>
-                        </tr>
-                        <tr className="border-b border-gray-700">
-                          <td className="py-2 text-blue-400">Low Angle</td>
-                          <td className="py-2">Most subjects</td>
-                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
-                          <td className="py-2">&quot;Looking up at a character&quot;</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 text-blue-400">High Angle</td>
-                          <td className="py-2">Top features</td>
-                          <td className="py-2 text-yellow-400">⚠️ Helpful</td>
-                          <td className="py-2">&quot;Looking down at a person&quot;</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                {/* Troubleshooting */}
-                <section>
-                  <h3 className="text-xl font-semibold text-white mb-3">🔧 Troubleshooting</h3>
-                  
-                  <div className="bg-gray-800 p-4 rounded-lg">
-                    <h4 className="font-medium text-orange-400 mb-2">If your results aren&apos;t what you expected:</h4>
-                    <ol className="list-decimal list-inside space-y-1 ml-4">
-                      <li>Check your image - Does it have the right context for your requested angle?</li>
-                      <li>Simplify your prompt - Remove complex instructions and focus on the basics</li>
-                      <li>Add environmental context - Include details about the setting</li>
-                      <li>Try a different angle - Some angles work better with certain images</li>
-                      <li>Be more specific - &quot;Character standing in a modern office&quot; vs &quot;Character&quot;</li>
-                    </ol>
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-          
-          {/* User Counter - Moved to bottom */}
-          <div className="w-full max-w-4xl mx-auto px-4 mb-6">
-            <UserCounter />
-          </div>
-        </div>
-      )}
-      
-      {/* Mobile Chat Interface - Modern Full Width Design */}
-      <div className="mobile-chat-interface">
-        <div className="mobile-input-container">
-          {/* Multiple Files Preview with Slots - Same as Large Uploader */}
-          <div className="flex gap-2 mb-3 overflow-x-auto">
-            {/* Existing files */}
-            {uploadedFiles.map((file, index) => (
-              <div 
-                key={index} 
-                className={`relative flex-shrink-0 transition-all duration-200 ${
-                  dragOverSlot === index 
-                    ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
-                    : ''
-                }`}
-                onDrop={(e) => handleSlotDrop(e, index)}
-                onDragOver={(e) => handleSlotDragOver(e, index)}
-                onDragLeave={handleSlotDragLeave}
-                onPaste={(e) => handleSlotPaste(e as any, index)}
-                data-slot-area
-                tabIndex={0}
-              >
-                {file.fileType === 'image' ? (
-                  <img
-                    src={file.preview}
-                    alt={`Character ${index + 1}`}
-                    className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
-                  />
-                ) : (
-                  <video
-                    src={file.preview}
-                    className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
-                    muted
-                  />
-                )}
-                <button
-                  onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                  title="Remove file"
-                >
-                  <X className="w-2 h-2" />
-                </button>
-                <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
-                  {file.fileType.toUpperCase()} {index + 1}
-                </div>
-                {dragOverSlot === index && (
-                  <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                    <div className="text-white text-xs font-medium bg-blue-600 px-1 py-0.5 rounded">
-                      Drop
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {/* Empty slots for drag and drop */}
-            {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
-              const slotIndex = uploadedFiles.length + index;
-              return (
-                <div
-                  key={`empty-${slotIndex}`}
-                  className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-10 h-10 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
-                    dragOverSlot === slotIndex 
-                      ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
-                      : ''
-                  }`}
-                  onClick={() => document.getElementById('file-input')?.click()}
-                  onDrop={(e) => handleSlotDrop(e, slotIndex)}
-                  onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
-                  onDragLeave={handleSlotDragLeave}
-                  onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
-                  data-slot-area
-                  tabIndex={0}
-                >
-                  <Plus className="w-3 h-3 text-gray-400" />
-                  {dragOverSlot === slotIndex && (
-                    <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                      <div className="text-white text-xs font-medium bg-blue-600 px-1 py-0.5 rounded">
-                        Drop
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          
-          {/* Mobile Text Input */}
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={
-                  hasVideoFiles 
-                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
-                    : processingMode === 'endframe'
-                    ? "Describe the transition or transformation between your start and end frames..."
-                    : uploadedFiles.length === 0
-                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
-                    : "Describe the angle or pose variations you want..."
-                }
-                className="mobile-chat-input"
-            rows={1}
-                style={{ fontSize: '16px' }} // Prevents zoom on iOS
-              />
-          
-          <div className="flex items-center gap-2">
-            {/* File Upload Button */}
-            <button
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"
-              title="Upload files"
-            >
-              <Upload className="w-4 h-4 text-white" />
-            </button>
-            
-            {/* Modern Send Button */}
-              {uploadedFiles.length === 0 ? (
-                // Text-to-Image generation
-                <button
-                  onClick={handleTextToImage}
-                  disabled={processing.isProcessing || !prompt.trim()}
-                className="mobile-send-button"
-                title="Generate Image"
-                >
-                  {processing.isProcessing ? (
-                  <Loader2 className="mobile-send-icon animate-spin" />
-                  ) : (
-                  <Camera className="mobile-send-icon" />
-                  )}
-                </button>
-              ) : hasVideoFiles ? (
-              // Video generation
-                <button
-                  onClick={handleRunwayVideoEditing}
-                  disabled={processing.isProcessing || !prompt.trim()}
-                className="mobile-send-button"
-                title="Generate Video"
-                >
-                  {processing.isProcessing ? (
-                  <Loader2 className="mobile-send-icon animate-spin" />
-                  ) : (
-                  <Camera className="mobile-send-icon" />
-                  )}
-                </button>
-              ) : (
-                // Character variations
-                <button
-                  onClick={handleCharacterVariation}
-                  disabled={processing.isProcessing || !prompt.trim()}
-                className="mobile-send-button"
-                title="Generate Variation"
-                >
-                  {processing.isProcessing ? (
-                  <Loader2 className="mobile-send-icon animate-spin" />
-                  ) : (
-                  <Camera className="mobile-send-icon" />
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {/* Mobile File Upload Input */}
-          <input
-            id="file-input"
-            type="file"
-            accept={ENABLE_VIDEO_FEATURES ? "image/*,video/*" : "image/*"}
-            multiple
-            className="hidden"
-            onChange={handleFileInputChange}
-          />
-      </div>
+                          )}
 
       {/* Authentication Modal */}
       <AuthModal
@@ -5612,6 +4725,212 @@ export default function Home() {
         onClose={() => setShowAuthModal(false)}
         defaultMode={authModalMode}
       />
+
+      {/* Preset Modal */}
+      {showPresetModal && activePresetTab && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">
+                  {activePresetTab === 'shot' && '📸 Professional Camera Angles & Shot Types'}
+                  {activePresetTab === 'background' && '🎨 Background Removal & Replacement Options'}
+                  {activePresetTab === 'restyle' && '🎭 Character Style Presets'}
+                </h2>
+                              <button
+                  onClick={() => {
+                    setShowPresetModal(false);
+                    setActivePresetTab(null);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                              </button>
+                      </div>
+
+              {/* Modal Content */}
+              <div className="space-y-6">
+                {activePresetTab === 'shot' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">📸 Professional Camera Angles & Shot Types</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Basic Angles</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {BASIC_PROMPTS.map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                    </div>
+                  </div>
+                      <div>
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Extended Shot Types</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {EXTENDED_PROMPTS.slice(0, 10).map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="px-3 py-1 text-sm bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                      </div>
+                        {EXTENDED_PROMPTS.length > 10 && (
+                          <div className="mt-3">
+                            <p className="text-gray-400 text-sm">+ {EXTENDED_PROMPTS.length - 10} more options available</p>
+                    </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activePresetTab === 'background' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">🎨 Background Removal & Replacement Options</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Background Changes</h4>
+                        <div className="space-y-2">
+                          {[
+                            'Change background to a modern office',
+                            'Place character in a forest setting',
+                            'Background: beach sunset scene',
+                            'Set in a futuristic cityscape',
+                            'Background: cozy living room',
+                            'Place in a magical garden',
+                            'Background: mountain landscape',
+                            'Set in a space station interior'
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Style Transfers</h4>
+                        <div className="space-y-2">
+                          {[
+                            'Convert to anime style',
+                            'Make it look like a painting',
+                            'Style: watercolor art',
+                            'Convert to cartoon style',
+                            'Style: oil painting',
+                            'Make it look like a sketch',
+                            'Style: digital art',
+                            'Convert to realistic photo'
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-orange-100 text-orange-800 rounded hover:bg-orange-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                  </div>
+                  </div>
+                  </div>
+                  </div>
+                )}
+
+                {activePresetTab === 'restyle' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">🎭 Character Style Presets</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Classic Character Styles</h4>
+                        <div className="space-y-2">
+                          {CHARACTER_STYLE_PROMPTS.map((style) => (
+                            <button
+                              key={style.name}
+                              onClick={() => {
+                                setPrompt(style.prompt);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-pink-100 text-pink-800 rounded hover:bg-pink-200 transition-colors"
+                              title={style.description}
+                            >
+                              <div className="font-medium">{style.name}</div>
+                              <div className="text-xs text-pink-600 mt-1">{style.description}</div>
+                            </button>
+                          ))}
+                  </div>
+              </div>
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Artistic Styles</h4>
+                        <div className="space-y-2">
+                          {[
+                            'Apply Ghibli anime style - Studio Ghibli magical colorful animation aesthetic',
+                            'Apply Van Gogh painting style - impressionist brushstrokes and vibrant colors',
+                            'Apply watercolor painting style - soft blended colors and artistic texture',
+                            'Apply oil painting style - rich textures and classical art aesthetic',
+                            'Apply cyberpunk neon style - electric colors and futuristic lighting',
+                            'Apply film noir style - high contrast black and white with dramatic shadows',
+                            'Apply vintage photography style - sepia tones and nostalgic atmosphere',
+                            'Apply digital art style - clean lines and modern graphic design aesthetic'
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-indigo-100 text-indigo-800 rounded hover:bg-indigo-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+            </div>
+          </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+                    </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Hidden File Input */}
+      <input
+        id="file-input"
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+    </div>
     </div>
   );
 }

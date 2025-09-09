@@ -487,7 +487,6 @@ QUALITY ENHANCEMENTS (only if they support the user's vision):
 CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
 
 RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their specific requests.`;
-    }
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -596,18 +595,18 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
               return await fal.subscribe(modelName, {
-                input: {
-                  prompt: nanoBananaPrompt,
-                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
-                  num_images: 1,
-                  output_format: "jpeg"
-                },
-                logs: true,
-                onQueueUpdate: (update) => {
-                  if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                  }
-                },
+              input: {
+                prompt: nanoBananaPrompt,
+                image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                num_images: 1,
+                output_format: "jpeg"
+              },
+              logs: true,
+              onQueueUpdate: (update) => {
+                if (update.status === "IN_PROGRESS") {
+                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                }
+              },
               });
             });
 
@@ -863,4 +862,6 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       }
     ];
   }
-}
+} 
+ 
+ 

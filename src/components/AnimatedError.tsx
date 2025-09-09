@@ -147,7 +147,7 @@ export default function AnimatedError({
     <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
       <div className="relative">
         {/* Main oval/cylinder notification body */}
-        <div className="bg-red-600 bg-opacity-95 backdrop-blur-sm border border-red-500 rounded-full px-6 py-3 max-w-sm shadow-lg relative overflow-hidden">
+        <div className="bg-red-600 bg-opacity-95 backdrop-blur-sm border border-red-500 rounded-full px-5 py-2.5 max-w-xs shadow-lg relative overflow-hidden">
           {/* Cylinder effect with gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-red-500 to-red-700 rounded-full opacity-80"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 rounded-full"></div>
@@ -170,14 +170,14 @@ export default function AnimatedError({
         
         {/* Image tag popping out from the side */}
         {type === 'toasty' && (
-          <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 z-10">
+          <div className="absolute -left-16 top-1/2 transform -translate-y-1/2 z-10">
             <div className="relative">
               {/* Tag background */}
-              <div className="bg-yellow-400 rounded-full p-2 shadow-lg border-2 border-yellow-300">
+              <div className="bg-yellow-400 rounded-full p-3 shadow-lg border-2 border-yellow-300">
                 <img 
                   src="/Toasty_mk3.JPG.webp" 
                   alt="Toasty from Mortal Kombat"
-                  className="w-12 h-12 object-contain rounded-full"
+                  className="w-24 h-24 object-contain rounded-full"
                   style={{ 
                     filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.9))',
                     animation: animationPhase === 'idle' ? 'toasty-glow 2s ease-in-out infinite' : 'none'
@@ -187,7 +187,7 @@ export default function AnimatedError({
               {/* Tag connector line */}
               <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-0.5 bg-yellow-400"></div>
               {/* "TOASTY!" text above the tag */}
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-400 animate-bounce whitespace-nowrap">
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-sm font-bold text-yellow-400 animate-bounce whitespace-nowrap">
                 TOASTY!
               </div>
             </div>

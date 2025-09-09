@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, 
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
 import { Header } from '@/components/Header';
+import { AnalyticsUpdater } from '@/components/AnalyticsUpdater';
 import { useRouter } from 'next/navigation';
 
 interface Post {
@@ -143,7 +144,7 @@ export default function CommunityPage() {
   ];
 
   const [fundingData, setFundingData] = useState({
-    current: 19.85,
+    current: 14.12,
     goal: 550,
     weeklyCost: 550,
     lastUpdated: new Date(),
@@ -233,7 +234,7 @@ export default function CommunityPage() {
       const data = await response.json();
       
       setFundingData({
-        current: data.current || 19.85,
+        current: data.current || 14.12,
         goal: data.goal || 550,
         weeklyCost: data.weeklyCost || 550,
         lastUpdated: new Date(data.lastUpdated || new Date()),
@@ -643,16 +644,43 @@ export default function CommunityPage() {
 
   return (
     <div 
-      className="min-h-screen bg-black relative"
+      className="min-h-screen bg-black relative overflow-hidden"
     >
-      {/* Header with Profile Access */}
-      <Header 
-        onSignUpClick={handleSignUp}
-        onSignInClick={handleSignIn}
-      />
+      {/* Background Video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        style={{ 
+          filter: 'brightness(0.3) contrast(1.2)',
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto'
+        }}
+      >
+        <source src="/adarkorchestra_28188_Inside_a_lived-in_spaceship_cockpit_a_no_2f629715-cb74-4eff-b2ee-62bc41318cd7_1.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
       
+      {/* Dark overlay for better text readability */}
+      <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+      
+      {/* Header with Profile Access */}
+      <div className="relative z-20">
+        <Header 
+          onSignUpClick={handleSignUp}
+          onSignInClick={handleSignIn}
+        />
+      </div>
+      
+      {/* Analytics Updater - Remove this after updating */}
+      <AnalyticsUpdater />
+
       {/* Main Content */}
-      <div className="relative z-10 pt-4">
+      <div className="relative z-20 pt-4">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

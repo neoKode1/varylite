@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Blur-in animation for generated images */
+@keyframes blurIn {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+  }
+}
+
+.animate-blur-in {
+  animation: blurIn 1.2s ease-out;
+}
+
 /* Mobile-specific optimizations */
 @layer base {
   /* Prevent zoom on iOS when focusing inputs */
@@ -375,19 +393,92 @@
       display: block !important;
     }
     
+    /* Fixed Header Components - Below main header */
+    .fixed-header-components {
+      position: fixed !important;
+      top: 5rem !important; /* Below the main header */
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: min(90vw, 56rem) !important;
+      max-width: 56rem !important;
+      z-index: 15 !important;
+      padding: 0 1rem !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    /* Main content area with padding to avoid overlap */
+    .main-content-with-padding {
+      padding-top: 20rem !important; /* Space for fixed header components */
+    }
+    
+    /* 2x2 Generation Panel - Fixed positioning and responsive scaling */
+    .generation-panel {
+      position: fixed !important;
+      bottom: 18rem !important; /* 288px - responsive to zoom */
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: min(90vw, 56rem) !important; /* max-w-4xl equivalent with viewport scaling */
+      max-width: 56rem !important;
+      z-index: 20 !important;
+      padding: 0 1rem !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    .generation-panel h2 {
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem) !important; /* Responsive text scaling */
+      margin-bottom: 2rem !important;
+      text-align: center !important;
+      color: white !important;
+      font-weight: 600 !important;
+    }
+    
+    .generation-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 2rem !important;
+      width: 100% !important;
+    }
+    
+    .generation-slot {
+      position: relative !important;
+      width: 100% !important;
+      height: 16rem !important; /* 256px - h-64 equivalent */
+      background: transparent !important;
+      border-radius: 0.5rem !important;
+      border: 1px solid transparent !important;
+      overflow: hidden !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .generation-slot:hover {
+      transform: scale(1.02) !important;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .generation-slot img,
+    .generation-slot video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 0.5rem !important;
+    }
+    
     /* Generate Page Floating Input - Desktop */
     .generate-floating-input {
       position: fixed !important;
-      bottom: 20px !important;
+      bottom: 1.25rem !important; /* 20px - responsive to zoom */
       left: 50% !important;
       transform: translateX(-50%) !important;
-      width: 50% !important;
+      width: min(90vw, 50%) !important; /* Responsive width with viewport scaling */
+      max-width: 50% !important;
+      min-width: 20rem !important; /* Minimum width for usability */
       z-index: 40 !important;
       background: rgba(0, 0, 0, 0.95) !important;
       backdrop-filter: blur(20px) !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 16px !important;
-      padding: 12px 16px !important;
+      border-radius: 1rem !important; /* 16px - responsive to zoom */
+      padding: 0.75rem 1rem !important; /* 12px 16px - responsive to zoom */
       transition: all 0.2s ease !important;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     }
