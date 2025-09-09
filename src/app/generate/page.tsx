@@ -592,6 +592,11 @@ export default function Home() {
     progress: 0,
     currentStep: ''
   });
+
+  // Generation time estimation state
+  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
@@ -771,6 +776,58 @@ export default function Home() {
       lowerContent.includes(indicator.toLowerCase())
     );
   };
+
+  // Generation time estimation functions
+  const getEstimatedTimeForMode = (mode: GenerationMode): number => {
+    const timeEstimates = {
+      'nano-banana': 15, // 15 seconds for character variations
+      'runway-t2i': 30, // 30 seconds for text-to-image
+      'veo3-fast': 45, // 45 seconds for image-to-video
+      'minimax-2.0': 120, // 2 minutes for minimax video
+      'kling-2.1-master': 90, // 1.5 minutes for kling video
+      'veo3-fast-t2v': 60, // 1 minute for text-to-video
+      'minimax-2-t2v': 150, // 2.5 minutes for minimax t2v
+      'kling-2.1-master-t2v': 120 // 2 minutes for kling t2v
+    };
+    return timeEstimates[mode] || 30;
+  };
+
+  const startGenerationTimer = (mode: GenerationMode) => {
+    const estimated = getEstimatedTimeForMode(mode);
+    setEstimatedTime(estimated);
+    setTimeRemaining(estimated);
+    setGenerationStartTime(Date.now());
+  };
+
+  const updateGenerationTimer = () => {
+    if (generationStartTime && estimatedTime) {
+      const elapsed = Math.floor((Date.now() - generationStartTime) / 1000);
+      const remaining = Math.max(0, estimatedTime - elapsed);
+      setTimeRemaining(remaining);
+      
+      if (remaining === 0) {
+        // Generation is taking longer than estimated
+        setTimeRemaining(null);
+      }
+    }
+  };
+
+  const stopGenerationTimer = () => {
+    setEstimatedTime(null);
+    setTimeRemaining(null);
+    setGenerationStartTime(null);
+  };
+
+  // Timer effect for countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (processing.isProcessing && timeRemaining !== null) {
+      interval = setInterval(updateGenerationTimer, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [processing.isProcessing, timeRemaining, generationStartTime, estimatedTime]);
 
   // Show whoopee animation for rejected content
   const showContentRejectedAnimation = () => {
@@ -1828,6 +1885,9 @@ export default function Home() {
     setError(null);
     setVariations([]);
     
+    // Start generation timer
+    startGenerationTimer('nano-banana');
+    
     // Detect file types to determine which API to use
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
@@ -1933,6 +1993,7 @@ export default function Home() {
           progress: 0,
           currentStep: ''
         });
+        stopGenerationTimer();
       }, 1000);
 
     } catch (err) {
@@ -1985,6 +2046,7 @@ export default function Home() {
         progress: 0,
         currentStep: ''
       });
+      stopGenerationTimer();
     }
   };
 
@@ -2847,6 +2909,9 @@ export default function Home() {
       progress: 0,
       currentStep: 'Starting Minimax 2.0 generation...'
     });
+    
+    // Start generation timer
+    startGenerationTimer('minimax-2.0');
 
     try {
       setProcessing({
@@ -2989,6 +3054,7 @@ export default function Home() {
         progress: 0,
         currentStep: ''
       });
+      stopGenerationTimer();
     }
   };
 
@@ -3860,7 +3926,7 @@ export default function Home() {
                         className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg text-base font-medium hover:bg-purple-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
-                        <option value="">Select Image-to-Video Model</option>
+                        <option value="">Select Model</option>
                         <option value="nano-banana">🍌 Nano Banana (Character Variations)</option>
                         <option value="minimax-2.0">🎬 Minimax 2.0 (Image-to-Video)</option>
                         <option value="kling-2.1-master">🎥 Kling 2.1 Master (Image-to-Video)</option>
@@ -3879,7 +3945,7 @@ export default function Home() {
                         className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg text-base font-medium hover:bg-blue-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
-                        <option value="">Select Text-to-Video Model</option>
+                        <option value="">Select Model</option>
                         <option value="runway-t2i">🎨 Runway T2I (Text-to-Image)</option>
                         <option value="veo3-fast-t2v">⚡ Veo3 Fast (Text-to-Video)</option>
                         <option value="minimax-2-t2v">🎬 Minimax 2.0 (Text-to-Video)</option>
@@ -3898,7 +3964,7 @@ export default function Home() {
                         className="w-full px-4 py-3 bg-green-600 text-white rounded-lg text-base font-medium hover:bg-green-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50"
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
-                        <option value="">Select Video Processing Model</option>
+                        <option value="">Select Model</option>
                         <option value="runway-video">Runway Aleph (Video Processing)</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
@@ -3914,7 +3980,7 @@ export default function Home() {
                         className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg text-base font-medium hover:bg-orange-700 transition-all appearance-none pr-10 cursor-pointer min-h-[44px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-50"
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
-                        <option value="">Select EndFrame Model</option>
+                        <option value="">Select Model</option>
                         <option value="endframe">EndFrame (Start → End Video)</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
@@ -3973,7 +4039,11 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
+                        {timeRemaining !== null ? (
+                          <span>{processing.currentStep} ({timeRemaining}s)</span>
+                        ) : (
+                          processing.currentStep
+                        )}
                       </>
                     ) : (
                       <>
@@ -4006,12 +4076,16 @@ export default function Home() {
                   <button
                     onClick={handleMinimax2Generation}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
+                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        {processing.currentStep}
+                        {timeRemaining !== null ? (
+                          <span>{processing.currentStep} ({timeRemaining}s)</span>
+                        ) : (
+                          processing.currentStep
+                        )}
                       </>
                     ) : (
                       <>
@@ -4063,7 +4137,7 @@ export default function Home() {
                   <button
                     onClick={handleMinimax2T2VGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
-                    className="w-full max-w-sm px-8 py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
+                    className="w-full max-w-sm px-8 py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
                     {processing.isProcessing ? (
                       <>
