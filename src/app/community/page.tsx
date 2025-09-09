@@ -120,6 +120,16 @@ export default function CommunityPage() {
       type: 'advisor'
     },
     {
+      id: 'nayri',
+      name: 'Nayri',
+      handle: '@NayriTheWitch',
+      role: 'Digital Artist & AI Consultant',
+      contribution: 'Helped with product selection, model selection, and workflow enhancements',
+      avatar: null,
+      social: 'https://x.com/NayriTheWitch',
+      type: 'advisor'
+    },
+    {
       id: 'community-moderator',
       name: 'Community Helper',
       handle: '@helper',
