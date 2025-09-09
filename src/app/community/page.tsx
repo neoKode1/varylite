@@ -100,6 +100,16 @@ export default function CommunityPage() {
       type: 'advisor'
     },
     {
+      id: 'afro-futcha',
+      name: 'Afro Futcha',
+      handle: '@misslaidlaw',
+      role: 'AI Filmmaker & Creative Designer',
+      contribution: 'Helped with landing page design',
+      avatar: null,
+      social: 'https://x.com/misslaidlaw',
+      type: 'artist'
+    },
+    {
       id: 'community-moderator',
       name: 'Community Helper',
       handle: '@helper',
