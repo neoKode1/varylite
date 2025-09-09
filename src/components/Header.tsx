@@ -6,13 +6,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
 import { ProfileModal } from './ProfileModal'
+import { AnalyticsUpdater } from './AnalyticsUpdater'
 
 interface HeaderProps {
   onSignUpClick: () => void
   onSignInClick: () => void
+  showContributors?: boolean
+  onToggleContributors?: () => void
+  hideCommunityButton?: boolean
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton }) => {
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -39,20 +43,43 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
         </div>
 
         {/* Navigation Tabs */}
-        <div className="hidden md:flex items-center space-x-1">
+        <div className="flex items-center space-x-1">
           <button
             onClick={() => router.push('/generate')}
-            className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+            className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
           >
-            Generate
+            <span className="hidden sm:inline">Generate</span>
+            <span className="sm:hidden">Gen</span>
           </button>
-          <button
-            onClick={() => router.push('/community')}
-            className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Tha Communita</span>
-          </button>
+          
+          {/* Community Button - Only show if not on community page */}
+          {!hideCommunityButton && (
+            <button
+              onClick={() => router.push('/community')}
+              className="flex items-center space-x-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+            >
+              <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Tha Communita</span>
+              <span className="sm:hidden">Community</span>
+            </button>
+          )}
+          
+          {/* Contributors Button - Only show on community page */}
+          {hideCommunityButton && onToggleContributors && (
+            <button
+              onClick={onToggleContributors}
+              className="flex items-center space-x-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+            >
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{showContributors ? 'Hide' : 'Show'} Contributors</span>
+              <span className="sm:hidden">Contributors</span>
+            </button>
+          )}
+          
+          {/* Analytics Dropdown */}
+          <div className="ml-1 sm:ml-2">
+            <AnalyticsUpdater />
+          </div>
         </div>
 
         {/* User Section */}

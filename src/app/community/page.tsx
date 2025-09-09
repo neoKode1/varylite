@@ -673,11 +673,12 @@ export default function CommunityPage() {
         <Header 
           onSignUpClick={handleSignUp}
           onSignInClick={handleSignIn}
+          showContributors={showCollaborators}
+          onToggleContributors={() => setShowCollaborators(!showCollaborators)}
+          hideCommunityButton={true}
         />
       </div>
       
-      {/* Analytics Updater - Remove this after updating */}
-      <AnalyticsUpdater />
 
       {/* Main Content */}
       <div className="relative z-20 pt-4">
@@ -1355,21 +1356,6 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {/* Collaborators Toggle Button */}
-      <button
-        onClick={() => setShowCollaborators(!showCollaborators)}
-        className="fixed left-4 top-4 z-50 bg-gray-800 bg-opacity-90 backdrop-blur-md rounded-lg p-3 border border-gray-700 border-opacity-30 hover:bg-opacity-100 transition-all duration-200 group"
-        title="View Collaborators"
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-            <User className="w-3 h-3 text-white" />
-          </div>
-          <span className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">
-            {showCollaborators ? 'Hide' : 'Show'} Contributors
-          </span>
-        </div>
-      </button>
 
       {/* Authentication Modal */}
       <AuthModal

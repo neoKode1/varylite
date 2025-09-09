@@ -650,50 +650,7 @@ export default function Home() {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
 
-  // Community Energy Meter state
-  const [isEnergyMeterExpanded, setIsEnergyMeterExpanded] = useState(false);
-  const [isEnergyMeterHovered, setIsEnergyMeterHovered] = useState(false);
-  const [hasBeenClicked, setHasBeenClicked] = useState(false);
   const [variations, setVariations] = useState<CharacterVariation[]>([]);
-  
-  // Handle Community Energy Meter interactions
-  const handleEnergyMeterClick = () => {
-    if (!hasBeenClicked) {
-      // First click - navigate to community page
-      setHasBeenClicked(true);
-      router.push('/community');
-    } else {
-      // Subsequent clicks - toggle expansion
-      setIsEnergyMeterExpanded(!isEnergyMeterExpanded);
-    }
-  };
-
-  // Handle hover events
-  const handleEnergyMeterMouseEnter = () => {
-    setIsEnergyMeterHovered(true);
-  };
-
-  const handleEnergyMeterMouseLeave = () => {
-    setIsEnergyMeterHovered(false);
-  };
-
-  // Handle click away to close the modal (only when expanded, not hovered)
-  const handleClickAway = (event: MouseEvent) => {
-    const target = event.target as Element;
-    const energyMeter = document.querySelector('[data-energy-meter]');
-    
-    if (energyMeter && !energyMeter.contains(target)) {
-      setIsEnergyMeterExpanded(false);
-    }
-  };
-
-  // Add click-away event listener (only when expanded, not just hovered)
-  useEffect(() => {
-    if (isEnergyMeterExpanded && !isEnergyMeterHovered) {
-      document.addEventListener('mousedown', handleClickAway);
-      return () => document.removeEventListener('mousedown', handleClickAway);
-    }
-  }, [isEnergyMeterExpanded, isEnergyMeterHovered]);
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
@@ -710,31 +667,6 @@ export default function Home() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
   
-  // Community funding meter state (shows FAL balance for community support)
-  const [fundingData, setFundingData] = useState({
-    current: 19.85, // Current FAL balance (community sees this)
-    goal: 550, // Weekly cost projection for 2x growth
-    weeklyCost: 550, // Updated with real usage data: 13,820 images × $0.0398 = ~$550
-    lastUpdated: new Date(),
-    donations: [] as any[],
-    usageStats: {
-      totalRequests: 6910, // Updated: 6,910 images from Sep 1-8, 2025 CSV
-      successfulRequests: 6910,
-      successRate: 100,
-      period: 'September 1-8, 2025',
-      weeklyProjection: 13820, // 2x scaling projection (6,910 × 2)
-      costPerGeneration: 0.0398, // Actual FAL pricing
-      currentUsers: 24, // Estimated user base
-      scalingFactor: 2,
-      baseWeeklyProjection: 6910,
-      modelBreakdown: {
-        nanoBanana: 6910, // 99.1% of usage
-        videoModels: 40.25, // 0.9% of usage (video seconds)
-        totalImages: 6910,
-        totalVideoSeconds: 40.25
-      }
-    }
-  });
 
   // User stats state for App Performance Analytics
   const [userStats, setUserStats] = useState({
@@ -771,41 +703,6 @@ export default function Home() {
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
   const [runwayTaskId, setRunwayTaskId] = useState<string | null>(null);
 
-  // Fetch community funding data (FAL balance for community support)
-  const fetchFundingData = async () => {
-    try {
-      const response = await fetch('/api/fal-balance');
-      const data = await response.json();
-      
-      setFundingData({
-        current: data.current || 19.85, // Current FAL balance
-        goal: data.goal || 550, // Weekly cost projection
-        weeklyCost: data.weeklyCost || 550,
-        lastUpdated: new Date(data.lastUpdated || new Date()),
-        donations: [], // No donations for FAL balance
-        usageStats: {
-          totalRequests: data.usageStats?.totalRequests || 6910,
-          successfulRequests: data.usageStats?.successfulRequests || 6910,
-          successRate: data.usageStats?.successRate || 100,
-          period: data.usageStats?.period || 'September 1-8, 2025',
-          weeklyProjection: data.usageStats?.weeklyProjection || 13820,
-          costPerGeneration: data.usageStats?.costPerGeneration || 0.0398,
-          currentUsers: data.usageStats?.currentUsers || 24,
-          scalingFactor: data.usageStats?.scalingFactor || 2,
-          baseWeeklyProjection: data.usageStats?.baseWeeklyProjection || 6910,
-          modelBreakdown: {
-            nanoBanana: data.usageStats?.totalRequests || 6910,
-            videoModels: 40.25, // Video seconds from CSV data
-            totalImages: data.usageStats?.totalRequests || 6910,
-            totalVideoSeconds: 40.25
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Failed to fetch funding data:', error);
-      // Keep existing data on error
-    }
-  };
 
   // Fetch user stats data for App Performance Analytics
   const fetchUserStats = async () => {
@@ -821,30 +718,12 @@ export default function Home() {
     }
   };
 
-  // Calculate energy level (0-100%) based on FAL balance for community support
-  const getEnergyLevel = () => {
-    const currentBalance = fundingData.current; // Current FAL balance
-    const weeklyCost = fundingData.weeklyCost; // Weekly cost projection
-    const percentage = (currentBalance / weeklyCost) * 100;
-    return Math.min(percentage, 100);
-  };
-
-  // Get energy status
-  const getEnergyStatus = () => {
-    const level = getEnergyLevel();
-    if (level >= 80) return { status: 'high', color: 'green', text: 'High Energy' };
-    if (level >= 50) return { status: 'medium', color: 'yellow', text: 'Medium Energy' };
-    if (level >= 20) return { status: 'low', color: 'orange', text: 'Low Energy' };
-    return { status: 'critical', color: 'red', text: 'Critical Energy' };
-  };
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchFundingData();
     fetchUserStats();
-    // Refresh every 2 minutes to keep meter updated
+    // Refresh every 2 minutes to keep stats updated
     const interval = setInterval(() => {
-      fetchFundingData();
       fetchUserStats();
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
@@ -1315,32 +1194,6 @@ export default function Home() {
     };
   }, [fullScreenImage, closeFullScreen, goToPrevious, goToNext]);
 
-  // Initialize Ko-fi widget
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-    script.async = true;
-    document.head.appendChild(script);
-
-    script.onload = () => {
-      // Initialize the Ko-fi widget
-      if (window.kofiWidgetOverlay) {
-        window.kofiWidgetOverlay.draw('varyai', {
-          'type': 'floating-chat',
-          'floating-chat.donateButton.text': 'Support me',
-          'floating-chat.donateButton.background-color': '#8b5cf6', // Purple to match your theme
-          'floating-chat.donateButton.text-color': '#fff'
-        });
-      }
-    };
-
-    return () => {
-      // Cleanup script on unmount
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
 
   // Convert image URL to base64
   const urlToBase64 = async (url: string): Promise<string> => {
@@ -2993,8 +2846,6 @@ export default function Home() {
         currentStep: 'Complete!'
       });
 
-      // Update funding meter after generation
-      fetchFundingData();
 
       setTimeout(() => {
         setProcessing({
@@ -3690,130 +3541,6 @@ export default function Home() {
         onSignInClick={handleSignInClick}
       />
       
-      {/* Collapsible Community Energy Meter */}
-      <div 
-        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-40" 
-        data-energy-meter
-        onMouseEnter={handleEnergyMeterMouseEnter}
-        onMouseLeave={handleEnergyMeterMouseLeave}
-      >
-        {/* Thermometer Tab (Always Visible) */}
-        <div 
-          onClick={handleEnergyMeterClick}
-          className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-r-xl p-2 cursor-pointer hover:scale-105 transition-all duration-300 shadow-2xl border border-purple-500 border-opacity-30 border-l-0"
-        >
-          {/* Vertical Thermometer */}
-          <div className="flex flex-col items-center space-y-2">
-            <div className="text-white text-xs font-medium" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-              {hasBeenClicked ? 'Community' : 'Energy'}
-            </div>
-            
-            {/* Vertical Energy Bar */}
-            <div className="w-3 h-16 bg-gray-700 rounded-full relative overflow-hidden">
-              <div 
-                className={`w-full rounded-full transition-all duration-500 ${
-                  getEnergyStatus().status === 'high' ? 'bg-gradient-to-t from-green-400 to-green-600' :
-                  getEnergyStatus().status === 'medium' ? 'bg-gradient-to-t from-yellow-400 to-yellow-600' :
-                  getEnergyStatus().status === 'low' ? 'bg-gradient-to-t from-orange-400 to-orange-600' :
-                  'bg-gradient-to-t from-red-400 to-red-600'
-                }`}
-                style={{ height: `${getEnergyLevel()}%` }}
-              ></div>
-            </div>
-            
-            <div className="text-white text-xs font-bold">
-              {Math.round(getEnergyLevel())}%
-            </div>
-            {!hasBeenClicked && (
-              <div className="text-yellow-400 text-xs animate-pulse">
-                Hover or Click!
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Expanded Meter (Slides out to the right on hover or click) */}
-        <div className={`absolute left-full top-0 ml-2 transition-all duration-300 ease-in-out ${
-          (isEnergyMeterExpanded || isEnergyMeterHovered)
-            ? 'translate-x-0 opacity-100' 
-            : '-translate-x-full opacity-0 pointer-events-none'
-        }`}>
-          {/* Backdrop for click-away functionality (only when clicked, not hovered) */}
-          {isEnergyMeterExpanded && !isEnergyMeterHovered && (
-            <div 
-              className="fixed inset-0 -z-10"
-              onClick={() => setIsEnergyMeterExpanded(false)}
-            />
-          )}
-          <div 
-            className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-r-xl p-3 sm:p-4 border border-purple-500 border-opacity-30 border-l-0 shadow-2xl min-w-[180px] sm:min-w-[200px]"
-          >
-            {/* Energy Meter */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
-                  <span className="text-white text-sm font-medium">Community Energy</span>
-                </div>
-                <MessageCircle className="w-4 h-4 text-gray-300" />
-              </div>
-              
-              {/* Energy Bar */}
-              <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-500 ${
-                    getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                    getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                    getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                    'bg-gradient-to-r from-red-400 to-red-600'
-                  }`}
-                  style={{ width: `${getEnergyLevel()}%` }}
-                ></div>
-              </div>
-              
-              <div className="text-center">
-                <span className={`text-xs font-medium ${
-                  getEnergyStatus().color === 'green' ? 'text-green-400' :
-                  getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
-                  getEnergyStatus().color === 'orange' ? 'text-orange-400' :
-                  'text-red-400'
-                }`}>
-                  {Math.round(getEnergyLevel())}% • ${fundingData.current.toFixed(2)}
-                </span>
-              </div>
-            </div>
-            
-            {/* Donation Buttons */}
-            <div className="space-y-2">
-              <a
-                href="https://ko-fi.com/varyai"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
-                title="Weekly Injection - Funds take time to be released"
-              >
-                ⚡ Weekly Injection
-              </a>
-              <a
-                href="https://cash.app/$VaryAi"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
-                title="Daily Injection - Funds go directly into the pot"
-              >
-                💚 Daily Injection
-              </a>
-            </div>
-            
-            {/* Click hint */}
-            <div className="text-center mt-2">
-              <span className="text-gray-400 text-xs">Click to view community</span>
-            </div>
-          </div>
-        </div>
-      </div>
       
       {/* Semi-transparent overlay for content readability */}
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>

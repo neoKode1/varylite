@@ -124,19 +124,6 @@
   
   /* Modern Mobile Chat Interface - Inspired by WhatsApp/Telegram */
   @media (max-width: 768px) {
-    /* Reposition Ko-fi support button in mobile view */
-    #kofi-widget-iframe {
-      bottom: 80px !important; /* Position above the floating input */
-      left: 16px !important;
-      right: auto !important;
-    }
-    
-    /* Alternative selector for Ko-fi button */
-    [id*="kofi"], [class*="kofi"], [id*="ko-fi"], [class*="ko-fi"] {
-      bottom: 80px !important;
-      left: 16px !important;
-      right: auto !important;
-    }
     
     .mobile-chat-interface {
       position: fixed !important;
