@@ -80,13 +80,13 @@ export default function CommunityPage() {
       type: 'contributor'
     },
     {
-      id: 'feature-advisor-1',
-      name: 'Feature Advisor',
-      handle: '@example',
-      role: 'UI/UX Consultant',
-      contribution: 'Suggested the floating input box and community features',
+      id: 'blvcklight',
+      name: 'BLVCKLIGHT',
+      handle: '@BLVCKLIGHTai',
+      role: 'AI Model Consultant',
+      contribution: 'Fed ideas on model selection and priority in workflow enhancements',
       avatar: null,
-      social: null,
+      social: 'https://x.com/BLVCKLIGHTai',
       type: 'advisor'
     },
     {
