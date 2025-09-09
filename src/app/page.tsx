@@ -129,40 +129,52 @@ export default function LandingPage() {
                   <p className="text-gray-300 text-xs">Text & Image-to-Video</p>
                 </div>
 
-                {/* Gemini */}
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                {/* Gemini - Coming Soon */}
+                <div className="bg-white bg-opacity-5 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-10 text-center opacity-60 relative">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                    <img src="/gemini-color.svg" alt="Gemini" className="w-10 h-10" />
+                    <img src="/gemini-color.svg" alt="Gemini" className="w-10 h-10 grayscale" />
                   </div>
                   <h3 className="text-white font-semibold mb-2">Gemini</h3>
-                  <p className="text-gray-300 text-xs">Text-to-Image</p>
+                  <p className="text-gray-400 text-xs">Text-to-Image</p>
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
+                    Coming Soon
+                  </div>
                 </div>
 
-                {/* Flux */}
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                {/* Flux - Coming Soon */}
+                <div className="bg-white bg-opacity-5 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-10 text-center opacity-60 relative">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-                    <img src="/flux.svg" alt="Flux" className="w-10 h-10" />
+                    <img src="/flux.svg" alt="Flux" className="w-10 h-10 grayscale" />
                   </div>
                   <h3 className="text-white font-semibold mb-2">Flux</h3>
-                  <p className="text-gray-300 text-xs">Advanced Generation</p>
+                  <p className="text-gray-400 text-xs">Advanced Generation</p>
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
+                    Coming Soon
+                  </div>
                 </div>
 
-                {/* Ideogram */}
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                {/* Ideogram - Coming Soon */}
+                <div className="bg-white bg-opacity-5 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-10 text-center opacity-60 relative">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <img src="/ideogram.svg" alt="Ideogram" className="w-10 h-10" />
+                    <img src="/ideogram.svg" alt="Ideogram" className="w-10 h-10 grayscale" />
                   </div>
                   <h3 className="text-white font-semibold mb-2">Ideogram</h3>
-                  <p className="text-gray-300 text-xs">Text Generation</p>
+                  <p className="text-gray-400 text-xs">Text Generation</p>
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
+                    Coming Soon
+                  </div>
                 </div>
 
-                {/* ElevenLabs */}
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                {/* ElevenLabs - Coming Soon */}
+                <div className="bg-white bg-opacity-5 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-10 text-center opacity-60 relative">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <img src="/elevenlabs.svg" alt="ElevenLabs" className="w-10 h-10" />
+                    <img src="/elevenlabs.svg" alt="ElevenLabs" className="w-10 h-10 grayscale" />
                   </div>
                   <h3 className="text-white font-semibold mb-2">ElevenLabs</h3>
-                  <p className="text-gray-300 text-xs">Voice Synthesis</p>
+                  <p className="text-gray-400 text-xs">Voice Synthesis</p>
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
+                    Coming Soon
+                  </div>
                 </div>
               </div>
             </div>
