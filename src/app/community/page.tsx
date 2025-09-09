@@ -167,11 +167,11 @@ export default function CommunityPage() {
   });
 
   const [userStats, setUserStats] = useState({
-    totalUsers: 52,
-    activeUsers: 17,
-    newUsers24h: 12,
-    totalGenerations: 439,
-    recentActivity: 439,
+    totalUsers: 0,
+    activeUsers: 0,
+    newUsers24h: 0,
+    totalGenerations: 0,
+    recentActivity: 0,
     lastUpdated: new Date(),
     period: 'Loading...'
   });
@@ -268,10 +268,10 @@ export default function CommunityPage() {
       
       if (data.success && data.data) {
         setUserStats({
-          totalUsers: data.data.totalUsers || 52,
-          activeUsers: data.data.activeUsers || 8,
-          newUsers24h: data.data.newUsers24h || 3,
-          totalGenerations: data.data.totalGenerations || 6910,
+          totalUsers: data.data.totalUsers || 0,
+          activeUsers: data.data.activeUsers || 0,
+          newUsers24h: data.data.newUsers24h || 0,
+          totalGenerations: data.data.totalGenerations || 0,
           recentActivity: data.data.recentActivity || 150,
           lastUpdated: new Date(data.data.lastUpdated || new Date()),
           period: data.data.period || 'Real-time data'
