@@ -4,6 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 export async function GET(request: NextRequest) {
   try {
     console.log('📊 [UserStats] Fetching comprehensive user statistics...');
+    console.log('🔍 [UserStats] Environment check:', {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_KEY
+    });
     
     // Check if environment variables are available
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_KEY) {
@@ -11,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
-          totalUsers: 47, // Updated to match actual Supabase count
+          totalUsers: 50, // Updated to match actual Supabase count
           activeUsers: 12,
           newUsers24h: 5,
           totalGenerations: 6910,

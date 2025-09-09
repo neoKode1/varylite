@@ -166,7 +166,7 @@ export default function CommunityPage() {
   });
 
   const [userStats, setUserStats] = useState({
-    totalUsers: 47,
+    totalUsers: 50,
     activeUsers: 17,
     newUsers24h: 12,
     totalGenerations: 439,
