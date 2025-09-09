@@ -22,8 +22,8 @@ async function getRealFalBalance() {
 
   console.log('🔄 Getting manual FAL AI balance...');
   
-      // Manual balance - updated by user as needed
-      const manualBalance = 45.19; // Current actual FAL AI balance
+       // Manual balance - updated by user as needed
+       const manualBalance = 43.51; // Current actual FAL AI balance
   const balanceStatus = 'healthy';
   
   console.log(`💰 Using manual balance: $${manualBalance}`);
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
     
     // Return fallback data on error
     return NextResponse.json({
-      current: 0,
+      current: 43.51,
       goal: 363,
       weeklyCost: 363,
       energyLevel: 0,
