@@ -3964,6 +3964,42 @@ export default function Home() {
                   })}
                 </div>
                 
+                {/* Model Selection Dropdown */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mb-3">
+                    <select
+                      value={generationMode || ''}
+                      onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                      className="w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 border-opacity-30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+                      style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                    >
+                      <option value="">Select Model</option>
+                      {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
+                        <>
+                          <option value="nano-banana">🍌 Nano Banana (Character Variations)</option>
+                          <option value="minimax-2.0">🎬 Minimax 2.0 (Image-to-Video)</option>
+                          <option value="kling-2.1-master">🎥 Kling 2.1 Master (Image-to-Video)</option>
+                          <option value="veo3-fast">⚡ Veo3 Fast (Image-to-Video)</option>
+                        </>
+                      )}
+                      {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
+                        <option value="runway-video">Runway Aleph (Video Processing)</option>
+                      )}
+                      {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
+                        <option value="endframe">EndFrame (Start → End Video)</option>
+                      )}
+                      {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
+                        <>
+                          <option value="runway-t2i">🎨 Runway T2I (Text-to-Image)</option>
+                          <option value="veo3-fast-t2v">⚡ Veo3 Fast (Text-to-Video)</option>
+                          <option value="minimax-2-t2v">🎬 Minimax 2.0 (Text-to-Video)</option>
+                          <option value="kling-2.1-master-t2v">🎥 Kling 2.1 Master (Text-to-Video)</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
+                
                 <textarea
                   id="prompt"
                   data-prompt-field="true"
