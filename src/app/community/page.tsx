@@ -143,7 +143,7 @@ export default function CommunityPage() {
   ];
 
   const [fundingData, setFundingData] = useState({
-    current: 40.34,
+    current: 19.85,
     goal: 550,
     weeklyCost: 550,
     lastUpdated: new Date(),
@@ -233,7 +233,7 @@ export default function CommunityPage() {
       const data = await response.json();
       
       setFundingData({
-        current: data.current || 40.34,
+        current: data.current || 19.85,
         goal: data.goal || 550,
         weeklyCost: data.weeklyCost || 550,
         lastUpdated: new Date(data.lastUpdated || new Date()),
@@ -643,21 +643,13 @@ export default function CommunityPage() {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative"
-      style={{
-        backgroundImage: `url('/adarkorchestra_28188_In_the_style_of_glitch_transcendental_co_657b00f6-f6c5-41b4-8e19-425331e21112_1.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
+      className="min-h-screen bg-black relative"
     >
       {/* Header with Profile Access */}
       <Header 
         onSignUpClick={handleSignUp}
         onSignInClick={handleSignIn}
       />
-      {/* Subtle overlay for better text readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       
       {/* Main Content */}
       <div className="relative z-10 pt-4">
@@ -1063,113 +1055,189 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {/* Floating Post Input */}
+      {/* Desktop Floating Post Input - Match Generate Page Styling */}
       {user ? (
         <div 
-          className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 w-1/3 z-40 bg-gray-800 bg-opacity-90 backdrop-blur-md rounded-lg p-3 border border-gray-700 border-opacity-30 transition-all duration-200 ${
+          className={`generate-floating-input ${
             isDragOver ? 'border-purple-400 border-opacity-60 bg-purple-900 bg-opacity-30' : ''
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <form onSubmit={handlePostSubmit} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {user.user_metadata?.avatar_url ? (
-                  <img 
-                    src={user.user_metadata.avatar_url} 
-                    alt={user.user_metadata?.full_name || 'User'}
-                    className="w-full h-full object-cover"
+          {/* Simple Image Preview for Community Posts */}
+          {uploadedImages.length > 0 && (
+            <div className="flex gap-2 mb-3 overflow-x-auto">
+              {uploadedImages.map((image, index) => (
+                <div 
+                  key={index} 
+                  className="relative flex-shrink-0 transition-all duration-200"
+                >
+                  <img
+                    src={image}
+                    alt={`Image ${index + 1}`}
+                    className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
                   />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <User className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <textarea
-                  value={newPost}
-                  onChange={(e) => setNewPost(e.target.value)}
-                  placeholder="Share your thoughts..."
-                  className="w-full bg-gray-700 bg-opacity-30 border border-gray-600 border-opacity-30 rounded-lg px-2 py-1 text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm text-sm"
-                  rows={1}
-                  maxLength={500}
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                {/* File Upload Button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1 text-gray-400 hover:text-purple-400 text-xs transition-colors p-1"
-                >
-                  <Image className="w-3 h-3" />
-                </button>
-                
-                <button
-                  type="submit"
-                  disabled={(!newPost.trim() && uploadedImages.length === 0) || isLoading}
-                  className="px-3 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 text-sm"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Send className="w-3 h-3" />
-                  )}
-                </button>
-              </div>
-            </div>
-            
-            {/* Uploaded Images Preview - Compact */}
-            {uploadedImages.length > 0 && (
-              <div className="mt-2">
-                <div className="flex gap-1 overflow-x-auto">
-                  {uploadedImages.map((image, index) => (
-                    <div key={index} className="relative group flex-shrink-0">
-                      <img 
-                        src={image} 
-                        alt={`Upload preview ${index + 1}`}
-                        className="w-12 h-12 object-cover rounded border border-gray-600 border-opacity-30"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
-                      >
-                        <X className="w-2 h-2" />
-                      </button>
-                    </div>
-                  ))}
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
-              </div>
-            )}
-            
-            {/* Character count */}
-            <div className="flex justify-between items-center text-xs text-gray-400">
-              <span>{newPost.length}/500</span>
-              {uploadedImages.length === 0 && (
-                <span>or drag & drop images</span>
-              )}
+              ))}
             </div>
+          )}
+          
+          <textarea
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            placeholder="Share your thoughts..."
+            className="generate-floating-textarea"
+            rows={1}
+            maxLength={500}
+            style={{ fontSize: '16px' }} // Prevents zoom on iOS
+          />
+          
+          <div className="generate-floating-buttons">
+            {/* File Upload Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="generate-floating-upload-button"
+              title="Upload files"
+            >
+              <Upload className="generate-floating-upload-icon" />
+            </button>
             
-            {/* Hidden File Input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFileInputChange}
-              className="hidden"
-            />
-          </form>
+            {/* Send Button */}
+            <button
+              onClick={handlePostSubmit}
+              disabled={(!newPost.trim() && uploadedImages.length === 0) || isLoading}
+              className="generate-floating-send-button"
+              title="Post"
+            >
+              {isLoading ? (
+                <Loader2 className="generate-floating-icon animate-spin" />
+              ) : (
+                <Send className="generate-floating-icon" />
+              )}
+            </button>
+          </div>
+          
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
         </div>
       ) : (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-1/3 z-40 bg-gray-800 bg-opacity-90 backdrop-blur-md rounded-lg p-3 border border-gray-700 border-opacity-30 text-center">
           <div className="flex items-center justify-center gap-2">
             <MessageCircle className="w-4 h-4 text-gray-400" />
             <span className="text-gray-400 text-sm">Sign in to join the conversation</span>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleSignIn}
+                className="px-3 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded text-sm font-medium hover:from-purple-600 hover:to-blue-600 transition-all"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={handleSignUp}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-all"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Post Input - Match Generate Page Styling */}
+      {user ? (
+        <div className="mobile-chat-interface">
+          <div className="mobile-input-container">
+            {/* Simple Image Preview for Community Posts */}
+            {uploadedImages.length > 0 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto">
+                {uploadedImages.map((image, index) => (
+                  <div 
+                    key={index} 
+                    className="relative flex-shrink-0 transition-all duration-200"
+                  >
+                    <img
+                      src={image}
+                      alt={`Image ${index + 1}`}
+                      className="w-10 h-10 object-cover rounded-lg border border-white border-opacity-20"
+                    />
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="w-2 h-2" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <textarea
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              placeholder="Share your thoughts..."
+              className="mobile-chat-input"
+              rows={1}
+              maxLength={500}
+            />
+            
+            <div className="flex items-center gap-2">
+              {/* File Upload Button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"
+                title="Upload files"
+              >
+                <Upload className="w-4 h-4 text-white" />
+              </button>
+              
+              {/* Send Button */}
+              <button
+                onClick={handlePostSubmit}
+                disabled={(!newPost.trim() && uploadedImages.length === 0) || isLoading}
+                className="mobile-send-button"
+                title="Post"
+              >
+                {isLoading ? (
+                  <Loader2 className="mobile-send-icon animate-spin" />
+                ) : (
+                  <Send className="mobile-send-icon" />
+                )}
+              </button>
+            </div>
+          </div>
+          
+          {/* Mobile File Upload Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+        </div>
+      ) : (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black bg-opacity-98 backdrop-blur-20px border-t border-white border-opacity-15 p-3 pb-safe">
+          <div className="community-mobile-input-container">
+            <div className="flex-1 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">Sign in to join the conversation</span>
+            </div>
             <div className="flex gap-2">
               <button 
                 onClick={handleSignIn}
