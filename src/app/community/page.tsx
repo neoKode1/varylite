@@ -95,13 +95,23 @@ export default function CommunityPage() {
       const data = await response.json();
       
       if (data.success) {
-        const postsWithUserInfo = data.data.map((post: any) => ({
-          ...post,
-          userName: post.profiles?.display_name || post.profiles?.username || 'Anonymous',
-          userAvatar: post.profiles?.avatar_url || undefined,
-          isLiked: false, // Will be updated based on user interactions
-          isReposted: false
-        }));
+        console.log('📊 [COMMUNITY PAGE] Posts data:', data.data);
+        const postsWithUserInfo = data.data.map((post: any) => {
+          console.log('👤 [COMMUNITY PAGE] Post user data:', {
+            postId: post.id,
+            userId: post.user_id,
+            profile: post.profiles,
+            displayName: post.profiles?.display_name,
+            username: post.profiles?.username
+          });
+          return {
+            ...post,
+            userName: post.profiles?.display_name || post.profiles?.username || 'Anonymous',
+            userAvatar: post.profiles?.avatar_url || undefined,
+            isLiked: false, // Will be updated based on user interactions
+            isReposted: false
+          };
+        });
         setPosts(postsWithUserInfo);
       }
     } catch (error) {

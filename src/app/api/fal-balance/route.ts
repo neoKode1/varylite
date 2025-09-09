@@ -22,8 +22,8 @@ async function getRealFalBalance() {
 
   console.log('🔄 Getting manual FAL AI balance...');
   
-  // Manual balance - updated by user as needed
-  const manualBalance = 49.16; // Current actual FAL AI balance
+      // Manual balance - updated by user as needed
+      const manualBalance = 45.19; // Current actual FAL AI balance
   const balanceStatus = 'healthy';
   
   console.log(`💰 Using manual balance: $${manualBalance}`);
