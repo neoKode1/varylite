@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Try to get real balance by making a test request
-    let balance = 56.34; // Current FAL balance from dashboard (updated from live data)
+    let balance = 0; // Will be determined by API response
     let balanceStatus = 'unknown';
     let lastError = null;
     
