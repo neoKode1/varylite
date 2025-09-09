@@ -4449,7 +4449,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                               </button>
                 ) : hasVideoFiles ? (
@@ -4463,7 +4463,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                           </button>
                 ) : (
@@ -4477,7 +4477,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                               </button>
                 )}
