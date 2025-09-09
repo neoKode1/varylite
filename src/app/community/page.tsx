@@ -97,8 +97,8 @@ export default function CommunityPage() {
       if (data.success) {
         const postsWithUserInfo = data.data.map((post: any) => ({
           ...post,
-          userName: post.user_id?.split('@')[0] || 'Anonymous',
-          userAvatar: undefined, // Will be populated from user metadata
+          userName: post.profiles?.display_name || post.profiles?.username || 'Anonymous',
+          userAvatar: post.profiles?.avatar_url || undefined,
           isLiked: false, // Will be updated based on user interactions
           isReposted: false
         }));
@@ -118,8 +118,8 @@ export default function CommunityPage() {
       if (data.success) {
         const commentsWithUserInfo = data.data.map((comment: any) => ({
           ...comment,
-          userName: comment.user_id?.split('@')[0] || 'Anonymous',
-          userAvatar: undefined // Will be populated from user metadata
+          userName: comment.profiles?.display_name || comment.profiles?.username || 'Anonymous',
+          userAvatar: comment.profiles?.avatar_url || undefined
         }));
         setComments(prev => ({ ...prev, [postId]: commentsWithUserInfo }));
       }

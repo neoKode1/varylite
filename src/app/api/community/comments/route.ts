@@ -14,10 +14,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Post ID required' }, { status: 400 });
     }
 
-    // Fetch comments for a specific post
+    // Fetch comments for a specific post with user information
     const { data: comments, error } = await supabase
       .from('community_comments')
-      .select('*')
+      .select(`
+        *,
+        profiles:user_id (
+          id,
+          display_name,
+          avatar_url,
+          username
+        )
+      `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
