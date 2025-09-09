@@ -6,14 +6,18 @@ const supabaseKey = process.env.SUPABASE_KEY!;
 
 export async function GET() {
   try {
+    console.log('📖 [COMMUNITY POSTS] GET request received - fetching posts');
+    
     // Check if Supabase is configured
     if (!supabaseUrl || !supabaseKey) {
-      console.log('Supabase not configured, returning empty posts');
+      console.log('❌ [COMMUNITY POSTS] Supabase not configured, returning empty posts');
       return NextResponse.json({ success: true, data: [] });
     }
 
+    console.log('✅ [COMMUNITY POSTS] Supabase configured, creating client');
     const supabase = createClient(supabaseUrl, supabaseKey);
     
+    console.log('🔍 [COMMUNITY POSTS] Fetching posts with user profiles...');
     // Fetch posts with user information
     const { data: posts, error } = await supabase
       .from('community_posts')
@@ -29,15 +33,22 @@ export async function GET() {
       .order('created_at', { ascending: false })
       .limit(50);
 
+    console.log('📊 [COMMUNITY POSTS] Fetch response:', { 
+      success: !error, 
+      error: error ? error.message : null,
+      postCount: posts ? posts.length : 0
+    });
+
     if (error) {
-      console.error('Error fetching posts:', error);
+      console.error('❌ [COMMUNITY POSTS] Error fetching posts:', error);
       // Return empty array instead of error to prevent 500s
       return NextResponse.json({ success: true, data: [] });
     }
 
+    console.log('✅ [COMMUNITY POSTS] Returning posts:', posts?.length || 0);
     return NextResponse.json({ success: true, data: posts || [] });
   } catch (error) {
-    console.error('Error in GET /api/community/posts:', error);
+    console.error('❌ [COMMUNITY POSTS] Error in GET /api/community/posts:', error);
     // Return empty array instead of error to prevent 500s
     return NextResponse.json({ success: true, data: [] });
   }
@@ -45,9 +56,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 [COMMUNITY POSTS] POST request received');
+    
     // Check if Supabase is configured
     if (!supabaseUrl || !supabaseKey) {
-      console.log('Supabase not configured, returning mock success');
+      console.log('❌ [COMMUNITY POSTS] Supabase not configured, returning mock success');
       return NextResponse.json({ 
         success: true, 
         data: { 
@@ -57,23 +70,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('✅ [COMMUNITY POSTS] Supabase configured, creating client');
     const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    console.log('📝 [COMMUNITY POSTS] Parsing request body...');
     const body = await request.json();
+    console.log('📦 [COMMUNITY POSTS] Request body:', JSON.stringify(body, null, 2));
     
     const { content, images, user_id } = body;
+    console.log('🔍 [COMMUNITY POSTS] Extracted data:', { 
+      content: content ? `${content.substring(0, 50)}...` : 'empty',
+      images: images ? `${images.length} images` : 'no images',
+      user_id: user_id ? `${user_id.substring(0, 8)}...` : 'missing'
+    });
 
     if (!content && (!images || images.length === 0)) {
+      console.log('❌ [COMMUNITY POSTS] Validation failed: No content or images provided');
       return NextResponse.json({ error: 'Content or images required' }, { status: 400 });
     }
 
     // Allow posts with just content, just images, or both
     const postContent = content || '';
     const postImages = images || [];
+    console.log('✅ [COMMUNITY POSTS] Validation passed, preparing post data');
 
     if (!user_id) {
+      console.log('❌ [COMMUNITY POSTS] Validation failed: No user_id provided');
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
+    console.log('💾 [COMMUNITY POSTS] Attempting to insert post into database...');
     // Create the post
     const { data: post, error } = await supabase
       .from('community_posts')
@@ -88,8 +114,14 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
+    console.log('📊 [COMMUNITY POSTS] Database response:', { 
+      success: !error, 
+      error: error ? error.message : null,
+      postId: post?.id || 'none'
+    });
+
     if (error) {
-      console.error('Error creating post:', error);
+      console.error('❌ [COMMUNITY POSTS] Database error:', error);
       return NextResponse.json({ 
         error: 'Failed to create post', 
         details: error.message,
@@ -97,8 +129,11 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    console.log('✅ [COMMUNITY POSTS] Post created successfully:', post.id);
+
     // Track analytics (optional, don't fail if this fails)
     try {
+      console.log('📈 [COMMUNITY POSTS] Tracking analytics...');
       await supabase
         .from('analytics_events')
         .insert({
@@ -110,10 +145,12 @@ export async function POST(request: NextRequest) {
             image_count: images ? images.length : 0
           }
         });
+      console.log('✅ [COMMUNITY POSTS] Analytics tracked successfully');
     } catch (analyticsError) {
-      console.log('Analytics tracking failed, but post was created successfully');
+      console.log('⚠️ [COMMUNITY POSTS] Analytics tracking failed, but post was created successfully');
     }
 
+    console.log('🎉 [COMMUNITY POSTS] Returning success response');
     return NextResponse.json({ success: true, data: post });
   } catch (error) {
     console.error('Error in POST /api/community/posts:', error);

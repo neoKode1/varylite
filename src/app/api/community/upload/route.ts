@@ -6,9 +6,11 @@ const supabaseKey = process.env.SUPABASE_KEY!;
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📤 [COMMUNITY UPLOAD] POST request received');
+    
     // Check if Supabase is configured
     if (!supabaseUrl || !supabaseKey) {
-      console.log('Supabase not configured, returning mock upload success');
+      console.log('❌ [COMMUNITY UPLOAD] Supabase not configured, returning mock upload success');
       return NextResponse.json({ 
         success: true, 
         data: { 
@@ -18,10 +20,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('✅ [COMMUNITY UPLOAD] Supabase configured, creating client');
     const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    console.log('📝 [COMMUNITY UPLOAD] Parsing form data...');
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('user_id') as string;
+    
+    console.log('🔍 [COMMUNITY UPLOAD] Form data:', { 
+      hasFile: !!file,
+      fileName: file?.name || 'none',
+      fileSize: file?.size || 0,
+      userId: userId ? `${userId.substring(0, 8)}...` : 'missing'
+    });
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
