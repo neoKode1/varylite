@@ -17,13 +17,7 @@ export async function GET(request: NextRequest) {
     // Fetch comments for a specific post
     const { data: comments, error } = await supabase
       .from('community_comments')
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 

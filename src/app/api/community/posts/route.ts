@@ -11,13 +11,7 @@ export async function GET() {
     // Fetch posts with user information
     const { data: posts, error } = await supabase
       .from('community_posts')
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
 

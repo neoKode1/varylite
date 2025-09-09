@@ -97,8 +97,8 @@ export default function CommunityPage() {
       if (data.success) {
         const postsWithUserInfo = data.data.map((post: any) => ({
           ...post,
-          userName: post.profiles?.full_name || post.user_id?.split('@')[0] || 'Anonymous',
-          userAvatar: post.profiles?.avatar_url,
+          userName: post.user_id?.split('@')[0] || 'Anonymous',
+          userAvatar: undefined, // Will be populated from user metadata
           isLiked: false, // Will be updated based on user interactions
           isReposted: false
         }));
@@ -118,8 +118,8 @@ export default function CommunityPage() {
       if (data.success) {
         const commentsWithUserInfo = data.data.map((comment: any) => ({
           ...comment,
-          userName: comment.profiles?.full_name || comment.user_id?.split('@')[0] || 'Anonymous',
-          userAvatar: comment.profiles?.avatar_url
+          userName: comment.user_id?.split('@')[0] || 'Anonymous',
+          userAvatar: undefined // Will be populated from user metadata
         }));
         setComments(prev => ({ ...prev, [postId]: commentsWithUserInfo }));
       }
@@ -493,11 +493,13 @@ export default function CommunityPage() {
 
   // Handle authentication modal
   const handleSignIn = () => {
+    console.log('Sign In button clicked');
     setAuthModalMode('signin');
     setShowAuthModal(true);
   };
 
   const handleSignUp = () => {
+    console.log('Sign Up button clicked');
     setAuthModalMode('signup');
     setShowAuthModal(true);
   };
@@ -520,7 +522,10 @@ export default function CommunityPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push('/generate')}
+                onClick={() => {
+                  console.log('Generate button clicked');
+                  router.push('/generate');
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg"
                 title="Back to Generate"
               >
