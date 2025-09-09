@@ -22,8 +22,8 @@ async function getRealFalBalance() {
 
   console.log('🔄 Getting manual FAL AI balance...');
   
-       // Manual balance - updated by user as needed
-       const manualBalance = 43.51; // Current actual FAL AI balance
+              // Manual balance - updated by user as needed
+              const manualBalance = 35.87; // Current actual FAL AI balance
   const balanceStatus = 'healthy';
   
   console.log(`💰 Using manual balance: $${manualBalance}`);
@@ -134,17 +134,17 @@ export async function GET(request: NextRequest) {
     console.error('Failed to fetch fal.com balance:', error);
     
     // Return fallback data on error
-    return NextResponse.json({
-      current: 43.51,
-      goal: 363,
-      weeklyCost: 363,
-      energyLevel: 0,
-      energyStatus: 'critical',
-      energyColor: 'red',
-      energyText: 'Could be worse, Could be a CPP',
-      lastUpdated: new Date().toISOString(),
-      source: 'fal.com',
-      error: 'Failed to fetch balance'
-    });
+           return NextResponse.json({
+             current: 35.87,
+             goal: 363,
+             weeklyCost: 363,
+             energyLevel: 0,
+             energyStatus: 'critical',
+             energyColor: 'red',
+             energyText: 'Could be worse, Could be a CPP',
+             lastUpdated: new Date().toISOString(),
+             source: 'fal.com',
+             error: 'Failed to fetch balance'
+           });
   }
 }
