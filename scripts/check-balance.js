@@ -82,8 +82,19 @@ async function checkFalBalance() {
           log(`💡 Consider adding funds to FAL AI account`, 'yellow');
         } else if (balance < 50) {
           log(`⚠️  Balance is getting low ($${balance})`, 'yellow');
+          log(`💡 Consider adding funds soon to avoid service interruption`, 'yellow');
         } else {
           log(`✅ Balance is healthy ($${balance})`, 'green');
+        }
+        
+        // Show estimated generations if available
+        if (response.data.estimatedGenerations !== undefined) {
+          log(`📊 Estimated generations remaining: ${response.data.estimatedGenerations}`, 'cyan');
+        }
+        
+        // Show low balance alert if present
+        if (response.data.lowBalanceAlert) {
+          log(`🚨 LOW BALANCE ALERT: Balance below $50 threshold!`, 'red');
         }
         
         return true;
