@@ -1,10 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fal } from '@fal-ai/client';
-
-// Configure FAL client
-fal.config({
-  credentials: process.env.FAL_KEY
-});
 
 // Cache for balance data to avoid excessive API calls
 let balanceCache: {
@@ -17,76 +11,6 @@ let balanceCache: {
   ttl: 5 * 60 * 1000 // 5 minutes
 };
 
-// Function to test balance by making multiple requests with different scenarios
-async function testBalanceWithMultipleRequests() {
-  console.log('🔍 Testing balance with multiple request scenarios...');
-  
-  const testScenarios = [
-    {
-      name: 'Nano Banana (cheapest)',
-      model: 'fal-ai/nano-banana',
-      input: {
-        prompt: 'A simple test image for balance checking',
-        image_url: 'https://storage.googleapis.com/falserverless/example_inputs/nano_banana_img.jpg'
-      },
-      cost: 0.0398
-    }
-  ];
-  
-  let lowestWorkingCost = null;
-  let highestFailingCost = null;
-  
-  for (const scenario of testScenarios) {
-    try {
-      console.log(`🧪 Testing ${scenario.name} ($${scenario.cost})...`);
-      
-      const result = await fal.subscribe(scenario.model, {
-        input: scenario.input,
-        logs: false
-      });
-      
-      console.log(`✅ ${scenario.name} succeeded - balance sufficient for $${scenario.cost}`);
-      if (!lowestWorkingCost || scenario.cost < lowestWorkingCost) {
-        lowestWorkingCost = scenario.cost;
-      }
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.log(`❌ ${scenario.name} failed: ${errorMessage}`);
-      
-      // Check if it's a balance-related error
-      if (errorMessage && (
-        errorMessage.includes('balance') || 
-        errorMessage.includes('credit') || 
-        errorMessage.includes('insufficient') ||
-        errorMessage.includes('payment') ||
-        errorMessage.includes('quota') ||
-        errorMessage.includes('limit')
-      )) {
-        console.log(`🚨 Balance insufficient for $${scenario.cost}`);
-        if (!highestFailingCost || scenario.cost > highestFailingCost) {
-          highestFailingCost = scenario.cost;
-        }
-      }
-    }
-  }
-  
-  // Estimate balance based on test results
-  if (lowestWorkingCost && highestFailingCost) {
-    const estimatedBalance = (lowestWorkingCost + highestFailingCost) / 2;
-    console.log(`💰 Estimated balance: $${estimatedBalance.toFixed(2)} (between $${highestFailingCost} and $${lowestWorkingCost})`);
-    return estimatedBalance;
-  } else if (lowestWorkingCost) {
-    console.log(`💰 Balance sufficient for at least $${lowestWorkingCost}`);
-    return lowestWorkingCost * 2; // Conservative estimate
-  } else if (highestFailingCost) {
-    console.log(`💰 Balance insufficient for $${highestFailingCost}`);
-    return highestFailingCost * 0.5; // Conservative estimate
-  } else {
-    console.log(`⚠️ Could not determine balance from test results`);
-    return 56.34; // Fallback
-  }
-}
 
 async function getRealFalBalance() {
   // Check cache first
@@ -96,201 +20,27 @@ async function getRealFalBalance() {
     return balanceCache.data;
   }
 
-  console.log('🔄 Attempting to get real FAL AI balance...');
+  console.log('🔄 Getting manual FAL AI balance...');
   
-  try {
-    // Make a simple test request to check if API is working
-    console.log('🧪 Making test request to check API connectivity...');
-    
-    const testResult = await fal.subscribe("fal-ai/nano-banana", {
-      input: {
-        prompt: "balance check test",
-        image_url: "https://storage.googleapis.com/falserverless/example_inputs/nano_banana_img.jpg"
-      },
-      logs: false
-    });
-    
-    console.log('✅ API connectivity test successful');
-    
-    // Since FAL AI doesn't provide a direct balance API, we need to implement
-    // a different approach. Let's try to make a request that might fail due to
-    // balance and give us balance information in the error message
-    console.log('🔍 Attempting to trigger balance error to extract balance info...');
-    
-    let estimatedBalance = 0; // Start with 0, will be updated if we get balance info
-    let balanceStatus = 'healthy';
-    let balanceError = null;
-    
-    // Try to make a request that might fail due to balance issues
-    try {
-      // Make a request with a very expensive model to potentially trigger balance error
-      await fal.subscribe("fal-ai/veo3/fast/image-to-video", {
-        input: {
-          image_url: "https://storage.googleapis.com/falserverless/example_inputs/nano_banana_img.jpg",
-          prompt: "balance test"
-        },
-        logs: false
-      });
-      
-      console.log('✅ Expensive model test succeeded - balance appears sufficient');
-      
-      // If the expensive model works, try an even more expensive one
-      try {
-        await fal.subscribe("fal-ai/minimax/hailuo-02/pro/image-to-video", {
-          input: {
-            image_url: "https://storage.googleapis.com/falserverless/example_inputs/nano_banana_img.jpg",
-            prompt: "balance test"
-          },
-          logs: false
-        });
-        
-        console.log('✅ High-cost model test succeeded - balance appears very sufficient');
-        
-      } catch (highCostError) {
-        const errorMessage = highCostError instanceof Error ? highCostError.message : 'Unknown error';
-        console.log('🔍 High-cost model test failed:', errorMessage);
-        
-        // Check if it's a balance-related error
-        if (errorMessage && (
-          errorMessage.includes('balance') || 
-          errorMessage.includes('credit') || 
-          errorMessage.includes('insufficient') ||
-          errorMessage.includes('payment') ||
-          errorMessage.includes('quota') ||
-          errorMessage.includes('limit')
-        )) {
-          balanceStatus = 'low';
-          balanceError = errorMessage;
-          console.log('🚨 Balance issue detected from high-cost model test');
-          
-          // Try to extract balance from error message
-          const balanceMatch = errorMessage.match(/(\d+\.?\d*)/);
-          if (balanceMatch) {
-            estimatedBalance = parseFloat(balanceMatch[1]);
-            console.log(`💰 Extracted balance from error: $${estimatedBalance}`);
-          } else {
-            estimatedBalance = 0;
-            console.log('⚠️ Could not extract balance from error, assuming $0');
-          }
-        }
-      }
-      
-    } catch (balanceError) {
-      const errorMessage = balanceError instanceof Error ? balanceError.message : 'Unknown error';
-      console.log('🔍 Expensive model test failed:', errorMessage);
-      
-      // Check if it's a balance-related error
-      if (errorMessage && (
-        errorMessage.includes('balance') || 
-        errorMessage.includes('credit') || 
-        errorMessage.includes('insufficient') ||
-        errorMessage.includes('payment') ||
-        errorMessage.includes('quota') ||
-        errorMessage.includes('limit')
-      )) {
-        balanceStatus = 'low';
-        console.log('🚨 Balance issue detected from expensive model test');
-        
-        // Try to extract balance from error message
-        const balanceMatch = errorMessage.match(/(\d+\.?\d*)/);
-        if (balanceMatch) {
-          estimatedBalance = parseFloat(balanceMatch[1]);
-          console.log(`💰 Extracted balance from error: $${estimatedBalance}`);
-        } else {
-          estimatedBalance = 0;
-          console.log('⚠️ Could not extract balance from error, assuming $0');
-        }
-      }
-    }
-    
-    // If we still haven't detected a balance issue, use the actual balance
-    if (balanceStatus === 'healthy' && estimatedBalance === 0) {
-      console.log('⚠️ Cannot determine exact balance from FAL AI API');
-      console.log('💡 FAL AI does not provide a direct balance endpoint');
-      console.log('💡 Balance detection relies on error messages from failed requests');
-      console.log('💡 Since API requests are succeeding, balance appears sufficient');
-      
-      // Use the actual balance for community tracking purposes
-      estimatedBalance = 49.16; // Current actual FAL AI balance
-      balanceStatus = 'healthy';
-      console.log(`💰 Using actual balance for community tracking: $${estimatedBalance}`);
-    }
-    
-    const balanceData = {
-      balance: estimatedBalance,
-      status: balanceStatus,
-      lastError: balanceError,
-      lastChecked: new Date().toISOString()
-    };
-    
-    // Update cache
-    balanceCache.data = balanceData;
-    balanceCache.lastUpdated = Date.now();
-    
-    console.log(`✅ FAL AI balance check completed: $${estimatedBalance} (Status: ${balanceStatus})`);
-    return balanceData;
-    
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.log('❌ FAL AI balance check failed:', errorMessage);
-    
-    let balance = 0;
-    let status = 'error';
-    let estimatedGenerations = 0;
-    
-    // Check for balance-related errors and try to extract balance information
-    if (errorMessage && (
-      errorMessage.includes('balance') || 
-      errorMessage.includes('credit') || 
-      errorMessage.includes('insufficient') ||
-      errorMessage.includes('payment') ||
-      errorMessage.includes('quota') ||
-      errorMessage.includes('limit')
-    )) {
-      status = 'low';
-      console.log('🚨 BALANCE ISSUE DETECTED!');
-      
-      // Try to extract balance information from error message
-      const balanceMatch = errorMessage.match(/(\d+\.?\d*)/);
-      if (balanceMatch) {
-        balance = parseFloat(balanceMatch[1]);
-        console.log(`💰 Extracted balance from error: $${balance}`);
-      } else {
-        // If we can't extract exact balance, estimate based on error type
-        balance = 0; // Assume zero if we get balance errors
-        console.log('⚠️ Could not extract exact balance, assuming $0');
-      }
-      
-      // Calculate estimated generations remaining
-      const costPerGeneration = 0.0398; // $0.0398 per image
-      estimatedGenerations = Math.floor(balance / costPerGeneration);
-      console.log(`📊 Estimated generations remaining: ${estimatedGenerations}`);
-      
-    } else if (errorMessage.includes('Unauthorized')) {
-      status = 'auth_error';
-      balance = 0;
-      console.log('🔑 Authentication error - API key issue');
-    } else {
-      // For other errors, use fallback balance
-      balance = 56.34;
-      status = 'error';
-      console.log('⚠️ Other error detected, using fallback balance');
-    }
-    
-    const balanceData = {
-      balance,
-      status,
-      lastError: errorMessage,
-      lastChecked: new Date().toISOString(),
-      estimatedGenerations
-    };
-    
-    // Update cache even on error to avoid repeated failed requests
-    balanceCache.data = balanceData;
-    balanceCache.lastUpdated = Date.now();
-    
-    return balanceData;
-  }
+  // Manual balance - updated by user as needed
+  const manualBalance = 49.16; // Current actual FAL AI balance
+  const balanceStatus = 'healthy';
+  
+  console.log(`💰 Using manual balance: $${manualBalance}`);
+  
+  const balanceData = {
+    balance: manualBalance,
+    status: balanceStatus,
+    lastError: null,
+    lastChecked: new Date().toISOString()
+  };
+  
+  // Update cache
+  balanceCache.data = balanceData;
+  balanceCache.lastUpdated = Date.now();
+  
+  console.log(`✅ FAL AI balance check completed: $${manualBalance} (Status: ${balanceStatus})`);
+  return balanceData;
 }
 
 export async function GET(request: NextRequest) {
