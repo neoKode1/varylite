@@ -17,23 +17,15 @@ export async function GET() {
     console.log('✅ [COMMUNITY POSTS] Supabase configured, creating client');
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    console.log('🔍 [COMMUNITY POSTS] Fetching posts with user profiles...');
-    // Fetch posts with user information
+    console.log('🔍 [COMMUNITY POSTS] Fetching posts first...');
+    // First, fetch posts without user profiles to avoid relationship issues
     const { data: posts, error } = await supabase
       .from('community_posts')
-      .select(`
-        *,
-        profiles:user_id (
-          id,
-          display_name,
-          avatar_url,
-          username
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
 
-    console.log('📊 [COMMUNITY POSTS] Fetch response:', { 
+    console.log('📊 [COMMUNITY POSTS] Posts fetched:', { 
       success: !error, 
       error: error ? error.message : null,
       postCount: posts ? posts.length : 0
@@ -41,12 +33,37 @@ export async function GET() {
 
     if (error) {
       console.error('❌ [COMMUNITY POSTS] Error fetching posts:', error);
-      // Return empty array instead of error to prevent 500s
       return NextResponse.json({ success: true, data: [] });
     }
 
-    console.log('✅ [COMMUNITY POSTS] Returning posts:', posts?.length || 0);
-    return NextResponse.json({ success: true, data: posts || [] });
+    // Now fetch user profiles for each post
+    if (posts && posts.length > 0) {
+      console.log('👥 [COMMUNITY POSTS] Fetching user profiles for posts...');
+      const userIds = [...new Set(posts.map(post => post.user_id))];
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, username')
+        .in('id', userIds);
+
+      console.log('👥 [COMMUNITY POSTS] Profiles fetched:', { 
+        success: !profilesError, 
+        error: profilesError ? profilesError.message : null,
+        profileCount: profiles ? profiles.length : 0
+      });
+
+      // Merge posts with profiles
+      const postsWithProfiles = posts.map(post => ({
+        ...post,
+        profiles: profiles?.find(profile => profile.id === post.user_id) || null
+      }));
+
+      console.log('✅ [COMMUNITY POSTS] Returning posts with profiles:', postsWithProfiles.length);
+      return NextResponse.json({ success: true, data: postsWithProfiles });
+    }
+
+    console.log('✅ [COMMUNITY POSTS] No posts found, returning empty array');
+    return NextResponse.json({ success: true, data: [] });
   } catch (error) {
     console.error('❌ [COMMUNITY POSTS] Error in GET /api/community/posts:', error);
     // Return empty array instead of error to prevent 500s
