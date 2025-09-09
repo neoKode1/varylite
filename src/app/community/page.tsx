@@ -55,6 +55,42 @@ export default function CommunityPage() {
   const [comments, setComments] = useState<{ [postId: string]: Comment[] }>({});
   const [newComment, setNewComment] = useState<{ [postId: string]: string }>({});
   const [isCommenting, setIsCommenting] = useState<{ [postId: string]: boolean }>({});
+  const [showCollaborators, setShowCollaborators] = useState(false);
+  
+  // Collaborators data
+  const collaborators = [
+    {
+      id: 'kazi',
+      name: 'Kazi',
+      handle: '@Kazi5isAlive',
+      role: 'Background Artist',
+      contribution: 'Created the stunning background artwork for the community page',
+      avatar: 'https://pbs.twimg.com/profile_images/your-avatar-url.jpg',
+      social: 'https://x.com/Kazi5isAlive',
+      type: 'artist'
+    },
+    {
+      id: 'feature-advisor-1',
+      name: 'Feature Advisor',
+      handle: '@example',
+      role: 'UI/UX Consultant',
+      contribution: 'Suggested the floating input box and community features',
+      avatar: null,
+      social: null,
+      type: 'advisor'
+    },
+    {
+      id: 'community-moderator',
+      name: 'Community Helper',
+      handle: '@helper',
+      role: 'Community Moderator',
+      contribution: 'Helps moderate discussions and provides user support',
+      avatar: null,
+      social: null,
+      type: 'moderator'
+    }
+  ];
+
   const [fundingData, setFundingData] = useState({
     current: 57.85,
     goal: 550,
@@ -1092,6 +1128,92 @@ export default function CommunityPage() {
           </div>
         </div>
       )}
+
+      {/* Collaborators Modal */}
+      {showCollaborators && (
+        <div 
+          className="fixed left-4 top-1/2 transform -translate-y-1/2 w-80 z-40 bg-gray-800 bg-opacity-90 backdrop-blur-md rounded-lg border border-gray-700 border-opacity-30 transition-all duration-200"
+        >
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold text-lg">Collaborators</h3>
+              <button
+                onClick={() => setShowCollaborators(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {collaborators.map((collaborator) => (
+                <div key={collaborator.id} className="bg-gray-700 bg-opacity-30 rounded-lg p-3 border border-gray-600 border-opacity-20">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {collaborator.avatar ? (
+                        <img 
+                          src={collaborator.avatar} 
+                          alt={collaborator.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className={`w-full h-full rounded-full flex items-center justify-center ${
+                          collaborator.type === 'artist' ? 'bg-gradient-to-r from-purple-500 to-blue-500' :
+                          collaborator.type === 'advisor' ? 'bg-gradient-to-r from-green-500 to-teal-500' :
+                          'bg-gradient-to-r from-orange-500 to-red-500'
+                        }`}>
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-white font-medium text-sm truncate">{collaborator.name}</h4>
+                        {collaborator.social && (
+                          <a 
+                            href={collaborator.social}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            <span className="text-xs">{collaborator.handle}</span>
+                          </a>
+                        )}
+                      </div>
+                      
+                      <div className="text-purple-300 text-xs font-medium mb-1">{collaborator.role}</div>
+                      <p className="text-gray-300 text-xs leading-relaxed">{collaborator.contribution}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-4 pt-3 border-t border-gray-600 border-opacity-20">
+              <p className="text-gray-400 text-xs text-center">
+                Want to contribute? <span className="text-purple-400">Join our community!</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collaborators Toggle Button */}
+      <button
+        onClick={() => setShowCollaborators(!showCollaborators)}
+        className="fixed left-4 top-4 z-50 bg-gray-800 bg-opacity-90 backdrop-blur-md rounded-lg p-3 border border-gray-700 border-opacity-30 hover:bg-opacity-100 transition-all duration-200 group"
+        title="View Collaborators"
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+            <User className="w-3 h-3 text-white" />
+          </div>
+          <span className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">
+            {showCollaborators ? 'Hide' : 'Show'} Team
+          </span>
+        </div>
+      </button>
 
       {/* Authentication Modal */}
       <AuthModal
