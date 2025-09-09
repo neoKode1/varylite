@@ -15,6 +15,26 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📤 Supabase Storage Upload API called');
     
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      console.log('❌ No authorization header provided');
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 });
+    }
+
+    // Extract the token from the header
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('❌ Auth error:', authError);
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+    
+    console.log('✅ User authenticated:', user.id, user.email);
+    
     // Get the file from the request body
     const file = await request.blob();
     console.log('📦 Received blob:', file.size, 'bytes, type:', file.type);
@@ -81,6 +101,7 @@ export async function POST(request: NextRequest) {
         file_type: file.type,
         public_url: publicUrl,
         storage_path: data.path,
+        user_id: user.id,
         created_at: new Date().toISOString()
       });
 
