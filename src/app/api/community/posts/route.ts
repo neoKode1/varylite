@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating post:', error);
-      return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to create post', 
+        details: error.message,
+        code: error.code 
+      }, { status: 500 });
     }
 
     // Track analytics

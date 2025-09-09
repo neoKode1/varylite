@@ -271,6 +271,10 @@ export default function CommunityPage() {
         setUploadedImages([]);
       } else {
         console.error('Failed to create post:', postData.error);
+        console.error('Error details:', postData.details);
+        console.error('Error code:', postData.code);
+        // You could show a user-friendly error message here
+        alert(`Failed to create post: ${postData.details || postData.error}`);
       }
     } catch (error) {
       console.error('Error creating post:', error);

@@ -3699,7 +3699,6 @@ export default function Home() {
           <div>• <span className="text-orange-300 font-medium">{userStats.usageBreakdown.video_generations}</span> Video generations</div>
           <div>• <span className="text-red-300 font-medium">{userStats.usageBreakdown.minimax_endframe}</span> Minimax 2.0 videos</div>
           <div>• <span className="text-purple-300 font-medium">{userStats.usageBreakdown.gemini}</span> Gemini generations</div>
-          <div>• Current balance: <span className="text-yellow-300 font-medium">${fundingData.current.toFixed(2)}</span> (FAL AI balance)</div>
         </div>
                 </div>
               </div>
