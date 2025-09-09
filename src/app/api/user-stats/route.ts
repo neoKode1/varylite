@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create a server-side Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
-);
-
 export async function GET(request: NextRequest) {
   try {
     console.log('📊 [UserStats] Fetching comprehensive user statistics...');
@@ -45,6 +39,12 @@ export async function GET(request: NextRequest) {
         }
       });
     }
+
+    // Create a server-side Supabase client only when environment variables are available
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_KEY
+    );
     
     // Get current timestamp and calculate time ranges
     const now = new Date();
