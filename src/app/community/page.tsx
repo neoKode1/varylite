@@ -925,6 +925,24 @@ export default function CommunityPage() {
 
         {/* Add bottom padding to account for floating input */}
         <div className="pb-32"></div>
+        
+        {/* Artist Credit */}
+        <div className="mt-8 text-center">
+          <div className="bg-gray-800 bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-gray-700 border-opacity-20 inline-block">
+            <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+              <span>Background artwork by</span>
+              <a 
+                href="https://x.com/Kazi5isAlive" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 transition-colors font-medium flex items-center gap-1"
+              >
+                <span>Kazi</span>
+                <span className="text-blue-400">@Kazi5isAlive</span>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Full-Screen Image Modal */}

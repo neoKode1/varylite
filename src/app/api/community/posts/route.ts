@@ -37,20 +37,32 @@ export async function GET() {
     }
 
     // Now fetch user profiles for each post
-    if (posts && posts.length > 0) {
-      console.log('👥 [COMMUNITY POSTS] Fetching user profiles for posts...');
-      const userIds = [...new Set(posts.map(post => post.user_id))];
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url, username')
-        .in('id', userIds);
+         if (posts && posts.length > 0) {
+           console.log('👥 [COMMUNITY POSTS] Fetching user profiles for posts...');
+           const userIds = [...new Set(posts.map(post => post.user_id))];
+           console.log('🔍 [COMMUNITY POSTS] User IDs to fetch profiles for:', userIds);
+           
+           const { data: profiles, error: profilesError } = await supabase
+             .from('profiles')
+             .select('id, display_name, avatar_url, username')
+             .in('id', userIds);
 
-      console.log('👥 [COMMUNITY POSTS] Profiles fetched:', { 
-        success: !profilesError, 
-        error: profilesError ? profilesError.message : null,
-        profileCount: profiles ? profiles.length : 0
-      });
+           console.log('👥 [COMMUNITY POSTS] Profiles fetched:', { 
+             success: !profilesError, 
+             error: profilesError ? profilesError.message : null,
+             profileCount: profiles ? profiles.length : 0,
+             profiles: profiles
+           });
+
+           // If no profiles found, let's check if users exist in auth.users
+           if (!profiles || profiles.length === 0) {
+             console.log('⚠️ [COMMUNITY POSTS] No profiles found, checking auth.users...');
+             const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+             console.log('👤 [COMMUNITY POSTS] Auth users:', { 
+               count: authUsers?.users?.length || 0,
+               error: authError ? authError.message : null
+             });
+           }
 
       // Merge posts with profiles
       const postsWithProfiles = posts.map(post => ({
