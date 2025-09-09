@@ -19,16 +19,18 @@ export async function POST(request: NextRequest) {
   try {
     console.log(`🚀 [${requestId}] Minimax 2.0 I2V - Request started`);
     
-    const { prompt, image_url, duration = "8s", generate_audio = true, resolution = "720p" } = await request.json();
+    const { prompt, image_url, prompt_optimizer = true } = await request.json();
 
     console.log(`📋 [${requestId}] Request parameters:`, {
       prompt: prompt?.substring(0, 100) + (prompt?.length > 100 ? '...' : ''),
       image_url: image_url ? 'Provided' : 'Missing',
-      duration,
-      generate_audio,
-      resolution,
+      prompt_optimizer,
       timestamp: new Date().toISOString()
     });
+    
+    console.log(`🖼️ [${requestId}] Full image URL received:`, image_url);
+    console.log(`🔍 [${requestId}] Image URL type:`, typeof image_url);
+    console.log(`🔍 [${requestId}] Image URL starts with:`, image_url?.substring(0, 50));
 
     if (!prompt || !image_url) {
       console.error(`❌ [${requestId}] Validation failed: Prompt and image_url are required`);
@@ -46,45 +48,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🎬 [${requestId}] Starting Minimax 2.0 generation...`);
+    console.log(`🎬 [${requestId}] Starting Minimax 2.0 Pro generation...`);
     console.log(`📝 [${requestId}] Prompt: ${prompt}`);
     console.log(`🖼️ [${requestId}] Image URL: ${image_url}`);
-    console.log(`⏱️ [${requestId}] Duration: ${duration}`);
-    console.log(`🔊 [${requestId}] Generate Audio: ${generate_audio}`);
-    console.log(`📺 [${requestId}] Resolution: ${resolution}`);
+    console.log(`🔧 [${requestId}] Prompt Optimizer: ${prompt_optimizer}`);
 
     console.log(`🔄 [${requestId}] Submitting to FAL API...`);
     const falStartTime = Date.now();
     
-    // Use FAL client for Minimax 2.0
-    // Note: Update the model name when Minimax 2.0 is available on FAL
-    const result = await fal.subscribe("fal-ai/minimax/video-generation", {
+    // Step 1: Submit request to FAL AI
+    console.log(`📤 [${requestId}] Submitting to FAL AI with input:`, {
+      prompt: prompt?.substring(0, 50) + '...',
+      image_url: image_url,
+      prompt_optimizer
+    });
+    
+    const { request_id } = await fal.queue.submit("fal-ai/minimax/hailuo-02/pro/image-to-video", {
       input: {
         prompt,
         image_url,
-        duration,
-        generate_audio,
-        resolution,
-        model: 'minimax-2.0'
-      },
-      logs: true,
-      onQueueUpdate: (update) => {
-        const queueTime = Date.now() - falStartTime;
-        console.log(`🔄 [${requestId}] Queue update - Status: ${update.status}, Queue time: ${queueTime}ms`);
-        
-        if (update.status === "IN_PROGRESS") {
-          console.log(`🔄 [${requestId}] Minimax 2.0 generation in progress...`);
-          if (update.logs) {
-            update.logs.map((log) => {
-              console.log(`📝 [${requestId}] FAL Log: ${log.message}`);
-            });
-          }
-        } else if (update.status === "COMPLETED") {
-          console.log(`✅ [${requestId}] FAL API completed successfully`);
-        } else {
-          console.log(`📊 [${requestId}] FAL API status: ${update.status}`);
-        }
-      },
+        prompt_optimizer: true
+      }
+    });
+    
+    console.log(`🆔 [${requestId}] FAL Request ID: ${request_id}`);
+    
+    // Step 2: Poll for status with exponential backoff
+    let status = null;
+    let pollCount = 0;
+    const maxPolls = 60; // Maximum 5 minutes of polling
+    const baseDelay = 1000; // Start with 1 second
+    
+    while (pollCount < maxPolls) {
+      pollCount++;
+      const pollDelay = Math.min(baseDelay * Math.pow(1.5, pollCount - 1), 10000); // Max 10 seconds
+      
+      console.log(`🔄 [${requestId}] Polling attempt ${pollCount}/${maxPolls} (delay: ${pollDelay}ms)`);
+      
+      status = await fal.queue.status("fal-ai/minimax/hailuo-02/pro/image-to-video", {
+        requestId: request_id,
+        logs: true
+      });
+      
+      const queueTime = Date.now() - falStartTime;
+      console.log(`📊 [${requestId}] Status: ${status.status}, Queue time: ${queueTime}ms`);
+      
+      if ((status as any).logs && (status as any).logs.length > 0) {
+        (status as any).logs.forEach((log: any) => {
+          console.log(`📝 [${requestId}] FAL Log: ${log.message}`);
+        });
+      }
+      
+      if (status.status === "COMPLETED") {
+        console.log(`✅ [${requestId}] FAL API completed successfully`);
+        break;
+      } else if ((status as any).status === "FAILED") {
+        throw new Error(`FAL API request failed: ${(status as any).error || 'Unknown error'}`);
+      } else if (status.status === "IN_PROGRESS" || status.status === "IN_QUEUE") {
+        console.log(`🔄 [${requestId}] Generation in progress, waiting ${pollDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, pollDelay));
+      } else {
+        console.log(`📊 [${requestId}] Unknown status: ${status.status}, waiting ${pollDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, pollDelay));
+      }
+    }
+    
+    if (!status || status.status !== "COMPLETED") {
+      throw new Error(`FAL API request timed out after ${maxPolls} polls`);
+    }
+    
+    // Step 3: Retrieve the result
+    const result = await fal.queue.result("fal-ai/minimax/hailuo-02/pro/image-to-video", {
+      requestId: request_id
     });
 
     if (!result.data || !result.data.video || !result.data.video.url) {
@@ -97,15 +132,15 @@ export async function POST(request: NextRequest) {
     console.log(`✅ [${requestId}] Minimax 2.0 generation completed!`);
     console.log(`🎥 [${requestId}] Video URL: ${result.data.video.url}`);
     console.log(`⏱️ [${requestId}] Total time: ${totalTime}ms, FAL time: ${falTime}ms`);
-    console.log(`🆔 [${requestId}] FAL Request ID: ${result.requestId}`);
+    console.log(`🆔 [${requestId}] FAL Request ID: ${request_id}`);
 
     return NextResponse.json({
       success: true,
       videoUrl: result.data.video.url,
-      requestId: result.requestId,
+      requestId: request_id,
       model: 'minimax-2.0',
       processingTime: totalTime,
-      falRequestId: result.requestId
+      falRequestId: request_id
     });
 
   } catch (error) {

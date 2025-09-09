@@ -124,6 +124,53 @@ export interface Database {
           metadata?: any | null
         }
       }
+      image_uploads: {
+        Row: {
+          id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          public_url: string
+          storage_path: string
+          user_id: string | null
+          session_id: string | null
+          created_at: string
+          expires_at: string
+          is_processed: boolean
+          fal_url: string | null
+          metadata: any | null
+        }
+        Insert: {
+          id?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          public_url: string
+          storage_path: string
+          user_id?: string | null
+          session_id?: string | null
+          created_at?: string
+          expires_at?: string
+          is_processed?: boolean
+          fal_url?: string | null
+          metadata?: any | null
+        }
+        Update: {
+          id?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          public_url?: string
+          storage_path?: string
+          user_id?: string | null
+          session_id?: string | null
+          created_at?: string
+          expires_at?: string
+          is_processed?: boolean
+          fal_url?: string | null
+          metadata?: any | null
+        }
+      }
     }
   }
 }

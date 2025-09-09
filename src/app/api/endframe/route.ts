@@ -42,6 +42,11 @@ function validateImageAspectRatio(base64Data: string): { isValid: boolean; messa
 
 // POST endpoint to generate end frames
 export async function POST(request: NextRequest) {
+  // DISABLED: This video model route is not in the approved list
+  return NextResponse.json(
+    { error: 'This video model route has been disabled. Please use approved models: Minimax 2.0, Kling 2.1 Master, or Veo3 Fast.' },
+    { status: 410 } // Gone
+  );
   console.log('🚀 API Route: /api/endframe - EndFrame generation request received');
   
   try {
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
     console.log('🔑 Checking API keys...');
     console.log(`🔍 MINIMAX_API_KEY exists: ${!!process.env.MINIMAX_API_KEY}`);
     console.log(`🔍 MINIMAX_API_KEY length: ${process.env.MINIMAX_API_KEY?.length || 0} characters`);
-    console.log(`🔍 MINIMAX_API_KEY preview: ${process.env.MINIMAX_API_KEY ? process.env.MINIMAX_API_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log(`🔍 MINIMAX_API_KEY preview: ${process.env.MINIMAX_API_KEY ? process.env.MINIMAX_API_KEY!.substring(0, 8) + '...' : 'NOT SET'}`);
     
     if (!process.env.MINIMAX_API_KEY) {
       throw new Error('Minimax API key not configured. Please add MINIMAX_API_KEY to your environment variables.');
@@ -160,33 +165,33 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('💥 Error in endframe API:', error);
     console.error('💥 Error type:', typeof error);
-    console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
-    console.error('💥 Error message:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('💥 Full error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('💥 Error name:', error instanceof Error ? (error as Error).name : 'Unknown');
+    console.error('💥 Error message:', error instanceof Error ? (error as Error).message : 'Unknown error');
+    console.error('💥 Full error stack:', error instanceof Error ? (error as Error).stack : 'No stack trace');
 
     let errorMessage = 'An unexpected error occurred while generating the end frame.';
     let statusCode = 500;
     let retryable = false;
 
     if (error instanceof Error) {
-      if (error.message.includes('aspect ratio') || error.message.includes('2013')) {
+      if ((error as Error).message.includes('aspect ratio') || (error as Error).message.includes('2013')) {
         errorMessage = 'Image aspect ratio is not supported. Please use images with standard aspect ratios (16:9, 4:3, 1:1, or 9:16).';
         statusCode = 400;
-      } else if (error.message.includes('content policy') || error.message.includes('inappropriate')) {
+      } else if ((error as Error).message.includes('content policy') || (error as Error).message.includes('inappropriate')) {
         errorMessage = 'Content policy violation. Please ensure your content complies with Minimax\'s guidelines.';
         statusCode = 400;
-      } else if (error.message.includes('quota exceeded')) {
+      } else if ((error as Error).message.includes('quota exceeded')) {
         errorMessage = 'Minimax API quota exceeded. Please check your account limits.';
         statusCode = 429;
         retryable = true;
-      } else if (error.message.includes('invalid api key') || error.message.includes('authentication')) {
+      } else if ((error as Error).message.includes('invalid api key') || (error as Error).message.includes('authentication')) {
         errorMessage = 'Minimax API authentication failed. Please check your API key.';
         statusCode = 401;
-      } else if (error.message.includes('timeout') || error.message.includes('network error')) {
+      } else if ((error as Error).message.includes('timeout') || (error as Error).message.includes('network error')) {
         errorMessage = 'Request timed out. Please check your connection and try again.';
         statusCode = 408;
         retryable = true;
-      } else if (error.message.includes('No image URL found')) {
+      } else if ((error as Error).message.includes('No image URL found')) {
         errorMessage = 'EndFrame generation completed but no image was returned. Please try again.';
         statusCode = 500;
         retryable = true;

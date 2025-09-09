@@ -4,11 +4,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run check-balance && next build",
     "start": "next start",
     "lint": "next lint",
     "test:endframe": "node test-endframe.js",
-    "test:endframe:ps1": "powershell -ExecutionPolicy Bypass -File test-endframe.ps1"
+    "test:endframe:ps1": "powershell -ExecutionPolicy Bypass -File test-endframe.ps1",
+    "check-balance": "node scripts/check-balance.js"
   },
   "keywords": [],
   "author": "",

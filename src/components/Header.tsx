@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { User, LogOut, Settings, UserPlus, LogIn } from 'lucide-react'
+import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
@@ -36,6 +36,23 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick }) 
             <span className="text-white font-bold text-sm">V</span>
           </div>
           <h1 className="text-lg sm:text-xl font-bold text-white">VaryAI</h1>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="hidden md:flex items-center space-x-1">
+          <button
+            onClick={() => router.push('/generate')}
+            className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+          >
+            Generate
+          </button>
+          <button
+            onClick={() => router.push('/community')}
+            className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Tha Communita</span>
+          </button>
         </div>
 
         {/* User Section */}

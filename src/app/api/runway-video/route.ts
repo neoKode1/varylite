@@ -110,6 +110,11 @@ function validateAndAdjustRatio(ratio: string, model: string): string {
 
 // POST endpoint to create video editing tasks
 export async function POST(request: NextRequest) {
+  // DISABLED: This video model route is not in the approved list
+  return NextResponse.json(
+    { error: 'This video model route has been disabled. Please use approved models: Minimax 2.0, Kling 2.1 Master, or Veo3 Fast.' },
+    { status: 410 } // Gone
+  );
   console.log('🚀 API Route: /api/runway-video - Video editing request received');
   
   try {
@@ -128,13 +133,13 @@ export async function POST(request: NextRequest) {
     console.log('🔑 Checking API keys...');
     console.log(`🔍 GOOGLE_API_KEY exists: ${!!process.env.GOOGLE_API_KEY}`);
     console.log(`🔍 GOOGLE_API_KEY length: ${process.env.GOOGLE_API_KEY?.length || 0} characters`);
-    console.log(`🔍 GOOGLE_API_KEY preview: ${process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log(`🔍 GOOGLE_API_KEY preview: ${process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY!.substring(0, 8) + '...' : 'NOT SET'}`);
     console.log(`🔍 FAL_KEY exists: ${!!process.env.FAL_KEY}`);
     console.log(`🔍 FAL_KEY length: ${process.env.FAL_KEY?.length || 0} characters`);
-    console.log(`🔍 FAL_KEY preview: ${process.env.FAL_KEY ? process.env.FAL_KEY.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log(`🔍 FAL_KEY preview: ${process.env.FAL_KEY ? process.env.FAL_KEY!.substring(0, 8) + '...' : 'NOT SET'}`);
     console.log(`🔍 RUNWAYML_API_SECRET exists: ${!!process.env.RUNWAYML_API_SECRET}`);
     console.log(`🔍 RUNWAYML_API_SECRET length: ${process.env.RUNWAYML_API_SECRET?.length || 0} characters`);
-    console.log(`🔍 RUNWAYML_API_SECRET preview: ${process.env.RUNWAYML_API_SECRET ? process.env.RUNWAYML_API_SECRET.substring(0, 8) + '...' : 'NOT SET'}`);
+    console.log(`🔍 RUNWAYML_API_SECRET preview: ${process.env.RUNWAYML_API_SECRET ? process.env.RUNWAYML_API_SECRET!.substring(0, 8) + '...' : 'NOT SET'}`);
     
     if (!process.env.RUNWAYML_API_SECRET) {
       throw new Error('Runway API key not configured. Please add RUNWAYML_API_SECRET to your environment variables.');
@@ -169,7 +174,7 @@ export async function POST(request: NextRequest) {
         tempVideoPath = base64ToTempFile(files[0], mimeType);
         
         // Process video to ensure valid aspect ratio
-        const processedVideoPath = await processVideoForRunway(tempVideoPath);
+        const processedVideoPath = await processVideoForRunway(tempVideoPath!);
         
         // Create data URI from processed video
         const processedVideoBuffer = require('fs').readFileSync(processedVideoPath);
@@ -216,11 +221,11 @@ export async function POST(request: NextRequest) {
       console.log(`📋 Task ID: ${task.id}`);
     } catch (error) {
       console.error('❌ Runway API error:', error);
-      throw new Error(`Runway API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Runway API error: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`);
     } finally {
       // Clean up temporary video file
       if (tempVideoPath) {
-        cleanupTempVideo(tempVideoPath);
+        cleanupTempVideo(tempVideoPath!);
       }
     }
 
@@ -232,36 +237,37 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('💥 Error in runway-video API:', error);
     console.error('💥 Error type:', typeof error);
-    console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
-    console.error('💥 Error message:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('💥 Full error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('💥 Error name:', error instanceof Error ? (error as Error).name : 'Unknown');
+    console.error('💥 Error message:', error instanceof Error ? (error as Error).message : 'Unknown error');
+    console.error('💥 Full error stack:', error instanceof Error ? (error as Error).stack : 'No stack trace');
 
     let errorMessage = 'An unexpected error occurred while processing your request.';
     let statusCode = 500;
     let retryable = false;
 
     if (error instanceof Error) {
-      if (error.message.includes('content policy') || error.message.includes('inappropriate')) {
+      const errorMsg = (error as Error).message;
+      if (errorMsg.includes('content policy') || errorMsg.includes('inappropriate')) {
         errorMessage = 'Content policy violation. Please ensure your content complies with Runway\'s guidelines.';
         statusCode = 400;
-      } else if (error.message.includes('quota exceeded')) {
+      } else if (errorMsg.includes('quota exceeded')) {
         errorMessage = 'Runway API quota exceeded. Please check your account limits.';
         statusCode = 429;
         retryable = true;
-      } else if (error.message.includes('invalid api key') || error.message.includes('authentication')) {
+      } else if (errorMsg.includes('invalid api key') || errorMsg.includes('authentication')) {
         errorMessage = 'Runway API authentication failed. Please check your API key.';
         statusCode = 401;
-      } else if (error.message.includes('timeout') || error.message.includes('network error')) {
+      } else if (errorMsg.includes('timeout') || errorMsg.includes('network error')) {
         errorMessage = 'Request timed out. Please check your connection and try again.';
         statusCode = 408;
         retryable = true;
-      } else if (error.message.includes('Invalid asset aspect ratio')) {
+      } else if (errorMsg.includes('Invalid asset aspect ratio')) {
         errorMessage = 'Video aspect ratio is not supported. Please try a different video with a standard aspect ratio (16:9, 9:16, 1:1, etc.).';
         statusCode = 400;
-      } else if (error.message.includes('aspect ratio')) {
+      } else if (errorMsg.includes('aspect ratio')) {
         errorMessage = 'Video aspect ratio issue. The video dimensions are not compatible with Runway\'s requirements.';
         statusCode = 400;
-      } else if (error.message.includes('duration') || error.message.includes('too long') || error.message.includes('maximum')) {
+      } else if (errorMsg.includes('duration') || errorMsg.includes('too long') || errorMsg.includes('maximum')) {
         errorMessage = 'Video duration too long. Runway Aleph supports videos up to 5 seconds maximum. Please trim your video to 5 seconds or less.';
         statusCode = 400;
       }

@@ -42,33 +42,72 @@ export async function POST(request: NextRequest) {
     console.log(`🔄 [${requestId}] Submitting to FAL API...`);
     const falStartTime = Date.now();
     
-    // Use fal.subscribe for automatic polling
-    const result = await fal.subscribe("fal-ai/kling-video/v2.1/master/text-to-video", {
+    // Step 1: Submit request to FAL AI
+    const { request_id } = await fal.queue.submit("fal-ai/kling-video/v2.1/master/text-to-video", {
       input: {
         prompt,
         duration,
         aspect_ratio,
         negative_prompt,
         cfg_scale
-      },
-      logs: true,
-      onQueueUpdate: (update) => {
-        const queueTime = Date.now() - falStartTime;
-        console.log(`🔄 [${requestId}] Queue update - Status: ${update.status}, Queue time: ${queueTime}ms`);
+      }
+    });
+
+    // Step 2: Poll for status with exponential backoff
+    let status = null;
+    let pollCount = 0;
+    const maxPolls = 60; // Maximum 5 minutes of polling
+    const baseDelay = 1000; // Start with 1 second
+
+    while (pollCount < maxPolls) {
+      pollCount++;
+      const pollDelay = Math.min(baseDelay * Math.pow(1.5, pollCount - 1), 10000); // Max 10 seconds
+      
+      console.log(`🔄 [${requestId}] Polling attempt ${pollCount}/${maxPolls} (delay: ${pollDelay}ms)`);
+      
+      try {
+        status = await fal.queue.status("fal-ai/kling-video/v2.1/master/text-to-video", {
+          requestId: request_id,
+          logs: true
+        });
         
-        if (update.status === "IN_PROGRESS") {
+        const queueTime = Date.now() - falStartTime;
+        console.log(`🔄 [${requestId}] Queue update - Status: ${status.status}, Queue time: ${queueTime}ms`);
+        
+        if (status.status === "COMPLETED") {
+          console.log(`✅ [${requestId}] FAL API completed successfully`);
+          break;
+        } else if ((status as any).status === "FAILED" || (status as any).error) {
+          console.error(`❌ [${requestId}] FAL API failed:`, status);
+          throw new Error(`FAL API failed: ${(status as any).error || 'Unknown error'}`);
+        } else if (status.status === "IN_PROGRESS" || status.status === "IN_QUEUE") {
           console.log(`🔄 [${requestId}] Kling 2.1 Master T2V generation in progress...`);
-          if (update.logs) {
-            update.logs.map((log) => {
+          if ((status as any).logs) {
+            (status as any).logs.map((log: any) => {
               console.log(`📝 [${requestId}] FAL Log: ${log.message}`);
             });
           }
-        } else if (update.status === "COMPLETED") {
-          console.log(`✅ [${requestId}] FAL API completed successfully`);
-        } else {
-          console.log(`📊 [${requestId}] FAL API status: ${update.status}`);
         }
-      },
+        
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, pollDelay));
+        
+      } catch (error) {
+        console.error(`❌ [${requestId}] Polling error:`, error);
+        if (pollCount >= maxPolls) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, pollDelay));
+      }
+    }
+
+    if (!status || status.status !== "COMPLETED") {
+      throw new Error(`Generation timed out after ${maxPolls} polling attempts`);
+    }
+
+    // Step 3: Retrieve the result
+    const result = await fal.queue.result("fal-ai/kling-video/v2.1/master/text-to-video", {
+      requestId: request_id
     });
 
     const totalTime = Date.now() - startTime;

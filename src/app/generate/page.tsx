@@ -1,19 +1,17 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit } from 'lucide-react';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
 // Generation mode types
 type GenerationMode = 
   | 'nano-banana' 
   | 'runway-t2i' 
-  | 'runway-video' 
-  | 'endframe' 
   | 'veo3-fast' 
   | 'minimax-2.0'
   | 'kling-2.1-master'
-  | 'seedance-pro'
   | 'veo3-fast-t2v'
   | 'minimax-2-t2v'
   | 'kling-2.1-master-t2v';
@@ -582,6 +580,7 @@ export default function Home() {
   const { user } = useAuth();
   const { canGenerate, trackUsage, isAnonymous } = useUsageTracking();
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
+  const router = useRouter();
   
   // Note: Automatic duplicate removal removed to prevent infinite loop
   // Use the "Fix Duplicates" button in development mode if needed
@@ -608,23 +607,29 @@ export default function Home() {
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
   
-  // Funding meter state
+  // Community funding meter state (shows FAL balance for community support)
   const [fundingData, setFundingData] = useState({
-    current: 421.58, // Stripe revenue ($654.69) - FAL costs already spent ($233.11)
-    goal: 466,
-    weeklyCost: 466, // Updated with real usage data: 5,857 images × $0.0398 = ~$233, 2x scaling = $466
+    current: 57.85, // Current FAL balance (community sees this)
+    goal: 550, // Weekly cost projection for 2x growth
+    weeklyCost: 550, // Updated with real usage data: 13,820 images × $0.0398 = ~$550
     lastUpdated: new Date(),
     donations: [] as any[],
     usageStats: {
-      totalRequests: 5857, // Real data from Sep 1-8, 2025
-      successfulRequests: 5857,
+      totalRequests: 6910, // Updated: 6,910 images from Sep 1-8, 2025 CSV
+      successfulRequests: 6910,
       successRate: 100,
       period: 'September 1-8, 2025',
-      weeklyProjection: 11714, // 2x scaling projection
+      weeklyProjection: 13820, // 2x scaling projection (6,910 × 2)
       costPerGeneration: 0.0398, // Actual FAL pricing
       currentUsers: 24, // Estimated user base
       scalingFactor: 2,
-      baseWeeklyProjection: 5857
+      baseWeeklyProjection: 6910,
+      modelBreakdown: {
+        nanoBanana: 6910, // 99.1% of usage
+        videoModels: 40.25, // 0.9% of usage (video seconds)
+        totalImages: 6910,
+        totalVideoSeconds: 40.25
+      }
     }
   });
   const [selectedVideoGenre, setSelectedVideoGenre] = useState<string | null>(null);
@@ -633,39 +638,47 @@ export default function Home() {
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
   const [runwayTaskId, setRunwayTaskId] = useState<string | null>(null);
 
-  // Fetch fal.com balance data
-  const fetchFalBalanceData = async () => {
+  // Fetch community funding data (FAL balance for community support)
+  const fetchFundingData = async () => {
     try {
       const response = await fetch('/api/fal-balance');
       const data = await response.json();
       
       setFundingData({
-        current: data.current,
-        goal: data.goal,
-        weeklyCost: data.weeklyCost,
-        lastUpdated: new Date(data.lastUpdated),
-        donations: [], // No donations for fal.com balance
-        usageStats: data.usageStats || {
-          totalRequests: 0,
-          successfulRequests: 0,
-          successRate: 0,
-          period: '',
-          weeklyProjection: 0,
-          costPerGeneration: 0,
-          currentUsers: 0,
-          scalingFactor: 0,
-          baseWeeklyProjection: 0
+        current: data.current || 57.85, // Current FAL balance
+        goal: data.goal || 550, // Weekly cost projection
+        weeklyCost: data.weeklyCost || 550,
+        lastUpdated: new Date(data.lastUpdated || new Date()),
+        donations: [], // No donations for FAL balance
+        usageStats: {
+          totalRequests: data.usageStats?.totalRequests || 6910,
+          successfulRequests: data.usageStats?.successfulRequests || 6910,
+          successRate: data.usageStats?.successRate || 100,
+          period: data.usageStats?.period || 'September 1-8, 2025',
+          weeklyProjection: data.usageStats?.weeklyProjection || 13820,
+          costPerGeneration: data.usageStats?.costPerGeneration || 0.0398,
+          currentUsers: data.usageStats?.currentUsers || 24,
+          scalingFactor: data.usageStats?.scalingFactor || 2,
+          baseWeeklyProjection: data.usageStats?.baseWeeklyProjection || 6910,
+          modelBreakdown: {
+            nanoBanana: data.usageStats?.totalRequests || 6910,
+            videoModels: 40.25, // Video seconds from CSV data
+            totalImages: data.usageStats?.totalRequests || 6910,
+            totalVideoSeconds: 40.25
+          }
         }
       });
     } catch (error) {
-      console.error('Failed to fetch fal.com balance data:', error);
+      console.error('Failed to fetch funding data:', error);
       // Keep existing data on error
     }
   };
 
-  // Calculate energy level (0-100%)
+  // Calculate energy level (0-100%) based on FAL balance for community support
   const getEnergyLevel = () => {
-    const percentage = (fundingData.current / fundingData.weeklyCost) * 100;
+    const currentBalance = fundingData.current; // Current FAL balance
+    const weeklyCost = fundingData.weeklyCost; // Weekly cost projection
+    const percentage = (currentBalance / weeklyCost) * 100;
     return Math.min(percentage, 100);
   };
 
@@ -680,9 +693,9 @@ export default function Home() {
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchFalBalanceData();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchFalBalanceData, 5 * 60 * 1000);
+    fetchFundingData();
+    // Refresh every 2 minutes to keep meter updated
+    const interval = setInterval(fetchFundingData, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
   const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -754,11 +767,7 @@ export default function Home() {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
-    if (hasVideos && !hasImages) {
-      return 'runway-video';
-    } else if (hasImages && uploadedFiles.length >= 2) {
-      return 'endframe';
-    } else if (hasImages && uploadedFiles.length === 1) {
+    if (hasImages && uploadedFiles.length === 1) {
       // Ambiguous case - could be nano-banana, runway-t2i, veo3-fast, or minimax-2.0
       return null; // Let user choose
     } else if (!hasImages && !hasVideos) {
@@ -792,13 +801,7 @@ export default function Home() {
       modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
     }
     
-    if (hasVideos && !hasImages) {
-      modes.push('runway-video');
-    }
-    
-    if (hasImages && uploadedFiles.length >= 2) {
-      modes.push('endframe');
-    }
+    // Disabled models removed: runway-video, endframe
     
     return modes;
   }, [uploadedFiles]);
@@ -2636,8 +2639,51 @@ export default function Home() {
     try {
       setProcessing({
         isProcessing: true,
-        progress: 30,
-        currentStep: 'Uploading image to Veo3 Fast...'
+        progress: 20,
+        currentStep: 'Uploading image to Supabase...'
+      });
+
+      // Upload image to Supabase Storage first
+      const uploadResponse = await fetch('/api/supabase-upload', {
+        method: 'POST',
+        body: imageFile.file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to storage');
+      }
+
+      const uploadData = await uploadResponse.json();
+      const imageUrl = uploadData.url;
+
+      setProcessing({
+        isProcessing: true,
+        progress: 40,
+        currentStep: 'Transferring image to FAL AI...'
+      });
+
+      // Transfer image from Supabase to FAL AI
+      const transferResponse = await fetch('/api/supabase-to-fal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ supabaseUrl: imageUrl }),
+      });
+
+      if (!transferResponse.ok) {
+        const errorText = await transferResponse.text();
+        console.error('❌ Supabase to FAL transfer failed:', transferResponse.status, errorText);
+        throw new Error(`Failed to transfer image to FAL AI: ${transferResponse.status} - ${errorText}`);
+      }
+
+      const transferData = await transferResponse.json();
+      const falImageUrl = transferData.url;
+
+      setProcessing({
+        isProcessing: true,
+        progress: 60,
+        currentStep: 'Generating video with Veo3 Fast...'
       });
 
       const response = await fetch('/api/veo3-fast', {
@@ -2647,7 +2693,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
-          image_url: imageFile.preview,
+          image_url: falImageUrl,
           duration: "8s",
           generate_audio: true,
           resolution: "720p"
@@ -2663,7 +2709,21 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if it's a balance-related error
+        if (data.balanceStatus === 'low') {
+          showAnimatedErrorNotification(`FAL AI Balance Low: ${data.balanceError || 'Insufficient credits for generation'} TOASTY!`, 'toasty');
+        } else {
+          showAnimatedErrorNotification(`Veo3 Fast Error: ${data.error || 'Failed to generate video'} TOASTY!`, 'toasty');
+        }
         throw new Error(data.error || 'Failed to generate video');
+      }
+
+      // Log balance information
+      if (data.balanceStatus) {
+        console.log(`💰 FAL AI Balance Status: ${data.balanceStatus}`);
+        if (data.balanceError) {
+          console.log(`⚠️ Balance Error: ${data.balanceError}`);
+        }
       }
 
       setProcessing({
@@ -2693,6 +2753,9 @@ export default function Home() {
         progress: 100,
         currentStep: 'Complete!'
       });
+
+      // Update funding meter after generation
+      fetchFundingData();
 
       setTimeout(() => {
         setProcessing({
@@ -2740,6 +2803,60 @@ export default function Home() {
     try {
       setProcessing({
         isProcessing: true,
+        progress: 20,
+        currentStep: 'Converting image to base64...'
+      });
+
+      // Upload image to Supabase Storage first (production-optimized pipeline)
+      console.log('🔄 Uploading image to Supabase Storage...');
+      console.log('📸 Original image preview URL:', imageFile.preview);
+      
+      const imageBlob = await fetch(imageFile.preview).then(r => r.blob());
+      console.log('📦 Image blob size:', imageBlob.size, 'bytes, type:', imageBlob.type);
+      
+      const imageFileObj = new File([imageBlob], 'image.jpg', { type: 'image/jpeg' });
+      console.log('📁 File object created:', imageFileObj.name, imageFileObj.size, 'bytes');
+      
+      // Upload to Supabase Storage
+      const supabaseUploadResponse = await fetch('/api/supabase-upload', {
+        method: 'POST',
+        body: imageFileObj,
+      });
+      
+      if (!supabaseUploadResponse.ok) {
+        const errorText = await supabaseUploadResponse.text();
+        console.error('❌ Supabase upload failed:', supabaseUploadResponse.status, errorText);
+        throw new Error('Failed to upload image to Supabase Storage');
+      }
+      
+      const { url: supabaseUrl } = await supabaseUploadResponse.json();
+      console.log('✅ Image uploaded to Supabase Storage:', supabaseUrl);
+      
+      // Transfer from Supabase to FAL for video generation
+      console.log('🔄 Transferring image from Supabase to FAL...');
+      const falTransferResponse = await fetch('/api/supabase-to-fal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          supabaseUrl: supabaseUrl,
+          sessionId: 'minimax-2-generation'
+        }),
+      });
+      
+      if (!falTransferResponse.ok) {
+        const errorText = await falTransferResponse.text();
+        console.error('❌ FAL transfer failed:', falTransferResponse.status, errorText);
+        throw new Error('Failed to transfer image to FAL storage');
+      }
+      
+      const { url: falImageUrl } = await falTransferResponse.json();
+      console.log('✅ Image transferred to FAL storage:', falImageUrl);
+      console.log('🔗 FAL image URL will be sent to Minimax 2.0 API');
+
+      setProcessing({
+        isProcessing: true,
         progress: 30,
         currentStep: 'Uploading image to Minimax 2.0...'
       });
@@ -2751,10 +2868,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
-          image_url: imageFile.preview,
-          duration: "8s",
-          generate_audio: true,
-          resolution: "720p"
+          image_url: falImageUrl,
+          prompt_optimizer: true
         }),
       });
 
@@ -2769,6 +2884,10 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate video');
       }
+
+      console.log('✅ Minimax 2.0 generation successful!');
+      console.log('📹 Video URL received:', data.videoUrl);
+      console.log('📊 Full response data:', data);
 
       setProcessing({
         isProcessing: true,
@@ -2786,8 +2905,16 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      console.log('🎬 Created variation object:', generatedVariation);
+
+      console.log('🔄 Adding variation to gallery...');
+      setVariations(prev => {
+        const newVariations = [generatedVariation, ...prev];
+        console.log('📋 Updated variations:', newVariations);
+        return newVariations;
+      });
       addToGallery([generatedVariation], prompt.trim());
+      console.log('✅ Variation added to gallery successfully!');
 
       // Track usage
       trackUsage('video_generation', 'minimax_endframe');
@@ -2839,6 +2966,29 @@ export default function Home() {
     try {
       setProcessing({
         isProcessing: true,
+        progress: 20,
+        currentStep: 'Converting image to base64...'
+      });
+
+      // Upload image to FAL storage for better performance
+      console.log('🔄 Uploading image to FAL storage...');
+      const imageBlob = await fetch(imageFile.preview).then(r => r.blob());
+      const imageFileObj = new File([imageBlob], 'image.jpg', { type: 'image/jpeg' });
+      
+      const uploadResponse = await fetch('/api/upload-to-fal', {
+        method: 'POST',
+        body: imageFileObj,
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to FAL storage');
+      }
+      
+      const { url: falImageUrl } = await uploadResponse.json();
+      console.log('✅ Image uploaded to FAL storage:', falImageUrl);
+
+      setProcessing({
+        isProcessing: true,
         progress: 30,
         currentStep: 'Uploading image to Kling 2.1 Master...'
       });
@@ -2850,7 +3000,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
-          image_url: imageFile.preview,
+          image_url: falImageUrl,
           duration: "5",
           negative_prompt: "blur, distort, and low quality",
           cfg_scale: 0.5
@@ -3297,6 +3447,78 @@ export default function Home() {
         onSignInClick={handleSignInClick}
       />
       
+      {/* Floating Funding Meter */}
+      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40">
+        <div 
+          onClick={() => router.push('/community')}
+          className="bg-gradient-to-br from-purple-900 to-blue-900 bg-opacity-95 backdrop-blur-sm rounded-xl p-4 border border-purple-500 border-opacity-30 cursor-pointer hover:scale-105 transition-all duration-300 shadow-2xl min-w-[200px]"
+        >
+          {/* Energy Meter */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
+                <span className="text-white text-sm font-medium">Community Energy</span>
+              </div>
+              <MessageCircle className="w-4 h-4 text-gray-300" />
+            </div>
+            
+            {/* Energy Bar */}
+            <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+              <div 
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                  getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                  getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                  'bg-gradient-to-r from-red-400 to-red-600'
+                }`}
+                style={{ width: `${getEnergyLevel()}%` }}
+              ></div>
+            </div>
+            
+            <div className="text-center">
+              <span className={`text-xs font-medium ${
+                getEnergyStatus().color === 'green' ? 'text-green-400' :
+                getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
+                getEnergyStatus().color === 'orange' ? 'text-orange-400' :
+                'text-red-400'
+              }`}>
+                {Math.round(getEnergyLevel())}% • ${fundingData.current.toFixed(2)}
+              </span>
+            </div>
+          </div>
+          
+          {/* Donation Buttons */}
+          <div className="space-y-2">
+            <a
+              href="https://ko-fi.com/varyai"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full px-3 py-2 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
+              title="Weekly Injection - Funds take time to be released"
+            >
+              ⚡ Weekly Injection
+            </a>
+            <a
+              href="https://cash.app/$VaryAi"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
+              title="Daily Injection - Funds go directly into the pot"
+            >
+              💚 Daily Injection
+            </a>
+          </div>
+          
+          {/* Click hint */}
+          <div className="text-center mt-2">
+            <span className="text-gray-400 text-xs">Click to view community</span>
+          </div>
+        </div>
+      </div>
+      
       {/* Semi-transparent overlay for content readability */}
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       
@@ -3345,102 +3567,6 @@ export default function Home() {
               onSaveToAccountClick={handleSaveToAccountClick}
             />
 
-            {/* Community Funding Meter */}
-            <div className="w-full max-w-4xl mx-auto px-4 mb-6">
-              <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-90 backdrop-blur-sm rounded-lg p-4 border border-purple-500 border-opacity-30">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
-                    <h3 className="text-white font-semibold text-lg">Community Energy</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-300 text-sm">Weekly Goal: ${fundingData.weeklyCost}</p>
-                    <p className="text-white font-medium">${fundingData.current} / ${fundingData.goal}</p>
-                  </div>
-                </div>
-                
-                {/* Energy Bar */}
-                <div className="relative">
-                  <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
-                    <div 
-                      className={`h-3 rounded-full transition-all duration-500 ${
-                        getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                        getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                        getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                        'bg-gradient-to-r from-red-400 to-red-600'
-                      }`}
-                      style={{ width: `${getEnergyLevel()}%` }}
-                    ></div>
-                  </div>
-                  
-                  {/* Energy Status */}
-                  <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium ${
-                      getEnergyStatus().color === 'green' ? 'text-green-400' :
-                      getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
-                      getEnergyStatus().color === 'orange' ? 'text-orange-400' :
-                      'text-red-400'
-                    }`}>
-                      {getEnergyStatus().text} ({Math.round(getEnergyLevel())}%)
-                    </span>
-                    
-                    {getEnergyLevel() < 80 && (
-                      <div className="flex gap-2">
-                      <a 
-                        href="https://ko-fi.com/varyai" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-full transition-colors"
-                      >
-                          ⚡ Ko-fi
-                        </a>
-                        <a 
-                          href="https://cash.app/$VaryAi" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors"
-                        >
-                          💚 Cash App
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-gray-400 text-xs mt-2">
-                  {getEnergyLevel() >= 80 
-                    ? "🎉 High energy! Generate freely while the balance stays healthy!" 
-                    : getEnergyLevel() >= 50 
-                    ? "⚡ Good energy levels. Keep creating!" 
-                    : getEnergyLevel() >= 20 
-                    ? "💡 Energy running low. Community support helps keep VaryAI running!" 
-                    : "💜 Low energy. Your support helps keep the community thriving!"
-                  }
-                </p>
-                
-                {/* Recent Donations */}
-                {fundingData.donations.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-600">
-                    <h4 className="text-gray-300 text-sm font-medium mb-2">Recent Supporters</h4>
-                    <div className="space-y-1 max-h-20 overflow-y-auto">
-                      {fundingData.donations.slice(-3).map((donation, index) => (
-                        <div key={donation.id || index} className="flex items-center justify-between text-xs">
-                          <span className="text-gray-300">
-                            {donation.from_name} 
-                            {donation.is_subscription && (
-                              <span className="text-purple-400 ml-1">⭐</span>
-                            )}
-                          </span>
-                          <span className="text-green-400 font-medium">
-                            ${donation.amount}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
             
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
@@ -3506,24 +3632,27 @@ export default function Home() {
             {fundingData.usageStats.totalRequests > 0 && (
               <div className="mb-4 p-4 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
                 <div className="text-xs text-blue-200">
-                  <div className="font-semibold text-blue-100 mb-2">📊 Real Usage Analytics ({fundingData.usageStats.period})</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.totalRequests.toLocaleString()}</span> images generated</div>
-                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.successRate}%</span> success rate</div>
-                      <div>• <span className="text-blue-100 font-medium">${fundingData.usageStats.costPerGeneration}</span> per image</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.currentUsers}</span> active users</div>
-                      <div>• <span className="text-blue-100 font-medium">{fundingData.usageStats.baseWeeklyProjection.toLocaleString()}</span> images/week</div>
-                      <div>• <span className="text-blue-100 font-medium">${fundingData.weeklyCost}</span> weekly cost</div>
-                    </div>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
-                    <div className="text-blue-100 font-medium">🚀 Growth Projection:</div>
-                    <div>• {fundingData.usageStats.scalingFactor}x scaling → <span className="text-green-300 font-medium">{fundingData.usageStats.weeklyProjection.toLocaleString()}</span> images/week</div>
-                    <div>• Current balance: <span className="text-yellow-300 font-medium">${fundingData.current}</span> ({(fundingData.current / fundingData.weeklyCost).toFixed(1)} weeks runway)</div>
-                  </div>
+        <div className="font-semibold text-blue-100 mb-2">📊 App Performance Analytics (September 2025)</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <div>• <span className="text-blue-100 font-medium">6,445</span> total generations</div>
+            <div>• <span className="text-blue-100 font-medium">75%</span> success rate</div>
+            <div>• <span className="text-blue-100 font-medium">14.06s</span> avg response time</div>
+          </div>
+          <div className="space-y-1">
+            <div>• <span className="text-blue-100 font-medium">20</span> active customers</div>
+            <div>• <span className="text-blue-100 font-medium">4,834</span> successful generations</div>
+            <div>• <span className="text-blue-100 font-medium">Peak: 3,900</span> daily requests</div>
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
+          <div className="text-blue-100 font-medium">🚀 Model Performance:</div>
+          <div>• <span className="text-green-300 font-medium">6,433</span> Nano Banana (99.8%)</div>
+          <div>• <span className="text-orange-300 font-medium">8</span> Veo3 Fast videos</div>
+          <div>• <span className="text-red-300 font-medium">4</span> Minimax 2.0 videos</div>
+          <div>• <span className="text-purple-300 font-medium">0.25</span> Seedance Pro videos</div>
+          <div>• Current balance: <span className="text-yellow-300 font-medium">$677.67</span> (2.6 months runway)</div>
+        </div>
                 </div>
               </div>
             )}
@@ -3689,7 +3818,7 @@ export default function Home() {
                         <option value="nano-banana">Nano Banana (Character Variations)</option>
                         <option value="minimax-2.0">Minimax 2.0 (Image-to-Video)</option>
                         <option value="kling-2.1-master">Kling 2.1 Master (Image-to-Video)</option>
-                        <option value="seedance-pro">Seedance 1.0 Pro (Image-to-Video)</option>
+                        <option value="veo3-fast">Veo3 Fast (Image-to-Video)</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
@@ -3788,7 +3917,7 @@ export default function Home() {
                       </>
                     )}
                   </button>
-                ) : processingMode === 'variations' || generationMode === 'nano-banana' ? (
+                ) : generationMode === 'nano-banana' ? (
                   // Character variations - Nano Banana
                   <button
                     onClick={handleProcessCharacter}
@@ -3808,13 +3937,23 @@ export default function Home() {
                     )}
                   </button>
                 ) : generationMode === 'veo3-fast' ? (
-                  // Veo3 Fast image-to-video - DISABLED IN PRODUCTION
+                  // Veo3 Fast image-to-video - FULLY ENABLED
                   <button
-                    disabled={true}
-                    className="px-8 py-4 bg-gray-500 text-gray-300 rounded-lg font-semibold text-lg cursor-not-allowed flex items-center justify-center gap-2 shadow-lg opacity-50"
+                    onClick={handleVeo3FastGeneration}
+                    disabled={processing.isProcessing || !prompt.trim()}
+                    className="w-full max-w-sm px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold text-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg min-h-[48px] touch-manipulation"
                   >
-                    <Camera className="w-5 h-5" />
-                    Animate Image (Veo3 Fast) - Temporarily Disabled
+                    {processing.isProcessing && generationMode === 'veo3-fast' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {processing.currentStep}
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        Animate Image (Veo3 Fast)
+                      </>
+                    )}
                   </button>
                 ) : generationMode === 'minimax-2.0' ? (
                   // Minimax 2.0 image-to-video
