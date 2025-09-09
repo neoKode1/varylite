@@ -110,6 +110,16 @@ export default function CommunityPage() {
       type: 'artist'
     },
     {
+      id: 'deep-tech-ai',
+      name: 'Deep tech Ai',
+      handle: '@io2Medusa',
+      role: 'AI Development Consultant',
+      contribution: 'Helped with prompt and feature enhancement',
+      avatar: null,
+      social: 'https://x.com/io2Medusa',
+      type: 'advisor'
+    },
+    {
       id: 'community-moderator',
       name: 'Community Helper',
       handle: '@helper',
