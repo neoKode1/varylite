@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles, Trash2, MoreVertical } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
+import { Header } from '@/components/Header';
 import { useRouter } from 'next/navigation';
 
 interface Post {
@@ -638,6 +639,17 @@ export default function CommunityPage() {
     setSelectedImage(null);
   };
 
+  // Header handlers
+  const handleSignUp = () => {
+    setAuthModalMode('signup');
+    setShowAuthModal(true);
+  };
+
+  const handleSignIn = () => {
+    setAuthModalMode('signin');
+    setShowAuthModal(true);
+  };
+
   return (
     <div 
       className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative"
@@ -648,10 +660,16 @@ export default function CommunityPage() {
         backgroundRepeat: 'no-repeat'
       }}
     >
+      {/* Header with Profile Access */}
+      <Header 
+        onSignUpClick={handleSignUp}
+        onSignInClick={handleSignIn}
+      />
       {/* Subtle overlay for better text readability */}
       <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-      {/* Header */}
-      <div className="bg-black bg-opacity-10 backdrop-blur-md border-b border-purple-500 border-opacity-20 relative z-10">
+      
+      {/* Main Content */}
+      <div className="relative z-10 pt-4">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
