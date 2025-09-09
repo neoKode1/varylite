@@ -1261,7 +1261,7 @@ export default function CommunityPage() {
             <User className="w-3 h-3 text-white" />
           </div>
           <span className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">
-            {showCollaborators ? 'Hide' : 'Show'} Team
+            {showCollaborators ? 'Hide' : 'Show'} Contributors
           </span>
         </div>
       </button>
