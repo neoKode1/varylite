@@ -707,14 +707,30 @@ export default function Home() {
   // Fetch user stats data for App Performance Analytics
   const fetchUserStats = async () => {
     try {
-      const response = await fetch('/api/user-stats');
+      const response = await fetch('/api/user-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success && data.data) {
         setUserStats(data.data);
+      } else {
+        console.warn('User stats API returned unsuccessful response:', data);
       }
     } catch (error) {
       console.error('Error fetching user stats:', error);
+      // Don't throw the error, just log it to prevent breaking the app
+      // The userStats state will keep its default values
     }
   };
 
@@ -727,6 +743,19 @@ export default function Home() {
       fetchUserStats();
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Add error boundary for fetchUserStats to prevent app crashes
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && event.reason.message && event.reason.message.includes('fetch')) {
+        console.warn('Caught unhandled fetch rejection:', event.reason);
+        event.preventDefault(); // Prevent the error from crashing the app
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
   }, []);
   const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
@@ -891,6 +920,21 @@ export default function Home() {
     
     return modes;
   }, [uploadedFiles]);
+
+  // Get display name for generation mode
+  const getModelDisplayName = useCallback((mode: GenerationMode): string => {
+    const displayNames: Record<GenerationMode, string> = {
+      'nano-banana': 'Nano Banana',
+      'runway-t2i': 'Runway T2I',
+      'veo3-fast': 'Veo3 Fast',
+      'minimax-2.0': 'Minimax 2.0',
+      'kling-2.1-master': 'Kling 2.1 Master',
+      'veo3-fast-t2v': 'Veo3 Fast T2V',
+      'minimax-2-t2v': 'Minimax 2.0 T2V',
+      'kling-2.1-master-t2v': 'Kling 2.1 Master T2V'
+    };
+    return displayNames[mode] || mode;
+  }, []);
 
   // Auto-detect generation mode when files change
   useEffect(() => {
@@ -3594,19 +3638,19 @@ export default function Home() {
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
             
-        {/* Fixed Header Components - Below main header */}
-        <div className="fixed-header-components">
+        {/* Main Content Container - Centered and Unified */}
+        <div className="w-full max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-gray-700 border-opacity-50 shadow-2xl">
+            
           {/* Funding Message */}
-        <div className="mb-4 bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-lg p-3 border border-gray-700 border-opacity-50">
-          <div className="text-center">
+            <div className="mb-6 text-center">
             <p className="text-gray-300 text-sm font-medium">
               💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what VaryAI brings, please help fund its growth!
             </p>
-          </div>
         </div>
 
           {/* vARYai Header */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center items-center mb-8 lg:mb-16 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20 gap-4 lg:gap-0">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center items-center mb-8 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20 gap-4 lg:gap-0">
           <h1 className="text-2xl lg:text-4xl font-bold text-white text-center lg:text-left">
             vARY<span className="text-gray-400">ai</span>
           </h1>
@@ -3648,6 +3692,110 @@ export default function Home() {
             </span>
           </button>
             </div>
+            {/* Generation Panel */}
+            <div className="generation-panel mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 text-center">New generations</h2>
+              <div className="generation-grid">
+                {/* Slot 1 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
+                >
+                  {variations[0] && (
+                    <div className="relative w-full h-full">
+                      {variations[0].fileType === 'video' ? (
+                        <video
+                          src={variations[0].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[0].imageUrl}
+                          alt={variations[0].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+              </div>
+                  )}
+                </div>
+                {/* Slot 2 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
+                >
+                  {variations[1] && (
+                    <div className="relative w-full h-full">
+                      {variations[1].fileType === 'video' ? (
+                        <video
+                          src={variations[1].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[1].imageUrl}
+                          alt={variations[1].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Slot 3 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
+                >
+                  {variations[2] && (
+                    <div className="relative w-full h-full">
+                      {variations[2].fileType === 'video' ? (
+                        <video
+                          src={variations[2].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[2].imageUrl}
+                          alt={variations[2].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Slot 4 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
+                >
+                  {variations[3] && (
+                    <div className="relative w-full h-full">
+                      {variations[3].fileType === 'video' ? (
+                        <video
+                          src={variations[3].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[3].imageUrl}
+                          alt={variations[3].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Input Section */}
           </div>
         </div>
 
@@ -3691,168 +3839,6 @@ export default function Home() {
                       </span>
                     </button>
                   )}
-              </div>
-              </div>
-            </div>
-
-            {/* 2x2 Generation Panel - Fixed above text input */}
-            <div className="generation-panel">
-              <h2>New generations</h2>
-              <div className="generation-grid">
-                {/* Slot 1 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
-                >
-                  {variations[0] && (
-                    <div className="relative w-full h-full">
-                      {variations[0].fileType === 'video' ? (
-                        <video
-                          src={variations[0].videoUrl || variations[0].imageUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          onCanPlay={() => {
-                            const video = document.querySelector(`video[src="${variations[0].videoUrl || variations[0].imageUrl}"]`);
-                            if (video) {
-                              video.classList.add('animate-blur-in');
-                            }
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src={variations[0].imageUrl}
-                          alt="Generated variation 1"
-                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.opacity = '1';
-                            img.style.filter = 'blur(0px)';
-                          }}
-                          style={{
-                            filter: 'blur(10px)',
-                            opacity: '0'
-                          }}
-                        />
-                      )}
-              </div>
-                  )}
-                </div>
-
-                {/* Slot 2 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
-                >
-                  {variations[1] && (
-                    <div className="relative w-full h-full">
-                      {variations[1].fileType === 'video' ? (
-                        <video
-                          src={variations[1].videoUrl || variations[1].imageUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          onCanPlay={() => {
-                            const video = document.querySelector(`video[src="${variations[1].videoUrl || variations[1].imageUrl}"]`);
-                            if (video) {
-                              video.classList.add('animate-blur-in');
-                            }
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src={variations[1].imageUrl}
-                          alt="Generated variation 2"
-                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.opacity = '1';
-                            img.style.filter = 'blur(0px)';
-                          }}
-                          style={{
-                            filter: 'blur(10px)',
-                            opacity: '0'
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Slot 3 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
-                >
-                  {variations[2] && (
-                    <div className="relative w-full h-full">
-                      {variations[2].fileType === 'video' ? (
-                        <video
-                          src={variations[2].videoUrl || variations[2].imageUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          onCanPlay={() => {
-                            const video = document.querySelector(`video[src="${variations[2].videoUrl || variations[2].imageUrl}"]`);
-                            if (video) {
-                              video.classList.add('animate-blur-in');
-                            }
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src={variations[2].imageUrl}
-                          alt="Generated variation 3"
-                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.opacity = '1';
-                            img.style.filter = 'blur(0px)';
-                          }}
-                          style={{
-                            filter: 'blur(10px)',
-                            opacity: '0'
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Slot 4 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
-                >
-                  {variations[3] && (
-                    <div className="relative w-full h-full">
-                      {variations[3].fileType === 'video' ? (
-                        <video
-                          src={variations[3].videoUrl || variations[3].imageUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          onCanPlay={() => {
-                            const video = document.querySelector(`video[src="${variations[3].videoUrl || variations[3].imageUrl}"]`);
-                            if (video) {
-                              video.classList.add('animate-blur-in');
-                            }
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src={variations[3].imageUrl}
-                          alt="Generated variation 4"
-                          className="w-full h-full object-cover rounded-lg opacity-0 transition-all duration-1000 ease-out"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.opacity = '1';
-                            img.style.filter = 'blur(0px)';
-                          }}
-                          style={{
-                            filter: 'blur(10px)',
-                            opacity: '0'
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -3862,19 +3848,20 @@ export default function Home() {
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
                 <div className="mb-3">
-                  <div className="flex gap-2 items-center overflow-x-auto">
+                  <div className="flex gap-2 items-center overflow-x-auto pt-3">
                     {/* 4 Image Upload Slots - Mobile */}
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 flex-shrink-0 pb-3">
                       {/* Filled slots */}
-                      {uploadedFiles.map((file, index) => (
-                        <div 
-                          key={index} 
-                          className="relative flex-shrink-0 transition-all duration-200"
-                        >
+                    {uploadedFiles.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="relative flex-shrink-0 transition-all duration-200"
+                        style={{ paddingBottom: '0.5px' }}
+                      >
                           {file.fileType === 'image' ? (
-                            <img
-                              src={file.preview}
-                              alt={`Image ${index + 1}`}
+                        <img
+                          src={file.preview}
+                          alt={`Image ${index + 1}`}
                               className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
                             />
                           ) : (
@@ -3884,18 +3871,18 @@ export default function Home() {
                               muted
                             />
                           )}
-                          <button
-                            onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                            title="Remove image"
-                          >
-                            <X className="w-2 h-2" />
-                          </button>
+                        <button
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          title="Remove image"
+                        >
+                          <X className="w-2 h-2" />
+                        </button>
                           <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
                             {file.fileType.toUpperCase()}
                           </div>
-                        </div>
-                      ))}
+                      </div>
+                    ))}
                       
                       {/* Empty slots for upload */}
                       {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
@@ -3903,20 +3890,40 @@ export default function Home() {
                         return (
                           <div
                             key={`empty-${slotIndex}`}
-                            className="border-2 border-dashed border-white border-opacity-30 rounded-lg w-12 h-12 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0"
-                            onClick={() => document.getElementById('file-input')?.click()}
+                            className="border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 touch-manipulation"
+                            style={{ paddingBottom: '0.5px', minWidth: '56px', minHeight: '56px' }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('📱 Mobile image slot clicked, slot:', slotIndex);
+                              const fileInput = document.getElementById('file-input');
+                              if (fileInput) {
+                                fileInput.click();
+                              } else {
+                                console.error('❌ File input not found');
+                              }
+                            }}
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                document.getElementById('file-input')?.click();
+                                e.stopPropagation();
+                                console.log('📱 Mobile image slot key pressed, slot:', slotIndex);
+                                const fileInput = document.getElementById('file-input');
+                                if (fileInput) {
+                                  fileInput.click();
+                                }
                               }
                             }}
                             tabIndex={0}
                             role="button"
                             aria-label={`Upload image to slot ${slotIndex + 1}`}
                           >
-                            <Plus className="w-4 h-4 text-gray-400" />
-                          </div>
+                            <Plus className="w-5 h-5 text-gray-400" />
+                  </div>
                         );
                       })}
                     </div>
@@ -3929,51 +3936,37 @@ export default function Home() {
                         className="px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200 flex-shrink-0 min-w-[120px]"
                       >
                         <option value="">Select Model</option>
-                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
-                          <>
-                            <option value="nano-banana">Nano Banana</option>
-                            <option value="runway-t2i">Runway T2I</option>
-                          </>
-                        )}
-                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length > 1 && (
-                          <>
-                            <option value="nano-banana">Nano Banana</option>
-                            <option value="runway-t2i">Runway T2I</option>
-                          </>
-                        )}
-                        {uploadedFiles.some(file => file.fileType === 'video') && (
-                          <>
-                            <option value="veo3-fast">Veo3 Fast</option>
-                            <option value="minimax-2.0">Minimax 2.0</option>
-                            <option value="kling-2.1-master">Kling 2.1</option>
-                          </>
-                        )}
+                        {getAvailableModes().map((mode) => (
+                          <option key={mode} value={mode}>
+                            {getModelDisplayName(mode)}
+                          </option>
+                        ))}
                       </select>
                     )}
                   </div>
                   
                   {/* Text Input - Directly below the top container */}
-                  <textarea
-                    id="prompt-mobile"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={
-                      hasVideoFiles 
-                        ? "Describe the scene changes..." 
-                        : processingMode === 'endframe'
-                        ? "Describe the transition..."
-                        : uploadedFiles.length === 0
-                        ? "Describe the image you want to generate..."
-                        : "Describe the variations you want..."
-                    }
+                <textarea
+                  id="prompt-mobile"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={
+                    hasVideoFiles 
+                      ? "Describe the scene changes..." 
+                      : processingMode === 'endframe'
+                      ? "Describe the transition..."
+                      : uploadedFiles.length === 0
+                      ? "Describe the image you want to generate..."
+                      : "Describe the variations you want..."
+                  }
                     className="mobile-chat-input mt-3"
-                    rows={1}
-                    style={{ fontSize: '16px' }}
-                  />
+                  rows={1}
+                  style={{ fontSize: '16px' }}
+                />
                 </div>
                 
                 {/* Bottom Container: Action Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   {/* Upload Button */}
                   <button
                     onClick={() => document.getElementById('file-input')?.click()}
@@ -3984,23 +3977,52 @@ export default function Home() {
                   </button>
                   
                   {/* Generate Button */}
-                  <button
-                    onClick={uploadedFiles.length === 0 ? handleTextToImage : hasVideoFiles ? handleRunwayVideoEditing : handleCharacterVariation}
-                    disabled={processing.isProcessing || !prompt.trim()}
-                    className="mobile-send-button"
-                    title="Generate"
-                  >
-                    {processing.isProcessing ? (
-                      <Loader2 className="mobile-send-icon animate-spin" />
-                    ) : (
-                      <ArrowRight className="mobile-send-icon" />
-                    )}
-                  </button>
+                  {uploadedFiles.length === 0 ? (
+                    // Text-to-Image generation
+                    <button
+                      onClick={handleTextToImage}
+                      disabled={processing.isProcessing || !prompt.trim()}
+                      className="mobile-send-button"
+                      title="Generate Image"
+                    >
+                      {processing.isProcessing ? (
+                        <Loader2 className="mobile-send-icon animate-spin" />
+                      ) : (
+                        <ArrowRight className="mobile-send-icon" />
+                      )}
+                    </button>
+                  ) : hasVideoFiles ? (
+                    // Video generation
+                    <button
+                      onClick={handleRunwayVideoEditing}
+                      disabled={processing.isProcessing || !prompt.trim()}
+                      className="mobile-send-button"
+                      title="Generate Video"
+                    >
+                      {processing.isProcessing ? (
+                        <Loader2 className="mobile-send-icon animate-spin" />
+                      ) : (
+                        <ArrowRight className="mobile-send-icon" />
+                      )}
+                    </button>
+                  ) : (
+                    // Character variations
+                    <button
+                      onClick={handleCharacterVariation}
+                      disabled={processing.isProcessing || !prompt.trim()}
+                      className="mobile-send-button"
+                      title="Generate Variation"
+                    >
+                      {processing.isProcessing ? (
+                        <Loader2 className="mobile-send-icon animate-spin" />
+                      ) : (
+                        <ArrowRight className="mobile-send-icon" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Desktop Floating Input - Full Width, Fixed to Bottom */}
             <div className="generate-floating-input hidden md:block">
               {/* All components in a compact wrap layout */}
               <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -4118,28 +4140,11 @@ export default function Home() {
                       }}
                       >
                         <option value="">Select Model</option>
-                      {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
-                        <>
-                          <option value="nano-banana">🍌 Nano Banana</option>
-                          <option value="minimax-2.0">🎬 Minimax 2.0</option>
-                          <option value="kling-2.1-master">🎥 Kling 2.1</option>
-                          <option value="veo3-fast">⚡ Veo3 Fast</option>
-                        </>
-                      )}
-                      {uploadedFiles.some(file => file.fileType === 'video') && !uploadedFiles.some(file => file.fileType === 'image') && (
-                        <option value="runway-video">Runway Aleph</option>
-                      )}
-                      {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length >= 2 && (
-                        <option value="endframe">EndFrame</option>
-                      )}
-                  {!uploadedFiles.some(file => file.fileType === 'image') && !uploadedFiles.some(file => file.fileType === 'video') && (
-                        <>
-                          <option value="runway-t2i">🎨 Runway T2I</option>
-                          <option value="veo3-fast-t2v">⚡ Veo3 Fast T2V</option>
-                          <option value="minimax-2-t2v">🎬 Minimax 2.0 T2V</option>
-                          <option value="kling-2.1-master-t2v">🎥 Kling 2.1 T2V</option>
-                        </>
-                      )}
+                        {getAvailableModes().map((mode) => (
+                          <option key={mode} value={mode}>
+                            {getModelDisplayName(mode)}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   )}
@@ -4801,6 +4806,7 @@ export default function Home() {
         className="hidden"
       />
     </div>
+      </div>
     </div>
   );
 }

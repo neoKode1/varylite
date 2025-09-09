@@ -53,7 +53,7 @@ export const AnalyticsUpdater = () => {
           <h3 className="text-lg font-bold mb-2">Analytics Updater</h3>
           
           <div className="mb-3 p-2 bg-green-900 bg-opacity-50 rounded border border-green-500">
-            <div className="text-green-400 font-semibold">💰 Current Funding: $14.12</div>
+            <div className="text-green-400 font-semibold">💰 Current Funding: $10.10</div>
             <div className="text-xs text-gray-300">Community contributions</div>
           </div>
           
