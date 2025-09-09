@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle } from 'lucide-react';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
@@ -4376,7 +4376,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                               </button>
                 ) : hasVideoFiles ? (
@@ -4390,7 +4390,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                           </button>
                 ) : (
@@ -4404,7 +4404,7 @@ export default function Home() {
                     {processing.isProcessing ? (
                       <Loader2 className="generate-floating-icon animate-spin" />
                     ) : (
-                      <Camera className="generate-floating-icon" />
+                      <ArrowRight className="generate-floating-icon" />
                     )}
                               </button>
                 )}
