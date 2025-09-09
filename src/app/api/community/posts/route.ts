@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content or images required' }, { status: 400 });
     }
 
+    // Allow posts with just content, just images, or both
+    const postContent = content || '';
+    const postImages = images || [];
+
     if (!user_id) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
@@ -75,8 +79,8 @@ export async function POST(request: NextRequest) {
       .from('community_posts')
       .insert({
         user_id,
-        content: content || '',
-        images: images || [],
+        content: postContent,
+        images: postImages,
         likes_count: 0,
         reposts_count: 0,
         comments_count: 0
