@@ -3815,10 +3815,10 @@ export default function Home() {
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select Image-to-Video Model</option>
-                        <option value="nano-banana">Nano Banana (Character Variations)</option>
-                        <option value="minimax-2.0">Minimax 2.0 (Image-to-Video)</option>
-                        <option value="kling-2.1-master">Kling 2.1 Master (Image-to-Video)</option>
-                        <option value="veo3-fast">Veo3 Fast (Image-to-Video)</option>
+                        <option value="nano-banana">🍌 Nano Banana (Character Variations)</option>
+                        <option value="minimax-2.0">🎬 Minimax 2.0 (Image-to-Video)</option>
+                        <option value="kling-2.1-master">🎥 Kling 2.1 Master (Image-to-Video)</option>
+                        <option value="veo3-fast">⚡ Veo3 Fast (Image-to-Video)</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>
@@ -3834,10 +3834,10 @@ export default function Home() {
                         style={{ fontSize: '16px' }} // Prevents zoom on iOS
                       >
                         <option value="">Select Text-to-Video Model</option>
-                        <option value="runway-t2i">Runway T2I (Text-to-Image)</option>
-                        <option value="veo3-fast-t2v">Veo3 Fast (Text-to-Video)</option>
-                        <option value="minimax-2-t2v">Minimax 2.0 (Text-to-Video)</option>
-                        <option value="kling-2.1-master-t2v">Kling 2.1 Master (Text-to-Video)</option>
+                        <option value="runway-t2i">🎨 Runway T2I (Text-to-Image)</option>
+                        <option value="veo3-fast-t2v">⚡ Veo3 Fast (Text-to-Video)</option>
+                        <option value="minimax-2-t2v">🎬 Minimax 2.0 (Text-to-Video)</option>
+                        <option value="kling-2.1-master-t2v">🎥 Kling 2.1 Master (Text-to-Video)</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
                     </div>

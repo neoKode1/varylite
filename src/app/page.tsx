@@ -89,6 +89,84 @@ export default function LandingPage() {
                           </div>
                       </div>
 
+            {/* Available AI Models */}
+            <div className="mb-12">
+              <h2 className="text-3xl font-bold text-white mb-8 text-center">Powered by Leading AI Models</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {/* Nano Banana */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-2xl">🍌</span>
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Nano Banana</h3>
+                  <p className="text-gray-300 text-xs">Character Variations</p>
+                </div>
+
+                {/* Minimax 2.0 */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center">
+                    <img src="/minimax-color.svg" alt="Minimax" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Minimax 2.0</h3>
+                  <p className="text-gray-300 text-xs">Image-to-Video</p>
+                </div>
+
+                {/* Kling 2.1 Master */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <img src="/kling-color.svg" alt="Kling" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Kling 2.1 Master</h3>
+                  <p className="text-gray-300 text-xs">Image-to-Video</p>
+                </div>
+
+                {/* Veo3 Fast */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                    <span className="text-2xl">🎬</span>
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Veo3 Fast</h3>
+                  <p className="text-gray-300 text-xs">Text & Image-to-Video</p>
+                </div>
+
+                {/* Gemini */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                    <img src="/gemini-color.svg" alt="Gemini" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Gemini</h3>
+                  <p className="text-gray-300 text-xs">Text-to-Image</p>
+                </div>
+
+                {/* Flux */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+                    <img src="/flux.svg" alt="Flux" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Flux</h3>
+                  <p className="text-gray-300 text-xs">Advanced Generation</p>
+                </div>
+
+                {/* Ideogram */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <img src="/ideogram.svg" alt="Ideogram" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Ideogram</h3>
+                  <p className="text-gray-300 text-xs">Text Generation</p>
+                </div>
+
+                {/* ElevenLabs */}
+                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20 text-center hover:bg-opacity-20 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <img src="/elevenlabs.svg" alt="ElevenLabs" className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">ElevenLabs</h3>
+                  <p className="text-gray-300 text-xs">Voice Synthesis</p>
+                </div>
+              </div>
+            </div>
+
             {/* User Growth Counter */}
             <div className="mb-12">
               <UserGrowthCounter />

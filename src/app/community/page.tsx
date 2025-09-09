@@ -421,12 +421,12 @@ export default function CommunityPage() {
             
             <p className="text-gray-400 text-xs mt-2">
               {getEnergyLevel() >= 80 
-                ? "🎉 High energy! Generate freely while the balance stays healthy!" 
+                ? "🎉 High energy! Generate freely while the balance stays healthy! Data based on real-time usage." 
                 : getEnergyLevel() >= 50 
-                ? "⚡ Good energy levels. Keep creating!" 
+                ? "⚡ Good energy levels. Keep creating! Data based on real-time usage." 
                 : getEnergyLevel() >= 20 
-                ? "💡 Energy running low. Community support helps keep VaryAI running!" 
-                : "💜 Low energy. Your support helps keep the community thriving!"
+                ? "💡 Energy running low. Community support helps keep VaryAI running! Data based on real-time usage." 
+                : "💜 Low energy. Your support helps keep the community thriving! Data based on real-time usage."
               }
             </p>
           </div>
