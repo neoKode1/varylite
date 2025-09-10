@@ -612,7 +612,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Mobile Header with Navigation - Mobile Only */}
-      <header className="lg:hidden sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <header className="lg:hidden sticky top-0 z-50 bg-transparent backdrop-blur-md border-b border-gray-800">
         <div className="flex items-center justify-center py-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -689,7 +689,7 @@ export default function CommunityPage() {
 
         {/* Community Funding Meter */}
         <div className="mb-4 lg:mb-6">
-          <div className="bg-gradient-charcoal bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
+          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
@@ -758,7 +758,7 @@ export default function CommunityPage() {
 
         {/* Usage Statistics */}
         <div className="mb-4 lg:mb-6">
-          <div className="bg-gradient-charcoal bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
+          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-accent-gray to-light-gray animate-pulse"></div>
@@ -1346,7 +1346,7 @@ export default function CommunityPage() {
       />
 
       {/* Mobile Floating Bottom Input - Match Reference Design */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700 p-3 pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-t border-gray-700 p-3 pb-safe">
         <div className="flex items-center gap-3 mb-3">
           {/* Add Media Button */}
           <button 
@@ -1361,7 +1361,7 @@ export default function CommunityPage() {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Describe your idea"
+              placeholder="Share your thoughts."
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"

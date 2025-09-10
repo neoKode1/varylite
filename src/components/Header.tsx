@@ -78,8 +78,8 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
           {/* User Section */}
           <div className="flex items-center space-x-4">
-            {/* Analytics Dropdown - Moved to right side */}
-            <div className="flex-shrink-0">
+            {/* Analytics Dropdown - Desktop only */}
+            <div className="hidden lg:block flex-shrink-0">
               <AnalyticsUpdater />
             </div>
             

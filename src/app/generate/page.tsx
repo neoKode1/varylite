@@ -919,11 +919,11 @@ export default function Home() {
     if (hasImages) {
       if (uploadedFiles.length === 1) {
         // Single image - character variation models
-        modes.push('nano-banana');
-        // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
-        modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+      modes.push('nano-banana');
+      // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
+      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
         modes.push('minimax-video'); // Image-to-video with Minimax Video
-        modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
         modes.push('seedance-pro'); // Image-to-video with Seedance Pro
       } else if (uploadedFiles.length >= 2) {
         // Multiple images - end frame models
@@ -3716,7 +3716,7 @@ export default function Home() {
   return (
     <div className="min-h-screen relative">
       {/* Fixed Header with vARYai Branding - Mobile Only */}
-      <header className="lg:hidden sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <header className="lg:hidden sticky top-0 z-50 bg-transparent backdrop-blur-md border-b border-gray-800">
         <div className="flex items-center justify-center py-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -3838,7 +3838,7 @@ export default function Home() {
       
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : ''} flex flex-col items-center`}>
+        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : 'lg:ml-32'} flex flex-col items-center`}>
           <div className="w-full max-w-6xl mx-auto px-4 py-8 lg:px-8">
             {/* Usage Limit Banner */}
             <UsageLimitBanner 
@@ -3852,7 +3852,7 @@ export default function Home() {
             
         {/* Main Content Container - Centered and Unified */}
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
-          <div className="bg-gray-900 bg-opacity-90 backdrop-blur-md rounded-xl p-6 lg:p-8 xl:p-10 border border-gray-700 border-opacity-40 shadow-2xl w-full max-w-4xl">
+          <div className="bg-transparent lg:bg-gray-900 lg:bg-opacity-90 backdrop-blur-md rounded-xl p-6 lg:p-8 xl:p-10 border border-gray-700 border-opacity-40 shadow-2xl w-full max-w-4xl">
             
           {/* Funding Message */}
             <div className="mb-6 lg:mb-8 text-center">
@@ -4057,7 +4057,7 @@ export default function Home() {
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
-              <div className="mb-4 p-4 bg-charcoal bg-opacity-30 backdrop-blur-sm rounded-lg border border-border-gray border-opacity-30">
+              <div className="mb-4 p-4 bg-transparent lg:bg-charcoal lg:bg-opacity-30 backdrop-blur-sm rounded-lg border border-border-gray border-opacity-30">
                 <div className="text-xs text-accent-gray">
         <div className="font-semibold text-light-gray mb-2">📊 App Performance Analytics ({userStats.period})</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -4330,20 +4330,80 @@ export default function Home() {
               {/* Dynamic Content - Only show when images are uploaded */}
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
-                  {/* Image Upload Slots - Compact */}
-                  <div className="flex gap-1">
-                    {uploadedFiles.map((file, index) => (
-                      <div 
-                        key={index} 
-                        className={`relative flex-shrink-0 transition-all duration-200 ${
-                          dragOverSlot === index 
-                            ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
+                {/* Image Upload Slots - Compact */}
+                <div className="flex gap-1">
+                  {uploadedFiles.map((file, index) => (
+                    <div 
+                      key={index} 
+                      className={`relative flex-shrink-0 transition-all duration-200 ${
+                        dragOverSlot === index 
+                          ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
+                          : ''
+                      }`}
+                      onDrop={(e) => handleSlotDrop(e, index)}
+                      onDragOver={(e) => handleSlotDragOver(e, index)}
+                      onDragLeave={handleSlotDragLeave}
+                      onPaste={(e) => handleSlotPaste(e as any, index)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          document.getElementById('file-input')?.click();
+                        }
+                      }}
+                      data-slot-area
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Replace image in slot ${index + 1}`}
+                    >
+                      {file.fileType === 'image' ? (
+                        <img
+                          src={file.preview}
+                          alt={`Character ${index + 1}`}
+                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
+                        />
+                      ) : (
+                        <video
+                          src={file.preview}
+                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
+                          muted
+                        />
+                      )}
+                      <button
+                        onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                        className="absolute -top-2 -right-2 w-1 h-1 bg-red-500 bg-opacity-80 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10 border border-white border-opacity-50"
+                        title="Remove file"
+                      >
+                        <X className="w-0.5 h-0.5" />
+                      </button>
+                      <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
+                        {file.fileType.toUpperCase()}
+                      </div>
+                      {dragOverSlot === index && (
+                        <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                          <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
+                            Drop
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Empty slots for drag and drop */}
+                  {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
+                    const slotIndex = uploadedFiles.length + index;
+                    return (
+                      <div
+                        key={`empty-${slotIndex}`}
+                        className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
+                          dragOverSlot === slotIndex 
+                            ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
                             : ''
                         }`}
-                        onDrop={(e) => handleSlotDrop(e, index)}
-                        onDragOver={(e) => handleSlotDragOver(e, index)}
+                        onClick={() => document.getElementById('file-input')?.click()}
+                        onDrop={(e) => handleSlotDrop(e, slotIndex)}
+                        onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
                         onDragLeave={handleSlotDragLeave}
-                        onPaste={(e) => handleSlotPaste(e as any, index)}
+                        onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
@@ -4353,32 +4413,10 @@ export default function Home() {
                         data-slot-area
                         tabIndex={0}
                         role="button"
-                        aria-label={`Replace image in slot ${index + 1}`}
+                        aria-label={`Upload image to slot ${slotIndex + 1}`}
                       >
-                        {file.fileType === 'image' ? (
-                          <img
-                            src={file.preview}
-                            alt={`Character ${index + 1}`}
-                            className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
-                          />
-                        ) : (
-                          <video
-                            src={file.preview}
-                            className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
-                            muted
-                          />
-                        )}
-                        <button
-                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                          className="absolute -top-2 -right-2 w-1 h-1 bg-red-500 bg-opacity-80 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10 border border-white border-opacity-50"
-                          title="Remove file"
-                        >
-                          <X className="w-0.5 h-0.5" />
-                        </button>
-                        <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
-                          {file.fileType.toUpperCase()}
-                        </div>
-                        {dragOverSlot === index && (
+                        <Plus className="w-4 h-4 text-gray-400" />
+                        {dragOverSlot === slotIndex && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
                             <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
                               Drop
@@ -4386,49 +4424,11 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-                    ))}
-                    
-                    {/* Empty slots for drag and drop */}
-                    {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
-                      const slotIndex = uploadedFiles.length + index;
-                      return (
-                        <div
-                          key={`empty-${slotIndex}`}
-                          className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
-                            dragOverSlot === slotIndex 
-                              ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
-                              : ''
-                          }`}
-                          onClick={() => document.getElementById('file-input')?.click()}
-                          onDrop={(e) => handleSlotDrop(e, slotIndex)}
-                          onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
-                          onDragLeave={handleSlotDragLeave}
-                          onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              document.getElementById('file-input')?.click();
-                            }
-                          }}
-                          data-slot-area
-                          tabIndex={0}
-                          role="button"
-                          aria-label={`Upload image to slot ${slotIndex + 1}`}
-                        >
-                          <Plus className="w-4 h-4 text-gray-400" />
-                          {dragOverSlot === slotIndex && (
-                            <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                              <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
-                                Drop
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Model Selection - Compact */}
+                    );
+                  })}
+                </div>
+                
+                {/* Model Selection - Compact */}
                   <div className="flex items-center gap-2">
                     <span className="text-white text-xs font-medium whitespace-nowrap">Model:</span>
                       <select
@@ -4451,73 +4451,73 @@ export default function Home() {
                       </select>
                     </div>
 
-                  {/* Quick Shot Presets Dropdown - Compact */}
-                  <div className="relative">
-                        <select
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          setPrompt(e.target.value);
-                          e.target.value = ''; // Reset selection
-                        }
-                      }}
-                      className="px-3 py-1 text-xs bg-white text-black rounded-full hover:bg-gray-100 transition-colors appearance-none cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-purple-500 pr-6"
-                      style={{ 
-                        borderRadius: '20px',
-                        minWidth: '140px'
-                      }}
-                    >
-                      <option value="">Quick Shot Presets</option>
-                      {BASIC_PROMPTS.map((example) => (
-                        <option key={example} value={example}>
-                          {example}
-                        </option>
-                      ))}
-                        </select>
-                    {/* Custom dropdown arrow */}
-                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                      </div>
-                  </div>
-
-                  {/* Preset Buttons - Compact */}
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => {
-                        setActivePresetTab('shot');
-                        setShowPresetModal(true);
-                      }}
-                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                    >
-                      📸 Shot
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActivePresetTab('background');
-                        setShowPresetModal(true);
-                      }}
-                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                    >
-                      🎨 Background
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActivePresetTab('restyle');
-                        setShowPresetModal(true);
-                      }}
-                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                    >
-                      🎭 Restyle
-                    </button>
-                    <button
-                      onClick={() => setShowHelpModal(true)}
-                      className="px-2 py-1 text-xs rounded transition-colors border bg-blue-800 text-white border-blue-600 hover:bg-blue-700"
-                    >
-                      Prompt Help
-                    </button>
+                {/* Quick Shot Presets Dropdown - Compact */}
+                <div className="relative">
+                      <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setPrompt(e.target.value);
+                        e.target.value = ''; // Reset selection
+                      }
+                    }}
+                    className="px-3 py-1 text-xs bg-white text-black rounded-full hover:bg-gray-100 transition-colors appearance-none cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-purple-500 pr-6"
+                    style={{ 
+                      borderRadius: '20px',
+                      minWidth: '140px'
+                    }}
+                  >
+                    <option value="">Quick Shot Presets</option>
+                    {BASIC_PROMPTS.map((example) => (
+                      <option key={example} value={example}>
+                        {example}
+                      </option>
+                    ))}
+                      </select>
+                  {/* Custom dropdown arrow */}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    </div>
                 </div>
+
+                {/* Preset Buttons - Compact */}
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('shot');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    📸 Shot
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('background');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    🎨 Background
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('restyle');
+                      setShowPresetModal(true);
+                    }}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  >
+                    🎭 Restyle
+                  </button>
+                  <button
+                    onClick={() => setShowHelpModal(true)}
+                    className="px-2 py-1 text-xs rounded transition-colors border bg-blue-800 text-white border-blue-600 hover:bg-blue-700"
+                  >
+                    Prompt Help
+                  </button>
               </div>
+            </div>
               )}
 
               {/* Text input and buttons container */}
@@ -4747,8 +4747,10 @@ export default function Home() {
         )}
       </div>
 
-      {/* Analytics Updater - Remove this after updating */}
-      <AnalyticsUpdater />
+      {/* Analytics Updater - Desktop only */}
+      <div className="hidden lg:block">
+        <AnalyticsUpdater />
+      </div>
 
       {/* Help Modal */}
       <HelpModal 
@@ -5128,10 +5130,17 @@ export default function Home() {
       />
 
       {/* Mobile Dynamic Image Upload System */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-t border-gray-700">
         {/* Dynamic numbered image slots - ONLY show if images uploaded */}
         {uploadedFiles.length > 0 && (
           <div className="p-4 border-b border-gray-800">
+            {/* Upload progress indicator - Moved above image slots */}
+            <div className="text-center mb-4">
+              <span className="text-xs text-gray-400">
+                {uploadedFiles.length}/4 images uploaded
+              </span>
+            </div>
+            
             <div className="flex justify-center gap-3 mb-4">
               {[1, 2, 3, 4].map((slotNumber) => {
                 const imageIndex = slotNumber - 1;
@@ -5172,11 +5181,20 @@ export default function Home() {
               })}
             </div>
             
-            {/* Upload progress indicator */}
+            {/* Model Selection - Moved to where upload counter was */}
             <div className="text-center">
-              <span className="text-xs text-gray-400">
-                {uploadedFiles.length}/4 images uploaded
-              </span>
+              <select 
+                value={generationMode || ''}
+                onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                className="bg-gray-800 border border-gray-600 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200"
+              >
+                <option value="">Select Model</option>
+                {getAvailableModes().map((mode) => (
+                  <option key={mode} value={mode}>
+                    {getModelDisplayName(mode)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         )}
@@ -5208,19 +5226,6 @@ export default function Home() {
               />
             </div>
             
-            {/* Model Selection */}
-            <select 
-              value={generationMode || ''}
-              onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
-              className="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200"
-            >
-              <option value="">All</option>
-              {getAvailableModes().map((mode) => (
-                <option key={mode} value={mode}>
-                  {getModelDisplayName(mode)}
-                </option>
-              ))}
-            </select>
             
             {/* Generate Button */}
             <button 
