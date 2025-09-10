@@ -68,6 +68,58 @@
   }
 }
 
+/* Mobile Responsive Utilities */
+@layer utilities {
+  /* Safe area and mobile-specific classes */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+  
+  .h-screen-mobile {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Mobile-specific spacing */
+  .mobile-padding {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-padding {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+  
+  /* Mobile text scaling */
+  .mobile-text-xs {
+    font-size: 0.75rem;
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-text-xs {
+      font-size: 0.875rem;
+    }
+  }
+  
+  /* Mobile grid responsive */
+  .mobile-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-grid-2 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
 /* Mobile positioning fixes for modals and overlays */
 @layer utilities {
   /* Fix for mobile viewport positioning issues */

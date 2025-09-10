@@ -1,20 +1,24 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 
 // Generation mode types
 type GenerationMode = 
   | 'nano-banana' 
   | 'runway-t2i' 
+  | 'runway-video'
   | 'veo3-fast' 
   | 'minimax-2.0'
+  | 'minimax-video'
   | 'kling-2.1-master'
   | 'veo3-fast-t2v'
   | 'minimax-2-t2v'
-  | 'kling-2.1-master-t2v';
+  | 'kling-2.1-master-t2v'
+  | 'seedance-pro'
+  | 'seedance-pro-t2v';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -633,6 +637,7 @@ export default function Home() {
   const { canGenerate, trackUsage, isAnonymous } = useUsageTracking();
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
   const router = useRouter();
+  const pathname = usePathname();
   
   // Note: Automatic duplicate removal removed to prevent infinite loop
   // Use the "Fix Duplicates" button in development mode if needed
@@ -654,6 +659,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
+  
+  // Mobile image display state
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [displayedImages, setDisplayedImages] = useState<string[]>([]);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   
   // Authentication UI state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -788,12 +798,16 @@ export default function Home() {
     const timeEstimates = {
       'nano-banana': 15, // 15 seconds for character variations
       'runway-t2i': 30, // 30 seconds for text-to-image
+      'runway-video': 60, // 1 minute for runway video
       'veo3-fast': 45, // 45 seconds for image-to-video
       'minimax-2.0': 120, // 2 minutes for minimax video
+      'minimax-video': 120, // 2 minutes for minimax video
       'kling-2.1-master': 90, // 1.5 minutes for kling video
       'veo3-fast-t2v': 60, // 1 minute for text-to-video
       'minimax-2-t2v': 150, // 2.5 minutes for minimax t2v
-      'kling-2.1-master-t2v': 120 // 2 minutes for kling t2v
+      'kling-2.1-master-t2v': 120, // 2 minutes for kling t2v
+      'seedance-pro': 45, // 45 seconds for seedance pro
+      'seedance-pro-t2v': 60 // 1 minute for seedance pro t2v
     };
     return timeEstimates[mode] || 30;
   };
@@ -906,17 +920,19 @@ export default function Home() {
       modes.push('nano-banana');
       // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
       modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+      modes.push('minimax-video'); // Image-to-video with Minimax Video
       modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+      modes.push('seedance-pro'); // Image-to-video with Seedance Pro
     }
     
     // Add text-to-video modes when no images are uploaded
     if (!hasImages && !hasVideos) {
+      modes.push('runway-video'); // Text-to-video with Runway
       modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
       modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
       modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
+      modes.push('seedance-pro-t2v'); // Text-to-video with Seedance Pro
     }
-    
-    // Disabled models removed: runway-video, endframe
     
     return modes;
   }, [uploadedFiles]);
@@ -926,15 +942,56 @@ export default function Home() {
     const displayNames: Record<GenerationMode, string> = {
       'nano-banana': 'Nano Banana',
       'runway-t2i': 'Runway T2I',
+      'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
       'minimax-2.0': 'Minimax 2.0',
+      'minimax-video': 'Minimax Video',
       'kling-2.1-master': 'Kling 2.1 Master',
       'veo3-fast-t2v': 'Veo3 Fast T2V',
       'minimax-2-t2v': 'Minimax 2.0 T2V',
-      'kling-2.1-master-t2v': 'Kling 2.1 Master T2V'
+      'kling-2.1-master-t2v': 'Kling 2.1 Master T2V',
+      'seedance-pro': 'Seedance Pro',
+      'seedance-pro-t2v': 'Seedance Pro T2V'
     };
     return displayNames[mode] || mode;
   }, []);
+
+  // Mobile image display handlers
+  const handleSwipeLeft = useCallback(() => {
+    if (currentImageIndex < displayedImages.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  }, [currentImageIndex, displayedImages.length]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  }, [currentImageIndex]);
+
+  // Simulate slow image appearance during generation
+  useEffect(() => {
+    if (isGeneratingImages && variations.length > 0) {
+      setDisplayedImages([]);
+      setCurrentImageIndex(0);
+      
+      variations.forEach((variation, index) => {
+        setTimeout(() => {
+          setDisplayedImages(prev => [...prev, variation.imageUrl || variation.videoUrl || '']);
+        }, (index + 1) * 2000); // 2 second delay between each image
+      });
+    }
+  }, [isGeneratingImages, variations]);
+
+  // Stop generation animation when processing is complete
+  useEffect(() => {
+    if (!processing.isProcessing && isGeneratingImages) {
+      // Add a delay to ensure all images have appeared
+      setTimeout(() => {
+        setIsGeneratingImages(false);
+      }, 1000);
+    }
+  }, [processing.isProcessing, isGeneratingImages]);
 
   // Auto-detect generation mode when files change
   useEffect(() => {
@@ -1902,6 +1959,40 @@ export default function Home() {
     }
   }, [handleFileUpload, showNotification]);
 
+  // Mobile-specific file upload handler for the new upload slots system
+  const handleMobileFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      // Check if we can add more files
+      if (uploadedFiles.length >= 4) {
+        showNotification('Maximum 4 images allowed', 'error');
+        return;
+      }
+      
+      // Check file size
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        showNotification('File too large. Please use files under 10MB.', 'error');
+        return;
+      }
+      
+      // Create new uploaded file object
+      const newFile: UploadedFile = {
+        file,
+        preview: URL.createObjectURL(file),
+        base64: '', // Will be populated later if needed
+        type: 'reference', // Default type
+        fileType: file.type.startsWith('video/') ? 'video' : 'image'
+      };
+      
+      setUploadedFiles(prev => [...prev, newFile]);
+    }
+    
+    // Reset the input value
+    e.target.value = '';
+  }, [uploadedFiles.length, showNotification]);
+
   const handleProcessCharacter = async () => {
     if (uploadedFiles.length === 0 || !prompt.trim()) {
       setError('Please upload at least one file and enter a variation prompt');
@@ -2665,15 +2756,19 @@ export default function Home() {
           return;
         }
         
-        // Create a variation object for the gallery
-        const generatedVariation: CharacterVariation = {
-          id: `t2i-${Date.now()}`,
+        // Create 4 variation objects for the 2x2 grid
+        const generatedVariations: CharacterVariation[] = Array.from({ length: 4 }, (_, index) => ({
+          id: `t2i-${Date.now()}-${index}`,
           description: `Generated: ${originalPrompt}`,
           angle: 'Text-to-Image',
           pose: 'AI Generated',
-          imageUrl: data.imageUrl,
+          imageUrl: data.imageUrl, // Use the same image for all 4 slots for now
           fileType: 'image'
-        };
+        }));
+
+        // Set variations for 2x2 grid display
+        setVariations(generatedVariations);
+        setIsGeneratingImages(true);
 
         // Track usage
         await trackUsage('image_generation', 'runway_aleph', {
@@ -2683,7 +2778,7 @@ export default function Home() {
         });
 
         // Add to gallery
-        await addToGallery([generatedVariation], originalPrompt);
+        await addToGallery(generatedVariations, originalPrompt);
         
         setProcessing({
           isProcessing: false,
@@ -3579,11 +3674,87 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Header */}
+      {/* Fixed Header with vARYai Branding - Mobile Only */}
+      <header className="lg:hidden sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div className="flex items-center justify-center py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">V</span>
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-wide">vARYai</h1>
+          </div>
+        </div>
+        
+        {/* Navigation tabs */}
+        <div className="flex items-center justify-between w-full max-w-xs mx-auto pb-4">
+          <button 
+            onClick={() => router.push('/generate')}
+            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              pathname === '/generate' 
+                ? 'text-white bg-gray-800/50 shadow-sm' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+            }`}
+          >
+            Generate
+          </button>
+          <button 
+            onClick={() => router.push('/community')}
+            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              pathname === '/community' 
+                ? 'text-white bg-gray-800/50 shadow-sm' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+            }`}
+          >
+            Community
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop Fixed Header */}
+      <div className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-center py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">V</span>
+              </div>
+              <h1 className="text-xl font-bold text-white tracking-wide">vARYai</h1>
+            </div>
+          </div>
+          
+          {/* Navigation tabs */}
+          <div className="flex items-center justify-between w-full max-w-md mx-auto pb-4">
+            <button 
+              onClick={() => router.push('/generate')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                pathname === '/generate' 
+                  ? 'text-white bg-gray-800/50 shadow-sm' 
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+              }`}
+            >
+              Generate
+            </button>
+            <button 
+              onClick={() => router.push('/community')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                pathname === '/community' 
+                  ? 'text-white bg-gray-800/50 shadow-sm' 
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+              }`}
+            >
+              Community
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Original Header - Hidden */}
+      <div className="hidden">
       <Header 
         onSignUpClick={handleSignUpClick}
         onSignInClick={handleSignInClick}
       />
+      </div>
       
       
       {/* Semi-transparent overlay for content readability */}
@@ -3627,7 +3798,7 @@ export default function Home() {
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : ''} flex flex-col items-center`}>
-          <div className="w-full max-w-4xl mx-auto px-4 py-8 lg:px-8">
+          <div className="w-full max-w-6xl mx-auto px-4 py-8 lg:px-8">
             {/* Usage Limit Banner */}
             <UsageLimitBanner 
               onSignUpClick={handleSignUpClick}
@@ -3639,63 +3810,105 @@ export default function Home() {
             <UsageCounter onSignUpClick={handleSignUpClick} />
             
         {/* Main Content Container - Centered and Unified */}
-        <div className="w-full max-w-6xl mx-auto px-4 py-8">
-          <div className="bg-gray-900 bg-opacity-95 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-gray-700 border-opacity-50 shadow-2xl">
+        <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
+          <div className="bg-gray-900 bg-opacity-90 backdrop-blur-md rounded-xl p-6 lg:p-8 xl:p-10 border border-gray-700 border-opacity-40 shadow-2xl w-full max-w-4xl">
             
           {/* Funding Message */}
-            <div className="mb-6 text-center">
-            <p className="text-gray-300 text-sm font-medium">
-              💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what VaryAI brings, please help fund its growth!
+            <div className="mb-6 lg:mb-8 text-center">
+            <p className="text-gray-300 text-sm lg:text-base font-normal leading-loose max-w-2xl mx-auto">
+              💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what vARYai brings, please help fund its growth!
             </p>
         </div>
 
-          {/* vARYai Header */}
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center items-center mb-8 bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-4 lg:p-6 border border-white border-opacity-20 gap-4 lg:gap-0">
-          <h1 className="text-2xl lg:text-4xl font-bold text-white text-center lg:text-left">
-            vARY<span className="text-gray-400">ai</span>
-          </h1>
-          <div className="flex gap-2 flex-wrap justify-center lg:justify-end">
-            {/* Test Animated Errors Button - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <>
+            {/* Mobile Image Diffusion Display */}
+            <div className="lg:hidden mx-4 mt-6 mb-4">
+              {/* Image Display Area - Only shows when there are images or generation is in progress */}
+              {(displayedImages.length > 0 || isGeneratingImages) && (
+                <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl min-h-[300px] relative overflow-hidden">
+                  {displayedImages.length > 0 ? (
+                    <div className="h-full">
+                      {/* Swipeable container */}
+                      <div 
+                        className="flex transition-transform duration-300 ease-out h-full"
+                        style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+                        onTouchStart={(e: React.TouchEvent) => {
+                          const startX = e.touches[0].clientX;
+                          
+                          const handleTouchEnd = (e: TouchEvent) => {
+                            const endX = e.changedTouches[0].clientX;
+                            const diff = startX - endX;
+                            
+                            if (Math.abs(diff) > 50) { // Minimum swipe distance
+                              if (diff > 0) handleSwipeLeft();
+                              else handleSwipeRight();
+                            }
+                            
+                            document.removeEventListener('touchend', handleTouchEnd);
+                          };
+                          
+                          document.addEventListener('touchend', handleTouchEnd);
+                        }}
+                      >
+                        {displayedImages.map((image, index) => (
+                          <div key={index} className="w-full h-[300px] flex-shrink-0 flex items-center justify-center p-4">
+                            <img 
+                              src={image} 
+                              alt={`Generated variation ${index + 1}`}
+                              className="max-w-full max-h-full object-contain rounded-lg"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Image indicator dots */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                        {displayedImages.map((_, index) => (
                 <button
-                  onClick={() => {
-                    const errorTypes = ['farting-man', 'mortal-kombat', 'bouncing-error', 'shake-error', 'toasty'] as const;
-                    const randomType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
-                    showAnimatedErrorNotification(`Test ${randomType} animation!`, randomType);
-                  }}
-                  className="flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg text-sm"
-                  title="Test random animated errors (dev only)"
-                >
-                  🎭 Test
-                </button>
-                <button
-                  onClick={() => showAnimatedErrorNotification('User Error: Test Toasty animation! TOASTY!', 'toasty')}
-                  className="flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium shadow-lg text-sm"
-                  title="Test Toasty animation (dev only)"
-                  data-whoopee="true"
-                >
-                  🥖 TOASTY
-                </button>
-              </>
-            )}
-          <button
-            onClick={() => setShowGallery(!showGallery)}
-            className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-lg text-sm lg:text-base"
-            title={showGallery ? 'Hide Gallery' : 'Show Gallery'}
-          >
-            <span className="hidden sm:inline">
-              {showGallery ? 'Hide' : 'Show'} gallery
-            </span>
-            <span className="sm:hidden">
-              {showGallery ? 'Hide' : 'Show'}
-            </span>
-          </button>
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-colors ${
+                              index === currentImageIndex ? 'bg-cyan-500' : 'bg-gray-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Swipe hint */}
+                      {displayedImages.length > 1 && (
+                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                          <div className="bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
+                            <span className="text-xs text-white">Swipe to view more</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : isGeneratingImages ? (
+                    // Generation loading state
+                    <div className="h-full flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mb-4"></div>
+                      <p className="text-gray-400 text-sm">Generating variations...</p>
+                      <div className="mt-4 flex gap-2">
+                        {[1, 2, 3, 4].map((num, index) => (
+                          <div 
+                            key={num}
+                            className={`w-12 h-12 rounded-lg border-2 border-dashed flex items-center justify-center text-xs text-gray-500 ${
+                              index < displayedImages.length ? 'border-cyan-500 bg-cyan-500/10' : 'border-gray-600'
+                            }`}
+                          >
+                            {index < displayedImages.length ? '✓' : num}
             </div>
-            {/* Generation Panel */}
-            <div className="generation-panel mb-8">
-              <h2 className="text-xl font-bold text-white mb-4 text-center">New generations</h2>
-              <div className="generation-grid">
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Generation Panel */}
+            <div className="hidden lg:block generation-panel mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New generations</h2>
+              <div className="generation-grid max-w-4xl mx-auto">
                 {/* Slot 1 */}
                 <div 
                   className="generation-slot"
@@ -3795,12 +4008,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Desktop Input Section */}
           </div>
         </div>
 
-        <div className="flex items-center justify-center min-h-[70vh] w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat main-content-with-padding">
-          <div className="w-full max-w-2xl mx-auto">
+        <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat pb-32 lg:pb-6">
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
@@ -3844,7 +4056,7 @@ export default function Home() {
             </div>
 
             {/* Mobile Floating Input - Match Community Page Style */}
-            <div className="mobile-chat-interface md:hidden">
+            <div className="mobile-chat-interface md:hidden hidden">
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
                 <div className="mb-3">
@@ -3873,10 +4085,10 @@ export default function Home() {
                           )}
                         <button
                           onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                           title="Remove image"
                         >
-                          <X className="w-2 h-2" />
+                          <X className="w-1.5 h-1.5" />
                         </button>
                           <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
                             {file.fileType.toUpperCase()}
@@ -4023,9 +4235,59 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="generate-floating-input hidden md:block">
+            {/* Desktop Generated Images Grid - 2x2 Display */}
+            <div className="hidden md:block w-full max-w-4xl mx-auto mb-6">
+              {(displayedImages.length > 0 || isGeneratingImages) && (
+                <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl p-4">
+                  <div className="grid grid-cols-2 gap-4 min-h-[400px]">
+                    {displayedImages.length > 0 ? (
+                      // Show generated images in 2x2 grid
+                      Array.from({ length: 4 }, (_, index) => (
+                        <div key={index} className="bg-gray-700/50 rounded-lg border border-gray-600 flex items-center justify-center min-h-[180px]">
+                          {displayedImages[index] ? (
+                            <img 
+                              src={displayedImages[index]} 
+                              alt={`Generated variation ${index + 1}`}
+                              className="max-w-full max-h-full object-contain rounded-lg"
+                            />
+                          ) : (
+                            <div className="text-gray-500 text-sm">Slot {index + 1}</div>
+                          )}
+                        </div>
+                      ))
+                    ) : isGeneratingImages ? (
+                      // Show loading state in 2x2 grid
+                      Array.from({ length: 4 }, (_, index) => (
+                        <div key={index} className="bg-gray-700/50 rounded-lg border border-gray-600 flex items-center justify-center min-h-[180px]">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-500"></div>
+                            <div className="text-gray-400 text-xs">Generating...</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : null}
+                  </div>
+                  
+                  {/* Generation progress indicator */}
+                  {isGeneratingImages && (
+                    <div className="mt-4 text-center">
+                      <div className="text-cyan-400 text-sm font-medium">Generating variations...</div>
+                      <div className="mt-2 flex justify-center gap-2">
+                        {[1, 2, 3, 4].map((num, index) => (
+                          <div key={num} className={`w-3 h-3 rounded-full transition-colors ${
+                            index < displayedImages.length ? 'bg-cyan-500' : 'bg-gray-600'
+                          }`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="generate-floating-input hidden md:block w-full max-w-4xl mx-auto flex flex-col items-center">
               {/* All components in a compact wrap layout */}
-              <div className="flex flex-wrap items-center gap-3 mb-3">
+              <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
                 {/* Image Upload Slots - Compact */}
                 <div className="flex gap-1">
                   {uploadedFiles.map((file, index) => (
@@ -4218,7 +4480,8 @@ export default function Home() {
             </div>
 
 
-              {/* Text input at the bottom */}
+              {/* Text input and buttons container */}
+              <div className="flex items-center gap-4 w-full justify-center">
               <textarea
                 id="prompt"
                 data-prompt-field="true"
@@ -4283,9 +4546,9 @@ export default function Home() {
                     )}
                               </button>
                 )}
+                </div>
               </div>
             </div>
-
         
         {/* Bottom Gallery Panel */}
         {showGallery && (
@@ -4796,7 +5059,7 @@ export default function Home() {
         </div>
       )}
       
-      {/* Hidden File Input */}
+      {/* Hidden File Input - Desktop */}
       <input
         id="file-input"
         type="file"
@@ -4805,7 +5068,178 @@ export default function Home() {
         onChange={handleFileInputChange}
         className="hidden"
       />
+
+      {/* Hidden File Input - Mobile */}
+      <input
+        id="mobile-file-input"
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleMobileFileUpload}
+        className="hidden"
+      />
+
+      {/* Mobile Dynamic Image Upload System */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700">
+        {/* Dynamic numbered image slots - ONLY show if images uploaded */}
+        {uploadedFiles.length > 0 && (
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex justify-center gap-3 mb-4">
+              {[1, 2, 3, 4].map((slotNumber) => {
+                const imageIndex = slotNumber - 1;
+                const hasImage = uploadedFiles[imageIndex];
+                
+                return (
+                  <div key={slotNumber} className="relative">
+                    <div className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium ${
+                      hasImage 
+                        ? 'border-green-500 bg-green-500/20' 
+                        : 'border-gray-600 border-dashed bg-gray-800/50'
+                    }`}>
+                      {hasImage ? (
+                        <img 
+                          src={hasImage.preview} 
+                          alt={`Upload ${slotNumber}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <span className="text-gray-500">{slotNumber}</span>
+                      )}
     </div>
+                    
+                    {/* Remove button for uploaded images */}
+                    {hasImage && (
+                      <button
+                        onClick={() => {
+                          const newFiles = uploadedFiles.filter((_, index) => index !== imageIndex);
+                          setUploadedFiles(newFiles);
+                        }}
+                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center"
+                      >
+                        <X className="w-1.5 h-1.5 text-white" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Upload progress indicator */}
+            <div className="text-center">
+              <span className="text-xs text-gray-400">
+                {uploadedFiles.length}/4 images uploaded
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Input area */}
+        <div className="p-5">
+          <div className="flex items-center gap-4">
+            {/* Yellow Plus Button - Media Upload */}
+            <button 
+              onClick={() => document.getElementById('mobile-file-input')?.click()}
+              disabled={uploadedFiles.length >= 4}
+              className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-200 ${
+                uploadedFiles.length >= 4 
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                  : 'bg-yellow-500 text-black hover:bg-yellow-400 hover:shadow-lg active:scale-95'
+              }`}
+            >
+              +
+            </button>
+            
+            {/* Text Input */}
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Describe your idea..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200 shadow-sm"
+              />
+            </div>
+            
+            {/* Model Selection */}
+            <select 
+              value={generationMode || ''}
+              onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+              className="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200"
+            >
+              <option value="">All</option>
+              {getAvailableModes().map((mode) => (
+                <option key={mode} value={mode}>
+                  {getModelDisplayName(mode)}
+                </option>
+              ))}
+            </select>
+            
+            {/* Generate Button */}
+            <button 
+              onClick={async () => {
+                if (uploadedFiles.length === 0 || !prompt.trim()) return;
+                
+                setIsGeneratingImages(true);
+                setDisplayedImages([]);
+                setCurrentImageIndex(0);
+                
+                try {
+                  // Use the appropriate generation function based on uploaded files
+                  if (uploadedFiles.length === 1 && uploadedFiles[0].fileType === 'image') {
+                    await handleCharacterVariation();
+                  } else {
+                    await handleTextToImage();
+                  }
+                } catch (error) {
+                  console.error('Generation error:', error);
+                  setIsGeneratingImages(false);
+                }
+              }}
+              disabled={uploadedFiles.length === 0 || !prompt.trim() || processing.isProcessing}
+              className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                uploadedFiles.length === 0 || !prompt.trim() || processing.isProcessing
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-cyan-500 text-white hover:bg-cyan-600 hover:shadow-lg active:scale-95'
+              }`}
+            >
+              <ArrowUp className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="bg-gray-800 border-t border-gray-700">
+          <div className="flex">
+            <button 
+              onClick={() => router.push('/generate')}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            >
+              <Grid3X3 className="w-5 h-5" />
+              <span className="text-xs">Home</span>
+            </button>
+            <button 
+              onClick={() => router.push('/community')}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-xs">Chat</span>
+            </button>
+            <button 
+              onClick={() => setShowGallery(!showGallery)}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            >
+              <FolderOpen className="w-5 h-5" />
+              <span className="text-xs">Library</span>
+            </button>
+            <button 
+              onClick={() => router.push('/profile')}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            >
+              <User className="w-5 h-5" />
+              <span className="text-xs">Profile</span>
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );

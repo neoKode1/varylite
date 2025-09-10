@@ -1,13 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use hardcoded Supabase configuration (same as client-side)
-const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo';
+// Use environment variables for Supabase configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Fallback to hardcoded values if environment variables are not available
+const finalSupabaseUrl = supabaseUrl || 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
+const finalSupabaseKey = supabaseServiceKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo';
+
+console.log('🔧 [COMMUNITY COMMENTS] Environment check:', {
+  hasSupabaseUrl: !!supabaseUrl,
+  hasServiceKey: !!supabaseServiceKey,
+  usingFallback: !supabaseUrl || !supabaseServiceKey
+});
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Validate configuration
+    if (!finalSupabaseUrl || !finalSupabaseKey) {
+      console.error('❌ [COMMUNITY COMMENTS] Missing Supabase configuration');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const supabase = createClient(finalSupabaseUrl, finalSupabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('post_id');
 
@@ -67,7 +88,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Validate configuration
+    if (!finalSupabaseUrl || !finalSupabaseKey) {
+      console.error('❌ [COMMUNITY COMMENTS] Missing Supabase configuration');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const supabase = createClient(finalSupabaseUrl, finalSupabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     const body = await request.json();
     
     const { post_id, content, user_id } = body;

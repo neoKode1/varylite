@@ -41,11 +41,11 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">V</span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold text-white">VaryAI</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white">vARYai</h1>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/generate')}
               className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             )}
             
             {/* Analytics Dropdown */}
-            <div className="ml-2">
+            <div className="ml-4">
               <AnalyticsUpdater />
             </div>
           </div>
@@ -197,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">V</span>
             </div>
-            <h1 className="text-base font-bold text-white">VaryAI</h1>
+            <h1 className="text-base font-bold text-white">vARYai</h1>
           </div>
 
           {/* Scrollable Navigation Components */}

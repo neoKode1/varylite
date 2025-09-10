@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles, Trash2, MoreVertical } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles, Trash2, MoreVertical, Plus, ArrowUp, FolderOpen, Grid3X3, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
 import { Header } from '@/components/Header';
 import { AnalyticsUpdater } from '@/components/AnalyticsUpdater';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+
 
 interface Post {
   id: string;
@@ -44,6 +45,7 @@ interface Comment {
 export default function CommunityPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +60,9 @@ export default function CommunityPage() {
   const [newComment, setNewComment] = useState<{ [postId: string]: string }>({});
   const [isCommenting, setIsCommenting] = useState<{ [postId: string]: boolean }>({});
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [isCommunityEnergyExpanded, setIsCommunityEnergyExpanded] = useState(false);
+  const [isUsageStatsExpanded, setIsUsageStatsExpanded] = useState(false);
   
   // Collaborators data
   const collaborators = [
@@ -143,29 +148,6 @@ export default function CommunityPage() {
     }
   ];
 
-  const [fundingData, setFundingData] = useState({
-    current: 6.28,
-    goal: 1000, // Updated goal based on actual usage
-    weeklyCost: 250, // Updated based on $35/day average
-    lastUpdated: new Date(),
-    usageStats: {
-      totalRequests: 7090, // Updated from CSV data
-      successfulRequests: 7090,
-      successRate: 100,
-      period: 'September 1-9, 2025',
-      weeklyProjection: 10000, // Updated projection
-      costPerGeneration: 0.0398,
-      currentUsers: 24,
-      scalingFactor: 2,
-      baseWeeklyProjection: 7090,
-      modelBreakdown: {
-        nanoBanana: 7090, // Updated from CSV
-        videoModels: 134, // Updated from CSV (134 video seconds)
-        totalImages: 7090,
-        totalVideoSeconds: 134
-      }
-    }
-  });
 
   const [userStats, setUserStats] = useState({
     totalUsers: 0,
@@ -227,39 +209,6 @@ export default function CommunityPage() {
     }
   };
 
-  // Fetch funding data
-  const fetchFundingData = async () => {
-    try {
-      const response = await fetch('/api/fal-balance');
-      const data = await response.json();
-      
-      setFundingData({
-        current: data.current || 6.28,
-        goal: data.goal || 1000,
-        weeklyCost: data.weeklyCost || 250,
-        lastUpdated: new Date(data.lastUpdated || new Date()),
-        usageStats: {
-          totalRequests: data.usageStats?.totalRequests || 7090,
-          successfulRequests: data.usageStats?.successfulRequests || 7090,
-          successRate: data.usageStats?.successRate || 100,
-          period: data.usageStats?.period || 'September 1-9, 2025',
-          weeklyProjection: data.usageStats?.weeklyProjection || 10000,
-          costPerGeneration: data.usageStats?.costPerGeneration || 0.0398,
-          currentUsers: data.usageStats?.currentUsers || 24,
-          scalingFactor: data.usageStats?.scalingFactor || 2,
-          baseWeeklyProjection: data.usageStats?.baseWeeklyProjection || 7090,
-          modelBreakdown: {
-            nanoBanana: data.usageStats?.modelBreakdown?.nanoBanana || 7090,
-            videoModels: data.usageStats?.modelBreakdown?.videoModels || 134,
-            totalImages: data.usageStats?.modelBreakdown?.totalImages || 7090,
-            totalVideoSeconds: data.usageStats?.modelBreakdown?.totalVideoSeconds || 134
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Failed to fetch funding data:', error);
-    }
-  };
 
   // Fetch user statistics from Supabase
   const fetchUserStats = async () => {
@@ -283,33 +232,16 @@ export default function CommunityPage() {
     }
   };
 
-  // Calculate energy level
-  const getEnergyLevel = () => {
-    const currentBalance = fundingData.current;
-    const weeklyCost = fundingData.weeklyCost;
-    const percentage = (currentBalance / weeklyCost) * 100;
-    return Math.min(percentage, 100);
-  };
-
-  const getEnergyStatus = () => {
-    const level = getEnergyLevel();
-    if (level >= 80) return { status: 'high', color: 'green', text: 'High Energy' };
-    if (level >= 50) return { status: 'medium', color: 'yellow', text: 'Medium Energy' };
-    if (level >= 20) return { status: 'low', color: 'orange', text: 'Low Energy' };
-    return { status: 'critical', color: 'red', text: 'Critical Energy' };
-  };
 
   // Load posts and fetch data
   useEffect(() => {
     // Fetch initial data
     fetchPosts();
-    fetchFundingData();
     fetchUserStats();
     
     // Set up real-time polling every 30 seconds
     const interval = setInterval(() => {
       fetchPosts();
-      fetchFundingData();
       fetchUserStats();
     }, 30000);
     
@@ -678,35 +610,81 @@ export default function CommunityPage() {
           hideCommunityButton={true}
         />
       </div>
+
+      {/* Mobile Header with Navigation - Mobile Only */}
+      <header className="lg:hidden sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div className="flex items-center justify-center py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">V</span>
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-wide">vARYai</h1>
+          </div>
+        </div>
+        
+        {/* Navigation tabs */}
+        <div className="flex items-center justify-between w-full max-w-xs mx-auto pb-4">
+          <button 
+            onClick={() => router.push('/generate')}
+            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              pathname === '/generate' 
+                ? 'text-white bg-gray-800/50 shadow-sm' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+            }`}
+          >
+            Generate
+          </button>
+          <button 
+            onClick={() => router.push('/community')}
+            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              pathname === '/community' 
+                ? 'text-white bg-gray-800/50 shadow-sm' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+            }`}
+          >
+            Community
+          </button>
+          <button 
+            onClick={() => setShowCollaborators(!showCollaborators)}
+            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              showCollaborators 
+                ? 'text-white bg-gray-800/50 shadow-sm' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+            }`}
+          >
+            Collaborators
+          </button>
+        </div>
+      </header>
       
 
       {/* Main Content */}
       <div className="relative z-20 pt-4">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-3 lg:px-4 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center gap-3 lg:gap-4">
               <button
                 onClick={() => {
                   console.log('Generate button clicked');
                   router.push('/generate');
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg"
+                className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg text-sm lg:text-base"
                 title="Back to Generate"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="font-medium">Generate</span>
                 <Sparkles className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2 lg:gap-3">
+                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-white">Tha Communita</h1>
+                <h1 className="text-lg lg:text-2xl font-bold text-white">Tha Communita</h1>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-gray-300 text-sm">Community Members</div>
-              <div className="text-white font-medium">
+            <div className="text-left lg:text-right">
+              <div className="text-gray-300 text-xs lg:text-sm">Community Members</div>
+              <div className="text-white font-medium text-sm lg:text-base">
                 {userStats.totalUsers} Total • {userStats.activeUsers} Active
               </div>
               <div className="text-green-400 text-xs">
@@ -717,175 +695,158 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
-        {/* Critical Balance Warning */}
-        {getEnergyLevel() < 5 && (
-          <div className="mb-6">
-            <div className="bg-gradient-to-r from-red-900 to-red-800 bg-opacity-90 backdrop-blur-md rounded-lg p-4 border-2 border-red-500 border-opacity-50 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">🚨</div>
-                <div>
-                  <h3 className="text-white font-bold text-lg">CRITICAL BALANCE ALERT</h3>
-                  <p className="text-red-200 text-sm">
-                    Current balance: ${fundingData.current.toFixed(2)} | 
-                    Daily usage: ~$35 | 
-                    Runway: Less than 1 day
-                  </p>
-                  <p className="text-red-100 text-xs mt-1">
-                    Service may be interrupted without immediate funding. Please support the community!
-                  </p>
-                </div>
-                <a 
-                  href="https://ko-fi.com/varyai" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors"
-                >
-                  🚨 URGENT SUPPORT
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6 relative z-10 pb-32 lg:pb-6">
 
         {/* Community Funding Meter */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-40 backdrop-blur-md rounded-lg p-4 border border-purple-500 border-opacity-20">
-            <div className="flex items-center justify-between mb-3">
+        <div className="mb-4 lg:mb-6">
+          <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-purple-500 border-opacity-20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
-                <h3 className="text-white font-semibold text-lg">Community Energy</h3>
+                <h3 className="text-white font-semibold text-sm lg:text-lg">Community Energy</h3>
               </div>
-              <div className="text-right">
-                <p className="text-gray-300 text-sm">Community Energy</p>
-                <p className="text-white font-medium">Balance: ${fundingData.current.toFixed(2)}</p>
+              <div className="flex items-center gap-2">
+                <div className="text-left sm:text-right">
+                  <p className="text-gray-300 text-xs lg:text-sm">Community Energy</p>
+                  <p className="text-white font-medium text-sm lg:text-base">Community Status</p>
+                </div>
+                <button
+                  onClick={() => setIsCommunityEnergyExpanded(!isCommunityEnergyExpanded)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {isCommunityEnergyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
               </div>
             </div>
             
-            {/* Energy Bar */}
-            <div className="relative">
-              <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
-                <div 
-                  className={`h-3 rounded-full transition-all duration-500 ${
-                    getEnergyStatus().status === 'high' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                    getEnergyStatus().status === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                    getEnergyStatus().status === 'low' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                    'bg-gradient-to-r from-red-400 to-red-600'
-                  }`}
-                  style={{ width: `${getEnergyLevel()}%` }}
-                ></div>
+            {/* Collapsed State - Show only meter */}
+            {!isCommunityEnergyExpanded && (
+              <div className="relative">
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
+                </div>
+                <p className="text-gray-400 text-xs leading-tight">
+                  Community support helps keep vARYai running! Thank you for being part of our creative community.
+                </p>
               </div>
-              
-              {/* Energy Status */}
-              <div className="flex items-center justify-between">
-                <span className={`text-sm font-medium ${
-                  getEnergyStatus().color === 'green' ? 'text-green-400' :
-                  getEnergyStatus().color === 'yellow' ? 'text-yellow-400' :
-                  getEnergyStatus().color === 'orange' ? 'text-orange-400' :
-                  'text-red-400'
-                }`}>
-                  {getEnergyStatus().text} ({Math.round(getEnergyLevel())}%)
-                </span>
+            )}
+            
+            {/* Expanded State - Show full content */}
+            {isCommunityEnergyExpanded && (
+              <div className="relative">
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
+                </div>
                 
-                {getEnergyLevel() < 80 && (
-                  <div className="flex gap-2">
-                    <a 
-                      href="https://ko-fi.com/varyai" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm rounded-full transition-colors"
-                      title="Weekly Injection - Funds take time to be released"
-                    >
-                      ⚡ Weekly Injection
-                    </a>
-                    <a 
-                      href="https://cash.app/$VaryAi" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-full transition-colors"
-                      title="Daily Injection - Funds go directly into the pot"
-                    >
-                      💚 Daily Injection
-                    </a>
-                  </div>
-                )}
+                {/* Support Links */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <a
+                    href="https://ko-fi.com/varyai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-full transition-colors text-center"
+                  >
+                    ⚡ Support
+                  </a>
+                  <a
+                    href="https://cash.app/$VaryAi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-full transition-colors text-center"
+                  >
+                    💚 Daily
+                  </a>
+                </div>
+
+                <p className="text-gray-400 text-xs mt-2 leading-tight">
+                  Community support helps keep vARYai running! Thank you for being part of our creative community.
+                </p>
               </div>
-            </div>
-            
-            <p className="text-gray-400 text-xs mt-2">
-              {getEnergyLevel() >= 80 
-                ? "🎉 High energy! Generate freely while the balance stays healthy! Data based on real-time usage." 
-                : getEnergyLevel() >= 50 
-                ? "⚡ Good energy levels. Keep creating! Data based on real-time usage." 
-                : getEnergyLevel() >= 20 
-                ? "💡 Energy running low. Community support helps keep VaryAI running! Data based on real-time usage." 
-                : "🚨 CRITICAL: Balance extremely low! Service may be interrupted soon. Immediate support needed! Data based on real-time usage."
-              }
-            </p>
+            )}
           </div>
         </div>
 
         {/* Usage Statistics */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-blue-900 to-purple-900 bg-opacity-40 backdrop-blur-md rounded-lg p-4 border border-blue-500 border-opacity-20">
-            <div className="flex items-center justify-between mb-3">
+        <div className="mb-4 lg:mb-6">
+          <div className="bg-gradient-to-r from-blue-900 to-purple-900 bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-blue-500 border-opacity-20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse"></div>
-                <h3 className="text-white font-semibold text-lg">Usage Statistics</h3>
+                <h3 className="text-white font-semibold text-sm lg:text-lg">Usage Statistics</h3>
               </div>
-              <div className="text-right">
-                <p className="text-gray-300 text-sm">Last Updated: {userStats.period}</p>
-                <p className="text-white font-medium">{userStats.totalUsers} Total Users</p>
-                <p className="text-green-400 text-xs">{userStats.activeUsers} Active • +{userStats.newUsers24h} New</p>
+              <div className="flex items-center gap-2">
+                <div className="text-left sm:text-right">
+                  <p className="text-gray-300 text-xs lg:text-sm">Last Updated: {userStats.period}</p>
+                  <p className="text-white font-medium text-sm lg:text-base">{userStats.totalUsers} Total Users</p>
+                  <p className="text-green-400 text-xs">{userStats.activeUsers} Active • +{userStats.newUsers24h} New</p>
+                </div>
+                <button
+                  onClick={() => setIsUsageStatsExpanded(!isUsageStatsExpanded)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {isUsageStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
               </div>
             </div>
             
-            {/* Usage Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-blue-400">{userStats.totalGenerations.toLocaleString()}</div>
-                <div className="text-xs text-gray-300">Total Generations</div>
-              </div>
-              <div className="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-green-400">{userStats.activeUsers}</div>
-                <div className="text-xs text-gray-300">Active Users</div>
-              </div>
-              <div className="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-purple-400">{userStats.recentActivity}</div>
-                <div className="text-xs text-gray-300">Recent Activity</div>
-              </div>
-              <div className="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-orange-400">{userStats.newUsers24h}</div>
-                <div className="text-xs text-gray-300">New Today</div>
-              </div>
-            </div>
+            {/* Collapsed State - Show only description */}
+            {!isUsageStatsExpanded && (
+              <p className="text-gray-400 text-xs">
+                🚀 VaryAI community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+              </p>
+            )}
             
-            {/* Community Growth Stats */}
-            <div className="bg-gray-800 bg-opacity-30 rounded-lg p-3">
-              <h4 className="text-gray-300 text-sm font-medium mb-2">Community Growth</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">Total Community Members</span>
-                  <span className="text-blue-400 font-medium">{userStats.totalUsers}</span>
+            {/* Expanded State - Show full content */}
+            {isUsageStatsExpanded && (
+              <>
+                {/* Usage Stats Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4 mb-4">
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-blue-400">{userStats.totalGenerations.toLocaleString()}</div>
+                    <div className="text-xs text-gray-300">Total Generations</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-green-400">{userStats.activeUsers}</div>
+                    <div className="text-xs text-gray-300">Active Users</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-purple-400">{userStats.recentActivity}</div>
+                    <div className="text-xs text-gray-300">Recent Activity</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-orange-400">{userStats.newUsers24h}</div>
+                    <div className="text-xs text-gray-300">New Today</div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">Active in Last 24h</span>
-                  <span className="text-green-400 font-medium">{userStats.activeUsers}</span>
+                
+                {/* Community Growth Stats */}
+                <div className="bg-gray-800 bg-opacity-30 rounded-lg p-2 lg:p-3">
+                  <h4 className="text-gray-300 text-xs lg:text-sm font-medium mb-2">Community Growth</h4>
+                  <div className="space-y-1 lg:space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">Total Community Members</span>
+                      <span className="text-blue-400 font-medium text-xs lg:text-sm">{userStats.totalUsers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">Active in Last 24h</span>
+                      <span className="text-green-400 font-medium text-xs lg:text-sm">{userStats.activeUsers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">New Members Today</span>
+                      <span className="text-purple-400 font-medium text-xs lg:text-sm">+{userStats.newUsers24h}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-sm">Data Source</span>
+                      <span className="text-gray-400 text-sm">{userStats.period}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">New Members Today</span>
-                  <span className="text-purple-400 font-medium">+{userStats.newUsers24h}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">Data Source</span>
-                  <span className="text-gray-400 text-sm">{userStats.period}</span>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-gray-400 text-xs mt-3">
-              🚀 VaryAI community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
-            </p>
+                
+                <p className="text-gray-400 text-xs mt-3">
+                  🚀 VaryAI community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -1393,6 +1354,101 @@ export default function CommunityPage() {
         onClose={() => setShowAuthModal(false)}
         defaultMode={authModalMode}
       />
+
+      {/* Mobile Floating Bottom Input - Match Reference Design */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700 p-3 pb-safe">
+        <div className="flex items-center gap-3 mb-3">
+          {/* Add Media Button */}
+          <button 
+            onClick={() => document.getElementById('file-input')?.click()}
+            className="flex-shrink-0 w-12 h-12 bg-gray-800 border border-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-700 transition-colors"
+            title="Add Media"
+          >
+            <Plus className="w-5 h-5 text-yellow-500" />
+          </button>
+          
+          {/* Text Input */}
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Describe your idea"
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+            />
+          </div>
+          
+          {/* Post Button */}
+          <button 
+            onClick={handlePostSubmit}
+            disabled={(!newPost.trim() && uploadedImages.length === 0) || isLoading}
+            className="flex-shrink-0 w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:bg-gray-700 hover:bg-cyan-600 transition-colors"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Bottom Navigation */}
+        <div className="flex bg-gray-800 rounded-xl overflow-hidden">
+          <button 
+            onClick={() => router.push('/generate')}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Grid3X3 className="w-5 h-5" />
+            <span className="text-xs font-medium">Home</span>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/community')}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs font-medium">Chat</span>
+          </button>
+          
+          <button 
+            onClick={() => setShowGallery(!showGallery)}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+          >
+            <FolderOpen className="w-5 h-5" />
+            <span className="text-xs font-medium">Library</span>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/profile')}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-xs font-medium">Profile</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Gallery Panel */}
+      {showGallery && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-sm border-t border-gray-700 z-30 max-h-[60vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
+                <FolderOpen className="w-6 h-6 text-white" />
+                Library
+              </h2>
+              <button
+                onClick={() => setShowGallery(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="text-center py-12">
+              <FolderOpen className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg">Library feature coming soon</p>
+              <p className="text-gray-500 text-sm mt-2">This will show your saved posts and generated content</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
