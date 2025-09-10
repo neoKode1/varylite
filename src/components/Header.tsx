@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
               <span className="text-white font-bold text-sm">V</span>
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-white">vARYai</h1>
@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   <span className="text-gray-300">Free: {usageStats.totalGenerations}/3</span>
                   <div className="w-16 h-2 bg-gray-700 rounded-full">
                     <div 
-                      className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                      className="h-2 bg-gradient-to-r from-accent-gray to-light-gray rounded-full transition-all duration-300"
                       style={{ width: `${(usageStats.totalGenerations / 3) * 100}%` }}
                     />
                   </div>
@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                 </button>
                 <button
                   onClick={onSignUpClick}
-                  className="flex items-center space-x-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-2 rounded-lg transition-colors font-medium"
+                  className="flex items-center space-x-1 bg-gradient-charcoal hover:bg-gradient-jet text-white px-3 py-2 rounded-lg transition-colors font-medium border border-border-gray"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Get Unlimited</span>
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <div className="text-left">
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
         <div className="flex items-center">
           {/* Fixed Logo - Always visible on left */}
           <div className="flex items-center space-x-2 flex-shrink-0 pr-4">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-6 h-6 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
               <span className="text-white font-bold text-xs">V</span>
             </div>
             <h1 className="text-base font-bold text-white">vARYai</h1>
@@ -239,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   <span className="text-gray-300">Free: {usageStats.totalGenerations}/3</span>
                   <div className="w-12 h-1.5 bg-gray-700 rounded-full">
                     <div 
-                      className="h-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                      className="h-1.5 bg-gradient-to-r from-accent-gray to-light-gray rounded-full transition-all duration-300"
                       style={{ width: `${(usageStats.totalGenerations / 3) * 100}%` }}
                     />
                   </div>
@@ -261,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                 </button>
                 <button
                   onClick={onSignUpClick}
-                  className="flex items-center space-x-1 flex-shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-2 rounded-lg transition-colors font-medium text-xs whitespace-nowrap"
+                  className="flex items-center space-x-1 flex-shrink-0 bg-gradient-charcoal hover:bg-gradient-jet text-white px-3 py-2 rounded-lg transition-colors font-medium text-xs whitespace-nowrap border border-border-gray"
                 >
                   <UserPlus className="w-3 h-3" />
                   <span>Get Unlimited</span>
@@ -274,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800"
                 >
-                  <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                     <User className="w-3 h-3 text-white" />
                   </div>
                   <div className="text-left">

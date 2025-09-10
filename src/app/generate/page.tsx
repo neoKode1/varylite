@@ -3809,7 +3809,7 @@ export default function Home() {
               ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
               : notification.type === 'success'
               ? 'bg-green-600 bg-opacity-90 border-green-500 text-white'
-              : 'bg-blue-600 bg-opacity-90 border-blue-500 text-white'
+              : 'bg-charcoal bg-opacity-90 border-border-gray text-white'
           }`}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{notification.message}</p>
@@ -4057,23 +4057,23 @@ export default function Home() {
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
-              <div className="mb-4 p-4 bg-blue-900 bg-opacity-30 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30">
-                <div className="text-xs text-blue-200">
-        <div className="font-semibold text-blue-100 mb-2">📊 App Performance Analytics ({userStats.period})</div>
+              <div className="mb-4 p-4 bg-charcoal bg-opacity-30 backdrop-blur-sm rounded-lg border border-border-gray border-opacity-30">
+                <div className="text-xs text-accent-gray">
+        <div className="font-semibold text-light-gray mb-2">📊 App Performance Analytics ({userStats.period})</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="space-y-1">
-            <div>• <span className="text-blue-100 font-medium">{userStats.totalGenerations.toLocaleString()}</span> total generations</div>
-            <div>• <span className="text-blue-100 font-medium">{userStats.engagement.activeUserPercentage}%</span> active users</div>
-            <div>• <span className="text-blue-100 font-medium">{userStats.totalUsers}</span> total users</div>
+            <div>• <span className="text-light-gray font-medium">{userStats.totalGenerations.toLocaleString()}</span> total generations</div>
+            <div>• <span className="text-light-gray font-medium">{userStats.engagement.activeUserPercentage}%</span> active users</div>
+            <div>• <span className="text-light-gray font-medium">{userStats.totalUsers}</span> total users</div>
           </div>
           <div className="space-y-1">
-            <div>• <span className="text-blue-100 font-medium">{userStats.activeUsers}</span> active customers</div>
-            <div>• <span className="text-blue-100 font-medium">{userStats.recentActivity}</span> recent activity</div>
-            <div>• <span className="text-blue-100 font-medium">+{userStats.newUsers24h}</span> new today</div>
+            <div>• <span className="text-light-gray font-medium">{userStats.activeUsers}</span> active customers</div>
+            <div>• <span className="text-light-gray font-medium">{userStats.recentActivity}</span> recent activity</div>
+            <div>• <span className="text-light-gray font-medium">+{userStats.newUsers24h}</span> new today</div>
           </div>
         </div>
-        <div className="mt-2 pt-2 border-t border-blue-500 border-opacity-20">
-          <div className="text-blue-100 font-medium">🚀 Model Performance:</div>
+        <div className="mt-2 pt-2 border-t border-border-gray border-opacity-20">
+          <div className="text-light-gray font-medium">🚀 Model Performance:</div>
           <div>• <span className="text-green-300 font-medium">{userStats.usageBreakdown.nano_banana.toLocaleString()}</span> Nano Banana ({((userStats.usageBreakdown.nano_banana / userStats.totalGenerations) * 100).toFixed(1)}%)</div>
           <div>• <span className="text-orange-300 font-medium">{userStats.usageBreakdown.minimax_endframe}</span> Video generations (Minimax 2.0)</div>
           <div>• <span className="text-purple-300 font-medium">{userStats.usageBreakdown.gemini}</span> Gemini generations</div>

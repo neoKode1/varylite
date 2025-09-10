@@ -658,7 +658,7 @@ export default function CommunityPage() {
                   console.log('Generate button clicked');
                   router.push('/generate');
                 }}
-                className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg text-sm lg:text-base"
+                className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-charcoal hover:bg-gradient-jet text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg text-sm lg:text-base border border-border-gray"
                 title="Back to Generate"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -666,7 +666,7 @@ export default function CommunityPage() {
                 <Sparkles className="w-4 h-4" />
               </button>
               <div className="flex items-center gap-2 lg:gap-3">
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                   <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
                 </div>
                 <h1 className="text-lg lg:text-2xl font-bold text-white">Tha Communita</h1>
@@ -689,7 +689,7 @@ export default function CommunityPage() {
 
         {/* Community Funding Meter */}
         <div className="mb-4 lg:mb-6">
-          <div className="bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-purple-500 border-opacity-20">
+          <div className="bg-gradient-charcoal bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
@@ -758,10 +758,10 @@ export default function CommunityPage() {
 
         {/* Usage Statistics */}
         <div className="mb-4 lg:mb-6">
-          <div className="bg-gradient-to-r from-blue-900 to-purple-900 bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-blue-500 border-opacity-20">
+          <div className="bg-gradient-charcoal bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse"></div>
+                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-accent-gray to-light-gray animate-pulse"></div>
                 <h3 className="text-white font-semibold text-sm lg:text-lg">Usage Statistics</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -792,7 +792,7 @@ export default function CommunityPage() {
                 {/* Usage Stats Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4 mb-4">
                   <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
-                    <div className="text-lg lg:text-2xl font-bold text-blue-400">{userStats.totalGenerations.toLocaleString()}</div>
+                    <div className="text-lg lg:text-2xl font-bold text-accent-gray">{userStats.totalGenerations.toLocaleString()}</div>
                     <div className="text-xs text-gray-300">Total Generations</div>
                   </div>
                   <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
@@ -815,7 +815,7 @@ export default function CommunityPage() {
                   <div className="space-y-1 lg:space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-300 text-xs lg:text-sm">Total Community Members</span>
-                      <span className="text-blue-400 font-medium text-xs lg:text-sm">{userStats.totalUsers}</span>
+                      <span className="text-accent-gray font-medium text-xs lg:text-sm">{userStats.totalUsers}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-300 text-xs lg:text-sm">Active in Last 24h</span>
@@ -853,7 +853,7 @@ export default function CommunityPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                       <User className="w-5 h-5 text-white" />
                     </div>
                   )}
@@ -917,7 +917,7 @@ export default function CommunityPage() {
                     
                     <button 
                       onClick={() => toggleComments(post.id)}
-                      className="flex items-center gap-2 text-gray-400 hover:text-blue-400 text-sm transition-colors"
+                      className="flex items-center gap-2 text-gray-400 hover:text-accent-gray text-sm transition-colors"
                     >
                       <MessageCircle className="w-4 h-4" />
                       {post.comments_count}
@@ -950,7 +950,7 @@ export default function CommunityPage() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                  <div className="w-full h-full bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                                     <User className="w-4 h-4 text-white" />
                                   </div>
                                 )}
@@ -979,7 +979,7 @@ export default function CommunityPage() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                              <div className="w-full h-full bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
                                 <User className="w-4 h-4 text-white" />
                               </div>
                             )}
@@ -1035,7 +1035,7 @@ export default function CommunityPage() {
                 className="text-purple-400 hover:text-purple-300 transition-colors font-medium flex items-center gap-1"
               >
                 <span>Kazi</span>
-                <span className="text-blue-400">@Kazi5isAlive</span>
+                <span className="text-accent-gray">@Kazi5isAlive</span>
               </a>
             </div>
           </div>
@@ -1153,7 +1153,7 @@ export default function CommunityPage() {
             <div className="flex gap-2">
               <button 
                 onClick={handleSignIn}
-                className="px-3 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded text-sm font-medium hover:from-purple-600 hover:to-blue-600 transition-all"
+                className="px-3 py-1 bg-gradient-charcoal text-white rounded text-sm font-medium hover:bg-gradient-jet transition-all border border-border-gray"
               >
                 Sign In
               </button>
@@ -1251,7 +1251,7 @@ export default function CommunityPage() {
             <div className="flex gap-2">
               <button 
                 onClick={handleSignIn}
-                className="px-3 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded text-sm font-medium hover:from-purple-600 hover:to-blue-600 transition-all"
+                className="px-3 py-1 bg-gradient-charcoal text-white rounded text-sm font-medium hover:bg-gradient-jet transition-all border border-border-gray"
               >
                 Sign In
               </button>
@@ -1295,7 +1295,7 @@ export default function CommunityPage() {
                         />
                       ) : (
                         <div className={`w-full h-full rounded-full flex items-center justify-center ${
-                          collaborator.type === 'artist' ? 'bg-gradient-to-r from-purple-500 to-blue-500' :
+                          collaborator.type === 'artist' ? 'bg-gradient-charcoal border border-border-gray' :
                           collaborator.type === 'contributor' ? 'bg-gradient-to-r from-indigo-500 to-purple-500' :
                           collaborator.type === 'advisor' ? 'bg-gradient-to-r from-green-500 to-teal-500' :
                           'bg-gradient-to-r from-orange-500 to-red-500'
@@ -1313,7 +1313,7 @@ export default function CommunityPage() {
                             href={collaborator.social}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            className="text-accent-gray hover:text-light-gray transition-colors"
                           >
                             <span className="text-xs">{collaborator.handle}</span>
                           </a>
