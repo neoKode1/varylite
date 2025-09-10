@@ -259,25 +259,41 @@ export default function CommunityPage() {
       let uploadedImageUrls: string[] = [];
       if (uploadedImages.length > 0) {
         for (const imageDataUrl of uploadedImages) {
-          // Convert data URL to blob
-          const response = await fetch(imageDataUrl);
-          const blob = await response.blob();
-          
-          // Create form data for upload
-          const formData = new FormData();
-          formData.append('file', blob, `image-${Date.now()}.jpg`);
-          formData.append('user_id', user.id);
-          
-          const uploadResponse = await fetch('/api/community/upload', {
-            method: 'POST',
-            body: formData
-          });
-          
-          const uploadData = await uploadResponse.json();
-          if (uploadData.success) {
-            uploadedImageUrls.push(uploadData.data.url);
+          try {
+            // Convert data URL to blob
+            const response = await fetch(imageDataUrl);
+            const blob = await response.blob();
+            
+            // Create form data for upload
+            const formData = new FormData();
+            formData.append('file', blob, `image-${Date.now()}.jpg`);
+            formData.append('user_id', user.id);
+            
+            const uploadResponse = await fetch('/api/community/upload', {
+              method: 'POST',
+              body: formData
+            });
+            
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+              uploadedImageUrls.push(uploadData.data.url);
+            } else {
+              console.error('Upload failed:', uploadData.error);
+              // Continue with other images, but log the error
+            }
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            // Continue with other images
           }
         }
+      }
+      
+      // Validate that we have either content or successfully uploaded images
+      if (!newPost.trim() && uploadedImageUrls.length === 0) {
+        console.error('Cannot create post: no content and no successfully uploaded images');
+        alert('Please add some text or ensure your images uploaded successfully');
+        setIsLoading(false);
+        return;
       }
       
       // Create the post
@@ -1350,7 +1366,7 @@ export default function CommunityPage() {
         <div className="flex items-center gap-3 mb-3">
           {/* Add Media Button */}
           <button 
-            onClick={() => document.getElementById('file-input')?.click()}
+            onClick={() => fileInputRef.current?.click()}
             className="flex-shrink-0 w-12 h-12 bg-gray-800 border border-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-700 transition-colors"
             title="Add Media"
           >

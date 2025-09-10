@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use hardcoded Supabase configuration (same as client-side)
-const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDk5NjgsImV4cCI6MjA3MjcyNTk2OH0.vwKODtk4ScXWv8ZCTqtkmlMeYLWhUrInxrhaYZnEVqo';
+// Use environment variables for Supabase configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Fallback to hardcoded values if environment variables are not available
+const finalSupabaseUrl = supabaseUrl || 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
+const finalSupabaseKey = supabaseServiceKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxbXplcGZiZ2J3dHpicG1yZXZ4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzE0OTk2OCwiZXhwIjoyMDcyNzI1OTY4fQ.YourServiceRoleKeyHere';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 [COMMUNITY UPLOAD] POST request received');
     
+    // Validate configuration
+    if (!finalSupabaseUrl || !finalSupabaseKey) {
+      console.error('❌ [COMMUNITY UPLOAD] Missing Supabase configuration');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    
     console.log('✅ [COMMUNITY UPLOAD] Supabase configured, creating client');
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(finalSupabaseUrl, finalSupabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     
     console.log('📝 [COMMUNITY UPLOAD] Parsing form data...');
     const formData = await request.formData();

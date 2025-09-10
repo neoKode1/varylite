@@ -4749,7 +4749,7 @@ export default function Home() {
 
       {/* Analytics Updater - Desktop only */}
       <div className="hidden lg:block">
-        <AnalyticsUpdater />
+      <AnalyticsUpdater />
       </div>
 
       {/* Help Modal */}
@@ -5139,7 +5139,7 @@ export default function Home() {
               <span className="text-xs text-gray-400">
                 {uploadedFiles.length}/4 images uploaded
               </span>
-            </div>
+    </div>
             
             <div className="flex justify-center gap-3 mb-4">
               {[1, 2, 3, 4].map((slotNumber) => {
@@ -5162,7 +5162,7 @@ export default function Home() {
                       ) : (
                         <span className="text-gray-500">{slotNumber}</span>
                       )}
-    </div>
+      </div>
                     
                     {/* Remove button for uploaded images */}
                     {hasImage && (
@@ -5176,8 +5176,8 @@ export default function Home() {
                         <X className="w-1.5 h-1.5 text-white" />
                       </button>
                     )}
-                  </div>
-                );
+    </div>
+  );
               })}
             </div>
             
