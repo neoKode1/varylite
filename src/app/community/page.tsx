@@ -623,7 +623,7 @@ export default function CommunityPage() {
         </div>
         
         {/* Navigation tabs */}
-        <div className="flex items-center justify-between w-full max-w-xs mx-auto pb-4">
+        <div className="flex items-center justify-center w-full max-w-xs mx-auto pb-4">
           <button 
             onClick={() => router.push('/generate')}
             className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
@@ -644,22 +644,12 @@ export default function CommunityPage() {
           >
             Community
           </button>
-          <button 
-            onClick={() => setShowCollaborators(!showCollaborators)}
-            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-              showCollaborators 
-                ? 'text-white bg-gray-800/50 shadow-sm' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-            }`}
-          >
-            Collaborators
-          </button>
         </div>
       </header>
       
 
       {/* Main Content */}
-      <div className="relative z-20 pt-4">
+      <div className="relative z-10 pt-20 lg:pt-24">
         <div className="max-w-6xl mx-auto px-3 lg:px-4 py-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-center gap-3 lg:gap-4">

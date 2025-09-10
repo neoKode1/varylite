@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   }
 
   return (
-    <header className="bg-transparent backdrop-blur-sm border-b border-gray-700/30 px-4 py-3 sticky top-0 z-50">
+    <header className="bg-transparent backdrop-blur-sm border-b border-gray-700/30 px-4 py-3 sticky top-0 z-[100]">
       {/* Desktop Layout */}
       <div className="hidden md:block max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
@@ -74,15 +74,15 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                 <span>{showContributors ? 'Hide' : 'Show'} Contributors</span>
               </button>
             )}
-            
-            {/* Analytics Dropdown */}
-            <div className="ml-4">
-              <AnalyticsUpdater />
-            </div>
           </div>
 
           {/* User Section */}
           <div className="flex items-center space-x-4">
+            {/* Analytics Dropdown - Moved to right side */}
+            <div className="flex-shrink-0">
+              <AnalyticsUpdater />
+            </div>
+            
             {/* Usage Stats */}
             <div className="hidden lg:flex items-center space-x-2 text-sm">
               {isAnonymous ? (
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
                 {/* Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[60]">
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[110]">
                     <div className="py-1">
                       <div className="px-4 py-2 border-b border-gray-700">
                         <div className="text-sm font-medium text-white">
@@ -232,11 +232,6 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               </button>
             )}
             
-            {/* Analytics Dropdown */}
-            <div className="flex-shrink-0">
-              <AnalyticsUpdater />
-            </div>
-
             {/* Usage Stats - Mobile */}
             <div className="flex items-center space-x-2 flex-shrink-0 text-xs">
               {isAnonymous ? (
@@ -294,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
                 {/* Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[60]">
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[110]">
                     <div className="py-1">
                       <div className="px-4 py-2 border-b border-gray-700">
                         <div className="text-sm font-medium text-white">
@@ -346,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
       {/* Click outside to close user menu */}
       {showUserMenu && (
         <div 
-          className="fixed inset-0 z-[55]" 
+          className="fixed inset-0 z-[105]" 
           onClick={() => setShowUserMenu(false)}
         />
       )}

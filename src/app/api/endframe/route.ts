@@ -42,11 +42,6 @@ function validateImageAspectRatio(base64Data: string): { isValid: boolean; messa
 
 // POST endpoint to generate end frames
 export async function POST(request: NextRequest) {
-  // DISABLED: This video model route is not in the approved list
-  return NextResponse.json(
-    { error: 'This video model route has been disabled. Please use approved models: Minimax 2.0, Kling 2.1 Master, or Veo3 Fast.' },
-    { status: 410 } // Gone
-  );
   console.log('🚀 API Route: /api/endframe - EndFrame generation request received');
   
   try {

@@ -916,13 +916,23 @@ export default function Home() {
     // Always allow text-to-image
     modes.push('runway-t2i');
     
-    if (hasImages && uploadedFiles.length === 1) {
-      modes.push('nano-banana');
-      // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
-      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
-      modes.push('minimax-video'); // Image-to-video with Minimax Video
-      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
-      modes.push('seedance-pro'); // Image-to-video with Seedance Pro
+    if (hasImages) {
+      if (uploadedFiles.length === 1) {
+        // Single image - character variation models
+        modes.push('nano-banana');
+        // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
+        modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+        modes.push('minimax-video'); // Image-to-video with Minimax Video
+        modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+        modes.push('seedance-pro'); // Image-to-video with Seedance Pro
+      } else if (uploadedFiles.length >= 2) {
+        // Multiple images - end frame models
+        modes.push('nano-banana'); // Can still do character variations
+        modes.push('minimax-2.0'); // End frame generation with Mini Mac's End Frame
+        modes.push('minimax-video'); // End frame generation with Minimax Video
+        modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
+        modes.push('seedance-pro'); // End frame generation with Seedance Pro
+      }
     }
     
     // Add text-to-video modes when no images are uploaded
@@ -940,11 +950,11 @@ export default function Home() {
   // Get display name for generation mode
   const getModelDisplayName = useCallback((mode: GenerationMode): string => {
     const displayNames: Record<GenerationMode, string> = {
-      'nano-banana': 'Nano Banana',
+      'nano-banana': 'Nana Banana',
       'runway-t2i': 'Runway T2I',
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
-      'minimax-2.0': 'Minimax 2.0',
+      'minimax-2.0': 'MiniMax End Frame',
       'minimax-video': 'Minimax Video',
       'kling-2.1-master': 'Kling 2.1 Master',
       'veo3-fast-t2v': 'Veo3 Fast T2V',
@@ -2033,6 +2043,37 @@ export default function Home() {
     }
   };
 
+  // Route to correct handler based on selected model
+  const handleModelGeneration = async () => {
+    if (!generationMode) {
+      showAnimatedErrorNotification('User Error: Please select a model first! TOASTY!', 'toasty');
+      return;
+    }
+
+    switch (generationMode) {
+      case 'nano-banana':
+        await handleCharacterVariation();
+        break;
+      case 'minimax-2.0':
+        // MiniMax End Frame - requires 2 images, uses older /api/endframe infrastructure
+        await handleEndFrameGeneration();
+        break;
+      case 'minimax-video':
+        // MiniMax Image-to-Video - single image, uses newer /api/minimax-2 infrastructure
+        await handleMinimax2Generation();
+        break;
+      case 'kling-2.1-master':
+        await handleKlingMasterGeneration();
+        break;
+      case 'seedance-pro':
+        await handleEndFrameGeneration();
+        break;
+      default:
+        await handleCharacterVariation();
+        break;
+    }
+  };
+
   const handleCharacterVariation = async () => {
     // Check if user can generate
     if (!canGenerate) {
@@ -2711,7 +2752,7 @@ export default function Home() {
       console.error('❌ EndFrame polling error:', error);
       const errorMessage = error instanceof Error ? error.message : 'EndFrame polling failed';
       setError(errorMessage);
-      showNotification(errorMessage, 'error');
+      showAnimatedErrorNotification(`User Error: ${errorMessage} TOASTY!`, 'toasty');
       
       // Clean up
       setEndFrameTaskId(null);
@@ -3660,7 +3701,7 @@ export default function Home() {
       console.error('❌ EndFrame processing failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'EndFrame processing failed';
       setError(errorMessage);
-      showNotification(errorMessage, 'error');
+      showAnimatedErrorNotification(`User Error: ${errorMessage} TOASTY!`, 'toasty');
       
       // Only clean up on error - successful completion cleanup happens in pollEndFrameTask
       setEndFrameProcessing(false);
@@ -4220,7 +4261,7 @@ export default function Home() {
                   ) : (
                     // Character variations
                     <button
-                      onClick={handleCharacterVariation}
+                      onClick={handleModelGeneration}
                       disabled={processing.isProcessing || !prompt.trim()}
                       className="mobile-send-button"
                       title="Generate Variation"
@@ -4286,82 +4327,23 @@ export default function Home() {
             </div>
 
             <div className="generate-floating-input hidden md:block w-full max-w-4xl mx-auto flex flex-col items-center">
-              {/* All components in a compact wrap layout */}
-              <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
-                {/* Image Upload Slots - Compact */}
-                <div className="flex gap-1">
-                  {uploadedFiles.map((file, index) => (
-                    <div 
-                      key={index} 
-                      className={`relative flex-shrink-0 transition-all duration-200 ${
-                        dragOverSlot === index 
-                          ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
-                          : ''
-                      }`}
-                      onDrop={(e) => handleSlotDrop(e, index)}
-                      onDragOver={(e) => handleSlotDragOver(e, index)}
-                      onDragLeave={handleSlotDragLeave}
-                      onPaste={(e) => handleSlotPaste(e as any, index)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          document.getElementById('file-input')?.click();
-                        }
-                      }}
-                      data-slot-area
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Replace image in slot ${index + 1}`}
-                    >
-                      {file.fileType === 'image' ? (
-                        <img
-                          src={file.preview}
-                          alt={`Character ${index + 1}`}
-                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
-                        />
-                      ) : (
-                        <video
-                          src={file.preview}
-                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
-                          muted
-                        />
-                      )}
-                      <button
-                        onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute -top-2 -right-2 w-1 h-1 bg-red-500 bg-opacity-80 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10 border border-white border-opacity-50"
-                        title="Remove file"
-                      >
-                        <X className="w-0.5 h-0.5" />
-                      </button>
-                      <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
-                        {file.fileType.toUpperCase()}
-                      </div>
-                      {dragOverSlot === index && (
-                        <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
-                          <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
-                            Drop
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {/* Empty slots for drag and drop */}
-                  {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
-                    const slotIndex = uploadedFiles.length + index;
-                    return (
-                      <div
-                        key={`empty-${slotIndex}`}
-                        className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
-                          dragOverSlot === slotIndex 
-                            ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
+              {/* Dynamic Content - Only show when images are uploaded */}
+              {uploadedFiles.length > 0 && (
+                <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
+                  {/* Image Upload Slots - Compact */}
+                  <div className="flex gap-1">
+                    {uploadedFiles.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className={`relative flex-shrink-0 transition-all duration-200 ${
+                          dragOverSlot === index 
+                            ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20' 
                             : ''
                         }`}
-                        onClick={() => document.getElementById('file-input')?.click()}
-                        onDrop={(e) => handleSlotDrop(e, slotIndex)}
-                        onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
+                        onDrop={(e) => handleSlotDrop(e, index)}
+                        onDragOver={(e) => handleSlotDragOver(e, index)}
                         onDragLeave={handleSlotDragLeave}
-                        onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
+                        onPaste={(e) => handleSlotPaste(e as any, index)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
@@ -4371,10 +4353,32 @@ export default function Home() {
                         data-slot-area
                         tabIndex={0}
                         role="button"
-                        aria-label={`Upload image to slot ${slotIndex + 1}`}
+                        aria-label={`Replace image in slot ${index + 1}`}
                       >
-                        <Plus className="w-4 h-4 text-gray-400" />
-                        {dragOverSlot === slotIndex && (
+                        {file.fileType === 'image' ? (
+                          <img
+                            src={file.preview}
+                            alt={`Character ${index + 1}`}
+                            className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
+                          />
+                        ) : (
+                          <video
+                            src={file.preview}
+                            className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
+                            muted
+                          />
+                        )}
+                        <button
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute -top-2 -right-2 w-1 h-1 bg-red-500 bg-opacity-80 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10 border border-white border-opacity-50"
+                          title="Remove file"
+                        >
+                          <X className="w-0.5 h-0.5" />
+                        </button>
+                        <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-tr">
+                          {file.fileType.toUpperCase()}
+                        </div>
+                        {dragOverSlot === index && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
                             <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
                               Drop
@@ -4382,12 +4386,49 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Model Selection - Compact */}
-              {uploadedFiles.length > 0 && (
+                    ))}
+                    
+                    {/* Empty slots for drag and drop */}
+                    {Array.from({ length: 4 - uploadedFiles.length }, (_, index) => {
+                      const slotIndex = uploadedFiles.length + index;
+                      return (
+                        <div
+                          key={`empty-${slotIndex}`}
+                          className={`border-2 border-dashed border-white border-opacity-30 rounded-lg w-14 h-14 flex items-center justify-center cursor-pointer hover:border-opacity-50 transition-all duration-200 flex-shrink-0 ${
+                            dragOverSlot === slotIndex 
+                              ? 'ring-2 ring-blue-500 ring-opacity-75 bg-blue-500 bg-opacity-20 border-blue-500' 
+                              : ''
+                          }`}
+                          onClick={() => document.getElementById('file-input')?.click()}
+                          onDrop={(e) => handleSlotDrop(e, slotIndex)}
+                          onDragOver={(e) => handleSlotDragOver(e, slotIndex)}
+                          onDragLeave={handleSlotDragLeave}
+                          onPaste={(e) => handleSlotPaste(e as any, slotIndex)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              document.getElementById('file-input')?.click();
+                            }
+                          }}
+                          data-slot-area
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`Upload image to slot ${slotIndex + 1}`}
+                        >
+                          <Plus className="w-4 h-4 text-gray-400" />
+                          {dragOverSlot === slotIndex && (
+                            <div className="absolute inset-0 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center">
+                              <div className="text-white text-xs font-medium bg-blue-600 px-2 py-1 rounded">
+                                Drop
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Model Selection - Compact */}
                   <div className="flex items-center gap-2">
                     <span className="text-white text-xs font-medium whitespace-nowrap">Model:</span>
                       <select
@@ -4409,76 +4450,75 @@ export default function Home() {
                         ))}
                       </select>
                     </div>
-                  )}
 
-                {/* Quick Shot Presets Dropdown - Compact */}
-                <div className="relative">
-                      <select
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        setPrompt(e.target.value);
-                        e.target.value = ''; // Reset selection
-                      }
-                    }}
-                    className="px-3 py-1 text-xs bg-white text-black rounded-full hover:bg-gray-100 transition-colors appearance-none cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-purple-500 pr-6"
-                    style={{ 
-                      borderRadius: '20px',
-                      minWidth: '140px'
-                    }}
-                  >
-                    <option value="">Quick Shot Presets</option>
-                    {BASIC_PROMPTS.map((example) => (
-                      <option key={example} value={example}>
-                        {example}
-                      </option>
-                    ))}
-                      </select>
-                  {/* Custom dropdown arrow */}
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                    </div>
+                  {/* Quick Shot Presets Dropdown - Compact */}
+                  <div className="relative">
+                        <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setPrompt(e.target.value);
+                          e.target.value = ''; // Reset selection
+                        }
+                      }}
+                      className="px-3 py-1 text-xs bg-white text-black rounded-full hover:bg-gray-100 transition-colors appearance-none cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-purple-500 pr-6"
+                      style={{ 
+                        borderRadius: '20px',
+                        minWidth: '140px'
+                      }}
+                    >
+                      <option value="">Quick Shot Presets</option>
+                      {BASIC_PROMPTS.map((example) => (
+                        <option key={example} value={example}>
+                          {example}
+                        </option>
+                      ))}
+                        </select>
+                    {/* Custom dropdown arrow */}
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      </div>
+                  </div>
+
+                  {/* Preset Buttons - Compact */}
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setActivePresetTab('shot');
+                        setShowPresetModal(true);
+                      }}
+                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                    >
+                      📸 Shot
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePresetTab('background');
+                        setShowPresetModal(true);
+                      }}
+                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                    >
+                      🎨 Background
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePresetTab('restyle');
+                        setShowPresetModal(true);
+                      }}
+                      className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                    >
+                      🎭 Restyle
+                    </button>
+                    <button
+                      onClick={() => setShowHelpModal(true)}
+                      className="px-2 py-1 text-xs rounded transition-colors border bg-blue-800 text-white border-blue-600 hover:bg-blue-700"
+                    >
+                      Prompt Help
+                    </button>
                 </div>
-
-                {/* Preset Buttons - Compact */}
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => {
-                      setActivePresetTab('shot');
-                      setShowPresetModal(true);
-                    }}
-                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                  >
-                    📸 Shot
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActivePresetTab('background');
-                      setShowPresetModal(true);
-                    }}
-                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                  >
-                    🎨 Background
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActivePresetTab('restyle');
-                      setShowPresetModal(true);
-                    }}
-                    className="px-2 py-1 text-xs rounded transition-colors border bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-                  >
-                    🎭 Restyle
-                  </button>
-                  <button
-                    onClick={() => setShowHelpModal(true)}
-                    className="px-2 py-1 text-xs rounded transition-colors border bg-blue-800 text-white border-blue-600 hover:bg-blue-700"
-                  >
-                    Prompt Help
-                  </button>
               </div>
-            </div>
-
+              )}
 
               {/* Text input and buttons container */}
               <div className="flex items-center gap-4 w-full justify-center">
@@ -4493,7 +4533,7 @@ export default function Home() {
                     : processingMode === 'endframe'
                     ? "Describe the transition or transformation between your start and end frames..."
                     : uploadedFiles.length === 0
-                    ? "Describe the image you want to generate... (e.g., 'A majestic dragon flying over a mountain at sunset')"
+                    ? "Imagine..."
                     : "Describe the angle or pose variations you want..."
                 }
                 className="generate-floating-textarea"
@@ -4502,6 +4542,15 @@ export default function Home() {
               />
               
               <div className="generate-floating-buttons">
+                {/* Upload Button */}
+                <button
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  className="generate-floating-upload-button"
+                  title="Upload Image"
+                >
+                  <Upload className="generate-floating-upload-icon" />
+                </button>
+
                 {/* Generate Button */}
                 {uploadedFiles.length === 0 ? (
                   // Text-to-Image generation
@@ -4534,7 +4583,7 @@ export default function Home() {
                 ) : (
                   // Character variations
                           <button
-                    onClick={handleCharacterVariation}
+                    onClick={handleModelGeneration}
                     disabled={processing.isProcessing || !prompt.trim()}
                     className="generate-floating-send-button"
                     title="Generate Variation"
@@ -5185,7 +5234,7 @@ export default function Home() {
                 try {
                   // Use the appropriate generation function based on uploaded files
                   if (uploadedFiles.length === 1 && uploadedFiles[0].fileType === 'image') {
-                    await handleCharacterVariation();
+                    await handleModelGeneration();
                   } else {
                     await handleTextToImage();
                   }
