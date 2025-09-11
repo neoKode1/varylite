@@ -4548,7 +4548,7 @@ export default function Home() {
 
         {/* Mobile Gallery Panel */}
         {showGallery && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-gray-700 z-40 max-h-[25vh] overflow-y-auto">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-gray-700 z-30 max-h-[25vh] overflow-y-auto">
             <div className="p-2 lg:p-6">
               <div className="flex items-center justify-between mb-2 lg:mb-6">
                 <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
@@ -4696,7 +4696,7 @@ export default function Home() {
 
         {/* Desktop Gallery Panel */}
         {showGallery && (
-          <div className="hidden lg:block fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-md border-t border-gray-700 z-40 max-h-[70vh] overflow-y-auto">
+          <div className="hidden lg:block fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-md border-t border-gray-700 z-30 max-h-[70vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
