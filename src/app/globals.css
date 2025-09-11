@@ -473,7 +473,7 @@
     /* 2x2 Generation Panel - Fixed positioning and responsive scaling */
     .generation-panel {
       position: fixed !important;
-      top: 100px !important; /* 100px from top */
+      top: 150px !important; /* 100px from top */
       left: 50% !important;
       transform: translateX(-50%) !important;
       width: min(90vw, 56rem) !important; /* max-w-4xl equivalent with viewport scaling */
@@ -692,18 +692,111 @@
       height: 16px !important;
       color: white !important;
     }
+
+    /* Gallery Layout - Responsive */
+    .gallery-item {
+      margin: 5px;
+      border: 1px solid rgba(75, 85, 99, 0.5);
+      width: 180px;
+      height: 180px;
+      border-radius: 30px;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      position: relative;
+      filter: brightness(0.7);
+    }
+
+    .gallery-item:hover {
+      border: 1px solid rgba(107, 114, 128, 0.8);
+      transform: translateY(-8px) scale(1.05);
+      filter: brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+      z-index: 10;
+    }
+
+    .gallery-item img,
+    .gallery-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-item .desc {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+      padding: 15px;
+      text-align: center;
+      color: white;
+    }
+
+    /* Mobile Responsive Gallery */
+    @media (max-width: 768px) {
+      .gallery-item {
+        width: 150px;
+        height: 150px;
+        margin: 3px;
+        border-radius: 30px;
+        filter: brightness(0.7);
+      }
+      
+      .gallery-item:hover {
+        transform: translateY(-8px) scale(1.05);
+        filter: brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        z-index: 10;
+      }
+      
+      .gallery-item .desc {
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .gallery-item {
+        width: 140px;
+        height: 140px;
+        margin: 2px;
+        border-radius: 30px;
+        filter: brightness(0.7);
+      }
+      
+      .gallery-item:hover {
+        transform: translateY(-8px) scale(1.05);
+        filter: brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        z-index: 10;
+      }
+      
+      .gallery-item .desc {
+        padding: 8px;
+      }
+    }
   }
 }
 
+/*
+/* Backdrop Blur Utilities */
+/*.backdrop-blur-md {
+  --tw-backdrop-blur: blur(12px);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+*/
+
 /* Solid black background */
-body {
+html, body {
   background-color: #000000;
-  min-height: 100vh;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 /* Ensure the background covers the entire viewport */
 #__next {
-  min-height: 100vh;
+  height: 100vh;
+  background-color: #000000;
+  overflow-x: hidden;
 }
 
 /* Line clamp utilities for text truncation */

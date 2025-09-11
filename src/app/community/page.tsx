@@ -1377,7 +1377,7 @@ export default function CommunityPage() {
 
       {/* Gallery Panel */}
       {showGallery && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-sm border-t border-gray-700 z-30 max-h-[60vh] overflow-y-auto">
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-sm border-t border-transparent z-30 max-h-[60vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">

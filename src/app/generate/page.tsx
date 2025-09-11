@@ -1266,7 +1266,8 @@ export default function Home() {
     }
     
     setFullScreenImageIndex(newIndex);
-    setFullScreenImage(galleryImagesWithUrls[newIndex].imageUrl!);
+    const nextItem = galleryImagesWithUrls[newIndex];
+    setFullScreenImage(nextItem.videoUrl || nextItem.imageUrl!);
   }, [galleryImagesWithUrls, fullScreenImageIndex]);
 
   const goToPrevious = useCallback(() => navigateFullScreen('prev'), [navigateFullScreen]);
@@ -3713,7 +3714,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="h-screen bg-black relative overflow-hidden">
 
       {/* Header */}
       <Header 
@@ -3802,7 +3803,7 @@ export default function Home() {
 
         </div>
 
-        <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat pb-32 lg:pb-6">
+        <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat lg:pb-6">
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
             {/* Usage Statistics - Left Corner */}
@@ -3831,6 +3832,81 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            {/* Mobile Generated Content Display */}
+            <div className="lg:hidden w-full max-w-4xl mx-auto mb-8">
+              <h2 className="text-lg font-bold text-white mb-4 text-center">New generations</h2>
+              
+              {/* Main Content Display Area */}
+              <div className="w-full aspect-square max-w-md mx-auto bg-black bg-opacity-50 rounded-[30px] border border-gray-700 overflow-hidden">
+                {variations.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    {variations[0].fileType === 'video' ? (
+                      <video
+                        src={variations[0].videoUrl}
+                        className="w-full h-full object-cover"
+                        controls
+                        muted
+                        loop
+                        onClick={() => setFullScreenImage(variations[0].videoUrl || null)}
+                      />
+                    ) : (
+                      <img
+                        src={variations[0].imageUrl}
+                        alt={variations[0].description}
+                        className="w-full h-full object-cover"
+                        onClick={() => setFullScreenImage(variations[0].imageUrl || null)}
+                      />
+                    )}
+                    
+                    {/* Content Info Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                      <div className="text-white text-sm font-medium">
+                        {variations[0].angle} - {variations[0].pose}
+                      </div>
+                      <div className="text-gray-300 text-xs">
+                        {variations[0].description}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🎨</div>
+                      <div className="text-sm">Your generated content will appear here</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Additional Variations (if any) */}
+              {variations.length > 1 && (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {variations.slice(1, 5).map((variation, index) => (
+                    <div 
+                      key={index}
+                      className="aspect-square bg-black bg-opacity-50 rounded-[30px] border border-gray-700 overflow-hidden"
+                      onClick={() => setFullScreenImage(variation.videoUrl || variation.imageUrl || null)}
+                    >
+                      {variation.fileType === 'video' ? (
+                        <video
+                          src={variation.videoUrl}
+                          className="w-full h-full object-cover"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variation.imageUrl}
+                          alt={variation.description}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
                   {hasVideoFiles && (
                     <button
@@ -4041,7 +4117,7 @@ export default function Home() {
                       {variations[0].fileType === 'video' ? (
                         <video
                           src={variations[0].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                           muted
                           loop
                         />
@@ -4049,7 +4125,7 @@ export default function Home() {
                         <img
                           src={variations[0].imageUrl}
                           alt={variations[0].description}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
               </div>
@@ -4065,7 +4141,7 @@ export default function Home() {
                       {variations[1].fileType === 'video' ? (
                         <video
                           src={variations[1].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                           muted
                           loop
                         />
@@ -4073,7 +4149,7 @@ export default function Home() {
                         <img
                           src={variations[1].imageUrl}
                           alt={variations[1].description}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
                     </div>
@@ -4089,7 +4165,7 @@ export default function Home() {
                       {variations[2].fileType === 'video' ? (
                         <video
                           src={variations[2].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                           muted
                           loop
                         />
@@ -4097,7 +4173,7 @@ export default function Home() {
                         <img
                           src={variations[2].imageUrl}
                           alt={variations[2].description}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
                     </div>
@@ -4113,7 +4189,7 @@ export default function Home() {
                       {variations[3].fileType === 'video' ? (
                         <video
                           src={variations[3].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                           muted
                           loop
                         />
@@ -4121,7 +4197,7 @@ export default function Home() {
                         <img
                           src={variations[3].imageUrl}
                           alt={variations[3].description}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
                     </div>
@@ -4405,7 +4481,7 @@ export default function Home() {
 
         {/* Mobile Gallery Panel */}
         {showGallery && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-gray-700 z-30 max-h-[25vh] overflow-y-auto">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-transparent z-30 max-h-[25vh] overflow-y-auto">
             <div className="p-2 lg:p-6">
               <div className="flex items-center justify-between mb-2 lg:mb-6">
                 <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
@@ -4472,38 +4548,114 @@ export default function Home() {
                     const isExpanded = expandedPrompts.has(itemKey);
                     
                     return (
-                      <div key={itemKey} className="bg-transparent lg:bg-gray-700 lg:bg-opacity-50 rounded-lg p-1.5 lg:p-4 border border-transparent lg:border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
-                        <div className="flex flex-col gap-1.5 lg:gap-4">
-                          {/* Image/Video Preview */}
-                                  <div className="relative">
-                            {item.fileType === 'video' ? (
-                                    <video
-                                src={item.videoUrl}
-                                className="w-full h-24 lg:h-48 object-cover rounded-lg cursor-pointer"
-                                onClick={() => setFullScreenImage(item.videoUrl)}
-                                      muted
-                                    />
-                                    ) : (
-                              <img
-                                src={item.imageUrl}
-                                alt="Gallery item"
-                                className="w-full h-24 lg:h-48 object-cover rounded-lg cursor-pointer"
-                                onClick={() => setFullScreenImage(item.imageUrl)}
-                              />
-                            )}
-                            <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-black bg-opacity-70 text-white text-xs px-1.5 lg:px-2 py-0.5 lg:py-1 rounded">
-                              {item.fileType?.toUpperCase() || 'IMAGE'}
-                                    </div>
-                                          </div>
+                      <div 
+                        key={itemKey} 
+                        className="gallery-item bg-transparent lg:bg-gray-700 lg:bg-opacity-50 border border-transparent lg:border-gray-600 hover:bg-gray-700 transition-all duration-400 relative z-30 overflow-hidden" 
+                        style={{ 
+                          borderRadius: '30px', 
+                          width: '150px', 
+                          height: '150px', 
+                          margin: '3px', 
+                          filter: 'brightness(0.7)',
+                          transition: 'all 0.4s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.filter = 'brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))';
+                          e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
+                          e.currentTarget.style.zIndex = '10';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.filter = 'brightness(0.7)';
+                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                          e.currentTarget.style.zIndex = '30';
+                        }}
+                      >
+                        {/* Image/Video Preview - Full Card */}
+                        <div className="relative w-full h-full">
+                          {item.fileType === 'video' ? (
+                            <video
+                              src={item.videoUrl}
+                              className="w-full h-full object-cover cursor-pointer"
+                              onClick={() => setFullScreenImage(item.videoUrl)}
+                              muted
+                            />
+                          ) : (
+                            <img
+                              src={item.imageUrl}
+                              alt="Gallery item"
+                              className="w-full h-full object-cover cursor-pointer"
+                              onClick={() => setFullScreenImage(item.imageUrl)}
+                            />
+                          )}
+                          
+                          {/* Type Badge */}
+                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
+                            {item.fileType?.toUpperCase() || 'IMAGE'}
+                          </div>
 
-                          {/* Content */}
-                          <div className="space-y-2 lg:space-y-3">
+                          {/* Mobile Overlay Text */}
+                          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                            <div className="text-xs text-white font-medium mb-1">
+                              {new Date(item.timestamp).toLocaleDateString()}
+                            </div>
+                            
+                            {item.angle && (
+                              <div className="text-xs text-gray-200 mb-1">
+                                Angle: {item.angle}
+                              </div>
+                            )}
+                            
+                            {item.pose && (
+                              <div className="text-xs text-gray-200 mb-2">
+                                Pose: {item.pose}
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  if (isExpanded) {
+                                    setExpandedPrompts(prev => {
+                                      const newSet = new Set(prev);
+                                      newSet.delete(itemKey);
+                                      return newSet;
+                                    });
+                                  } else {
+                                    setExpandedPrompts(prev => new Set([...prev, itemKey]));
+                                  }
+                                }}
+                                className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
+                              >
+                                {isExpanded ? 'Hide' : 'Show'}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteFromGallery(item.id)}
+                                className="text-xs text-red-300 hover:text-red-200 transition-colors px-2 py-1 rounded bg-red-900/30 hover:bg-red-900/50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+
+                            {/* Expanded Prompt */}
+                            {isExpanded && (
+                              <div className="mt-2 bg-black/60 backdrop-blur-sm p-2 rounded">
+                                <p className="text-xs text-white leading-relaxed">
+                                  {item.prompt}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                          {/* Desktop Content */}
+                          <div className="hidden lg:block space-y-2 lg:space-y-3 p-4">
                             <div className="flex items-center justify-between">
                               <span className="text-xs lg:text-sm text-gray-400">
                                 {new Date(item.timestamp).toLocaleDateString()}
                               </span>
-                                          <div className="flex gap-1 lg:gap-2">
-                                          <button
+                              <div className="flex gap-1 lg:gap-2">
+                                <button
                                   onClick={() => {
                                     if (isExpanded) {
                                       setExpandedPrompts(prev => {
@@ -4518,30 +4670,29 @@ export default function Home() {
                                   className="text-xs lg:text-sm text-accent-gray hover:text-white transition-colors"
                                 >
                                   {isExpanded ? 'Hide' : 'Show'} Prompt
-                                          </button>
-                                            <button
+                                </button>
+                                <button
                                   onClick={() => handleDeleteFromGallery(item.id)}
                                   className="text-xs lg:text-sm text-red-400 hover:text-red-300 transition-colors"
                                 >
                                   Delete
-                                          </button>
-                                          </div>
-                                        </div>
+                                </button>
+                              </div>
+                            </div>
 
-                              {isExpanded && (
+                            {isExpanded && (
                               <div className="bg-transparent lg:bg-gray-800 p-2 lg:p-3 rounded-lg">
                                 <p className="text-xs lg:text-sm text-gray-300">
                                   {item.prompt}
-                                      </p>
-                                    </div>
-                                  )}
+                                </p>
+                              </div>
+                            )}
                             
                             <div className="text-xs lg:text-sm text-gray-400 space-y-1">
                               {item.angle && <div>Angle: {item.angle}</div>}
                               {item.pose && <div>Pose: {item.pose}</div>}
                             </div>
                           </div>
-                            </div>
                       </div>
                     );
                   })}
@@ -4553,51 +4704,53 @@ export default function Home() {
 
         {/* Responsive Gallery Panel */}
         {showGallery && (
-          <div className="fixed top-20 left-0 right-0 lg:left-[15%] lg:right-[15%] lg:bottom-0 lg:top-auto bg-gray-800 bg-opacity-95 backdrop-blur-md border-t border-gray-700 z-30 max-h-[70vh] overflow-y-auto">
+          <div className="fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
             <div className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
-                  <Images className="w-6 h-6 text-white" />
+                <h2 className="text-2xl font-semibold flex items-center gap-3 text-white">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Images className="w-5 h-5 text-white" />
+                  </div>
                   Gallery ({filteredGallery.length})
                 </h2>
-                  <button
-                    onClick={() => setShowGallery(false)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
-                    title="Hide gallery"
-                  >
+                <button
+                  onClick={() => setShowGallery(false)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 text-white rounded-xl border border-gray-600/50 transition-all duration-200 backdrop-blur-sm"
+                  title="Hide gallery"
+                >
                   <X className="w-4 h-4" />
                   Hide Gallery
-                  </button>
+                </button>
               </div>
 
               {/* Gallery Filter Toggle */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-2 mb-6 p-1 bg-gray-900/50 rounded-xl backdrop-blur-sm border border-gray-700/50">
                 <button
                   onClick={() => setGalleryFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     galleryFilter === 'all'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >
                   All ({gallery.length})
                 </button>
                 <button
                   onClick={() => setGalleryFilter('images')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     galleryFilter === 'images'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >
                   Images ({gallery.filter(item => item.imageUrl && !item.videoUrl).length})
                 </button>
                 <button
                   onClick={() => setGalleryFilter('videos')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     galleryFilter === 'videos'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >
                   Videos ({gallery.filter(item => item.videoUrl).length})
@@ -4612,82 +4765,88 @@ export default function Home() {
                   <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                <div className="flex flex-wrap justify-start gap-2 sm:gap-3 md:gap-4">
                   {filteredGallery.map((item: any, index: number) => {
                     const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
                     
                     return (
-                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-2 sm:p-3 border border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
-                        <div className="flex flex-col gap-3">
-                          {/* Image/Video Preview */}
-                                  <div className="relative">
-                            {item.fileType === 'video' ? (
-                                    <video
-                                src={item.videoUrl}
-                                className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg cursor-pointer"
-                                onClick={() => setFullScreenImage(item.videoUrl)}
-                                      muted
-                                    />
-                                    ) : (
-                              <img
-                                src={item.imageUrl}
-                                alt="Gallery item"
-                                className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg cursor-pointer"
-                                onClick={() => setFullScreenImage(item.imageUrl)}
-                              />
-                            )}
-                            <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                              {item.fileType?.toUpperCase() || 'IMAGE'}
-                                    </div>
-                                          </div>
-
-                          {/* Content */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-400">
-                                {new Date(item.timestamp).toLocaleDateString()}
-                              </span>
-                                          <div className="flex gap-2">
-                                          <button
-                                  onClick={() => {
-                                    if (isExpanded) {
-                                      setExpandedPrompts(prev => {
-                                        const newSet = new Set(prev);
-                                        newSet.delete(itemKey);
-                                        return newSet;
-                                      });
-                                    } else {
-                                      setExpandedPrompts(prev => new Set([...prev, itemKey]));
-                                    }
-                                  }}
-                                  className="text-sm text-accent-gray hover:text-white transition-colors"
-                                >
-                                  {isExpanded ? 'Hide' : 'Show'} Prompt
-                                          </button>
-                                            <button
-                                  onClick={() => handleDeleteFromGallery(item.id)}
-                                  className="text-sm text-red-400 hover:text-red-300 transition-colors"
-                                >
-                                  Delete
-                                          </button>
-                                          </div>
-                                        </div>
-
-                              {isExpanded && (
-                              <div className="bg-gray-800 p-3 rounded-lg">
-                                <p className="text-sm text-gray-300">
-                                  {item.prompt}
-                                      </p>
-                                    </div>
-                                  )}
-                            
-                            <div className="text-sm text-gray-400 space-y-1">
-                              {item.angle && <div>Angle: {item.angle}</div>}
-                              {item.pose && <div>Pose: {item.pose}</div>}
-                            </div>
+                      <div key={itemKey} className="gallery-item border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 relative z-30 shadow-lg hover:shadow-xl group">
+                        {/* Image/Video Preview */}
+                        <div className="relative">
+                          {item.fileType === 'video' ? (
+                            <video
+                              src={item.videoUrl}
+                              className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
+                              onClick={() => setFullScreenImage(item.videoUrl)}
+                              muted
+                            />
+                          ) : (
+                            <img
+                              src={item.imageUrl}
+                              alt="Gallery item"
+                              className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
+                              onClick={() => setFullScreenImage(item.imageUrl)}
+                            />
+                          )}
+                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
+                            {item.fileType?.toUpperCase() || 'IMAGE'}
                           </div>
+                        </div>
+
+                        {/* Description Overlay */}
+                        <div className="desc">
+                          <div className="text-sm text-white font-medium mb-1">
+                            {new Date(item.timestamp).toLocaleDateString()}
+                          </div>
+                          
+                          {item.angle && (
+                            <div className="text-xs text-gray-200 mb-1">
+                              {item.angle}
                             </div>
+                          )}
+                          
+                          {item.pose && (
+                            <div className="text-xs text-gray-200 mb-2">
+                              {item.pose}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-1 justify-center">
+                            <button
+                              onClick={() => {
+                                if (isExpanded) {
+                                  setExpandedPrompts(prev => {
+                                    const newSet = new Set(prev);
+                                    newSet.delete(itemKey);
+                                    return newSet;
+                                  });
+                                } else {
+                                  setExpandedPrompts(prev => new Set([...prev, itemKey]));
+                                }
+                              }}
+                              className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
+                            >
+                              {isExpanded ? 'Hide' : 'Show'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFromGallery(item.id)}
+                              className="text-xs text-red-300 hover:text-red-200 transition-colors px-2 py-1 rounded bg-red-900/30 hover:bg-red-900/50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+
+                          {/* Expanded Prompt */}
+                          {isExpanded && (
+                            <div className="mt-2 bg-black/60 backdrop-blur-sm p-2 rounded">
+                              <p className="text-xs text-white leading-relaxed">
+                                {item.prompt}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -4712,12 +4871,33 @@ export default function Home() {
           onClick={closeFullScreen}
         >
           <div className="relative w-[90%] h-[90%] flex items-center justify-center">
-            <img
-              src={fullScreenImage}
-              alt="Full screen view"
-              className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
-            />
+            {(() => {
+              const currentItem = galleryImagesWithUrls[fullScreenImageIndex];
+              const isVideo = currentItem?.fileType === 'video' || fullScreenImage?.includes('.mp4') || fullScreenImage?.includes('video');
+              
+              if (isVideo) {
+                return (
+                  <video
+                    src={fullScreenImage}
+                    className="max-w-full max-h-full object-contain"
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on video
+                  />
+                );
+              } else {
+                return (
+                  <img
+                    src={fullScreenImage}
+                    alt="Full screen view"
+                    className="max-w-full max-h-full object-contain"
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+                  />
+                );
+              }
+            })()}
             
             {/* Close button */}
                           <button
@@ -5077,10 +5257,10 @@ export default function Home() {
       />
 
       {/* Mobile Dynamic Image Upload System */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent">
         {/* Dynamic numbered image slots - ONLY show if images uploaded */}
         {uploadedFiles.length > 0 && (
-          <div className="p-4 border-b border-gray-800">
+          <div className="p-4 border-b border-transparent">
             {/* Upload progress indicator - Moved above image slots */}
             <div className="text-center mb-4">
               <span className="text-xs text-gray-400">
@@ -5104,7 +5284,7 @@ export default function Home() {
                         <img 
                           src={hasImage.preview} 
                           alt={`Upload ${slotNumber}`}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-[30px]"
                         />
                       ) : (
                         <span className="text-gray-500">{slotNumber}</span>
@@ -5181,7 +5361,7 @@ export default function Home() {
                           <img 
                             src={image} 
                             alt={`Generated variation ${index + 1}`}
-                            className="max-w-full max-h-full object-contain rounded-lg"
+                            className="max-w-full max-h-full object-contain rounded-[30px]"
                           />
                         </div>
                       ))}

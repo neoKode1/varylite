@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   }
 
   return (
-    <header className="bg-transparent backdrop-blur-sm border-b border-gray-700/30 px-4 py-3 sticky top-0 z-[100]">
+    <header className="bg-transparent backdrop-blur-sm border-b border-transparent px-4 py-3 sticky top-0 z-[100]">
       {/* Desktop Layout */}
       <div className="hidden md:block max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
