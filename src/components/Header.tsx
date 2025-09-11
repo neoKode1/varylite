@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle, FolderOpen } from 'lucide-react'
+import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle, FolderOpen, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
@@ -115,6 +115,17 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
              >
                <MessageCircle className="w-4 h-4" />
                <span>Tha Communita</span>
+             </button>
+           )}
+           
+           {/* Secret Level Button - Only show for authenticated users */}
+           {user && (
+             <button
+               onClick={() => router.push('/secret')}
+               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors rounded-lg hover:bg-yellow-400/10 border border-yellow-400/20"
+             >
+               <Lock className="w-4 h-4" />
+               <span>Secret Level</span>
              </button>
            )}
            
@@ -297,6 +308,17 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               >
                 <MessageCircle className="w-3 h-3" />
                 <span>Community</span>
+              </button>
+            )}
+            
+            {/* Secret Level Button - Only show for authenticated users */}
+            {user && (
+              <button
+                onClick={() => router.push('/secret')}
+                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-yellow-400 hover:text-yellow-300 transition-colors rounded-lg hover:bg-yellow-400/10 border border-yellow-400/20 whitespace-nowrap"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Secret</span>
               </button>
             )}
             
