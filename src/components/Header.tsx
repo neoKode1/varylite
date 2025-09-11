@@ -117,9 +117,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                    />
                  </div>
                </>
-             ) : (
-               <span className="text-green-400 font-medium">✨ Unlimited</span>
-             )}
+             ) : null}
            </div>
 
            {/* Auth Buttons */}

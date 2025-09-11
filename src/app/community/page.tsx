@@ -600,6 +600,7 @@ export default function CommunityPage() {
         muted
         loop
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover z-0"
         style={{ 
           filter: 'brightness(0.3) contrast(1.2)',
@@ -628,47 +629,22 @@ export default function CommunityPage() {
       </div>
 
       {/* Mobile Header with Navigation - Mobile Only */}
-      <header className="lg:hidden sticky top-0 z-50 bg-transparent backdrop-blur-md border-b border-gray-800">
-        <div className="flex items-center justify-center py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">V</span>
-            </div>
-            <h1 className="text-xl font-bold text-white tracking-wide">vARY Ai</h1>
-          </div>
-        </div>
+      <header className="lg:hidden sticky top-0 z-50 relative overflow-hidden">
+        {/* Background Image Banner */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/adarkorchestra_28188_The_interior_of_a_retro-futuristic_space_638ede4d-ca7f-45f3-9dc8-2fd97f905591_0.png)',
+            filter: 'brightness(0.4) contrast(1.2)'
+          }}
+        />
         
-        {/* Navigation tabs */}
-        <div className="flex items-center justify-center w-full max-w-xs mx-auto pb-4">
-          <button 
-            onClick={() => router.push('/generate')}
-            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-              pathname === '/generate' 
-                ? 'text-white bg-gray-800/50 shadow-sm' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-            }`}
-          >
-            Generate
-          </button>
-          <button 
-            onClick={() => router.push('/community')}
-            className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-              pathname === '/community' 
-                ? 'text-white bg-gray-800/50 shadow-sm' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-            }`}
-          >
-            Community
-          </button>
-        </div>
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        
       </header>
       
 
-      {/* Main Content */}
-      <div className="relative z-10 pt-20 lg:pt-24">
-        <div className="max-w-6xl mx-auto px-3 lg:px-4 py-4">
-        </div>
-      </div>
 
       <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6 relative z-10 pb-32 lg:pb-6">
 

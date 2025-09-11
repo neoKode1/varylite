@@ -3728,9 +3728,18 @@ export default function Home() {
         autoPlay
         muted
         loop
+        playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover -z-10 opacity-75"
+        style={{
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto'
+        }}
       >
         <source src="/91b9d7be-bb33-4df3-af75-85c7bc3f9d79.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
       
       {/* Semi-transparent overlay for content readability */}
