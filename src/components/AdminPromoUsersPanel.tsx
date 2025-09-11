@@ -22,8 +22,8 @@ interface PromoUser {
   user: {
     id: string;
     email: string;
-    display_name: string;
-    username: string;
+    display_name?: string;
+    username?: string;
     created_at: string;
     secret_level: number;
     total_generations: number;
@@ -171,7 +171,7 @@ export const AdminPromoUsersPanel: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-white/60" />
                       <span className="text-white font-medium">
-                        {promoUser.user.display_name || promoUser.user.username || 'Unknown User'}
+                        {promoUser.user.display_name || promoUser.user.username || promoUser.user.email.split('@')[0]}
                       </span>
                     </div>
                     <div className="text-white/60 text-sm">

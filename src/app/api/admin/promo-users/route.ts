@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const userIds = promoUsers?.map(pu => pu.user_id) || [];
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, email, display_name, username, created_at, secret_level, total_generations, unique_models_used')
+      .select('id, email, created_at, secret_level, total_generations, unique_models_used')
       .in('id', userIds);
 
     if (usersError) {

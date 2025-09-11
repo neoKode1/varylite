@@ -33,6 +33,8 @@ export const AdminPromoModal: React.FC<AdminPromoModalProps> = ({ isOpen, onClos
         throw new Error('No active session');
       }
 
+      console.log('Session token:', session.access_token); // Debug log
+
       const response = await fetch('/api/admin/promo-generate', {
         method: 'POST',
         headers: {
@@ -47,12 +49,14 @@ export const AdminPromoModal: React.FC<AdminPromoModalProps> = ({ isOpen, onClos
       });
 
       const data = await response.json();
+      console.log('API Response:', { status: response.status, data });
 
       if (response.ok && data.success) {
         setGeneratedCode(data.promoCode);
         setCopied(false);
       } else {
-        setError(data.error || 'Failed to generate promo code');
+        console.error('API Error:', data);
+        setError(data.error || `Failed to generate promo code (Status: ${response.status})`);
       }
     } catch (error) {
       console.error('Error generating promo code:', error);

@@ -4,9 +4,12 @@ import { supabase } from '@/lib/supabase';
 export async function POST(request: NextRequest) {
   try {
     const { description, maxUses, expiresAt } = await request.json();
+    console.log('Promo generate request:', { description, maxUses, expiresAt });
 
     // Get the current session
     const authHeader = request.headers.get('authorization');
+    console.log('Auth header:', authHeader ? 'Present' : 'Missing');
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -15,7 +18,10 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('Token length:', token.length);
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    console.log('User:', user?.email, 'Auth error:', authError);
 
     if (authError || !user) {
       return NextResponse.json(
