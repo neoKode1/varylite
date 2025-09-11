@@ -22,7 +22,6 @@ type GenerationMode =
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
-import { AnalyticsUpdater } from '@/components/AnalyticsUpdater';
 import { HelpModal } from '@/components/HelpModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useUserGallery } from '@/hooks/useUserGallery';
@@ -4848,10 +4847,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Analytics Updater - Desktop only */}
-      <div className="hidden lg:block">
-      <AnalyticsUpdater />
-      </div>
 
       {/* Help Modal */}
       <HelpModal 
