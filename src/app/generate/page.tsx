@@ -3734,7 +3734,7 @@ export default function Home() {
       </video>
       
       {/* Semi-transparent overlay for content readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-100 z-10"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-80 z-10"></div>
       
       {/* Custom Notification Toast */}
       {notification && (
