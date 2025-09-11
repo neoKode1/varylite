@@ -86,7 +86,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats'>('profile');
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
   const loadProfileData = async () => {
     try {
-      setLoading(true);
+      setProfileLoading(true);
       console.log('🔄 Loading profile data...');
       
       // Get the current session token
@@ -191,7 +191,7 @@ export default function ProfilePage() {
         setGalleryItems([]);
       }
 
-      setLoading(false);
+      setProfileLoading(false);
     } catch (error) {
       console.error('❌ Error loading profile:', error);
       console.error('❌ Error details:', {
@@ -199,7 +199,7 @@ export default function ProfilePage() {
         user: user?.id,
         email: user?.email
       });
-      setLoading(false);
+      setProfileLoading(false);
     }
   };
 
@@ -207,7 +207,7 @@ export default function ProfilePage() {
     if (!profile || !user) return;
     
     try {
-      setLoading(true);
+      setProfileLoading(true);
       
       // Get the current session token
       const { data: { session } } = await supabase.auth.getSession();
@@ -236,10 +236,10 @@ export default function ProfilePage() {
       const data = await response.json();
       console.log('Profile saved successfully:', data);
       setIsEditing(false);
-      setLoading(false);
+      setProfileLoading(false);
     } catch (error) {
       console.error('Error saving profile:', error);
-      setLoading(false);
+      setProfileLoading(false);
     }
   };
 
@@ -248,7 +248,7 @@ export default function ProfilePage() {
     if (!file || !profile) return;
 
     try {
-      setLoading(true);
+      setProfileLoading(true);
       console.log('Uploading avatar:', file);
 
       // Validate file size (max 2MB)
@@ -344,10 +344,10 @@ export default function ProfilePage() {
         } : null);
       }
 
-      setLoading(false);
+      setProfileLoading(false);
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      setLoading(false);
+      setProfileLoading(false);
       
       // Revert the preview on error
       setProfile(prev => prev ? {
@@ -419,14 +419,6 @@ export default function ProfilePage() {
         return true; // Show all items (all are private)
     }
   });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading profile...</div>
-      </div>
-    );
-  }
 
   // Show loading state while auth is loading
   if (loading) {
