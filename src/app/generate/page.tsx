@@ -4130,7 +4130,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="generate-floating-input hidden md:block w-full max-w-4xl mx-auto flex flex-col items-center">
+            <div className="generate-floating-input hidden md:block">
               {/* Dynamic Content - Only show when images are uploaded */}
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
