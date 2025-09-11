@@ -3874,108 +3874,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Desktop Generation Panel */}
-            <div className="hidden lg:block generation-panel mb-6 lg:mb-8">
-              <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New generations</h2>
-              <div className="generation-grid max-w-4xl mx-auto">
-                {/* Slot 1 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
-                >
-                  {variations[0] && (
-                    <div className="relative w-full h-full">
-                      {variations[0].fileType === 'video' ? (
-                        <video
-                          src={variations[0].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          loop
-                        />
-                      ) : (
-                        <img
-                          src={variations[0].imageUrl}
-                          alt={variations[0].description}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      )}
-              </div>
-                  )}
-                </div>
-                {/* Slot 2 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
-                >
-                  {variations[1] && (
-                    <div className="relative w-full h-full">
-                      {variations[1].fileType === 'video' ? (
-                        <video
-                          src={variations[1].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          loop
-                        />
-                      ) : (
-                        <img
-                          src={variations[1].imageUrl}
-                          alt={variations[1].description}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Slot 3 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
-                >
-                  {variations[2] && (
-                    <div className="relative w-full h-full">
-                      {variations[2].fileType === 'video' ? (
-                        <video
-                          src={variations[2].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          loop
-                        />
-                      ) : (
-                        <img
-                          src={variations[2].imageUrl}
-                          alt={variations[2].description}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Slot 4 */}
-                <div 
-                  className="generation-slot"
-                  onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
-                >
-                  {variations[3] && (
-                    <div className="relative w-full h-full">
-                      {variations[3].fileType === 'video' ? (
-                        <video
-                          src={variations[3].videoUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          loop
-                        />
-                      ) : (
-                        <img
-                          src={variations[3].imageUrl}
-                          alt={variations[3].description}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
 
         </div>
 
@@ -4251,6 +4149,109 @@ export default function Home() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Desktop Generation Panel */}
+            <div className="hidden lg:block generation-panel mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New generations</h2>
+              <div className="generation-grid max-w-4xl mx-auto">
+                {/* Slot 1 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
+                >
+                  {variations[0] && (
+                    <div className="relative w-full h-full">
+                      {variations[0].fileType === 'video' ? (
+                        <video
+                          src={variations[0].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[0].imageUrl}
+                          alt={variations[0].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+              </div>
+                  )}
+                </div>
+                {/* Slot 2 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
+                >
+                  {variations[1] && (
+                    <div className="relative w-full h-full">
+                      {variations[1].fileType === 'video' ? (
+                        <video
+                          src={variations[1].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[1].imageUrl}
+                          alt={variations[1].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Slot 3 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
+                >
+                  {variations[2] && (
+                    <div className="relative w-full h-full">
+                      {variations[2].fileType === 'video' ? (
+                        <video
+                          src={variations[2].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[2].imageUrl}
+                          alt={variations[2].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Slot 4 */}
+                <div 
+                  className="generation-slot"
+                  onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
+                >
+                  {variations[3] && (
+                    <div className="relative w-full h-full">
+                      {variations[3].fileType === 'video' ? (
+                        <video
+                          src={variations[3].videoUrl}
+                          className="w-full h-full object-cover rounded-lg"
+                          muted
+                          loop
+                        />
+                      ) : (
+                        <img
+                          src={variations[3].imageUrl}
+                          alt={variations[3].description}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="generate-floating-input hidden md:block w-full max-w-4xl mx-auto flex flex-col items-center">
