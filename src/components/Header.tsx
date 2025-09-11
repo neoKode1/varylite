@@ -309,7 +309,15 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               /* User Profile - Mobile */
               <div className="relative flex-shrink-0">
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onClick={() => {
+                    // On mobile, navigate directly to profile page
+                    // On desktop, show dropdown menu
+                    if (window.innerWidth < 768) {
+                      router.push('/profile');
+                    } else {
+                      setShowUserMenu(!showUserMenu);
+                    }
+                  }}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800"
                 >
                   <div className="w-6 h-6 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
