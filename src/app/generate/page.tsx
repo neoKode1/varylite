@@ -3805,7 +3805,6 @@ export default function Home() {
             
         {/* Main Content Container - Centered and Unified */}
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
-          <div className="bg-transparent lg:bg-gray-900 lg:bg-opacity-90 backdrop-blur-md rounded-xl p-6 lg:p-8 xl:p-10 border border-gray-700 border-opacity-40 shadow-2xl w-full max-w-4xl">
             
 
             {/* Mobile Image Diffusion Display */}
@@ -3996,7 +3995,6 @@ export default function Home() {
               </div>
             </div>
 
-          </div>
         </div>
 
         <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat pb-32 lg:pb-6">
