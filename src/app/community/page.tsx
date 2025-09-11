@@ -624,7 +624,6 @@ export default function CommunityPage() {
           showContributors={showCollaborators}
           onToggleContributors={() => setShowCollaborators(!showCollaborators)}
           hideCommunityButton={true}
-          hideAnalytics={true}
         />
       </div>
 

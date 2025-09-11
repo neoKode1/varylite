@@ -464,7 +464,7 @@
     /* 2x2 Generation Panel - Fixed positioning and responsive scaling */
     .generation-panel {
       position: fixed !important;
-      bottom: 18rem !important; /* 288px - responsive to zoom */
+      top: 100px !important; /* 100px from top */
       left: 50% !important;
       transform: translateX(-50%) !important;
       width: min(90vw, 56rem) !important; /* max-w-4xl equivalent with viewport scaling */

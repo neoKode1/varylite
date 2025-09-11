@@ -3789,90 +3789,6 @@ export default function Home() {
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
             
 
-            {/* Mobile Image Diffusion Display */}
-            <div className="lg:hidden mx-4 mt-6 mb-4">
-              {/* Image Display Area - Only shows when there are images or generation is in progress */}
-              {(displayedImages.length > 0 || isGeneratingImages) && (
-                <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl min-h-[300px] relative overflow-hidden">
-                  {displayedImages.length > 0 ? (
-                    <div className="h-full">
-                      {/* Swipeable container */}
-                      <div 
-                        className="flex transition-transform duration-300 ease-out h-full"
-                        style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
-                        onTouchStart={(e: React.TouchEvent) => {
-                          const startX = e.touches[0].clientX;
-                          
-                          const handleTouchEnd = (e: TouchEvent) => {
-                            const endX = e.changedTouches[0].clientX;
-                            const diff = startX - endX;
-                            
-                            if (Math.abs(diff) > 50) { // Minimum swipe distance
-                              if (diff > 0) handleSwipeLeft();
-                              else handleSwipeRight();
-                            }
-                            
-                            document.removeEventListener('touchend', handleTouchEnd);
-                          };
-                          
-                          document.addEventListener('touchend', handleTouchEnd);
-                        }}
-                      >
-                        {displayedImages.map((image, index) => (
-                          <div key={index} className="w-full h-[300px] flex-shrink-0 flex items-center justify-center p-4">
-                            <img 
-                              src={image} 
-                              alt={`Generated variation ${index + 1}`}
-                              className="max-w-full max-h-full object-contain rounded-lg"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Image indicator dots */}
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                        {displayedImages.map((_, index) => (
-                <button
-                            key={index}
-                            onClick={() => setCurrentImageIndex(index)}
-                            className={`w-2 h-2 rounded-full transition-colors ${
-                              index === currentImageIndex ? 'bg-cyan-500' : 'bg-gray-600'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      
-                      {/* Swipe hint */}
-                      {displayedImages.length > 1 && (
-                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-                          <div className="bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-                            <span className="text-xs text-white">Swipe to view more</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : isGeneratingImages ? (
-                    // Generation loading state
-                    <div className="h-full flex flex-col items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mb-4"></div>
-                      <p className="text-gray-400 text-sm">Generating variations...</p>
-                      <div className="mt-4 flex gap-2">
-                        {[1, 2, 3, 4].map((num, index) => (
-                          <div 
-                            key={num}
-                            className={`w-12 h-12 rounded-lg border-2 border-dashed flex items-center justify-center text-xs text-gray-500 ${
-                              index < displayedImages.length ? 'border-cyan-500 bg-cyan-500/10' : 'border-gray-600'
-                            }`}
-                          >
-                            {index < displayedImages.length ? '✓' : num}
-            </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
 
 
         </div>
@@ -4100,55 +4016,6 @@ export default function Home() {
                   )}
                 </div>
               </div>
-            </div>
-            {/* Desktop Generated Images Grid - 2x2 Display */}
-            <div className="hidden md:block w-full max-w-4xl mx-auto mb-6">
-              {(displayedImages.length > 0 || isGeneratingImages) && (
-                <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl p-4">
-                  <div className="grid grid-cols-2 gap-4 min-h-[400px]">
-                    {displayedImages.length > 0 ? (
-                      // Show generated images in 2x2 grid
-                      Array.from({ length: 4 }, (_, index) => (
-                        <div key={index} className="bg-gray-700/50 rounded-lg border border-gray-600 flex items-center justify-center min-h-[180px]">
-                          {displayedImages[index] ? (
-                            <img 
-                              src={displayedImages[index]} 
-                              alt={`Generated variation ${index + 1}`}
-                              className="max-w-full max-h-full object-contain rounded-lg"
-                            />
-                          ) : (
-                            <div className="text-gray-500 text-sm">Slot {index + 1}</div>
-                          )}
-                        </div>
-                      ))
-                    ) : isGeneratingImages ? (
-                      // Show loading state in 2x2 grid
-                      Array.from({ length: 4 }, (_, index) => (
-                        <div key={index} className="bg-gray-700/50 rounded-lg border border-gray-600 flex items-center justify-center min-h-[180px]">
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-500"></div>
-                            <div className="text-gray-400 text-xs">Generating...</div>
-                          </div>
-                        </div>
-                      ))
-                    ) : null}
-                  </div>
-                  
-                  {/* Generation progress indicator */}
-                  {isGeneratingImages && (
-                    <div className="mt-4 text-center">
-                      <div className="text-cyan-400 text-sm font-medium">Generating variations...</div>
-                      <div className="mt-2 flex justify-center gap-2">
-                        {[1, 2, 3, 4].map((num, index) => (
-                          <div key={num} className={`w-3 h-3 rounded-full transition-colors ${
-                            index < displayedImages.length ? 'bg-cyan-500' : 'bg-gray-600'
-                          }`} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Desktop Generation Panel */}
@@ -5270,6 +5137,126 @@ export default function Home() {
           </div>
         )}
 
+        {/* Responsive Image Diffusion Display */}
+        <div className="w-full mb-6 px-4 pt-6" style={{ top: '100px' }}>
+          {/* Image Display Area - Only shows when there are images or generation is in progress */}
+          {(displayedImages.length > 0 || isGeneratingImages) && (
+            <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl min-h-[345px] md:min-h-[460px] relative overflow-hidden p-4 max-w-5xl mx-auto">
+              {displayedImages.length > 0 ? (
+                <div className="h-full">
+                  {/* Mobile: Swipeable container */}
+                  <div className="md:hidden">
+                    <div 
+                      className="flex transition-transform duration-300 ease-out h-full"
+                      style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+                      onTouchStart={(e: React.TouchEvent) => {
+                        const startX = e.touches[0].clientX;
+                        
+                        const handleTouchEnd = (e: TouchEvent) => {
+                          const endX = e.changedTouches[0].clientX;
+                          const diff = startX - endX;
+                          
+                          if (Math.abs(diff) > 50) { // Minimum swipe distance
+                            if (diff > 0) handleSwipeLeft();
+                            else handleSwipeRight();
+                          }
+                          
+                          document.removeEventListener('touchend', handleTouchEnd);
+                        };
+                        
+                        document.addEventListener('touchend', handleTouchEnd);
+                      }}
+                    >
+                      {displayedImages.map((image, index) => (
+                        <div key={index} className="w-full h-[345px] flex-shrink-0 flex items-center justify-center p-4">
+                          <img 
+                            src={image} 
+                            alt={`Generated variation ${index + 1}`}
+                            className="max-w-full max-h-full object-contain rounded-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Desktop: Grid layout */}
+                  <div className="hidden md:block">
+                    <div className="grid grid-cols-2 gap-4 min-h-[460px]">
+                      {Array.from({ length: 4 }, (_, index) => (
+                        <div key={index} className="bg-gray-700/50 rounded-lg border border-gray-600 flex items-center justify-center min-h-[207px]">
+                          {displayedImages[index] ? (
+                            <img 
+                              src={displayedImages[index]} 
+                              alt={`Generated variation ${index + 1}`}
+                              className="max-w-full max-h-full object-contain rounded-lg"
+                            />
+                          ) : (
+                            <div className="text-gray-500 text-sm">Slot {index + 1}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Image indicator dots - Mobile only */}
+                  <div className="md:hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    {displayedImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          index === currentImageIndex ? 'bg-cyan-500' : 'bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Swipe hint - Mobile only */}
+                  {displayedImages.length > 1 && (
+                    <div className="md:hidden absolute top-4 left-1/2 transform -translate-x-1/2">
+                      <div className="bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
+                        <span className="text-xs text-white">Swipe to view more</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Desktop progress indicator */}
+                  {isGeneratingImages && (
+                    <div className="hidden md:block mt-4 text-center">
+                      <div className="text-cyan-400 text-sm font-medium">Generating variations...</div>
+                      <div className="mt-2 flex justify-center gap-2">
+                        {[1, 2, 3, 4].map((num, index) => (
+                          <div key={num} className={`w-3 h-3 rounded-full transition-colors ${
+                            index < displayedImages.length ? 'bg-cyan-500' : 'bg-gray-600'
+                          }`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : isGeneratingImages ? (
+                // Generation loading state
+                <div className="h-full flex flex-col items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mb-4"></div>
+                  <p className="text-gray-400 text-sm">Generating variations...</p>
+                  <div className="mt-4 flex gap-2">
+                    {[1, 2, 3, 4].map((num, index) => (
+                      <div 
+                        key={num}
+                        className={`w-12 h-12 rounded-lg border-2 border-dashed flex items-center justify-center text-xs text-gray-500 ${
+                          index < displayedImages.length ? 'border-cyan-500 bg-cyan-500/10' : 'border-gray-600'
+                        }`}
+                      >
+                        {index < displayedImages.length ? '✓' : num}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+
         {/* Input area */}
         <div className="p-5">
           <div className="flex items-center gap-4">
@@ -5286,6 +5273,7 @@ export default function Home() {
               +
             </button>
             
+
             {/* Text Input */}
             <div className="flex-1">
               <input
