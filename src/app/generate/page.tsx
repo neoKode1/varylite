@@ -3723,9 +3723,18 @@ export default function Home() {
         showGallery={showGallery}
       />
       
+      {/* Background Video */}
+      <video
+        autoPlay
+        muted
+        loop
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source src="/91b9d7be-bb33-4df3-af75-85c7bc3f9d79.mp4" type="video/mp4" />
+      </video>
       
       {/* Semi-transparent overlay for content readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-15 z-10"></div>
       
       {/* Custom Notification Toast */}
       {notification && (
