@@ -671,6 +671,7 @@ export default function Home() {
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showBackgroundPrompts, setShowBackgroundPrompts] = useState(false);
   const [activePresetTab, setActivePresetTab] = useState<'shot' | 'background' | 'restyle' | null>(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -753,6 +754,23 @@ export default function Home() {
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Scroll detection for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      const galleryContainer = document.querySelector('.gallery-container');
+      if (galleryContainer) {
+        const scrollTop = galleryContainer.scrollTop;
+        setShowScrollToTop(scrollTop > 300);
+      }
+    };
+
+    const galleryContainer = document.querySelector('.gallery-container');
+    if (galleryContainer) {
+      galleryContainer.addEventListener('scroll', handleScroll);
+      return () => galleryContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [showGallery]);
 
   // Add error boundary for fetchUserStats to prevent app crashes
   useEffect(() => {
@@ -1229,6 +1247,16 @@ export default function Home() {
       showAnimatedErrorNotification('Error deleting image from gallery', 'toasty');
     }
   }, [removeFromGallery, gallery]);
+
+  const scrollToTop = () => {
+    const galleryContainer = document.querySelector('.gallery-container');
+    if (galleryContainer) {
+      galleryContainer.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
   
   // Filter gallery items based on selected filter
   const filteredGallery = useMemo(() => {
@@ -3856,6 +3884,11 @@ export default function Home() {
                         alt={variations[0].description}
                         className="w-full h-full object-cover"
                         onClick={() => setFullScreenImage(variations[0].imageUrl || null)}
+                        onError={(e) => {
+                          console.error('Mobile image failed to load:', variations[0].imageUrl);
+                          e.currentTarget.src = '/api/placeholder/400/400';
+                        }}
+                        loading="lazy"
                       />
                     )}
                     
@@ -3900,6 +3933,11 @@ export default function Home() {
                           src={variation.imageUrl}
                           alt={variation.description}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Mobile variation image failed to load:', variation.imageUrl);
+                            e.currentTarget.src = '/api/placeholder/200/200';
+                          }}
+                          loading="lazy"
                         />
                       )}
                     </div>
@@ -4481,7 +4519,7 @@ export default function Home() {
 
         {/* Mobile Gallery Panel */}
         {showGallery && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-transparent z-30 max-h-[25vh] overflow-y-auto">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-transparent z-30 max-h-[25vh] overflow-y-auto gallery-container">
             <div className="p-2 lg:p-6">
               <div className="flex items-center justify-between mb-2 lg:mb-6">
                 <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
@@ -4585,6 +4623,11 @@ export default function Home() {
                               alt="Gallery item"
                               className="w-full h-full object-cover cursor-pointer"
                               onClick={() => setFullScreenImage(item.imageUrl)}
+                              onError={(e) => {
+                                console.error('Mobile gallery image failed to load:', item.imageUrl);
+                                e.currentTarget.src = '/api/placeholder/150/150';
+                              }}
+                              loading="lazy"
                             />
                           )}
                           
@@ -4612,7 +4655,7 @@ export default function Home() {
                             )}
 
                             {/* Action Buttons */}
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 flex-wrap">
                               <button
                                 onClick={() => {
                                   if (isExpanded) {
@@ -4628,6 +4671,22 @@ export default function Home() {
                                 className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
                               >
                                 {isExpanded ? 'Hide' : 'Show'}
+                              </button>
+                              <button
+                                onClick={() => handleVaryImage(item.imageUrl, item.originalPrompt)}
+                                disabled={processing.isProcessing}
+                                className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Generate variations with nano_banana"
+                              >
+                                Vary
+                              </button>
+                              <button
+                                onClick={() => handleEditImage(item.imageUrl, item.originalPrompt)}
+                                disabled={processing.isProcessing}
+                                className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Inject into input slot"
+                              >
+                                Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteFromGallery(item.id)}
@@ -4698,13 +4757,24 @@ export default function Home() {
                   })}
                 </div>
               )}
+
+              {/* Mobile Gallery Scroll to Top Button */}
+              {showScrollToTop && (
+                <button
+                  onClick={scrollToTop}
+                  className="fixed bottom-20 right-4 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                  aria-label="Scroll to top"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         )}
 
         {/* Responsive Gallery Panel */}
         {showGallery && (
-          <div className="fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
+          <div className="gallery-container fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
             <div className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-3 text-white">
@@ -4765,7 +4835,7 @@ export default function Home() {
                   <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
                 </div>
               ) : (
-                <div className="flex flex-wrap justify-start gap-2 sm:gap-3 md:gap-4">
+                <div className="gallery-container flex flex-wrap justify-start gap-2 sm:gap-3 md:gap-4 max-h-[75vh] overflow-y-auto">
                   {filteredGallery.map((item: any, index: number) => {
                     const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
@@ -4787,6 +4857,11 @@ export default function Home() {
                               alt="Gallery item"
                               className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
                               onClick={() => setFullScreenImage(item.imageUrl)}
+                              onError={(e) => {
+                                console.error('Image failed to load:', item.imageUrl);
+                                e.currentTarget.src = '/api/placeholder/400/400';
+                              }}
+                              loading="lazy"
                             />
                           )}
                           <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
@@ -4813,7 +4888,7 @@ export default function Home() {
                           )}
 
                           {/* Action Buttons */}
-                          <div className="flex gap-1 justify-center">
+                          <div className="flex gap-1 justify-center flex-wrap">
                             <button
                               onClick={() => {
                                 if (isExpanded) {
@@ -4829,6 +4904,22 @@ export default function Home() {
                               className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
                             >
                               {isExpanded ? 'Hide' : 'Show'}
+                            </button>
+                            <button
+                              onClick={() => handleVaryImage(item.imageUrl, item.originalPrompt)}
+                              disabled={processing.isProcessing}
+                              className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Generate variations with nano_banana"
+                            >
+                              Vary
+                            </button>
+                            <button
+                              onClick={() => handleEditImage(item.imageUrl, item.originalPrompt)}
+                              disabled={processing.isProcessing}
+                              className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Inject into input slot"
+                            >
+                              Edit
                             </button>
                             <button
                               onClick={() => handleDeleteFromGallery(item.id)}
@@ -4851,6 +4942,17 @@ export default function Home() {
                     );
                   })}
                 </div>
+              )}
+
+              {/* Scroll to Top Button */}
+              {showScrollToTop && (
+                <button
+                  onClick={scrollToTop}
+                  className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                  aria-label="Scroll to top"
+                >
+                  <ArrowUp className="w-5 h-5" />
+                </button>
               )}
             </div>
           </div>

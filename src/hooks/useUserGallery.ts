@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { CharacterVariation } from '@/types/gemini'
+import { getOptimizedImageUrl } from '@/lib/imageUtils'
 
 interface StoredVariation extends CharacterVariation {
   timestamp: number
@@ -45,19 +46,21 @@ export const useUserGallery = (): UserGalleryHook => {
         return
       }
 
-      const formattedGallery: StoredVariation[] = data.map(item => ({
-        id: item.variation_id,
-        description: item.description,
-        angle: item.angle,
-        pose: item.pose,
-        imageUrl: item.image_url,
-        videoUrl: item.video_url,
-        fileType: item.file_type,
-        timestamp: new Date(item.created_at).getTime(),
-        originalPrompt: item.original_prompt,
-        originalImagePreview: item.original_image_preview,
-        databaseId: item.id // Preserve the database primary key
-      }))
+      const formattedGallery: StoredVariation[] = await Promise.all(
+        data.map(async (item) => ({
+          id: item.variation_id,
+          description: item.description,
+          angle: item.angle,
+          pose: item.pose,
+          imageUrl: item.image_url ? await getOptimizedImageUrl(item.image_url) : item.image_url,
+          videoUrl: item.video_url,
+          fileType: item.file_type,
+          timestamp: new Date(item.created_at).getTime(),
+          originalPrompt: item.original_prompt,
+          originalImagePreview: item.original_image_preview,
+          databaseId: item.id // Preserve the database primary key
+        }))
+      )
 
       setGallery(formattedGallery)
     } catch (error) {

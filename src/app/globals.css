@@ -1026,3 +1026,149 @@ html, body {
 .animate-toasty-bounce {
   animation: toasty-bounce 1s ease-in-out infinite;
 }
+
+/* Canvas-based Video Text Effect */
+/* Custom canvas container for IMAGINE text */
+.imagine-canvas-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end; /* Move canvas down */
+  gap: 0; /* No spacing between canvas and text */
+  width: 100%;
+  transform: translateY(15px); /* Move container down by 15px (50% increase) */
+}
+
+/* Responsive canvas wrapper */
+.canvas-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto; /* Allow horizontal scroll on very small screens */
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.canvas-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.canvas-text-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Ensure canvas doesn't break layout */
+  min-width: min-content;
+  margin: 0 auto;
+}
+
+.hidden-video {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Landing page canvas - responsive and centered */
+.video-text-canvas {
+  display: block !important;
+  width: 1000px !important;
+  height: 400px !important;
+  /* Add responsive scaling for smaller screens */
+  max-width: min(1000px, calc(100vw - 2rem)) !important;
+  height: auto !important; /* Maintain aspect ratio */
+  aspect-ratio: 2.5 !important; /* 1000:400 ratio */
+  flex-shrink: 0;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .video-text-canvas {
+    width: min(1000px, calc(100vw - 1rem)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-text-canvas {
+    width: min(1000px, calc(100vw - 0.5rem)) !important;
+  }
+}
+
+/* Alternative approach with CSS mask for better video text effect */
+.video-text-mask {
+  position: relative;
+  display: inline-block;
+  background: white;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+
+.video-text-mask::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+  mask: inherit;
+  -webkit-mask: inherit;
+  z-index: -1;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Bold block lettering style */
+.bold-block-text {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+}
+
+/* Small v styling - 30% smaller than the rest */
+.small-v {
+  font-size: 0.7em;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+/* Better video text effect using CSS masks */
+.video-text-masked {
+  position: relative;
+  display: inline-block;
+  font-weight: 900;
+  font-size: 1.15em;
+  color: white;
+  background: black;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.video-text-masked::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  mask: inherit;
+  -webkit-mask: inherit;
+  z-index: -1;
+}
