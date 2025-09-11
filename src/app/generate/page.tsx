@@ -3728,7 +3728,7 @@ export default function Home() {
         autoPlay
         muted
         loop
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        className="absolute inset-0 w-full h-full object-cover -z-10"
       >
         <source src="/91b9d7be-bb33-4df3-af75-85c7bc3f9d79.mp4" type="video/mp4" />
       </video>
