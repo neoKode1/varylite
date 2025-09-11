@@ -3964,7 +3964,7 @@ export default function Home() {
                   {/* Upload Button */}
                   <button
                     onClick={() => document.getElementById('file-input')?.click()}
-                    className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 flex items-center justify-center transition-colors"
                     title="Upload images"
                   >
                     <Upload className="w-4 h-4 text-white" />
@@ -5267,7 +5267,7 @@ export default function Home() {
               className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-200 ${
                 uploadedFiles.length >= 4 
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                  : 'bg-yellow-500 text-black hover:bg-yellow-400 hover:shadow-lg active:scale-95'
+                  : 'bg-green-500 text-white hover:bg-green-400 hover:shadow-lg active:scale-95'
               }`}
             >
               +

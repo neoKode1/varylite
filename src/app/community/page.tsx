@@ -667,194 +667,10 @@ export default function CommunityPage() {
       {/* Main Content */}
       <div className="relative z-10 pt-20 lg:pt-24">
         <div className="max-w-6xl mx-auto px-3 lg:px-4 py-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex items-center gap-3 lg:gap-4">
-              <button
-                onClick={() => {
-                  console.log('Generate button clicked');
-                  router.push('/generate');
-                }}
-                className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-charcoal hover:bg-gradient-jet text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg text-sm lg:text-base border border-border-gray"
-                title="Back to Generate"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="font-medium">Generate</span>
-                <Sparkles className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-2 lg:gap-3">
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
-                  <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
-                </div>
-                <h1 className="text-lg lg:text-2xl font-bold text-white">Tha Communita</h1>
-              </div>
-            </div>
-            <div className="text-left lg:text-right">
-              <div className="text-gray-300 text-xs lg:text-sm">Community Members</div>
-              <div className="text-white font-medium text-sm lg:text-base">
-                {userStats.totalUsers} Total • {userStats.activeUsers} Active
-              </div>
-              <div className="text-green-400 text-xs">
-                +{userStats.newUsers24h} new today
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6 relative z-10 pb-32 lg:pb-6">
-
-        {/* Community Funding Meter */}
-        <div className="mb-4 lg:mb-6">
-          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
-                <h3 className="text-white font-semibold text-sm lg:text-lg">Community Energy</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-left sm:text-right">
-                  <p className="text-gray-300 text-xs lg:text-sm">Community Energy</p>
-                  <p className="text-white font-medium text-sm lg:text-base">Community Status</p>
-                </div>
-                <button
-                  onClick={() => setIsCommunityEnergyExpanded(!isCommunityEnergyExpanded)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  {isCommunityEnergyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            
-            {/* Collapsed State - Show only meter */}
-            {!isCommunityEnergyExpanded && (
-              <div className="relative">
-                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
-                </div>
-                <p className="text-gray-400 text-xs leading-tight">
-                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
-                </p>
-              </div>
-            )}
-            
-            {/* Expanded State - Show full content */}
-            {isCommunityEnergyExpanded && (
-              <div className="relative">
-                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
-                </div>
-                
-                {/* Support Links */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <a
-                    href="https://ko-fi.com/vari-ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-full transition-colors text-center"
-                  >
-                    ⚡ Support
-                  </a>
-                  <a
-                    href="https://cash.app/$VaryAi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-full transition-colors text-center"
-                  >
-                    💚 Daily
-                  </a>
-                </div>
-
-                <p className="text-gray-400 text-xs mt-2 leading-tight">
-                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Usage Statistics */}
-        <div className="mb-4 lg:mb-6">
-          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-accent-gray to-light-gray animate-pulse"></div>
-                <h3 className="text-white font-semibold text-sm lg:text-lg">Usage Statistics</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-left sm:text-right">
-                  <p className="text-gray-300 text-xs lg:text-sm">Last Updated: {userStats.period}</p>
-                  <p className="text-white font-medium text-sm lg:text-base">{userStats.totalUsers} Total Users</p>
-                  <p className="text-green-400 text-xs">{userStats.activeUsers} Active • +{userStats.newUsers24h} New</p>
-                </div>
-                <button
-                  onClick={() => setIsUsageStatsExpanded(!isUsageStatsExpanded)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  {isUsageStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            
-            {/* Collapsed State - Show only description */}
-            {!isUsageStatsExpanded && (
-              <p className="text-gray-400 text-xs">
-                🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
-              </p>
-            )}
-            
-            {/* Expanded State - Show full content */}
-            {isUsageStatsExpanded && (
-              <>
-                {/* Usage Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4 mb-4">
-                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
-                    <div className="text-lg lg:text-2xl font-bold text-accent-gray">{userStats.totalGenerations.toLocaleString()}</div>
-                    <div className="text-xs text-gray-300">Total Generations</div>
-                  </div>
-                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
-                    <div className="text-lg lg:text-2xl font-bold text-green-400">{userStats.activeUsers}</div>
-                    <div className="text-xs text-gray-300">Active Users</div>
-                  </div>
-                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
-                    <div className="text-lg lg:text-2xl font-bold text-purple-400">{userStats.recentActivity}</div>
-                    <div className="text-xs text-gray-300">Recent Activity</div>
-                  </div>
-                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
-                    <div className="text-lg lg:text-2xl font-bold text-orange-400">{userStats.newUsers24h}</div>
-                    <div className="text-xs text-gray-300">New Today</div>
-                  </div>
-                </div>
-                
-                {/* Community Growth Stats */}
-                <div className="bg-gray-800 bg-opacity-30 rounded-lg p-2 lg:p-3">
-                  <h4 className="text-gray-300 text-xs lg:text-sm font-medium mb-2">Community Growth</h4>
-                  <div className="space-y-1 lg:space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 text-xs lg:text-sm">Total Community Members</span>
-                      <span className="text-accent-gray font-medium text-xs lg:text-sm">{userStats.totalUsers}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 text-xs lg:text-sm">Active in Last 24h</span>
-                      <span className="text-green-400 font-medium text-xs lg:text-sm">{userStats.activeUsers}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 text-xs lg:text-sm">New Members Today</span>
-                      <span className="text-purple-400 font-medium text-xs lg:text-sm">+{userStats.newUsers24h}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 text-sm">Data Source</span>
-                      <span className="text-gray-400 text-sm">{userStats.period}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="text-gray-400 text-xs mt-3">
-                  🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
-                </p>
-              </>
-            )}
-          </div>
-        </div>
 
         {/* Posts Feed */}
         <div className="space-y-4 mb-6">
@@ -1038,6 +854,159 @@ export default function CommunityPage() {
 
         {/* Add bottom padding to account for floating input */}
         <div className="pb-32"></div>
+
+        {/* Community Funding Meter */}
+        <div className="mb-4 lg:mb-6">
+          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
+                <h3 className="text-white font-semibold text-sm lg:text-lg">Community Energy</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-left sm:text-right">
+                  <p className="text-gray-300 text-xs lg:text-sm">Community Energy</p>
+                  <p className="text-white font-medium text-sm lg:text-base">Community Status</p>
+                </div>
+                <button
+                  onClick={() => setIsCommunityEnergyExpanded(!isCommunityEnergyExpanded)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {isCommunityEnergyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            
+            {/* Collapsed State - Show only meter */}
+            {!isCommunityEnergyExpanded && (
+              <div className="relative">
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
+                </div>
+                <p className="text-gray-400 text-xs leading-tight">
+                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
+                </p>
+              </div>
+            )}
+            
+            {/* Expanded State - Show full content */}
+            {isCommunityEnergyExpanded && (
+              <div className="relative">
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
+                </div>
+                
+                {/* Support Links */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <a
+                    href="https://ko-fi.com/vari-ai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-full transition-colors text-center"
+                  >
+                    ⚡ Support
+                  </a>
+                  <a
+                    href="https://cash.app/$VaryAi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-full transition-colors text-center"
+                  >
+                    💚 Daily
+                  </a>
+                </div>
+
+                <p className="text-gray-400 text-xs mt-2 leading-tight">
+                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Usage Statistics */}
+        <div className="mb-4 lg:mb-6">
+          <div className="bg-transparent lg:bg-gradient-charcoal lg:bg-opacity-40 backdrop-blur-md rounded-lg p-3 lg:p-4 border border-border-gray border-opacity-30">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-accent-gray to-light-gray animate-pulse"></div>
+                <h3 className="text-white font-semibold text-sm lg:text-lg">Usage Statistics</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-left sm:text-right">
+                  <p className="text-gray-300 text-xs lg:text-sm">Last Updated: {userStats.period}</p>
+                  <p className="text-white font-medium text-sm lg:text-base">{userStats.totalUsers} Total Users</p>
+                  <p className="text-green-400 text-xs">{userStats.activeUsers} Active • +{userStats.newUsers24h} New</p>
+                </div>
+                <button
+                  onClick={() => setIsUsageStatsExpanded(!isUsageStatsExpanded)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {isUsageStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            
+            {/* Collapsed State - Show only description */}
+            {!isUsageStatsExpanded && (
+              <p className="text-gray-400 text-xs">
+                🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+              </p>
+            )}
+            
+            {/* Expanded State - Show full content */}
+            {isUsageStatsExpanded && (
+              <>
+                {/* Usage Stats Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4 mb-4">
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-accent-gray">{userStats.totalGenerations.toLocaleString()}</div>
+                    <div className="text-xs text-gray-300">Total Generations</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-green-400">{userStats.activeUsers}</div>
+                    <div className="text-xs text-gray-300">Active Users</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-purple-400">{userStats.recentActivity}</div>
+                    <div className="text-xs text-gray-300">Recent Activity</div>
+                  </div>
+                  <div className="bg-gray-800 bg-opacity-50 rounded-lg p-2 lg:p-3 text-center">
+                    <div className="text-lg lg:text-2xl font-bold text-orange-400">{userStats.newUsers24h}</div>
+                    <div className="text-xs text-gray-300">New Today</div>
+                  </div>
+                </div>
+                
+                {/* Community Growth Stats */}
+                <div className="bg-gray-800 bg-opacity-30 rounded-lg p-2 lg:p-3">
+                  <h4 className="text-gray-300 text-xs lg:text-sm font-medium mb-2">Community Growth</h4>
+                  <div className="space-y-1 lg:space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">Total Community Members</span>
+                      <span className="text-accent-gray font-medium text-xs lg:text-sm">{userStats.totalUsers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">Active in Last 24h</span>
+                      <span className="text-green-400 font-medium text-xs lg:text-sm">{userStats.activeUsers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-xs lg:text-sm">New Members Today</span>
+                      <span className="text-purple-400 font-medium text-xs lg:text-sm">+{userStats.newUsers24h}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 text-sm">Data Source</span>
+                      <span className="text-gray-400 text-sm">{userStats.period}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-gray-400 text-xs mt-3">
+                  🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+                </p>
+              </>
+            )}
+          </div>
+        </div>
         
         {/* Artist Credit */}
         <div className="mt-8 text-center">
@@ -1455,6 +1424,41 @@ export default function CommunityPage() {
           </div>
         </div>
       )}
+
+      {/* Tha Communita Section - Moved to Bottom */}
+      <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <button
+              onClick={() => {
+                console.log('Generate button clicked');
+                router.push('/generate');
+              }}
+              className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-charcoal hover:bg-gradient-jet text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-lg text-sm lg:text-base border border-border-gray"
+              title="Back to Generate"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-medium">Generate</span>
+              <Sparkles className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2 lg:gap-3">
+              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
+                <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+              </div>
+              <h1 className="text-lg lg:text-2xl font-bold text-white">Tha Communita</h1>
+            </div>
+          </div>
+          <div className="text-left lg:text-right">
+            <div className="text-gray-300 text-xs lg:text-sm">Community Members</div>
+            <div className="text-white font-medium text-sm lg:text-base">
+              {userStats.totalUsers} Total • {userStats.activeUsers} Active
+            </div>
+            <div className="text-green-400 text-xs">
+              +{userStats.newUsers24h} new today
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
