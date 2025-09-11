@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
            
            const { data: profiles, error: profilesError } = await supabase
              .from('users')
-             .select('id, name, profile_picture, email')
+             .select('id, name, display_name, username, profile_picture, email')
              .in('id', userIds);
 
            // Merge comments with profiles
@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
                ...comment,
                profiles: userProfile ? {
                  id: userProfile.id,
-                 display_name: userProfile.name,
-                 username: userProfile.email?.split('@')[0] || 'user',
+                 display_name: userProfile.display_name || userProfile.name,
+                 username: userProfile.username || userProfile.email?.split('@')[0] || 'user',
                  avatar_url: userProfile.profile_picture
                } : null
              };

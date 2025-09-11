@@ -60,7 +60,7 @@ export async function GET() {
            
            const { data: profiles, error: profilesError } = await supabase
              .from('users')
-             .select('id, name, profile_picture, email')
+             .select('id, name, display_name, username, profile_picture, email')
              .in('id', userIds);
 
            console.log('👥 [COMMUNITY POSTS] Profiles fetched:', { 
@@ -92,6 +92,8 @@ export async function GET() {
                          id: authUser.id,
                          email: authUser.email,
                          name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'vARY Ai User',
+                         display_name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'vARY Ai User',
+                         username: authUser.email?.split('@')[0]?.toLowerCase().replace(/\s+/g, '_') || 'user',
                          profile_picture: authUser.user_metadata?.avatar_url,
                          bio: 'AI enthusiast and creative explorer',
                          preferences: {},
@@ -125,8 +127,8 @@ export async function GET() {
           ...post,
           profiles: userProfile ? {
             id: userProfile.id,
-            display_name: userProfile.name,
-            username: userProfile.email?.split('@')[0] || 'user',
+            display_name: userProfile.display_name || userProfile.name,
+            username: userProfile.username || userProfile.email?.split('@')[0] || 'user',
             avatar_url: userProfile.profile_picture
           } : null
         };

@@ -142,12 +142,12 @@ export default function ProfilePage() {
       // Transform database data to component format
       setProfile({
         id: data.profile.id,
-        displayName: data.profile.name || 'vARY Ai User',
-        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'vary_ai_user',
+        displayName: data.profile.display_name || data.profile.name || 'vARY Ai User',
+        username: data.profile.username || data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'vary_ai_user',
         email: data.profile.email || '',
-        bio: 'Creative AI enthusiast exploring the possibilities of character generation!',
+        bio: data.profile.bio || 'Creative AI enthusiast exploring the possibilities of character generation!',
         avatar: data.profile.profile_picture,
-        socialLinks: {
+        socialLinks: data.profile.social_links || {
           twitter: '',
           instagram: '',
           website: ''
@@ -224,7 +224,11 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           name: profile.displayName,
+          display_name: profile.displayName,
+          username: profile.username,
           profile_picture: profile.avatar,
+          bio: profile.bio,
+          social_links: profile.socialLinks,
           preferences: profile.preferences
         })
       });
@@ -318,7 +322,11 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           name: profile.displayName,
+          display_name: profile.displayName,
+          username: profile.username,
           profile_picture: compressedBase64, // Send compressed base64 data
+          bio: profile.bio,
+          social_links: profile.socialLinks,
           preferences: profile.preferences
         })
       });
@@ -464,7 +472,7 @@ export default function ProfilePage() {
 
       {/* Header */}
       <div className="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4 lg:py-6">
             {/* Left: Profile Icon and Title */}
             <div className="flex items-center space-x-3 lg:space-x-4">
@@ -503,7 +511,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 lg:p-8 mb-6 lg:mb-8 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
           <div className="flex flex-col lg:flex-row items-start gap-6">
@@ -651,7 +659,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Total Generations */}
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 transform hover:scale-105">
             <div className="flex items-center justify-between mb-4">

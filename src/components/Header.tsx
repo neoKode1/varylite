@@ -404,7 +404,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                         className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                       >
                         <User className="w-4 h-4" />
-                        <span>Profile</span>
+                        <span>Display Profile</span>
                       </button>
                       
                       <button
@@ -415,7 +415,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                         className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                       >
                         <Settings className="w-4 h-4" />
-                        <span>Settings</span>
+                        <span>Show Profile</span>
                       </button>
                       
                       <button

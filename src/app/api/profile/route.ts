@@ -43,8 +43,10 @@ export async function GET(request: NextRequest) {
     if (!profile) {
       const defaultProfile = {
         id: user.id,
-        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
         email: user.email,
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        display_name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        username: user.email?.split('@')[0]?.toLowerCase().replace(/\s+/g, '_') || 'user',
         bio: 'AI enthusiast and creative explorer',
         profile_picture: null,
         social_links: {
@@ -52,6 +54,7 @@ export async function GET(request: NextRequest) {
           instagram: '',
           website: ''
         },
+        background_image: null,
         preferences: {
           defaultModel: 'runway-t2i',
           defaultStyle: 'realistic',
@@ -99,7 +102,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, profile_picture, bio, social_links, preferences, background_image } = body;
+    const { name, profile_picture, bio, social_links, preferences, background_image, display_name, username } = body;
 
     // Update user profile in database
     const updateData: any = {
@@ -107,6 +110,8 @@ export async function PUT(request: NextRequest) {
     };
 
     if (name !== undefined) updateData.name = name;
+    if (display_name !== undefined) updateData.display_name = display_name;
+    if (username !== undefined) updateData.username = username;
     if (profile_picture !== undefined) updateData.profile_picture = profile_picture;
     if (bio !== undefined) updateData.bio = bio;
     if (social_links !== undefined) updateData.social_links = social_links;
@@ -133,6 +138,8 @@ export async function PUT(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        display_name: display_name || name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        username: username || user.email?.split('@')[0]?.toLowerCase().replace(/\s+/g, '_') || 'user',
         profile_picture: profile_picture || null,
         bio: bio || 'AI enthusiast and creative explorer',
         social_links: social_links || {

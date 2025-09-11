@@ -148,7 +148,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         const data = await response.json();
         setProfile(prev => ({
           ...prev,
-          displayName: data.profile.name || prev.displayName,
+          displayName: data.profile.display_name || data.profile.name || prev.displayName,
+          username: data.profile.username || prev.username,
           avatar: data.profile.profile_picture || prev.avatar,
           bio: data.profile.bio || prev.bio,
           socialLinks: {
@@ -220,6 +221,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         },
         body: JSON.stringify({
           name: profile.displayName,
+          display_name: profile.displayName,
+          username: profile.username,
           profile_picture: profile.avatar,
           bio: profile.bio,
           social_links: profile.socialLinks,
@@ -375,8 +378,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         },
         body: JSON.stringify({
           name: profile.displayName,
+          display_name: profile.displayName,
+          username: profile.username,
           profile_picture: profile.avatar,
           background_image: compressedBase64, // Send compressed base64 data
+          bio: profile.bio,
+          social_links: profile.socialLinks,
           preferences: profile.preferences
         })
       });
@@ -508,7 +515,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         },
         body: JSON.stringify({
           name: profile.displayName,
+          display_name: profile.displayName,
+          username: profile.username,
           profile_picture: compressedBase64, // Send compressed base64 data
+          bio: profile.bio,
+          social_links: profile.socialLinks,
           preferences: profile.preferences
         })
       });

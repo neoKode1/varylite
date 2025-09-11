@@ -37,6 +37,11 @@ export interface Database {
           email: string
           name: string | null
           profile_picture: string | null
+          bio: string | null
+          social_links: any | null
+          background_image: string | null
+          display_name: string | null
+          username: string | null
           created_at: string
           updated_at: string
           preferences: any | null
@@ -47,6 +52,11 @@ export interface Database {
           email: string
           name?: string | null
           profile_picture?: string | null
+          bio?: string | null
+          social_links?: any | null
+          background_image?: string | null
+          display_name?: string | null
+          username?: string | null
           created_at?: string
           updated_at?: string
           preferences?: any | null
@@ -57,10 +67,64 @@ export interface Database {
           email?: string
           name?: string | null
           profile_picture?: string | null
+          bio?: string | null
+          social_links?: any | null
+          background_image?: string | null
+          display_name?: string | null
+          username?: string | null
           created_at?: string
           updated_at?: string
           preferences?: any | null
           usage_stats?: any | null
+        }
+      }
+      collections: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      collection_items: {
+        Row: {
+          id: string
+          collection_id: string
+          gallery_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          collection_id: string
+          gallery_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          collection_id?: string
+          gallery_id?: string
+          created_at?: string
         }
       }
       galleries: {
