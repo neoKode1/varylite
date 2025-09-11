@@ -47,7 +47,7 @@ export default function LandingPage() {
           {/* Content - Centered */}
           <div className="w-full text-center bg-black bg-opacity-87 p-16 rounded-lg">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-              Welcome to vARI Ai
+              Welcome to vARY Ai
           </h1>
             <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
               The first ever fully funded generation or AI app made by creators, led by creators.
@@ -220,7 +220,7 @@ export default function LandingPage() {
                 <span className="text-white font-semibold">Support the Community</span>
                         </div>
               <p className="text-gray-300 text-sm mb-4">
-                Help keep vARI Ai running and growing. Every contribution helps us create more amazing AI tools!
+                Help keep vARY Ai running and growing. Every contribution helps us create more amazing AI tools!
               </p>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="text-center">

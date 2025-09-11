@@ -4019,7 +4019,7 @@ export default function Home() {
             </div>
 
             {/* Desktop Generation Panel */}
-            <div className="hidden lg:block generation-panel mb-6 lg:mb-8">
+            <div className="hidden lg:block generation-panel mb-6 lg:mb-8" style={{ top: '-200px' }}>
               <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New generations</h2>
               <div className="generation-grid max-w-4xl mx-auto">
                 {/* Slot 1 */}
@@ -4542,10 +4542,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Desktop Gallery Panel */}
+        {/* Responsive Gallery Panel */}
         {showGallery && (
-          <div className="hidden lg:block fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 backdrop-blur-md border-t border-gray-700 z-30 max-h-[70vh] overflow-y-auto">
-            <div className="p-6">
+          <div className="fixed top-20 left-0 right-0 lg:left-[15%] lg:right-[15%] lg:bottom-0 lg:top-auto bg-gray-800 bg-opacity-95 backdrop-blur-md border-t border-gray-700 z-30 max-h-[70vh] overflow-y-auto">
+            <div className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
                   <Images className="w-6 h-6 text-white" />
@@ -4603,20 +4603,20 @@ export default function Home() {
                   <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                   {filteredGallery.map((item: any, index: number) => {
                     const itemKey = `${item.id}-${item.timestamp}-${index}`;
                     const isExpanded = expandedPrompts.has(itemKey);
                     
                     return (
-                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
-                        <div className="flex flex-col gap-4">
+                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-2 sm:p-3 border border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
+                        <div className="flex flex-col gap-3">
                           {/* Image/Video Preview */}
                                   <div className="relative">
                             {item.fileType === 'video' ? (
                                     <video
                                 src={item.videoUrl}
-                                className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                                className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg cursor-pointer"
                                 onClick={() => setFullScreenImage(item.videoUrl)}
                                       muted
                                     />
@@ -4624,7 +4624,7 @@ export default function Home() {
                               <img
                                 src={item.imageUrl}
                                 alt="Gallery item"
-                                className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                                className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg cursor-pointer"
                                 onClick={() => setFullScreenImage(item.imageUrl)}
                               />
                             )}
@@ -5138,7 +5138,7 @@ export default function Home() {
         )}
 
         {/* Responsive Image Diffusion Display */}
-        <div className="w-full mb-6 px-4 pt-6" style={{ top: '100px' }}>
+        <div className="w-full mb-6 px-4 pt-6" style={{ top: '200px' }}>
           {/* Image Display Area - Only shows when there are images or generation is in progress */}
           {(displayedImages.length > 0 || isGeneratingImages) && (
             <div className="bg-gray-800/30 border-2 border-dashed border-cyan-500/50 rounded-xl min-h-[345px] md:min-h-[460px] relative overflow-hidden p-4 max-w-5xl mx-auto">

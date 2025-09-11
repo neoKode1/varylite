@@ -142,8 +142,8 @@ export default function ProfilePage() {
       // Transform database data to component format
       setProfile({
         id: data.profile.id,
-        displayName: data.profile.name || 'vARI Ai User',
-        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'vari_ai_user',
+        displayName: data.profile.name || 'vARY Ai User',
+        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'vary_ai_user',
         email: data.profile.email || '',
         bio: 'Creative AI enthusiast exploring the possibilities of character generation!',
         avatar: data.profile.profile_picture,
@@ -459,7 +459,7 @@ export default function ProfilePage() {
               onClick={() => router.push('/')}
               className="text-white hover:text-gray-300 transition-colors"
             >
-              ← Back to vARI Ai
+              ← Back to vARY Ai
             </button>
             <h1 className="text-2xl font-bold text-white">Profile</h1>
             <div className="w-8"></div>

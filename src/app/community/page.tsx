@@ -634,7 +634,7 @@ export default function CommunityPage() {
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">V</span>
             </div>
-            <h1 className="text-xl font-bold text-white tracking-wide">vARI Ai</h1>
+            <h1 className="text-xl font-bold text-white tracking-wide">vARY Ai</h1>
           </div>
         </div>
         
@@ -732,7 +732,7 @@ export default function CommunityPage() {
                   <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 w-3/4"></div>
                 </div>
                 <p className="text-gray-400 text-xs leading-tight">
-                  Community support helps keep vARI Ai running! Thank you for being part of our creative community.
+                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
                 </p>
               </div>
             )}
@@ -765,7 +765,7 @@ export default function CommunityPage() {
                 </div>
 
                 <p className="text-gray-400 text-xs mt-2 leading-tight">
-                  Community support helps keep vARI Ai running! Thank you for being part of our creative community.
+                  Community support helps keep vARY Ai running! Thank you for being part of our creative community.
                 </p>
               </div>
             )}
@@ -798,7 +798,7 @@ export default function CommunityPage() {
             {/* Collapsed State - Show only description */}
             {!isUsageStatsExpanded && (
               <p className="text-gray-400 text-xs">
-                🚀 vARI Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+                🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
               </p>
             )}
             
@@ -849,7 +849,7 @@ export default function CommunityPage() {
                 </div>
                 
                 <p className="text-gray-400 text-xs mt-3">
-                  🚀 vARI Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
+                  🚀 vARY Ai community is growing with {userStats.totalUsers} members and {userStats.totalGenerations} total generations!
                 </p>
               </>
             )}
