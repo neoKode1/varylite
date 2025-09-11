@@ -465,36 +465,28 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors group"
-              >
-                <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                  ←
-                </div>
-                <span>Back to vARY Ai</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between py-4 lg:py-6">
+            {/* Left: Profile Icon and Title */}
+            <div className="flex items-center space-x-3 lg:space-x-4">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <h1 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Profile
               </h1>
             </div>
-            <div className="flex space-x-3">
+            
+            {/* Right: Action Buttons */}
+            <div className="flex space-x-2 lg:space-x-3">
               <button
                 onClick={() => router.push('/generate')}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+                className="px-4 py-2 lg:px-6 lg:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg lg:rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 text-sm lg:text-base"
               >
                 Generate
               </button>
               <button
                 onClick={() => router.push('/community')}
-                className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+                className="px-4 py-2 lg:px-6 lg:py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg lg:rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
               >
                 Community
               </button>
