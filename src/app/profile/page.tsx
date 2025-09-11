@@ -506,9 +506,9 @@ export default function ProfilePage() {
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 lg:p-8 mb-6 lg:mb-8 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
-          <div className="flex items-start gap-6">
+          <div className="flex flex-col lg:flex-row items-start gap-6">
             {/* Avatar */}
-            <div className="relative group">
+            <div className="relative group mx-auto lg:mx-0">
               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold shadow-2xl ring-4 ring-white/20 hover:ring-white/30 transition-all duration-300 transform group-hover:scale-105">
                 {profile.avatar ? (
                   <img 
@@ -534,8 +534,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-4 mb-4">
                 {isEditing ? (
                   <input
                     type="text"
@@ -562,9 +562,9 @@ export default function ProfilePage() {
               )}
 
               {/* Social Links */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-2 lg:gap-4">
                 {isEditing ? (
-                  <>
+                  <div className="flex flex-wrap gap-2 lg:gap-4 w-full justify-center lg:justify-start">
                     <input
                       type="text"
                       placeholder="Twitter"
@@ -573,7 +573,7 @@ export default function ProfilePage() {
                         ...profile, 
                         socialLinks: {...profile.socialLinks, twitter: e.target.value}
                       })}
-                      className="text-sm text-gray-300 bg-transparent border border-white border-opacity-30 rounded px-2 py-1 focus:border-opacity-60 outline-none"
+                      className="text-sm text-white/80 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 focus:border-white/40 focus:bg-white/10 outline-none transition-all duration-300 min-w-[120px] flex-1 max-w-[200px]"
                     />
                     <input
                       type="text"
@@ -583,7 +583,7 @@ export default function ProfilePage() {
                         ...profile, 
                         socialLinks: {...profile.socialLinks, instagram: e.target.value}
                       })}
-                      className="text-sm text-gray-300 bg-transparent border border-white border-opacity-30 rounded px-2 py-1 focus:border-opacity-60 outline-none"
+                      className="text-sm text-white/80 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 focus:border-white/40 focus:bg-white/10 outline-none transition-all duration-300 min-w-[120px] flex-1 max-w-[200px]"
                     />
                     <input
                       type="text"
@@ -593,9 +593,9 @@ export default function ProfilePage() {
                         ...profile, 
                         socialLinks: {...profile.socialLinks, website: e.target.value}
                       })}
-                      className="text-sm text-gray-300 bg-transparent border border-white border-opacity-30 rounded px-2 py-1 focus:border-opacity-60 outline-none"
+                      className="text-sm text-white/80 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 focus:border-white/40 focus:bg-white/10 outline-none transition-all duration-300 min-w-[120px] flex-1 max-w-[200px]"
                     />
-                  </>
+                  </div>
                 ) : (
                   <>
                     {profile.socialLinks.twitter && (
@@ -616,36 +616,36 @@ export default function ProfilePage() {
                   </>
                 )}
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {isEditing ? (
-                <>
+              {/* Action Buttons - Now inside the profile card */}
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2 mt-4">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSaveProfile}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 shadow-lg"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all duration-300 flex items-center gap-2 transform hover:scale-105"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </>
+                ) : (
                   <button
-                    onClick={handleSaveProfile}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    onClick={() => setIsEditing(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
                   >
-                    <Save className="w-4 h-4" />
-                    Save
+                    <Edit3 className="w-4 h-4" />
+                    Edit Profile
                   </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit Profile
-                </button>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
