@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { AdminPromoModal } from '@/components/AdminPromoModal';
+import { AdminPromoUsersPanel } from '@/components/AdminPromoUsersPanel';
 import { 
   User, 
   Settings, 
@@ -23,7 +25,9 @@ import {
   EyeOff,
   Star,
   Clock,
-  BarChart3
+  BarChart3,
+  Sparkles,
+  Crown
 } from 'lucide-react';
 
 interface UserProfile {
@@ -93,6 +97,11 @@ export default function ProfilePage() {
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites'>('all');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Redirect if not authenticated (but wait for auth to finish loading)
   useEffect(() => {
@@ -138,6 +147,9 @@ export default function ProfilePage() {
 
       const data = await response.json();
       console.log('✅ Profile data loaded successfully:', data);
+      
+      // Check if user is admin
+      setIsAdmin(user?.email === '1deeptechnology@gmail.com');
       
       // Transform database data to component format
       setProfile({
@@ -401,6 +413,53 @@ export default function ProfilePage() {
 
   // Removed handleTogglePublic since all gallery items are private
 
+  const handleRedeemPromoCode = async () => {
+    if (!promoCode.trim() || !user) return;
+
+    try {
+      setPromoLoading(true);
+      setPromoMessage(null);
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch('/api/promo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: promoCode.trim() })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setPromoMessage({
+          type: 'success',
+          text: `Success! You now have ${data.access_type} access. ${data.description || ''}`
+        });
+        setPromoCode('');
+      } else {
+        setPromoMessage({
+          type: 'error',
+          text: data.error || 'Failed to redeem promo code'
+        });
+      }
+    } catch (error) {
+      console.error('Error redeeming promo code:', error);
+      setPromoMessage({
+        type: 'error',
+        text: 'Failed to redeem promo code. Please try again.'
+      });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handleExportData = () => {
     const exportData = {
       profile,
@@ -554,7 +613,15 @@ export default function ProfilePage() {
                 ) : (
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{profile.displayName}</h2>
                 )}
-                <span className="text-white/60 bg-white/10 px-3 py-1 rounded-full text-sm font-medium">@{profile.username}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/60 bg-white/10 px-3 py-1 rounded-full text-sm font-medium">@{profile.username}</span>
+                  {isAdmin && (
+                    <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                      <Crown className="w-3 h-3" />
+                      ADMIN
+                    </span>
+                  )}
+                </div>
               </div>
 
               {isEditing ? (
@@ -645,13 +712,24 @@ export default function ProfilePage() {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    Edit Profile
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit Profile
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setShowAdminModal(true)}
+                        className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 shadow-lg hover:shadow-yellow-500/25"
+                      >
+                        <Crown className="w-4 h-4" />
+                        Generate Promo Code
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -720,6 +798,13 @@ export default function ProfilePage() {
             <div className="text-white/80 text-sm">Last Active</div>
           </div>
         </div>
+
+        {/* Admin Promo Users Panel */}
+        {isAdmin && (
+          <div className="mb-8">
+            <AdminPromoUsersPanel />
+          </div>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex gap-2 mb-8 bg-white/5 backdrop-blur-xl rounded-2xl p-2 border border-white/10 shadow-2xl">
@@ -1030,6 +1115,74 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-medium text-white">Promo Codes</h4>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setShowAdminModal(true)}
+                        className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      >
+                        <Crown className="w-4 h-4" />
+                        <span className="text-sm font-medium">Generate Code</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-gray-300 text-sm mb-2">Enter Promo Code</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter promo code..."
+                          className="flex-1 bg-black bg-opacity-30 border border-white border-opacity-30 rounded-lg px-3 py-2 text-white focus:border-opacity-60 outline-none"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleRedeemPromoCode();
+                            }
+                          }}
+                          onChange={(e) => setPromoCode(e.target.value)}
+                        />
+                        <button
+                          onClick={handleRedeemPromoCode}
+                          disabled={!promoCode.trim() || promoLoading}
+                          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {promoLoading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Redeeming...
+                            </>
+                          ) : (
+                            <>
+                              <Star className="w-4 h-4" />
+                              Redeem
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      {promoMessage && (
+                        <div className={`mt-2 text-sm ${
+                          promoMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {promoMessage.text}
+                        </div>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Crown className="w-5 h-5 text-yellow-400" />
+                          <span className="text-yellow-400 font-medium">Admin Access</span>
+                        </div>
+                          <p className="text-white/80 text-sm">
+                            You have admin privileges. Click &quot;Generate Code&quot; to create promo codes for users.
+                          </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
                   <h4 className="text-lg font-medium text-white mb-3">Data Management</h4>
                   <div className="space-y-2">
                     <button 
@@ -1106,6 +1259,12 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Admin Promo Code Generator Modal */}
+      <AdminPromoModal 
+        isOpen={showAdminModal} 
+        onClose={() => setShowAdminModal(false)} 
+      />
     </div>
   );
 }

@@ -18,9 +18,10 @@ interface HeaderProps {
   onToggleGallery?: () => void
   showGallery?: boolean
   hideAnalytics?: boolean
+  showExitSecretLevel?: boolean
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton, onToggleGallery, showGallery, hideAnalytics }) => {
+export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton, onToggleGallery, showGallery, hideAnalytics, showExitSecretLevel }) => {
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -119,13 +120,24 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            )}
            
            {/* Secret Level Button - Only show for authenticated users */}
-           {user && (
+           {user && !showExitSecretLevel && (
              <button
                onClick={() => router.push('/secret')}
                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors rounded-lg hover:bg-yellow-400/10 border border-yellow-400/20"
              >
                <Lock className="w-4 h-4" />
                <span>Secret Level</span>
+             </button>
+           )}
+           
+           {/* Exit Secret Level Button - Show when on secret page */}
+           {showExitSecretLevel && (
+             <button
+               onClick={() => router.push('/generate')}
+               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 rounded-lg shadow-lg hover:shadow-yellow-500/25"
+             >
+               <Lock className="w-4 h-4" />
+               <span>Exit Secret Level</span>
              </button>
            )}
            
@@ -312,13 +324,24 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             )}
             
             {/* Secret Level Button - Only show for authenticated users */}
-            {user && (
+            {user && !showExitSecretLevel && (
               <button
                 onClick={() => router.push('/secret')}
                 className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-yellow-400 hover:text-yellow-300 transition-colors rounded-lg hover:bg-yellow-400/10 border border-yellow-400/20 whitespace-nowrap"
               >
                 <Lock className="w-3 h-3" />
                 <span>Secret</span>
+              </button>
+            )}
+            
+            {/* Exit Secret Level Button - Show when on secret page */}
+            {showExitSecretLevel && (
+              <button
+                onClick={() => router.push('/generate')}
+                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 rounded-lg shadow-lg hover:shadow-yellow-500/25 whitespace-nowrap"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Exit Secret</span>
               </button>
             )}
             

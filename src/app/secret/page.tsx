@@ -7,6 +7,40 @@ import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation }
 
 // Secret Level Generation mode types - NEW MODELS ONLY
 type SecretGenerationMode = 
+  // Text-to-Image Models (Priority Order: Highest to Lowest)
+  | 'nano-banana-text-to-image'
+  | 'gemini-pro-vision-text-to-image'
+  | 'flux-1.1-pro-text-to-image'
+  | 'imagen-3-text-to-image'
+  | 'dall-e-3-text-to-image'
+  | 'midjourney-v6-text-to-image'
+  | 'stable-diffusion-xl-text-to-image'
+  | 'flux-dev-text-to-image'
+  | 'stable-diffusion-v3-text-to-image'
+  | 'flux-schnell-text-to-image'
+  | 'stable-diffusion-v2-text-to-image'
+  | 'flux-1.0-text-to-image'
+  
+  // Text-to-Video Models (Priority Order: Highest to Lowest)
+  | 'veo-3-text-to-video'
+  | 'runway-gen-3-text-to-video'
+  | 'pika-labs-text-to-video'
+  | 'stable-video-diffusion-text-to-video'
+  | 'zeroscope-text-to-video'
+  | 'modelscope-text-to-video'
+  | 'cogvideo-text-to-video'
+  | 'text2video-zero-text-to-video'
+  
+  // Image-to-Video Models (Priority Order: Highest to Lowest)
+  | 'veo-3-image-to-video'
+  | 'runway-gen-3-image-to-video'
+  | 'pika-labs-image-to-video'
+  | 'stable-video-diffusion-image-to-video'
+  | 'modelscope-image-to-video'
+  | 'cogvideo-image-to-video'
+  | 'text2video-zero-image-to-video'
+  
+  // Legacy Models (Keep existing ones)
   | 'bytedance-dreamina-v3-1-text-to-image'
   | 'bytedance-seedance-v1-pro-image-to-video'
   | 'elevenlabs-tts-multilingual-v2'
@@ -35,12 +69,16 @@ import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
 import { HelpModal } from '@/components/HelpModal';
+import { useUserProgression } from '@/hooks/useUserProgression';
+import { LevelProgressionModal } from '@/components/LevelProgressionModal';
+import { LevelProgressIndicator } from '@/components/LevelProgressIndicator';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useUserGallery } from '@/hooks/useUserGallery';
 import { Header } from '@/components/Header';
 import { AuthModal } from '@/components/AuthModal';
 import { UsageLimitBanner, UsageCounter } from '@/components/UsageLimitBanner';
 import { UserCounter } from '@/components/UserCounter';
+import { supabase } from '@/lib/supabase';
 
 // Secret Level Prompts
 const SECRET_PROMPTS = [
@@ -100,13 +138,35 @@ export default function SecretPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading: authLoading } = useAuth();
-  const { showError, hideError, errorMessage, isVisible } = useAnimatedError();
+  const { showError, errors, removeError } = useAnimatedError();
   const { usageStats, isAnonymous, trackUsage } = useUsageTracking();
   const { addToGallery, removeFromGallery, gallery } = useUserGallery();
+  const {
+    progressionData,
+    trackModelUsage,
+    getProgressToNextLevel,
+    getModelsNeededForNextLevel,
+    isModelUnlocked,
+    getModelCostTier
+  } = useUserProgression();
 
   // Authentication states
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [hasSecretAccess, setHasSecretAccess] = useState<boolean | null>(null);
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminUser, setAdminUser] = useState<string | null>(null);
+  const [showAllModels, setShowAllModels] = useState(false);
+  
+  // Level progression states
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [levelUpData, setLevelUpData] = useState<{
+    leveledUp: boolean;
+    currentLevel: number;
+    previousLevel: number;
+    unlockedModels: string[];
+  } | null>(null);
 
   // File upload states
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -119,9 +179,9 @@ export default function SecretPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({
+    isProcessing: false,
     currentStep: '',
-    progress: 0,
-    totalSteps: 0
+    progress: 0
   });
 
   // UI states
@@ -137,6 +197,19 @@ export default function SecretPage() {
   // Initialize with basic models unlocked
   useEffect(() => {
     const basicModels: SecretGenerationMode[] = [
+      // High-priority text-to-image models
+      'nano-banana-text-to-image',
+      'flux-schnell-text-to-image',
+      'stable-diffusion-xl-text-to-image',
+      'flux-dev-text-to-image',
+      
+      // High-priority video models
+      'veo-3-text-to-video',
+      'pika-labs-text-to-video',
+      'veo-3-image-to-video',
+      'pika-labs-image-to-video',
+      
+      // Legacy models
       'bytedance-dreamina-v3-1-text-to-image',
       'fast-sdxl',
       'stable-diffusion-v35-large',
@@ -148,9 +221,172 @@ export default function SecretPage() {
     setUnlockedModels(new Set(basicModels));
   }, []);
 
+  // Check user's secret access
+  const checkSecretAccess = useCallback(async () => {
+    if (!user) {
+      setHasSecretAccess(false);
+      setAccessLoading(false);
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setHasSecretAccess(false);
+        setAccessLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/promo', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHasSecretAccess(data.hasAccess);
+        setIsAdmin(data.isAdmin || false);
+        setAdminUser(data.adminUser || null);
+      } else {
+        setHasSecretAccess(false);
+        setIsAdmin(false);
+        setAdminUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking secret access:', error);
+      setHasSecretAccess(false);
+    } finally {
+      setAccessLoading(false);
+    }
+  }, [user]);
+
+  // Check access when user changes
+  useEffect(() => {
+    checkSecretAccess();
+  }, [checkSecretAccess]);
+
+  // Get all available models
+  const getAllAvailableModels = (): SecretGenerationMode[] => {
+    return [
+      // Text-to-Image Models (Priority Order: Highest to Lowest)
+      'nano-banana-text-to-image',
+      'gemini-pro-vision-text-to-image',
+      'flux-1.1-pro-text-to-image',
+      'imagen-3-text-to-image',
+      'dall-e-3-text-to-image',
+      'midjourney-v6-text-to-image',
+      'stable-diffusion-xl-text-to-image',
+      'flux-dev-text-to-image',
+      'stable-diffusion-v3-text-to-image',
+      'flux-schnell-text-to-image',
+      'stable-diffusion-v2-text-to-image',
+      'flux-1.0-text-to-image',
+      
+      // Text-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-text-to-video',
+      'runway-gen-3-text-to-video',
+      'pika-labs-text-to-video',
+      'stable-video-diffusion-text-to-video',
+      'zeroscope-text-to-video',
+      'modelscope-text-to-video',
+      'cogvideo-text-to-video',
+      'text2video-zero-text-to-video',
+      
+      // Image-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-image-to-video',
+      'runway-gen-3-image-to-video',
+      'pika-labs-image-to-video',
+      'stable-video-diffusion-image-to-video',
+      'modelscope-image-to-video',
+      'cogvideo-image-to-video',
+      'text2video-zero-image-to-video',
+      
+      // Legacy Models (Keep existing ones)
+      'bytedance-dreamina-v3-1-text-to-image',
+      'bytedance-seedance-v1-pro-image-to-video',
+      'elevenlabs-tts-multilingual-v2',
+      'fast-sdxl',
+      'flux-krea',
+      'flux-pro-kontext',
+      'imagen4-preview',
+      'kling-video-v2-1-master-image-to-video',
+      'minimax-hailuo-02-pro-image-to-video',
+      'minimax-video-01',
+      'minimax-video-generation',
+      'nano-banana-edit',
+      'qwen-image-edit',
+      'stable-diffusion-v35-large',
+      'veo3-fast-image-to-video',
+      'veo3-image-to-video',
+      'veo3-standard',
+      'wan-v2-2-a14b-image-to-video-lora',
+      'wav2lip',
+      'latentsync',
+      'sync-fondo',
+      'musetalk'
+    ];
+  };
+
+  // Get models to display based on admin status and progression
+  const getDisplayModels = (): SecretGenerationMode[] => {
+    if (isAdmin) {
+      return getAllAvailableModels();
+    }
+    
+    if (showAllModels) {
+      return getAllAvailableModels();
+    }
+    
+    // For regular users, show unlocked models from progression system
+    if (progressionData?.unlockedModels) {
+      return getAllAvailableModels().filter(model => 
+        progressionData.unlockedModels.includes(model) || 
+        unlockedModels.has(model)
+      );
+    }
+    
+    return Array.from(unlockedModels);
+  };
+
   // Generation time estimation functions
   const getEstimatedTimeForMode = (mode: SecretGenerationMode): number => {
     const timeEstimates = {
+      // Text-to-Image Models (Priority Order: Highest to Lowest)
+      'nano-banana-text-to-image': 8,
+      'gemini-pro-vision-text-to-image': 12,
+      'flux-1.1-pro-text-to-image': 15,
+      'imagen-3-text-to-image': 18,
+      'dall-e-3-text-to-image': 20,
+      'midjourney-v6-text-to-image': 25,
+      'stable-diffusion-xl-text-to-image': 15,
+      'flux-dev-text-to-image': 12,
+      'stable-diffusion-v3-text-to-image': 20,
+      'flux-schnell-text-to-image': 8,
+      'stable-diffusion-v2-text-to-image': 25,
+      'flux-1.0-text-to-image': 18,
+      
+      // Text-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-text-to-video': 45,
+      'runway-gen-3-text-to-video': 60,
+      'pika-labs-text-to-video': 30,
+      'stable-video-diffusion-text-to-video': 40,
+      'zeroscope-text-to-video': 35,
+      'modelscope-text-to-video': 50,
+      'cogvideo-text-to-video': 45,
+      'text2video-zero-text-to-video': 30,
+      
+      // Image-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-image-to-video': 40,
+      'runway-gen-3-image-to-video': 55,
+      'pika-labs-image-to-video': 25,
+      'stable-video-diffusion-image-to-video': 35,
+      'modelscope-image-to-video': 45,
+      'cogvideo-image-to-video': 40,
+      'text2video-zero-image-to-video': 25,
+      
+      // Legacy Models (Keep existing ones)
       'bytedance-dreamina-v3-1-text-to-image': 20,
       'bytedance-seedance-v1-pro-image-to-video': 60,
       'elevenlabs-tts-multilingual-v2': 10,
@@ -187,6 +423,40 @@ export default function SecretPage() {
   // Get display name for generation mode
   const getModelDisplayName = useCallback((mode: SecretGenerationMode): string => {
     const displayNames: Record<SecretGenerationMode, string> = {
+      // Text-to-Image Models (Priority Order: Highest to Lowest)
+      'nano-banana-text-to-image': 'Nano Banana Pro',
+      'gemini-pro-vision-text-to-image': 'Gemini Pro Vision',
+      'flux-1.1-pro-text-to-image': 'Flux 1.1 Pro',
+      'imagen-3-text-to-image': 'Imagen 3',
+      'dall-e-3-text-to-image': 'DALL-E 3',
+      'midjourney-v6-text-to-image': 'Midjourney V6',
+      'stable-diffusion-xl-text-to-image': 'Stable Diffusion XL',
+      'flux-dev-text-to-image': 'Flux Dev',
+      'stable-diffusion-v3-text-to-image': 'Stable Diffusion V3',
+      'flux-schnell-text-to-image': 'Flux Schnell',
+      'stable-diffusion-v2-text-to-image': 'Stable Diffusion V2',
+      'flux-1.0-text-to-image': 'Flux 1.0',
+      
+      // Text-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-text-to-video': 'Veo 3 Text-to-Video',
+      'runway-gen-3-text-to-video': 'Runway Gen-3',
+      'pika-labs-text-to-video': 'Pika Labs',
+      'stable-video-diffusion-text-to-video': 'Stable Video Diffusion',
+      'zeroscope-text-to-video': 'Zeroscope',
+      'modelscope-text-to-video': 'ModelScope',
+      'cogvideo-text-to-video': 'CogVideo',
+      'text2video-zero-text-to-video': 'Text2Video-Zero',
+      
+      // Image-to-Video Models (Priority Order: Highest to Lowest)
+      'veo-3-image-to-video': 'Veo 3 Image-to-Video',
+      'runway-gen-3-image-to-video': 'Runway Gen-3 Image',
+      'pika-labs-image-to-video': 'Pika Labs Image',
+      'stable-video-diffusion-image-to-video': 'Stable Video Diffusion Image',
+      'modelscope-image-to-video': 'ModelScope Image',
+      'cogvideo-image-to-video': 'CogVideo Image',
+      'text2video-zero-image-to-video': 'Text2Video-Zero Image',
+      
+      // Legacy Models (Keep existing ones)
       'bytedance-dreamina-v3-1-text-to-image': 'Dreamina V3.1',
       'bytedance-seedance-v1-pro-image-to-video': 'Seedance V1 Pro',
       'elevenlabs-tts-multilingual-v2': 'ElevenLabs TTS',
@@ -367,12 +637,11 @@ export default function SecretPage() {
         }
 
         const uploadedFile: UploadedFile = {
-          id: `file-${Date.now()}-${i}`,
           file,
           fileType: file.type.startsWith('image/') ? 'image' : 'video',
           preview: URL.createObjectURL(file),
-          name: file.name,
-          size: file.size
+          base64: '', // Will be set after conversion
+          type: 'reference' // Default type
         };
 
         newFiles.push(uploadedFile);
@@ -407,13 +676,13 @@ export default function SecretPage() {
     setDragActive(false);
   };
 
-  const removeFile = (fileId: string) => {
+  const removeFile = (fileIndex: number) => {
     setUploadedFiles(prev => {
-      const file = prev.find(f => f.id === fileId);
+      const file = prev[fileIndex];
       if (file && file.preview) {
         URL.revokeObjectURL(file.preview);
       }
-      return prev.filter(f => f.id !== fileId);
+      return prev.filter((_, index) => index !== fileIndex);
     });
   };
 
@@ -561,36 +830,49 @@ export default function SecretPage() {
       
       // Add to gallery if successful
       if (result.data && result.data.video) {
-        await addToGallery({
+        await addToGallery([{
           id: `secret-${generationMode}-${Date.now()}`,
           description: `Secret generation: ${getModelDisplayName(generationMode)}`,
           angle: 'Secret Level',
           pose: 'Advanced AI',
-          image_url: null,
-          video_url: result.data.video.url,
-          file_type: 'video',
-          original_prompt: requestBody.prompt || 'Secret generation',
-          original_image_preview: null
-        });
+          imageUrl: undefined,
+          videoUrl: result.data.video.url,
+          fileType: 'video'
+        }], requestBody.prompt || 'Secret generation');
       } else if (result.data && result.data.image) {
-        await addToGallery({
+        await addToGallery([{
           id: `secret-${generationMode}-${Date.now()}`,
           description: `Secret generation: ${getModelDisplayName(generationMode)}`,
           angle: 'Secret Level',
           pose: 'Advanced AI',
-          image_url: result.data.image.url,
-          video_url: null,
-          file_type: 'image',
-          original_prompt: requestBody.prompt || 'Secret generation',
-          original_image_preview: null
-        });
+          imageUrl: result.data.image.url,
+          videoUrl: undefined,
+          fileType: 'image'
+        }], requestBody.prompt || 'Secret generation');
       }
 
       // Track usage
-      await trackUsage('image_generation', 'fal_ai', {
+      await trackUsage('image_generation', 'nano_banana', {
         model: generationMode,
         prompt: requestBody.prompt || 'Secret generation'
       });
+
+      // Track model usage for progression system
+      const generationType = generationMode.includes('text-to-image') ? 'text-to-image' :
+                           generationMode.includes('text-to-video') ? 'text-to-video' :
+                           generationMode.includes('image-to-video') ? 'image-to-video' :
+                           generationMode.includes('lip-sync') ? 'lip-sync' : 'other';
+      
+      const costTier = getModelCostTier(generationMode);
+      const costCredits = costTier === 'high' ? 10 : costTier === 'medium' ? 5 : 1;
+      
+      const levelUpResult = await trackModelUsage(generationMode, generationType, costCredits);
+      
+      // Show level up modal if user leveled up
+      if (levelUpResult?.leveledUp) {
+        setLevelUpData(levelUpResult);
+        setShowLevelUpModal(true);
+      }
 
     } catch (error) {
       console.error('Secret generation error:', error);
@@ -614,12 +896,42 @@ export default function SecretPage() {
   }, [uploadedFiles]);
 
   // Show loading screen while checking authentication
-  if (authLoading) {
+  if (authLoading || accessLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-4" />
           <p className="text-white/80">Loading Secret Level...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user has secret access
+  if (user && hasSecretAccess === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <Lock className="w-16 h-16 text-yellow-400 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-white mb-4">Secret Level Access Required</h1>
+          <p className="text-white/80 mb-6">
+            You need a valid promo code to access the Secret Level features. 
+            Enter your promo code in your profile settings to unlock advanced AI models.
+          </p>
+          <div className="space-y-4">
+            <button
+              onClick={() => router.push('/profile')}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+            >
+              Go to Profile Settings
+            </button>
+            <button
+              onClick={() => router.push('/generate')}
+              className="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-6 py-3 rounded-xl border border-white/20 transition-all duration-300"
+            >
+              Back to Generate
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -632,19 +944,22 @@ export default function SecretPage() {
         onSignInClick={handleSignInClick}
         hideCommunityButton={false}
         hideAnalytics={false}
+        showExitSecretLevel={true}
       />
       
-      <AnimatedError 
-        message={errorMessage}
-        isVisible={isVisible}
-        onClose={hideError}
-      />
+      {errors.map((error) => (
+        <AnimatedError 
+          key={error.id}
+          message={error.message}
+          type={error.type}
+          onClose={() => removeError(error.id)}
+        />
+      ))}
 
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
+        defaultMode={authMode}
       />
 
       <HelpModal
@@ -652,7 +967,10 @@ export default function SecretPage() {
         onClose={() => setShowHelpModal(false)}
       />
 
-      <UsageLimitBanner />
+      <UsageLimitBanner 
+        onSignUpClick={() => setShowAuthModal(true)}
+        onSaveToAccountClick={() => setShowAuthModal(true)}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Secret Level Header */}
@@ -670,11 +988,32 @@ export default function SecretPage() {
           <div className="flex items-center justify-center space-x-4 text-sm text-white/60">
             <span>Level: {secretLevel}</span>
             <span>•</span>
-            <span>Models Unlocked: {unlockedModels.size}</span>
+            <span>Models Available: {getDisplayModels().length}</span>
             <span>•</span>
-            <span>Total Available: 22</span>
+            <span>Total Models: {getAllAvailableModels().length}</span>
+            {isAdmin && (
+              <>
+                <span>•</span>
+                <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                  ADMIN: {adminUser || 'Chad (@1deeptechnology)'}
+                </span>
+              </>
+            )}
           </div>
         </div>
+
+        {/* Level Progression Indicator */}
+        {progressionData && (
+          <div className="mb-8">
+            <LevelProgressIndicator
+              level={progressionData.level}
+              totalGenerations={progressionData.totalGenerations}
+              uniqueModelsUsed={progressionData.uniqueModelsUsed}
+              progressToNext={getProgressToNextLevel()}
+              modelsNeededForNext={getModelsNeededForNextLevel()}
+            />
+          </div>
+        )}
 
         {/* Secret Level Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -724,8 +1063,8 @@ export default function SecretPage() {
                 <div className="mt-6">
                   <h3 className="text-lg font-medium text-white mb-3">Uploaded Files</h3>
                   <div className="space-y-3">
-                    {uploadedFiles.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                             {file.fileType === 'image' ? (
@@ -735,14 +1074,14 @@ export default function SecretPage() {
                             )}
                           </div>
                           <div>
-                            <p className="text-white text-sm font-medium">{file.name}</p>
+                            <p className="text-white text-sm font-medium">{file.file.name}</p>
                             <p className="text-white/60 text-xs">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                              {(file.file.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </div>
                         </div>
                         <button
-                          onClick={() => removeFile(file.id)}
+                          onClick={() => removeFile(index)}
                           className="text-white/60 hover:text-red-400 transition-colors"
                         >
                           <X className="w-4 h-4" />
@@ -765,30 +1104,86 @@ export default function SecretPage() {
 
               {/* Available Models */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-white mb-3">Available Models</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {getAvailableModes().map((mode) => (
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium text-white">Available Models</h3>
+                  {!isAdmin && (
                     <button
-                      key={mode}
-                      onClick={() => setGenerationMode(mode)}
-                      className={`p-4 rounded-lg border transition-all duration-300 text-left ${
-                        generationMode === mode
-                          ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
-                          : 'border-white/20 hover:border-white/40 text-white/80 hover:text-white'
-                      }`}
+                      onClick={() => setShowAllModels(!showAllModels)}
+                      className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{getModelDisplayName(mode)}</p>
-                          <p className="text-sm opacity-75">
-                            ~{getEstimatedTimeForMode(mode)}s
-                          </p>
-                        </div>
-                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
-                      </div>
+                      {showAllModels ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          Show Unlocked Only
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Show All Models
+                        </>
+                      )}
                     </button>
-                  ))}
+                  )}
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {getDisplayModels().map((mode) => {
+                    const isUnlocked = unlockedModels.has(mode) || isModelUnlocked(mode);
+                    const isAdminModel = isAdmin;
+                    const costTier = getModelCostTier(mode);
+                    return (
+                      <button
+                        key={mode}
+                        onClick={() => setGenerationMode(mode)}
+                        disabled={!isUnlocked && !isAdminModel}
+                        className={`p-4 rounded-lg border transition-all duration-300 text-left ${
+                          generationMode === mode
+                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
+                            : isUnlocked || isAdminModel
+                            ? 'border-white/20 hover:border-white/40 text-white/80 hover:text-white'
+                            : 'border-white/10 text-white/40 cursor-not-allowed opacity-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{getModelDisplayName(mode)}</p>
+                            <p className="text-sm opacity-75">
+                              ~{getEstimatedTimeForMode(mode)}s
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {!isUnlocked && !isAdminModel && (
+                                <p className="text-xs text-red-400">🔒 Locked</p>
+                              )}
+                              {costTier === 'high' && (
+                                <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Premium</span>
+                              )}
+                              {costTier === 'medium' && (
+                                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Standard</span>
+                              )}
+                              {costTier === 'low' && (
+                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Economy</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className={`w-3 h-3 rounded-full ${
+                            isUnlocked || isAdminModel 
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                              : 'bg-gray-500'
+                          }`}></div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {!isAdmin && (
+                  <div className="mt-3 text-center">
+                    <p className="text-white/60 text-sm">
+                      {showAllModels 
+                        ? `Showing all ${getAllAvailableModels().length} models (${unlockedModels.size} unlocked)`
+                        : `Showing ${unlockedModels.size} unlocked models`
+                      }
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Secret Prompts */}
@@ -876,9 +1271,23 @@ export default function SecretPage() {
 
         {/* Usage Counter */}
         <div className="mt-8 flex justify-center">
-          <UsageCounter />
+          <UsageCounter 
+            onSignUpClick={() => setShowAuthModal(true)}
+          />
         </div>
       </div>
+      
+      {/* Level Up Modal */}
+      {levelUpData && (
+        <LevelProgressionModal
+          isOpen={showLevelUpModal}
+          onClose={() => {
+            setShowLevelUpModal(false);
+            setLevelUpData(null);
+          }}
+          levelUpData={levelUpData}
+        />
+      )}
     </div>
   );
 }

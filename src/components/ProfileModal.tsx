@@ -22,11 +22,13 @@ import {
   Clock,
   BarChart3,
   UserPlus,
-  FolderPlus
+  FolderPlus,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useUserGallery } from '@/hooks/useUserGallery';
+import { AdminPromoModal } from '@/components/AdminPromoModal';
 
 interface UserProfile {
   id: string;
@@ -99,6 +101,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [settingsChanged, setSettingsChanged] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Real user profile data
   const [profile, setProfile] = useState<UserProfile>({
@@ -171,6 +178,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         if (data.profile.background_image) {
           setBackgroundImage(data.profile.background_image);
         }
+        
+        // Check if user is admin
+        setIsAdmin(user?.email === '1deeptechnology@gmail.com');
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
@@ -745,6 +755,57 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     );
   };
 
+  const handleRedeemPromoCode = async () => {
+    if (!promoCode.trim() || !user) return;
+
+    try {
+      setPromoLoading(true);
+      setPromoMessage(null);
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch('/api/promo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: promoCode.trim() })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setPromoMessage({
+          type: 'success',
+          text: `Success! You now have ${data.access_type} access. ${data.description || ''}`
+        });
+        setPromoCode('');
+        setNotification({
+          type: 'success',
+          message: `Promo code redeemed successfully! You now have ${data.access_type} access.`
+        });
+      } else {
+        setPromoMessage({
+          type: 'error',
+          text: data.error || 'Failed to redeem promo code'
+        });
+      }
+    } catch (error) {
+      console.error('Error redeeming promo code:', error);
+      setPromoMessage({
+        type: 'error',
+        text: 'Failed to redeem promo code. Please try again.'
+      });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handleExportData = () => {
     const data = {
       profile,
@@ -1292,6 +1353,76 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
               </div>
 
+              {/* Promo Codes */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">Promo Codes</h3>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setShowAdminModal(true)}
+                      className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                      <Crown className="w-4 h-4" />
+                      <span className="text-sm font-medium">Generate</span>
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Enter Promo Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code..."
+                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleRedeemPromoCode();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={handleRedeemPromoCode}
+                        disabled={!promoCode.trim() || promoLoading}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {promoLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Redeeming...
+                          </>
+                        ) : (
+                          <>
+                            <Star className="w-4 h-4" />
+                            Redeem
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {promoMessage && (
+                      <div className={`mt-2 text-sm ${
+                        promoMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {promoMessage.text}
+                      </div>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Crown className="w-4 h-4 text-yellow-400" />
+                        <span className="text-yellow-400 font-medium text-sm">Admin Access</span>
+                      </div>
+                      <p className="text-white/80 text-xs">
+                        You have admin privileges. Click &quot;Generate&quot; to create promo codes.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Data Management */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">Data Management</h3>
@@ -1465,6 +1596,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         )}
         </div>
       </div>
+
+      {/* Admin Promo Code Generator Modal */}
+      <AdminPromoModal 
+        isOpen={showAdminModal} 
+        onClose={() => setShowAdminModal(false)} 
+      />
     </div>
   );
 };

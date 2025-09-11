@@ -46,6 +46,7 @@ export interface Database {
           updated_at: string
           preferences: any | null
           usage_stats: any | null
+          is_admin: boolean
         }
         Insert: {
           id: string
@@ -61,6 +62,7 @@ export interface Database {
           updated_at?: string
           preferences?: any | null
           usage_stats?: any | null
+          is_admin?: boolean
         }
         Update: {
           id?: string
@@ -76,6 +78,7 @@ export interface Database {
           updated_at?: string
           preferences?: any | null
           usage_stats?: any | null
+          is_admin?: boolean
         }
       }
       collections: {
@@ -248,6 +251,64 @@ export interface Database {
           is_processed?: boolean
           fal_url?: string | null
           metadata?: any | null
+        }
+      }
+      promo_codes: {
+        Row: {
+          id: string
+          code: string
+          description: string | null
+          access_type: 'secret_level' | 'premium' | 'beta'
+          max_uses: number | null
+          used_count: number
+          expires_at: string | null
+          created_at: string
+          created_by: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          code: string
+          description?: string | null
+          access_type?: 'secret_level' | 'premium' | 'beta'
+          max_uses?: number | null
+          used_count?: number
+          expires_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          code?: string
+          description?: string | null
+          access_type?: 'secret_level' | 'premium' | 'beta'
+          max_uses?: number | null
+          used_count?: number
+          expires_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          is_active?: boolean
+        }
+      }
+      user_promo_access: {
+        Row: {
+          id: string
+          user_id: string
+          promo_code_id: string
+          redeemed_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          promo_code_id: string
+          redeemed_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          promo_code_id?: string
+          redeemed_at?: string
         }
       }
     }
