@@ -3749,7 +3749,6 @@ export default function Home() {
         onSignInClick={handleSignInClick}
         onToggleGallery={() => setShowGallery(!showGallery)}
         showGallery={showGallery}
-        hideAnalytics={true}
       />
       
       
