@@ -454,30 +454,62 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-purple-900 text-white relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
+      </div>
+
       {/* Header */}
-      <div className="bg-black bg-opacity-30 backdrop-blur-sm border-b border-white border-opacity-20">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/')}
-              className="text-white hover:text-gray-300 transition-colors"
-            >
-              ← Back to vARY Ai
-            </button>
-            <h1 className="text-2xl font-bold text-white">Profile</h1>
-            <div className="w-8"></div>
+      <div className="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors group"
+              >
+                <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                  ←
+                </div>
+                <span>Back to vARY Ai</span>
+              </button>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                Profile
+              </h1>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => router.push('/generate')}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+              >
+                Generate
+              </button>
+              <button
+                onClick={() => router.push('/community')}
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+              >
+                Community
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
-        <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white border-opacity-20">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 lg:p-8 mb-6 lg:mb-8 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
           <div className="flex items-start gap-6">
             {/* Avatar */}
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+            <div className="relative group">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold shadow-2xl ring-4 ring-white/20 hover:ring-white/30 transition-all duration-300 transform group-hover:scale-105">
                 {profile.avatar ? (
                   <img 
                     src={profile.avatar} 
@@ -485,12 +517,12 @@ export default function ProfilePage() {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-12 h-12" />
+                  <User className="w-16 h-16" />
                 )}
               </div>
               {isEditing && (
-                <label className="absolute -bottom-2 -right-2 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full cursor-pointer transition-colors">
-                  <Camera className="w-4 h-4" />
+                <label className="absolute -bottom-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full cursor-pointer transition-all duration-300 transform hover:scale-110 shadow-lg">
+                  <Camera className="w-5 h-5" />
                   <input
                     type="file"
                     accept="image/*"
@@ -503,18 +535,18 @@ export default function ProfilePage() {
 
             {/* Profile Info */}
             <div className="flex-1">
-              <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center gap-4 mb-4">
                 {isEditing ? (
                   <input
                     type="text"
                     value={profile.displayName}
                     onChange={(e) => setProfile({...profile, displayName: e.target.value})}
-                    className="text-2xl font-bold text-white bg-transparent border-b border-white border-opacity-30 focus:border-opacity-60 outline-none"
+                    className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent bg-transparent border-b-2 border-white/30 focus:border-white/60 outline-none transition-all duration-300"
                   />
                 ) : (
-                  <h2 className="text-2xl font-bold text-white">{profile.displayName}</h2>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{profile.displayName}</h2>
                 )}
-                <span className="text-gray-300">@{profile.username}</span>
+                <span className="text-white/60 bg-white/10 px-3 py-1 rounded-full text-sm font-medium">@{profile.username}</span>
               </div>
 
               {isEditing ? (
@@ -522,11 +554,11 @@ export default function ProfilePage() {
                   value={profile.bio}
                   onChange={(e) => setProfile({...profile, bio: e.target.value})}
                   placeholder="Tell us about yourself..."
-                  className="w-full text-gray-300 bg-transparent border border-white border-opacity-30 rounded-lg p-2 focus:border-opacity-60 outline-none resize-none"
+                  className="w-full text-white/80 bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl p-4 focus:border-white/40 focus:bg-white/10 outline-none resize-none transition-all duration-300"
                   rows={3}
                 />
               ) : (
-                <p className="text-gray-300 mb-4">{profile.bio}</p>
+                <p className="text-white/80 text-lg mb-6 leading-relaxed">{profile.bio}</p>
               )}
 
               {/* Social Links */}
@@ -618,14 +650,77 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Generations */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 transform hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">{profile.stats.totalGenerations}</div>
+                <div className="text-white/60 text-sm">Total</div>
+              </div>
+            </div>
+            <div className="text-white/80 text-sm">Generations Created</div>
+          </div>
+
+          {/* Account Age */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 transform hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">
+                  {Math.floor((new Date().getTime() - new Date(profile.stats.accountCreated).getTime()) / (1000 * 60 * 60 * 24))}
+                </div>
+                <div className="text-white/60 text-sm">Days</div>
+              </div>
+            </div>
+            <div className="text-white/80 text-sm">Account Age</div>
+          </div>
+
+          {/* Collections */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 transform hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <Heart className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">{profile.stats.collections}</div>
+                <div className="text-white/60 text-sm">Collections</div>
+              </div>
+            </div>
+            <div className="text-white/80 text-sm">Saved Collections</div>
+          </div>
+
+          {/* Last Active */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 transform hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">
+                  {Math.floor((new Date().getTime() - new Date(profile.stats.lastActive).getTime()) / (1000 * 60 * 60))}
+                </div>
+                <div className="text-white/60 text-sm">Hours</div>
+              </div>
+            </div>
+            <div className="text-white/80 text-sm">Last Active</div>
+          </div>
+        </div>
+
         {/* Navigation Tabs */}
-        <div className="flex gap-1 mb-6 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-1 border border-white border-opacity-20">
+        <div className="flex gap-2 mb-8 bg-white/5 backdrop-blur-xl rounded-2xl p-2 border border-white/10 shadow-2xl">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 font-medium ${
               activeTab === 'profile' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-white hover:bg-opacity-10'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <User className="w-4 h-4" />
@@ -633,10 +728,10 @@ export default function ProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 font-medium ${
               activeTab === 'gallery' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-white hover:bg-opacity-10'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <Camera className="w-4 h-4" />
@@ -644,10 +739,10 @@ export default function ProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 font-medium ${
               activeTab === 'stats' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-white hover:bg-opacity-10'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -655,10 +750,10 @@ export default function ProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 font-medium ${
               activeTab === 'settings' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-white hover:bg-opacity-10'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -667,7 +762,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">
           {activeTab === 'profile' && (
             <div>
               <h3 className="text-xl font-semibold text-white mb-4">Profile Information</h3>
