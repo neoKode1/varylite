@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle } from 'lucide-react'
+import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle, FolderOpen } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
@@ -14,9 +14,12 @@ interface HeaderProps {
   showContributors?: boolean
   onToggleContributors?: () => void
   hideCommunityButton?: boolean
+  onToggleGallery?: () => void
+  showGallery?: boolean
+  hideAnalytics?: boolean
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton }) => {
+export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton, onToggleGallery, showGallery, hideAnalytics }) => {
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -44,14 +47,31 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <h1 className="text-lg sm:text-xl font-bold text-white">vARYai</h1>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push('/generate')}
-              className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
-            >
-              Generate
-            </button>
+           {/* Navigation Tabs */}
+           <div className="flex items-center space-x-4">
+             {hideCommunityButton ? (
+               // Show Generate button on community page
+               <button
+                 onClick={() => router.push('/generate')}
+                 className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+               >
+                 Generate
+               </button>
+             ) : (
+               // Show Gallery button on generate page
+               onToggleGallery && (
+                 <button
+                   onClick={onToggleGallery}
+                   className={`px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
+                     showGallery 
+                       ? 'text-cyan-400 bg-gray-800' 
+                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                   }`}
+                 >
+                   {showGallery ? 'Hide Gallery' : 'Show Gallery'}
+                 </button>
+               )
+             )}
             
             {/* Community Button - Only show if not on community page */}
             {!hideCommunityButton && (
@@ -79,9 +99,11 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
           {/* User Section */}
           <div className="flex items-center space-x-4">
             {/* Analytics Dropdown - Desktop only */}
-            <div className="hidden lg:block flex-shrink-0">
-              <AnalyticsUpdater />
-            </div>
+            {!hideAnalytics && (
+              <div className="hidden lg:block flex-shrink-0">
+                <AnalyticsUpdater />
+              </div>
+            )}
             
             {/* Usage Stats */}
             <div className="hidden lg:flex items-center space-x-2 text-sm">
@@ -203,12 +225,29 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
           {/* Scrollable Navigation Components */}
           <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide pb-2 flex-1">
             {/* Navigation Items */}
-            <button
-              onClick={() => router.push('/generate')}
-              className="flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800 whitespace-nowrap"
-            >
-              Generate
-            </button>
+            {hideCommunityButton ? (
+              // Show Generate button on community page
+              <button
+                onClick={() => router.push('/generate')}
+                className="flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800 whitespace-nowrap"
+              >
+                Generate
+              </button>
+            ) : (
+              // Show Gallery button on generate page
+              onToggleGallery && (
+                <button
+                  onClick={onToggleGallery}
+                  className={`flex-shrink-0 px-3 py-2 text-xs font-medium transition-colors rounded-lg whitespace-nowrap ${
+                    showGallery 
+                      ? 'text-cyan-400 bg-gray-800' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {showGallery ? 'Hide Gallery' : 'Show Gallery'}
+                </button>
+              )
+            )}
             
             {/* Community Button - Only show if not on community page */}
             {!hideCommunityButton && (
@@ -231,6 +270,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                 <span>{showContributors ? 'Hide' : 'Show'} Contributors</span>
               </button>
             )}
+            
             
             {/* Usage Stats - Mobile */}
             <div className="flex items-center space-x-2 flex-shrink-0 text-xs">
