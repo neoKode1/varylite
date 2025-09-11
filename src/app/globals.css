@@ -206,29 +206,29 @@
       padding-bottom: 120px !important; /* Reduced space for new compact design */
     }
     
-    /* Modern Mobile Input Container - Match Desktop Styling */
-    .mobile-input-container {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 12px !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 16px !important;
-      padding: 16px 20px !important;
-      backdrop-filter: blur(20px) !important;
-      transition: all 0.2s ease !important;
-      min-height: 80px !important;
-      width: 100% !important;
-      margin: 0 !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    .mobile-input-container:focus-within {
-      border-color: rgba(139, 92, 246, 0.6) !important;
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-    }
+     /* Modern Mobile Input Container - Match Desktop Styling */
+     .mobile-input-container {
+       display: flex !important;
+       flex-direction: column !important;
+       align-items: stretch !important;
+       gap: 12px !important;
+       background: transparent !important;
+       border: none !important;
+       border-radius: 16px !important;
+       padding: 16px 20px !important;
+       backdrop-filter: none !important;
+       transition: all 0.2s ease !important;
+       min-height: 80px !important;
+       width: 100% !important;
+       margin: 0 !important;
+       box-shadow: none !important;
+     }
+     
+     .mobile-input-container:focus-within {
+       border: none !important;
+       box-shadow: none !important;
+       background: transparent !important;
+     }
     
     /* Modern Mobile Text Input */
     .mobile-chat-input {
@@ -257,20 +257,21 @@
       width: 40px !important;
       height: 40px !important;
       border-radius: 50% !important;
-      background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
-      border: none !important;
+      background: rgba(55, 65, 81, 0.8) !important;
+      border: 1px solid rgba(75, 85, 99, 0.5) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
       flex-shrink: 0 !important;
-      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
     
     .mobile-send-button:hover {
       transform: scale(1.05) !important;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4) !important;
+      background: rgba(55, 65, 81, 0.9) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
     
     .mobile-send-button:active {
@@ -307,22 +308,22 @@
       display: none !important; /* Chrome, Safari, Opera */
     }
     
-    /* Community Page Mobile Input - Match Desktop Styling */
-    .community-mobile-input-container {
-      display: flex !important;
-      align-items: flex-end !important;
-      gap: 12px !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 16px !important;
-      padding: 16px 20px !important;
-      backdrop-filter: blur(20px) !important;
-      transition: all 0.2s ease !important;
-      min-height: 60px !important;
-      width: 100% !important;
-      margin: 0 !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-    }
+     /* Community Page Mobile Input - Match Desktop Styling */
+     .community-mobile-input-container {
+       display: flex !important;
+       align-items: flex-end !important;
+       gap: 12px !important;
+       background: transparent !important;
+       border: none !important;
+       border-radius: 16px !important;
+       padding: 16px 20px !important;
+       backdrop-filter: none !important;
+       transition: all 0.2s ease !important;
+       min-height: 60px !important;
+       width: 100% !important;
+       margin: 0 !important;
+       box-shadow: none !important;
+     }
     
     /* Button container for image upload and send */
     .community-mobile-input-container .flex {
@@ -330,11 +331,11 @@
       align-items: center !important;
     }
     
-    .community-mobile-input-container:focus-within {
-      border-color: rgba(139, 92, 246, 0.6) !important;
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-    }
+     .community-mobile-input-container:focus-within {
+       border: none !important;
+       box-shadow: none !important;
+       background: transparent !important;
+     }
     
     .community-mobile-input {
       flex: 1 !important;
@@ -361,20 +362,21 @@
       width: 40px !important;
       height: 40px !important;
       border-radius: 50% !important;
-      background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
-      border: none !important;
+      background: rgba(55, 65, 81, 0.8) !important;
+      border: 1px solid rgba(75, 85, 99, 0.5) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
       flex-shrink: 0 !important;
-      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
     
     .community-mobile-send-button:hover {
       transform: scale(1.05) !important;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4) !important;
+      background: rgba(55, 65, 81, 0.9) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
     
     .community-mobile-send-button:active {

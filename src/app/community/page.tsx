@@ -1307,12 +1307,12 @@ export default function CommunityPage() {
       />
 
       {/* Mobile Floating Bottom Input - Match Reference Design */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-t border-gray-700 p-3 pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md">
         <div className="flex items-center gap-3 mb-3">
           {/* Add Media Button */}
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="flex-shrink-0 w-12 h-12 bg-gray-800 border border-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-700 transition-colors"
+            className="flex-shrink-0 w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gray-700 transition-colors"
             title="Add Media"
           >
             <Plus className="w-5 h-5 text-yellow-500" />
@@ -1325,7 +1325,7 @@ export default function CommunityPage() {
               placeholder="Share your thoughts."
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              className="w-full bg-gray-700/80 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 text-sm focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500/50"
             />
           </div>
           
@@ -1333,7 +1333,7 @@ export default function CommunityPage() {
           <button 
             onClick={handlePostSubmit}
             disabled={(!newPost.trim() && uploadedImages.length === 0) || isLoading}
-            className="flex-shrink-0 w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:bg-gray-700 hover:bg-cyan-600 transition-colors"
+            className="flex-shrink-0 w-12 h-12 bg-gray-600/80 rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:bg-gray-700 hover:bg-gray-600 transition-colors"
           >
             <ArrowUp className="w-5 h-5" />
           </button>
@@ -1343,7 +1343,7 @@ export default function CommunityPage() {
         <div className="flex bg-gray-800 rounded-xl overflow-hidden">
           <button 
             onClick={() => router.push('/generate')}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
           >
             <Grid3X3 className="w-5 h-5" />
             <span className="text-xs font-medium">Home</span>
@@ -1351,7 +1351,7 @@ export default function CommunityPage() {
           
           <button 
             onClick={() => router.push('/community')}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-xs font-medium">Chat</span>
@@ -1359,7 +1359,7 @@ export default function CommunityPage() {
           
           <button 
             onClick={() => setShowGallery(!showGallery)}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
           >
             <FolderOpen className="w-5 h-5" />
             <span className="text-xs font-medium">Library</span>
@@ -1367,7 +1367,7 @@ export default function CommunityPage() {
           
           <button 
             onClick={() => router.push('/profile')}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'bg-gray-700 text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
           >
             <User className="w-5 h-5" />
             <span className="text-xs font-medium">Profile</span>

@@ -81,7 +81,7 @@ interface GalleryItem {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -94,12 +94,12 @@ export default function ProfilePage() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites'>('all');
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (but wait for auth to finish loading)
   useEffect(() => {
-    if (!user) {
-      router.push('/');
+    if (!loading && !user) {
+      router.push('/generate');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   // Load profile data from database
   useEffect(() => {
@@ -424,6 +424,18 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading profile...</div>
+      </div>
+    );
+  }
+
+  // Show loading state while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-white text-xl mb-4">Loading...</div>
+          <div className="text-gray-300 text-sm">Please wait while we verify your authentication.</div>
+        </div>
       </div>
     );
   }

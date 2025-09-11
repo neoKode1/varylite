@@ -5077,7 +5077,7 @@ export default function Home() {
       />
 
       {/* Mobile Dynamic Image Upload System */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-t border-gray-700">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md">
         {/* Dynamic numbered image slots - ONLY show if images uploaded */}
         {uploadedFiles.length > 0 && (
           <div className="p-4 border-b border-gray-800">
@@ -5290,7 +5290,7 @@ export default function Home() {
                 placeholder="Describe your idea..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200 shadow-sm"
+                className="w-full bg-gray-700/80 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 text-sm focus:outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200 shadow-sm"
               />
             </div>
             
@@ -5298,7 +5298,7 @@ export default function Home() {
             {/* Generate Button */}
             <button 
               onClick={async () => {
-                if (uploadedFiles.length === 0 || !prompt.trim()) return;
+                if (!prompt.trim() && uploadedFiles.length === 0) return;
                 
                 setIsGeneratingImages(true);
                 setDisplayedImages([]);
@@ -5316,11 +5316,11 @@ export default function Home() {
                   setIsGeneratingImages(false);
                 }
               }}
-              disabled={uploadedFiles.length === 0 || !prompt.trim() || processing.isProcessing}
+              disabled={(!prompt.trim() && uploadedFiles.length === 0) || processing.isProcessing}
               className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                uploadedFiles.length === 0 || !prompt.trim() || processing.isProcessing
+                (!prompt.trim() && uploadedFiles.length === 0) || processing.isProcessing
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-cyan-500 text-white hover:bg-cyan-600 hover:shadow-lg active:scale-95'
+                  : 'bg-gray-600/80 text-white hover:bg-gray-600 hover:shadow-lg active:scale-95'
               }`}
             >
               <ArrowUp className="w-5 h-5" />
@@ -5333,28 +5333,28 @@ export default function Home() {
           <div className="flex">
             <button 
               onClick={() => router.push('/generate')}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'text-gray-200' : 'text-gray-400 hover:text-white'}`}
             >
               <Grid3X3 className="w-5 h-5" />
               <span className="text-xs">Home</span>
             </button>
             <button 
               onClick={() => router.push('/community')}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'text-gray-200' : 'text-gray-400 hover:text-white'}`}
             >
               <MessageCircle className="w-5 h-5" />
               <span className="text-xs">Chat</span>
             </button>
             <button 
               onClick={() => setShowGallery(!showGallery)}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'text-gray-200' : 'text-gray-400 hover:text-white'}`}
             >
               <FolderOpen className="w-5 h-5" />
               <span className="text-xs">Library</span>
             </button>
             <button 
               onClick={() => router.push('/profile')}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
+              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'text-gray-200' : 'text-gray-400 hover:text-white'}`}
             >
               <User className="w-5 h-5" />
               <span className="text-xs">Profile</span>
