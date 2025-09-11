@@ -3742,13 +3742,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Header */}
-      <Header 
-        onSignUpClick={handleSignUpClick}
-        onSignInClick={handleSignInClick}
-        onToggleGallery={() => setShowGallery(!showGallery)}
-        showGallery={showGallery}
-      />
       
       
       {/* Semi-transparent overlay for content readability */}
