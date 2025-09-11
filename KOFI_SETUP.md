@@ -1,7 +1,7 @@
 # Ko-fi Integration Setup
 
 ## Configuration Details
-- **Ko-fi Page**: https://ko-fi.com/varyai
+- **Ko-fi Page**: https://ko-fi.com/vari-ai
 - **Webhook URL**: https://vary-ai.vercel.app/api/ko-fi-webhook
 - **Verification Token**: 31c45be4-fa06-4c91-869c-6c0b199d5222
 - **Weekly Goal**: $300
@@ -26,6 +26,6 @@ KOFI_VERIFICATION_TOKEN=31c45be4-fa06-4c91-869c-6c0b199d5222
 - The meter shows current funding vs weekly goal with energy bar visualization
 
 ## Testing
-- Make a test donation to https://ko-fi.com/varyai
+- Make a test donation to https://ko-fi.com/vari-ai
 - Check the funding meter on your app to see if it updates
 - Monitor the webhook endpoint logs for incoming requests

@@ -1,4 +1,4 @@
--- VaryAI Database Schema for Supabase/PostgreSQL
+-- vARI Ai Database Schema for Supabase/PostgreSQL
 -- This file contains the SQL commands to create the necessary tables
 
 -- Enable Row Level Security

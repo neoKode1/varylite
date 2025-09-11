@@ -1,4 +1,4 @@
-# VaryAI Pricing Strategy & Goals - September 2025
+# vARI Ai Pricing Strategy & Goals - September 2025
 
 ## 📊 Current Usage Analysis (FAL AI Data)
 

@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(videoUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; VaryAI/1.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; vARI-Ai/1.0)',
         'Accept': 'video/*,*/*;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Cache-Control': 'no-cache',

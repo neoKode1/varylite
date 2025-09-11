@@ -27,6 +27,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
     }
 
+    // Get user's gallery data
+    const { data: gallery, error: galleryError } = await supabase
+      .from('galleries')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (galleryError) {
+      console.error('Error fetching gallery:', galleryError);
+      // Don't fail the entire request if gallery fetch fails
+    }
+
     // If no profile exists, create a default one
     if (!profile) {
       const defaultProfile = {
@@ -62,10 +74,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
       }
 
-      return NextResponse.json({ profile: newProfile });
+      return NextResponse.json({ profile: newProfile, gallery: gallery || [] });
     }
 
-    return NextResponse.json({ profile });
+    return NextResponse.json({ profile, gallery: gallery || [] });
   } catch (error) {
     console.error('Profile API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

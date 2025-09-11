@@ -6,7 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VaryAI - Character Angle Variation Generator',
+  title: 'vARI Ai - Character Angle Variation Generator',
   description: 'Generate character variations from different angles using AI',
 }
 

@@ -3715,14 +3715,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Fixed Header with vARYai Branding - Mobile Only */}
+      {/* Fixed Header with vARI Ai Branding - Mobile Only */}
       <header className="lg:hidden sticky top-0 z-50 bg-transparent backdrop-blur-md border-b border-gray-800">
         <div className="flex items-center justify-center py-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">V</span>
             </div>
-            <h1 className="text-xl font-bold text-white tracking-wide">vARYai</h1>
+            <h1 className="text-xl font-bold text-white tracking-wide">vARI Ai</h1>
           </div>
         </div>
         
@@ -3736,7 +3736,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">V</span>
               </div>
-              <h1 className="text-xl font-bold text-white tracking-wide">vARYai</h1>
+              <h1 className="text-xl font-bold text-white tracking-wide">vARI Ai</h1>
             </div>
           </div>
           
@@ -3812,7 +3812,7 @@ export default function Home() {
           {/* Funding Message */}
             <div className="mb-6 lg:mb-8 text-center">
             <p className="text-gray-300 text-sm lg:text-base font-normal leading-loose max-w-2xl mx-auto">
-              💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what vARYai brings, please help fund its growth!
+              💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what vARI Ai brings, please help fund its growth!
             </p>
         </div>
 

@@ -91,7 +91,7 @@ export const useUserGallery = (): UserGalleryHook => {
     if (typeof window === 'undefined') return
     
     try {
-      const savedGallery = localStorage.getItem('varyai-gallery')
+      const savedGallery = localStorage.getItem('vari-ai-gallery')
       if (savedGallery) {
         setGallery(JSON.parse(savedGallery))
       }
@@ -173,9 +173,9 @@ export const useUserGallery = (): UserGalleryHook => {
     if (typeof window === 'undefined') return
     
     try {
-      const currentGallery = JSON.parse(localStorage.getItem('varyai-gallery') || '[]')
+      const currentGallery = JSON.parse(localStorage.getItem('vari-ai-gallery') || '[]')
       const newGallery = [...variations, ...currentGallery]
-      localStorage.setItem('varyai-gallery', JSON.stringify(newGallery))
+      localStorage.setItem('vari-ai-gallery', JSON.stringify(newGallery))
     } catch (error) {
       console.error('Error saving to localStorage:', error)
     }
@@ -212,11 +212,11 @@ export const useUserGallery = (): UserGalleryHook => {
     } else {
       // Remove from localStorage
       try {
-        const currentGallery = JSON.parse(localStorage.getItem('varyai-gallery') || '[]')
+        const currentGallery = JSON.parse(localStorage.getItem('vari-ai-gallery') || '[]')
         const newGallery = currentGallery.filter((item: StoredVariation) => 
           !(item.id === variationId && item.timestamp === timestamp)
         )
-        localStorage.setItem('varyai-gallery', JSON.stringify(newGallery))
+        localStorage.setItem('vari-ai-gallery', JSON.stringify(newGallery))
       } catch (error) {
         console.error('Error removing from localStorage:', error)
         return
@@ -246,7 +246,7 @@ export const useUserGallery = (): UserGalleryHook => {
     } else {
       // Clear from localStorage
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('varyai-gallery')
+        localStorage.removeItem('vari-ai-gallery')
       }
     }
 
@@ -282,7 +282,7 @@ export const useUserGallery = (): UserGalleryHook => {
     try {
       if (typeof window === 'undefined') return
       
-      const localGallery = JSON.parse(localStorage.getItem('varyai-gallery') || '[]')
+      const localGallery = JSON.parse(localStorage.getItem('vari-ai-gallery') || '[]')
       if (localGallery.length === 0) return
 
       // Save all local items to database
@@ -290,7 +290,7 @@ export const useUserGallery = (): UserGalleryHook => {
       
       // Clear localStorage
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('varyai-gallery')
+        localStorage.removeItem('vari-ai-gallery')
       }
       
       // Reload gallery from database

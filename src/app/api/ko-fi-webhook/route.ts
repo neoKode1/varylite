@@ -27,7 +27,7 @@ const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN || '31c45be4
 
 // Ko-fi configuration
 const KOFI_CONFIG = {
-  pageUrl: 'https://ko-fi.com/varyai',
+  pageUrl: 'https://ko-fi.com/vari-ai',
   weeklyGoal: 300,
   weeklyCost: 265,
   webhookUrl: 'https://vary-ai.vercel.app/api/ko-fi-webhook'

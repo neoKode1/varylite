@@ -35,17 +35,17 @@ export const UserCounter: React.FC = () => {
   const trackUserActivity = async () => {
     try {
       // Generate a simple user ID and session ID based on session storage
-      let userId = sessionStorage.getItem('varyai_user_id');
-      let sessionId = sessionStorage.getItem('varyai_session_id');
+      let userId = sessionStorage.getItem('vari_ai_user_id');
+      let sessionId = sessionStorage.getItem('vari_ai_session_id');
       
       if (!userId) {
         userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        sessionStorage.setItem('varyai_user_id', userId);
+        sessionStorage.setItem('vari_ai_user_id', userId);
       }
       
       if (!sessionId) {
         sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        sessionStorage.setItem('varyai_session_id', sessionId);
+        sessionStorage.setItem('vari_ai_session_id', sessionId);
       }
 
       await fetch('/api/user-stats', {

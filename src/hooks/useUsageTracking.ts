@@ -38,11 +38,11 @@ export const useUsageTracking = (): UsageTrackingHook => {
     // Generate or retrieve session ID from localStorage
     if (typeof window === 'undefined') return 'server-session'
     
-    const stored = localStorage.getItem('varyai-session-id')
+    const stored = localStorage.getItem('vari-ai-session-id')
     if (stored) return stored
     
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    localStorage.setItem('varyai-session-id', newSessionId)
+    localStorage.setItem('vari-ai-session-id', newSessionId)
     return newSessionId
   })
 
@@ -91,7 +91,7 @@ export const useUsageTracking = (): UsageTrackingHook => {
   const loadAnonymousStats = () => {
     if (typeof window === 'undefined') return
     
-    const stored = localStorage.getItem('varyai-anonymous-usage')
+    const stored = localStorage.getItem('vari-ai-anonymous-usage')
     if (stored) {
       try {
         const stats = JSON.parse(stored)
@@ -104,7 +104,7 @@ export const useUsageTracking = (): UsageTrackingHook => {
 
   const saveAnonymousStats = (stats: UsageStats) => {
     if (typeof window === 'undefined') return
-    localStorage.setItem('varyai-anonymous-usage', JSON.stringify(stats))
+    localStorage.setItem('vari-ai-anonymous-usage', JSON.stringify(stats))
   }
 
   const trackUsage = useCallback(async (

@@ -19,7 +19,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <HelpCircle className="w-6 h-6 text-blue-400" />
-              <h2 className="text-xl font-bold text-white">VaryAI Help Guide</h2>
+              <h2 className="text-xl font-bold text-white">vARI Ai Help Guide</h2>
             </div>
             <button
               onClick={onClose}
@@ -40,7 +40,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                   Getting Started
                 </h3>
                 <p className="text-gray-300 text-sm mb-3">
-                  VaryAI helps you create character variations, change backgrounds, and generate videos.
+                  vARI Ai helps you create character variations, change backgrounds, and generate videos.
                 </p>
                 <ul className="text-gray-300 text-sm space-y-1">
                   <li className="flex items-start gap-2">
@@ -169,10 +169,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     Visit Community
                   </button>
                   <button
-                    onClick={() => window.open('https://ko-fi.com/varyai', '_blank')}
+                    onClick={() => window.open('https://ko-fi.com/vari-ai', '_blank')}
                     className="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-colors text-sm"
                   >
-                    Support VaryAI
+                    Support vARI Ai
                   </button>
                 </div>
               </div>

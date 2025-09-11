@@ -92,7 +92,7 @@ export default function ProfilePage() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites' | 'public' | 'private'>('all');
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites'>('all');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -142,8 +142,8 @@ export default function ProfilePage() {
       // Transform database data to component format
       setProfile({
         id: data.profile.id,
-        displayName: data.profile.name || 'VaryAI User',
-        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'varyai_user',
+        displayName: data.profile.name || 'vARI Ai User',
+        username: data.profile.name?.toLowerCase().replace(/\s+/g, '_') || 'vari_ai_user',
         email: data.profile.email || '',
         bio: 'Creative AI enthusiast exploring the possibilities of character generation!',
         avatar: data.profile.profile_picture,
@@ -171,20 +171,25 @@ export default function ProfilePage() {
       });
 
       // Set gallery items from API response
-      setGalleryItems(data.gallery.map((item: any) => ({
-        id: item.id,
-        type: item.file_type,
-        url: item.image_url || item.video_url || '/api/placeholder/400/400',
-        thumbnail: item.file_type === 'video' ? '/api/placeholder/200/200' : undefined,
-        title: item.description,
-        description: item.description,
-        isPublic: false, // Default to private
-        isFavorite: false, // Default to not favorite
-        collectionId: undefined,
-        createdAt: item.created_at,
-        generationModel: 'runway-t2i', // Default model
-        prompt: item.original_prompt
-      })));
+      if (data.gallery && Array.isArray(data.gallery)) {
+        setGalleryItems(data.gallery.map((item: any) => ({
+          id: item.id,
+          type: item.file_type,
+          url: item.image_url || item.video_url || '/api/placeholder/400/400',
+          thumbnail: item.file_type === 'video' ? '/api/placeholder/200/200' : undefined,
+          title: item.description,
+          description: item.description,
+          isPublic: false, // All gallery items are private
+          isFavorite: false, // Default to not favorite
+          collectionId: undefined,
+          createdAt: item.created_at,
+          generationModel: 'runway-t2i', // Default model
+          prompt: item.original_prompt
+        })));
+      } else {
+        console.log('📝 No gallery data found, setting empty array');
+        setGalleryItems([]);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -386,15 +391,7 @@ export default function ProfilePage() {
     );
   };
 
-  const handleTogglePublic = (itemId: string) => {
-    setGalleryItems(items => 
-      items.map(item => 
-        item.id === itemId 
-          ? { ...item, isPublic: !item.isPublic }
-          : item
-      )
-    );
-  };
+  // Removed handleTogglePublic since all gallery items are private
 
   const handleExportData = () => {
     const exportData = {
@@ -407,7 +404,7 @@ export default function ProfilePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `varyai-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `vari-ai-data-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -418,12 +415,8 @@ export default function ProfilePage() {
     switch (galleryFilter) {
       case 'favorites':
         return item.isFavorite;
-      case 'public':
-        return item.isPublic;
-      case 'private':
-        return !item.isPublic;
       default:
-        return true;
+        return true; // Show all items (all are private)
     }
   });
 
@@ -466,7 +459,7 @@ export default function ProfilePage() {
               onClick={() => router.push('/')}
               className="text-white hover:text-gray-300 transition-colors"
             >
-              ← Back to VaryAI
+              ← Back to vARI Ai
             </button>
             <h1 className="text-2xl font-bold text-white">Profile</h1>
             <div className="w-8"></div>
@@ -716,8 +709,6 @@ export default function ProfilePage() {
                   >
                     <option value="all">All Items</option>
                     <option value="favorites">Favorites</option>
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
                   </select>
                   <button
                     onClick={() => setShowCreateCollection(true)}
@@ -786,16 +777,7 @@ export default function ProfilePage() {
                         >
                           <Star className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleTogglePublic(item.id)}
-                          className={`p-2 rounded-full transition-colors ${
-                            item.isPublic 
-                              ? 'bg-green-500 text-white' 
-                              : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
-                          }`}
-                        >
-                          {item.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        </button>
+                        {/* Removed public/private toggle - all items are private */}
                         <button className="p-2 rounded-full bg-white bg-opacity-20 text-white hover:bg-opacity-30 transition-colors">
                           <Download className="w-4 h-4" />
                         </button>

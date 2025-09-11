@@ -122,7 +122,7 @@ async function checkFalBalance() {
 }
 
 async function main() {
-  log('🚀 VaryAI Build Pre-Check', 'magenta');
+  log('🚀 vARI Ai Build Pre-Check', 'magenta');
   log('=' .repeat(50), 'magenta');
   
   const balanceCheckPassed = await checkFalBalance();

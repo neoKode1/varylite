@@ -107,7 +107,7 @@ async function testConnection() {
 
 // Main execution
 async function main() {
-  console.log('🔧 VaryAI Community Database Setup\n');
+  console.log('🔧 vARI Ai Community Database Setup\n');
   
   const connected = await testConnection();
   if (!connected) {

@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <div className="w-8 h-8 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
               <span className="text-white font-bold text-sm">V</span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold text-white">vARYai</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white">vARI Ai</h1>
           </div>
 
            {/* Navigation Tabs */}
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <div className="w-6 h-6 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
               <span className="text-white font-bold text-xs">V</span>
             </div>
-            <h1 className="text-base font-bold text-white">vARYai</h1>
+            <h1 className="text-base font-bold text-white">vARI Ai</h1>
           </div>
 
           {/* Scrollable Navigation Components */}

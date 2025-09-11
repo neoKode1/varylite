@@ -91,7 +91,7 @@ export async function GET() {
                        .insert({
                          id: authUser.id,
                          email: authUser.email,
-                         name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'VaryAI User',
+                         name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'vARI Ai User',
                          profile_picture: authUser.user_metadata?.avatar_url,
                          bio: 'AI enthusiast and creative explorer',
                          preferences: {},

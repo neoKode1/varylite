@@ -744,7 +744,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'varyai-profile-export.json';
+    a.download = 'vari-ai-profile-export.json';
     a.click();
     URL.revokeObjectURL(url);
   };

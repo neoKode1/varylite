@@ -1,7 +1,7 @@
-# 🔐 VaryAI Authentication System
+# 🔐 vARI Ai Authentication System
 
 ## Overview
-VaryAI now includes a complete authentication system built with Supabase, allowing users to:
+vARI Ai now includes a complete authentication system built with Supabase, allowing users to:
 - Use the app anonymously with 3 free generations
 - Create accounts for unlimited generations
 - Save their work permanently

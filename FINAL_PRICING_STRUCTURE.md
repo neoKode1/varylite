@@ -6,13 +6,13 @@
 - ✅ **Cost per free user**: ~$14/month (sustainable)
 - ✅ **Clear upgrade path** when they hit the 5-generation limit
 
-## **VaryAI Light ($14.99/month)**
+## **vARI Ai Light ($14.99/month)**
 - ✅ **50 generations/month** (all models except Seedance Pro)
 - ✅ **Includes**: Nano Banana, Runway T2I, VEO3 Fast, Minimax 2.0, Kling 2.1 Master, Runway Video
 - ✅ **Overage rate**: $0.05 per generation over limit
 - ✅ **Target**: Users who want video generation but don't need premium models
 
-## **VaryAI Heavy ($19.99/month)**
+## **vARI Ai Heavy ($19.99/month)**
 - ✅ **100 generations/month** (all models including Seedance Pro)
 - ✅ **Includes**: All Light features + Seedance Pro ($2.50/generation)
 - ✅ **Overage rate**: $0.04 per generation over limit
@@ -54,7 +54,7 @@
 - ✅ **Ready for Stripe product creation**
 
 ## **Next Steps:**
-1. **Create Stripe products** (VaryAI Light & Heavy)
+1. **Create Stripe products** (vARI Ai Light & Heavy)
 2. **Set up webhook endpoint**
 3. **Test the integration**
 4. **Launch the pricing system**
