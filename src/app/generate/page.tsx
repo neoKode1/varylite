@@ -3807,12 +3807,6 @@ export default function Home() {
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
           <div className="bg-transparent lg:bg-gray-900 lg:bg-opacity-90 backdrop-blur-md rounded-xl p-6 lg:p-8 xl:p-10 border border-gray-700 border-opacity-40 shadow-2xl w-full max-w-4xl">
             
-          {/* Funding Message */}
-            <div className="mb-6 lg:mb-8 text-center">
-            <p className="text-gray-300 text-sm lg:text-base font-normal leading-loose max-w-2xl mx-auto">
-              💜 I&apos;m a developer passionate about building quick and convenient AI tools for the community I love. I can&apos;t scale this alone - if you value what vARI Ai brings, please help fund its growth!
-            </p>
-        </div>
 
             {/* Mobile Image Diffusion Display */}
             <div className="lg:hidden mx-4 mt-6 mb-4">
