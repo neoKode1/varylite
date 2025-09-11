@@ -686,13 +686,9 @@
   }
 }
 
-/* Custom background image */
+/* Solid black background */
 body {
-  background-image: url('/background-smileys.svg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-color: #000000;
   min-height: 100vh;
 }
 
