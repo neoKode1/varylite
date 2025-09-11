@@ -4613,7 +4613,7 @@ export default function Home() {
                     const isExpanded = expandedPrompts.has(itemKey);
                     
                     return (
-                      <div key={itemKey} className="bg-transparent lg:bg-gray-700 lg:bg-opacity-50 rounded-lg p-1.5 lg:p-4 border border-transparent lg:border-gray-600 hover:bg-gray-700 transition-colors">
+                      <div key={itemKey} className="bg-transparent lg:bg-gray-700 lg:bg-opacity-50 rounded-lg p-1.5 lg:p-4 border border-transparent lg:border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
                         <div className="flex flex-col gap-1.5 lg:gap-4">
                           {/* Image/Video Preview */}
                                   <div className="relative">
@@ -4759,7 +4759,7 @@ export default function Home() {
                     const isExpanded = expandedPrompts.has(itemKey);
                     
                     return (
-                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600 hover:bg-gray-700 transition-colors">
+                      <div key={itemKey} className="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600 hover:bg-gray-700 transition-colors relative z-30">
                         <div className="flex flex-col gap-4">
                           {/* Image/Video Preview */}
                                   <div className="relative">
