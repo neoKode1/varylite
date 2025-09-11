@@ -468,8 +468,16 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between py-4 lg:py-6">
             {/* Left: Profile Icon and Title */}
             <div className="flex items-center space-x-3 lg:space-x-4">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
+                {profile?.avatar ? (
+                  <img 
+                    src={profile.avatar} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                )}
               </div>
               <h1 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Profile

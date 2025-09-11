@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { User, LogOut, Settings, UserPlus, LogIn, MessageCircle, FolderOpen } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
 import { ProfileModal } from './ProfileModal'
 import { AnalyticsUpdater } from './AnalyticsUpdater'
+import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
   onSignUpClick: () => void
@@ -24,7 +25,40 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null)
   const router = useRouter()
+
+  // Fetch user's profile picture
+  useEffect(() => {
+    const fetchUserProfilePicture = async () => {
+      if (!user) {
+        setUserProfilePicture(null)
+        return
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+
+        const response = await fetch('/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setUserProfilePicture(data.profile?.profile_picture || null)
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error)
+        setUserProfilePicture(null)
+      }
+    }
+
+    fetchUserProfilePicture()
+  }, [user])
 
   const handleSignOut = async () => {
     const { error } = await signOut()
@@ -141,13 +175,21 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            ) : (
              /* User Menu */
              <div className="relative">
-               <button
-                 onClick={() => setShowUserMenu(!showUserMenu)}
-                 className="flex items-center space-x-3 text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-gray-800"
-               >
-                 <div className="w-8 h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
-                   <User className="w-4 h-4 text-white" />
-                 </div>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-3 text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-gray-800"
+                >
+                  <div className="w-8 h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray overflow-hidden">
+                    {userProfilePicture ? (
+                      <img 
+                        src={userProfilePicture} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
+                  </div>
                  <div className="text-left">
                    <div className="text-sm font-medium text-white">
                      {user.user_metadata?.name || user.email?.split('@')[0]}
@@ -320,8 +362,16 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   }}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800"
                 >
-                  <div className="w-6 h-6 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray">
-                    <User className="w-3 h-3 text-white" />
+                  <div className="w-6 h-6 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray overflow-hidden">
+                    {userProfilePicture ? (
+                      <img 
+                        src={userProfilePicture} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-3 h-3 text-white" />
+                    )}
                   </div>
                   <div className="text-left">
                     <div className="text-xs font-medium text-white">
