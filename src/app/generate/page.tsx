@@ -3714,34 +3714,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Fixed Header with vARI Ai Branding - Mobile Only */}
-      <header className="lg:hidden sticky top-0 z-50 bg-transparent backdrop-blur-md border-b border-gray-800">
-        <div className="flex items-center justify-center py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">V</span>
-            </div>
-            <h1 className="text-xl font-bold text-white tracking-wide">vARI Ai</h1>
-          </div>
-        </div>
-        
-      </header>
 
-      {/* Desktop Fixed Header */}
-      <div className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex items-center justify-center py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">V</span>
-              </div>
-              <h1 className="text-xl font-bold text-white tracking-wide">vARI Ai</h1>
-            </div>
-          </div>
-          
-        </div>
-      </div>
-
+      {/* Header */}
+      <Header 
+        onSignUpClick={handleSignUpClick}
+        onSignInClick={handleSignInClick}
+        onToggleGallery={() => setShowGallery(!showGallery)}
+        showGallery={showGallery}
+      />
       
       
       {/* Semi-transparent overlay for content readability */}
