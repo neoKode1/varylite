@@ -1703,7 +1703,7 @@ export default function SecretPage() {
                           if (!isUnlocked && !isAdminModel) {
                             const unlocked = await unlockModel(mode);
                             if (unlocked) {
-                              showNotification(`🎉 ${getModelDisplayName(mode)} unlocked!`, 'success');
+                              showError(`🎉 ${getModelDisplayName(mode)} unlocked!`);
                             } else {
                               showError('Failed to unlock model. Please try again.');
                               return;
