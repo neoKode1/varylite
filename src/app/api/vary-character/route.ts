@@ -243,7 +243,9 @@ async function tryAlternativeModels(
     console.log('❌ Default Gemini model also failed:', (error as Error).message);
   }
   
-  throw new Error('All available Gemini models are currently unavailable. Please check your API key and model availability.');
+  // Log detailed error for debugging but return user-friendly message
+  console.error('💥 All Gemini models failed. Detailed errors logged above.');
+  throw new Error('AI service is temporarily unavailable. Please try again in a moment.');
 }
 
 // Minimal prompt processing to preserve user intent
