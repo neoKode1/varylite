@@ -4095,7 +4095,7 @@ export default function Home() {
 
             {/* Mobile Generated Content Display */}
             <div className="lg:hidden w-full max-w-4xl mx-auto mb-8">
-              <h2 className="text-lg font-bold text-white mb-4 text-center">New generations</h2>
+              <h2 className="text-lg font-bold text-white mb-4 text-center">New Variations</h2>
               
               {/* Main Content Display Area */}
               <div className="w-full aspect-square max-w-md mx-auto bg-black bg-opacity-50 rounded-[30px] border border-gray-700 overflow-hidden">
@@ -4375,7 +4375,7 @@ export default function Home() {
 
             {/* Desktop Generation Panel */}
             <div className="hidden lg:block generation-panel mb-6 lg:mb-8" style={{ top: '-200px' }}>
-              <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New generations</h2>
+              <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 text-center">New Variations</h2>
               <div className="generation-grid max-w-4xl mx-auto">
                 {/* Slot 1 */}
                 <div 
