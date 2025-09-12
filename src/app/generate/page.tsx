@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { HelpModal } from '@/components/HelpModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useUserGallery } from '@/hooks/useUserGallery';
+import { getProxiedImageUrl } from '@/lib/imageUtils';
 import { Header } from '@/components/Header';
 import { AuthModal } from '@/components/AuthModal';
 import { UsageLimitBanner, UsageCounter } from '@/components/UsageLimitBanner';
@@ -3759,20 +3760,29 @@ export default function Home() {
         loop
         playsInline
         preload="auto"
-        className="absolute inset-0 w-full h-full object-cover -z-10 opacity-75"
+        className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
         style={{
           minWidth: '100%',
           minHeight: '100%',
           width: 'auto',
           height: 'auto'
         }}
+        onError={(e) => {
+          console.error('Background video failed to load:', e);
+        }}
+        onLoadStart={() => {
+          console.log('Background video started loading');
+        }}
+        onCanPlay={() => {
+          console.log('Background video can play');
+        }}
       >
-        <source src="/91b9d7be-bb33-4df3-af75-85c7bc3f9d79.mp4" type="video/mp4" />
+        <source src="/Hailuo_Video_A dark, cosmic horror-like the_422674688974839808.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
       {/* Semi-transparent overlay for content readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-80 z-10"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-60 z-10"></div>
       
       {/* Custom Notification Toast */}
       {notification && (
@@ -4519,7 +4529,7 @@ export default function Home() {
 
         {/* Mobile Gallery Panel */}
         {showGallery && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-transparent z-30 max-h-[25vh] overflow-y-auto gallery-container">
+          <div className="block lg:hidden fixed bottom-16 left-0 right-0 bg-black bg-opacity-95 backdrop-blur-md border-t border-gray-800/50 z-30 max-h-[60vh] overflow-y-auto gallery-container">
             <div className="p-2 lg:p-6">
               <div className="flex items-center justify-between mb-2 lg:mb-6">
                 <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
@@ -4613,22 +4623,54 @@ export default function Home() {
                           {item.fileType === 'video' ? (
                             <video
                               src={item.videoUrl}
-                              className="w-full h-full object-cover cursor-pointer"
-                              onClick={() => setFullScreenImage(item.videoUrl)}
+                              className="w-full h-full object-cover cursor-pointer touch-manipulation"
+                              onClick={() => {
+                                console.log('Mobile gallery video tapped:', item.videoUrl);
+                                setFullScreenImage(item.videoUrl);
+                              }}
+                              onTouchStart={(e) => {
+                                e.currentTarget.style.transform = 'scale(0.95)';
+                                e.currentTarget.style.transition = 'transform 0.1s ease';
+                              }}
+                              onTouchEnd={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                              }}
                               muted
                             />
-                          ) : (
+                          ) : item.imageUrl ? (
                             <img
-                              src={item.imageUrl}
+                              src={getProxiedImageUrl(item.imageUrl)}
                               alt="Gallery item"
-                              className="w-full h-full object-cover cursor-pointer"
-                              onClick={() => setFullScreenImage(item.imageUrl)}
+                              className="w-full h-full object-cover cursor-pointer touch-manipulation"
+                              onClick={() => {
+                                console.log('Mobile gallery image tapped:', item.imageUrl);
+                                setFullScreenImage(item.imageUrl);
+                              }}
+                              onTouchStart={(e) => {
+                                e.currentTarget.style.transform = 'scale(0.95)';
+                                e.currentTarget.style.transition = 'transform 0.1s ease';
+                              }}
+                              onTouchEnd={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                              }}
                               onError={(e) => {
                                 console.error('Mobile gallery image failed to load:', item.imageUrl);
-                                e.currentTarget.src = '/api/placeholder/150/150';
+                                // Try fallback to original image preview
+                                if (item.originalImagePreview && e.currentTarget.src !== item.originalImagePreview) {
+                                  e.currentTarget.src = item.originalImagePreview;
+                                } else {
+                                  e.currentTarget.src = '/api/placeholder/150/150';
+                                }
+                              }}
+                              onLoad={() => {
+                                console.log('Mobile gallery image loaded successfully:', item.imageUrl);
                               }}
                               loading="lazy"
                             />
+                          ) : (
+                            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                              <span className="text-gray-400 text-sm">No Image</span>
+                            </div>
                           )}
                           
                           {/* Type Badge */}
@@ -4772,9 +4814,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* Responsive Gallery Panel */}
+        {/* Desktop Gallery Panel */}
         {showGallery && (
-          <div className="gallery-container fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
+          <div className="hidden lg:block gallery-container fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
             <div className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-3 text-white">
@@ -4851,18 +4893,30 @@ export default function Home() {
                               onClick={() => setFullScreenImage(item.videoUrl)}
                               muted
                             />
-                          ) : (
+                          ) : item.imageUrl ? (
                             <img
-                              src={item.imageUrl}
+                              src={getProxiedImageUrl(item.imageUrl)}
                               alt="Gallery item"
                               className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
                               onClick={() => setFullScreenImage(item.imageUrl)}
                               onError={(e) => {
-                                console.error('Image failed to load:', item.imageUrl);
-                                e.currentTarget.src = '/api/placeholder/400/400';
+                                console.error('Desktop gallery image failed to load:', item.imageUrl);
+                                // Try fallback to original image preview
+                                if (item.originalImagePreview && e.currentTarget.src !== item.originalImagePreview) {
+                                  e.currentTarget.src = item.originalImagePreview;
+                                } else {
+                                  e.currentTarget.src = '/api/placeholder/400/400';
+                                }
+                              }}
+                              onLoad={() => {
+                                console.log('Desktop gallery image loaded successfully:', item.imageUrl);
                               }}
                               loading="lazy"
                             />
+                          ) : (
+                            <div className="w-full h-auto bg-gray-700 flex items-center justify-center min-h-[200px]">
+                              <span className="text-gray-400 text-sm">No Image</span>
+                            </div>
                           )}
                           <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
                             {item.fileType?.toUpperCase() || 'IMAGE'}
@@ -4969,10 +5023,10 @@ export default function Home() {
       {/* Full-Screen Image Modal */}
       {fullScreenImage && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50"
           onClick={closeFullScreen}
         >
-          <div className="relative w-[90%] h-[90%] flex items-center justify-center">
+          <div className="relative w-[95%] h-[95%] sm:w-[90%] sm:h-[90%] flex items-center justify-center">
             {(() => {
               const currentItem = galleryImagesWithUrls[fullScreenImageIndex];
               const isVideo = currentItem?.fileType === 'video' || fullScreenImage?.includes('.mp4') || fullScreenImage?.includes('video');
@@ -5041,6 +5095,15 @@ export default function Home() {
                 {fullScreenImageIndex + 1} / {galleryImagesWithUrls.length}
                   </div>
                 )}
+
+            {/* Close Button - Mobile Friendly */}
+            <button
+              onClick={closeFullScreen}
+              className="absolute top-4 right-4 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200 z-10"
+              title="Close full screen"
+            >
+              <X className="w-6 h-6" />
+            </button>
 
             {/* Current Image Details */}
             {galleryImagesWithUrls[fullScreenImageIndex] && (

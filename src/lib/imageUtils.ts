@@ -87,3 +87,31 @@ export const getOptimizedImageUrl = async (imagePath: string): Promise<string> =
     return '/api/placeholder/400/400';
   }
 };
+
+/**
+ * Get proxied image URL for CORS-problematic URLs
+ */
+export const getProxiedImageUrl = (imageUrl: string | null | undefined): string => {
+  // Handle null/undefined cases
+  if (!imageUrl) {
+    return '/api/placeholder/400/400';
+  }
+  
+  // Check if URL is from a CORS-problematic domain
+  const corsProblematicDomains = [
+    'dnznrvs05pmza.cloudfront.net',
+    'cloudfront.net',
+    'oss-cn-wulanchabu.aliyuncs.com'
+  ];
+  
+  const isCorsProblematic = corsProblematicDomains.some(domain => 
+    imageUrl.includes(domain)
+  );
+  
+  if (isCorsProblematic) {
+    // Use our image proxy to avoid CORS issues
+    return `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+  }
+  
+  return imageUrl;
+};

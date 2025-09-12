@@ -184,20 +184,22 @@ export default function ProfilePage() {
 
       // Set gallery items from API response
       if (data.gallery && Array.isArray(data.gallery)) {
+        console.log('📸 Profile gallery data received:', data.gallery.length, 'items');
         setGalleryItems(data.gallery.map((item: any) => ({
-          id: item.id,
-          type: item.file_type,
+          id: item.variation_id || item.id, // Use variation_id as primary ID
+          type: item.file_type || (item.video_url ? 'video' : 'image'),
           url: item.image_url || item.video_url || '/api/placeholder/400/400',
           thumbnail: item.file_type === 'video' ? '/api/placeholder/200/200' : undefined,
-          title: item.description,
-          description: item.description,
+          title: item.description || 'Generated Content',
+          description: item.description || 'AI Generated Content',
           isPublic: false, // All gallery items are private
           isFavorite: false, // Default to not favorite
           collectionId: undefined,
           createdAt: item.created_at,
           generationModel: 'runway-t2i', // Default model
-          prompt: item.original_prompt
+          prompt: item.original_prompt || 'No prompt available'
         })));
+        console.log('📸 Profile gallery items processed:', data.gallery.length);
       } else {
         console.log('📝 No gallery data found, setting empty array');
         setGalleryItems([]);
@@ -946,6 +948,13 @@ export default function ProfilePage() {
                           src={item.url} 
                           alt={item.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Profile gallery image failed to load:', item.url);
+                            e.currentTarget.src = '/api/placeholder/400/400';
+                          }}
+                          onLoad={() => {
+                            console.log('Profile gallery image loaded successfully:', item.url);
+                          }}
                         />
                       ) : (
                         <video 

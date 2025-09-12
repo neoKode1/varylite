@@ -8,6 +8,11 @@ fal.config({
 
 // Model configurations for image-to-video models
 const MODEL_CONFIGS = {
+  'lucy-14b-image-to-video': {
+    endpoint: 'decart/lucy-14b/image-to-video',
+    maxDuration: 5,
+    supportedFormats: ['mp4']
+  },
   'bytedance-seedance-v1-pro-image-to-video': {
     endpoint: 'bytedance/seedance-v1-pro-image-to-video',
     maxDuration: 5,

@@ -210,7 +210,7 @@ async function tryAlternativeModels(
   const models = [
     { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
     { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' },
-    { name: 'gemini-pro', description: 'Gemini Pro' }
+    { name: 'gemini-1.0-pro', description: 'Gemini 1.0 Pro' }
   ];
   
   for (const modelConfig of models) {
@@ -221,12 +221,29 @@ async function tryAlternativeModels(
       console.log(`✅ Successfully used ${modelConfig.description}`);
       return result;
     } catch (error) {
-      console.log(`❌ ${modelConfig.description} failed:`, (error as Error).message);
+      const errorMessage = (error as Error).message;
+      console.log(`❌ ${modelConfig.description} failed:`, errorMessage);
+      
+      // Check if it's a model not found error
+      if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+        console.log(`⚠️ Model ${modelConfig.name} is not available in current API version`);
+      }
       continue;
     }
   }
   
-  throw new Error('All available Gemini models are currently unavailable');
+  // Last resort: try with default model (no specific model name)
+  try {
+    console.log('🔄 Trying default Gemini model as last resort...');
+    const defaultModel = genAI.getGenerativeModel({});
+    const result = await defaultModel.generateContent([prompt, ...imageParts]);
+    console.log('✅ Successfully used default Gemini model');
+    return result;
+  } catch (error) {
+    console.log('❌ Default Gemini model also failed:', (error as Error).message);
+  }
+  
+  throw new Error('All available Gemini models are currently unavailable. Please check your API key and model availability.');
 }
 
 // Minimal prompt processing to preserve user intent
@@ -361,10 +378,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🤖 Initializing Gemini AI model...');
-    // Get the generative model - using Gemini 2.0 Flash for better performance
-    // Fallback to Gemini 1.5 Pro if 2.0 Flash is overloaded
-    let model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    console.log('✅ Gemini 2.0 Flash model initialized successfully');
+    // Get the generative model - using Gemini 1.5 Pro for better performance
+    // Fallback to other models if 1.5 Pro is overloaded
+    let model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    console.log('✅ Gemini 1.5 Pro model initialized successfully');
 
     console.log('📝 Creating enhanced prompt...');
     
