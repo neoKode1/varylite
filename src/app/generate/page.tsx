@@ -2165,23 +2165,28 @@ export default function Home() {
         file_type: uploadedFiles[0]?.fileType
       });
       
-      // Add to gallery
-      if (filteredVariations.length > 0) {
-        addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
-        showNotification('🎨 Character variations generated successfully!', 'success');
-      } else if (newVariations.length > 0) {
-        // All variations were filtered out
-        showNotification('🚫 All generated content was filtered out due to content policy', 'error');
-      }
-      
-      setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
-        stopGenerationTimer();
-      }, 1000);
+        // Add to gallery
+        if (filteredVariations.length > 0) {
+          addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
+          showNotification('🎨 Character variations generated successfully!', 'success');
+          
+          // Clear input after successful generation
+          setPrompt('');
+          setUploadedFiles([]);
+          console.log('🧹 Cleared input after successful character variation generation');
+        } else if (newVariations.length > 0) {
+          // All variations were filtered out
+          showNotification('🚫 All generated content was filtered out due to content policy', 'error');
+        }
+        
+        setTimeout(() => {
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+          stopGenerationTimer();
+        }, 1000);
 
     } catch (err) {
       console.error('❌ Character variation error:', err);
@@ -2425,6 +2430,11 @@ export default function Home() {
           }], prompt, uploadedFiles[0]?.preview);
           setError(null);
           showNotification('🎬 Video editing completed successfully!', 'success');
+          
+          // Clear input after successful generation
+          setPrompt('');
+          setUploadedFiles([]);
+          console.log('🧹 Cleared input after successful video generation');
           
           // Clear the task ID and stop polling
           setRunwayTaskId(null);
@@ -2738,6 +2748,11 @@ export default function Home() {
         setError(null);
         showNotification('🎬 EndFrame video generated successfully!', 'success');
         
+        // Clear input after successful generation
+        setPrompt('');
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input after successful EndFrame video generation');
+        
         // Show final success state before cleanup
         setProcessing({
           isProcessing: false,
@@ -2849,6 +2864,11 @@ export default function Home() {
 
         // Add to gallery
         await addToGallery(generatedVariations, originalPrompt);
+        
+        // Clear input after successful generation
+        setPrompt('');
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input after successful text-to-image generation');
         
         setProcessing({
           isProcessing: false,
@@ -3049,6 +3069,11 @@ export default function Home() {
       // Track usage
       trackUsage('video_generation', 'minimax_endframe');
 
+      // Clear input after successful generation
+      setPrompt('');
+      setUploadedFiles([]);
+      console.log('🧹 Cleared input after successful Veo3 Fast generation');
+
       setProcessing({
         isProcessing: false,
         progress: 100,
@@ -3221,6 +3246,11 @@ export default function Home() {
       // Track usage
       trackUsage('video_generation', 'minimax_endframe');
 
+      // Clear input after successful generation
+      setPrompt('');
+      setUploadedFiles([]);
+      console.log('🧹 Cleared input after successful Minimax 2.0 generation');
+
       setProcessing({
         isProcessing: false,
         progress: 100,
@@ -3343,6 +3373,11 @@ export default function Home() {
 
       // Track usage
       trackUsage('video_generation', 'minimax_endframe');
+
+      // Clear input after successful generation
+      setPrompt('');
+      setUploadedFiles([]);
+      console.log('🧹 Cleared input after successful Kling 2.1 Master generation');
 
       setProcessing({
         isProcessing: false,
