@@ -2136,6 +2136,10 @@ export default function Home() {
     }
 
     switch (generationMode) {
+      case 'runway-t2i':
+        // Text-to-image generation - can work with or without images
+        await handleTextToImage();
+        break;
       case 'nano-banana':
         await handleCharacterVariation();
         break;
