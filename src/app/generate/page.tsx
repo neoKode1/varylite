@@ -4349,7 +4349,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditImage(variations[0].imageUrl, variations[0].originalPrompt);
+                              if (variations[0].imageUrl) {
+                                handleEditImage(variations[0].imageUrl, variations[0].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4360,7 +4362,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVaryImage(variations[0].imageUrl, variations[0].originalPrompt);
+                              if (variations[0].imageUrl) {
+                                handleVaryImage(variations[0].imageUrl, variations[0].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4408,7 +4412,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditImage(variations[1].imageUrl, variations[1].originalPrompt);
+                              if (variations[1].imageUrl) {
+                                handleEditImage(variations[1].imageUrl, variations[1].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4419,7 +4425,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVaryImage(variations[1].imageUrl, variations[1].originalPrompt);
+                              if (variations[1].imageUrl) {
+                                handleVaryImage(variations[1].imageUrl, variations[1].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4467,7 +4475,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditImage(variations[2].imageUrl, variations[2].originalPrompt);
+                              if (variations[2].imageUrl) {
+                                handleEditImage(variations[2].imageUrl, variations[2].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4478,7 +4488,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVaryImage(variations[2].imageUrl, variations[2].originalPrompt);
+                              if (variations[2].imageUrl) {
+                                handleVaryImage(variations[2].imageUrl, variations[2].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4526,7 +4538,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditImage(variations[3].imageUrl, variations[3].originalPrompt);
+                              if (variations[3].imageUrl) {
+                                handleEditImage(variations[3].imageUrl, variations[3].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4537,7 +4551,9 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVaryImage(variations[3].imageUrl, variations[3].originalPrompt);
+                              if (variations[3].imageUrl) {
+                                handleVaryImage(variations[3].imageUrl, variations[3].originalPrompt);
+                              }
                             }}
                             disabled={processing.isProcessing}
                             className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
