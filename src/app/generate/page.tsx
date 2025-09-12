@@ -1423,13 +1423,14 @@ export default function Home() {
       const base64Image = await urlToBase64(imageUrl);
       
       // Create a new uploaded file object
-      const newFile: UploadedFile = {
-        file: new File([], `edit-image-${Date.now()}.jpg`, { type: 'image/jpeg' }),
-        preview: imageUrl,
-        base64: base64Image,
-        type: 'reference',
-        fileType: 'image'
-      };
+        const newFile: UploadedFile = {
+          file: new File([], `edit-image-${Date.now()}.jpg`, { type: 'image/jpeg' }),
+          preview: imageUrl,
+          base64: base64Image,
+          mimeType: 'image/jpeg',
+          type: 'reference',
+          fileType: 'image'
+        };
       
       // Add to existing files (don't replace)
       setUploadedFiles(prev => [...prev, newFile]);
@@ -1506,6 +1507,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           images: [base64Image],
+          mimeTypes: ['image/jpeg'], // Default MIME type for URL-converted images
           prompt: varyPrompt
         }),
       });
@@ -1710,6 +1712,7 @@ export default function Home() {
           file,
           preview,
           base64: base64.split(',')[1], // Remove data:...;base64, prefix
+          mimeType: file.type, // Store original MIME type
           type: 'reference', // Default type
           fileType
         });
@@ -1789,6 +1792,7 @@ export default function Home() {
           file,
           preview,
           base64: base64.split(',')[1],
+          mimeType: file.type,
           type: 'reference',
           fileType
         };
@@ -1854,6 +1858,7 @@ export default function Home() {
         file,
         preview,
         base64: base64.split(',')[1], // Remove data:...;base64, prefix
+        mimeType: file.type,
         type: 'reference',
         fileType
       };
@@ -2077,6 +2082,7 @@ export default function Home() {
         file,
         preview: URL.createObjectURL(file),
         base64: '', // Will be populated later if needed
+        mimeType: file.type,
         type: 'reference', // Default type
         fileType: file.type.startsWith('video/') ? 'video' : 'image'
       };
@@ -2186,6 +2192,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           images: uploadedFiles.map(img => img.base64),
+          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
           prompt: prompt.trim()
         }),
       });

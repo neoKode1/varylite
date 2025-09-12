@@ -1,5 +1,6 @@
 export interface CharacterVariationRequest {
   images: string[]; // array of base64 encoded images
+  mimeTypes?: string[]; // array of MIME types for each image
   prompt: string; // user's angle/pose variation prompt
 }
 
@@ -23,6 +24,7 @@ export interface UploadedFile {
   file: File;
   preview: string;
   base64: string;
+  mimeType?: string; // Original MIME type of the file
   type: 'face' | 'body' | 'reference'; // File type for better processing
   fileType: 'image' | 'video'; // Distinguish between images and videos
 }

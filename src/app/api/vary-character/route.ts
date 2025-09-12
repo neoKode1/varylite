@@ -4,13 +4,22 @@ import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
 
 // Function to upload image using Fal AI client's built-in upload
-async function uploadImageToTempUrl(base64Data: string): Promise<string> {
+async function uploadImageToTempUrl(base64Data: string, mimeType: string = 'image/jpeg'): Promise<string> {
   try {
-    // Convert base64 to buffer
-    const buffer = Buffer.from(base64Data, 'base64');
+    // Ensure we have the full data URI format
+    const fullDataUri = base64Data.startsWith('data:') 
+      ? base64Data 
+      : `data:${mimeType};base64,${base64Data}`;
     
-    // Create a File object from the buffer
-    const file = new File([buffer], 'image.jpg', { type: 'image/jpeg' });
+    // Extract base64 string and convert to buffer
+    const base64String = fullDataUri.split(',')[1];
+    const buffer = Buffer.from(base64String, 'base64');
+    
+    // Create a File object from the buffer with original MIME type
+    const fileExtension = mimeType.split('/')[1] || 'jpg';
+    const file = new File([buffer], `image.${fileExtension}`, { type: mimeType });
+    
+    console.log(`📤 Uploading image to FAL storage: ${file.name} (${file.size} bytes, ${file.type})`);
     
     // Use Fal AI client's built-in upload functionality
     const url = await fal.storage.upload(file);
@@ -20,7 +29,9 @@ async function uploadImageToTempUrl(base64Data: string): Promise<string> {
   } catch (error) {
     console.error('❌ Failed to upload image to Fal AI:', error);
     // Fallback to data URI - Nano Banana should accept this according to docs
-    const dataUri = `data:image/jpeg;base64,${base64Data}`;
+    const dataUri = base64Data.startsWith('data:') 
+      ? base64Data 
+      : `data:${mimeType};base64,${base64Data}`;
     console.log(`⚠️ Using data URI directly: ${dataUri.substring(0, 50)}...`);
     return dataUri;
   }
@@ -343,7 +354,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, prompt } = body;
+    const { images, mimeTypes, prompt } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
@@ -573,11 +584,37 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
       // Upload all images to get proper URLs for Nano Banana
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
-          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI...`);
-          return await uploadImageToTempUrl(imageData);
+          const mimeType = mimeTypes?.[index] || 'image/jpeg';
+          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI... (${mimeType})`);
+          return await uploadImageToTempUrl(imageData, mimeType);
         })
       );
       console.log(`🖼️ Uploaded ${imageUrls.length} images for Nano Banana processing`);
+      
+      // Validate image URLs before sending to Nano Banana
+      console.log('🔍 Validating image URLs...');
+      const validatedImageUrls = await Promise.all(
+        imageUrls.map(async (url, index) => {
+          try {
+            // Skip validation for data URIs
+            if (url.startsWith('data:')) {
+              console.log(`✅ Image ${index + 1}: Using data URI (${url.substring(0, 50)}...)`);
+              return url;
+            }
+            
+            const response = await fetch(url, { method: 'HEAD' });
+            if (!response.ok) {
+              throw new Error(`Image URL not accessible: ${response.status}`);
+            }
+            console.log(`✅ Image ${index + 1}: URL validated (${url})`);
+            return url;
+          } catch (error) {
+            console.error(`❌ Image ${index + 1} URL validation failed:`, url, error);
+            throw error;
+          }
+        })
+      );
+      console.log('✅ All image URLs validated successfully');
       
       // Generate images for each variation using Nano Banana
       variationsWithImages = await Promise.all(
@@ -614,10 +651,16 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               const modelName = "fal-ai/nano-banana/edit";
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
+              // Enhanced debug logging
+              console.log(`🖼️ Image URLs being sent to Nano Banana:`, validatedImageUrls);
+              console.log(`📊 Image count:`, validatedImageUrls.length);
+              console.log(`🎯 Model:`, modelName);
+              console.log(`📝 Prompt:`, nanoBananaPrompt);
+              
               return await fal.subscribe(modelName, {
                 input: {
                   prompt: nanoBananaPrompt,
-                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                  image_urls: validatedImageUrls, // Use validated image URLs for character + scene combination
                   num_images: 1,
                   output_format: "jpeg"
                 },
