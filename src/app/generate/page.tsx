@@ -975,10 +975,10 @@ export default function Home() {
   }, [uploadedFiles]);
 
   // Get display name for generation mode
-  const getModelDisplayName = useCallback((mode: GenerationMode): string => {
+  const getModelDisplayName = useCallback((mode: GenerationMode, isMobile: boolean = false): string => {
     const displayNames: Record<GenerationMode, string> = {
       'nano-banana': 'Nana Banana',
-      'runway-t2i': 'Runway T2I',
+      'runway-t2i': isMobile ? 'Text to Image' : 'Runway T2I', // Remove "Runway" from mobile view
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
       'minimax-2.0': 'MiniMax End Frame',
@@ -4315,7 +4315,7 @@ export default function Home() {
                         <option value="">Select Model</option>
                         {getAvailableModes().map((mode) => (
                           <option key={mode} value={mode}>
-                            {getModelDisplayName(mode)}
+                            {getModelDisplayName(mode, true)}
                           </option>
                         ))}
                       </select>
@@ -5889,7 +5889,7 @@ export default function Home() {
                 <option value="">Select Model</option>
                 {getAvailableModes().map((mode) => (
                   <option key={mode} value={mode}>
-                    {getModelDisplayName(mode)}
+                    {getModelDisplayName(mode, true)}
                   </option>
                 ))}
               </select>
