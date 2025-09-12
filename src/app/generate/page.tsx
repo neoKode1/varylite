@@ -944,17 +944,15 @@ export default function Home() {
     
     const modes: GenerationMode[] = [];
     
-    // Always allow text-to-image
-    modes.push('runway-t2i');
-    
     if (hasImages) {
+      // When images are uploaded, only show image processing models
       if (uploadedFiles.length === 1) {
         // Single image - character variation models
-      modes.push('nano-banana');
-      // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
-      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+        modes.push('nano-banana');
+        // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
+        modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
         modes.push('minimax-video'); // Image-to-video with Minimax Video
-      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+        modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
         modes.push('seedance-pro'); // Image-to-video with Seedance Pro
       } else if (uploadedFiles.length >= 2) {
         // Multiple images - end frame models
@@ -964,10 +962,9 @@ export default function Home() {
         modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
         modes.push('seedance-pro'); // End frame generation with Seedance Pro
       }
-    }
-    
-    // Add text-to-video modes when no images are uploaded
-    if (!hasImages && !hasVideos) {
+    } else {
+      // When no images are uploaded, show text-to-image and text-to-video models
+      modes.push('runway-t2i'); // Text-to-image
       modes.push('runway-video'); // Text-to-video with Runway
       modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
       modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
@@ -1013,11 +1010,17 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         const defaultModel = data.profile?.preferences?.defaultModel;
-        if (defaultModel && getAvailableModes().includes(defaultModel as GenerationMode)) {
+        if (defaultModel) {
           setUserDefaultModel(defaultModel as GenerationMode);
-          // Set as initial generation mode if no files uploaded
+          // Only set as initial generation mode if:
+          // 1. No files uploaded (text-to-image context)
+          // 2. The default model is available in current context
+          // 3. No generation mode is already set
           if (uploadedFiles.length === 0 && !generationMode) {
-            setGenerationMode(defaultModel as GenerationMode);
+            const availableModes = getAvailableModes();
+            if (availableModes.includes(defaultModel as GenerationMode)) {
+              setGenerationMode(defaultModel as GenerationMode);
+            }
           }
         }
       }
