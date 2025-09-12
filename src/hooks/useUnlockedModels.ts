@@ -96,7 +96,7 @@ export const useUnlockedModels = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const secretModels = new Set(data.unlockedModels?.map((m: any) => m.model_name) || []);
+        const secretModels = new Set<string>(data.unlockedModels?.map((m: any) => m.model_name) || []);
         setUnlockedSecretModels(secretModels);
 
         // Convert to generate page models
