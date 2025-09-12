@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import UserCreditDisplay, { CreditDisplayRef } from '@/components/UserCreditDisplay';
+import { useCreditCheck } from '@/hooks/useCreditCheck';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 // StoredVariation type (extends CharacterVariation with additional properties)
 interface StoredVariation extends CharacterVariation {
@@ -33,7 +35,9 @@ type GenerationMode =
   | 'minimax-i2v-director'
   | 'hailuo-02-pro'
   | 'kling-video-pro'
-  | 'flux-dev';
+  | 'flux-dev'
+  | 'seedream-3'
+  | 'seedance-1-pro';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -655,6 +659,8 @@ export default function Home() {
   const { hasSecretAccess, isAdmin, loading: secretAccessLoading } = useSecretAccess();
   const { unlockedGenerateModels, isGenerateModelUnlocked, isVideoVariantModel } = useUnlockedModels();
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
+  const { checkUserCredits, useCredits, checking: creditChecking, using: creditUsing } = useCreditCheck();
+  const creditDisplayRef = useRef<CreditDisplayRef>(null);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -850,7 +856,9 @@ export default function Home() {
       'minimax-i2v-director': 120, // 2 minutes for MiniMax I2V Director
       'hailuo-02-pro': 100, // 1.67 minutes for Hailuo 02 Pro video variations
       'kling-video-pro': 110, // 1.83 minutes for Kling Video Pro video variations
-      'flux-dev': 20 // 20 seconds for Flux Dev image generation
+      'flux-dev': 20, // 20 seconds for Flux Dev image generation
+      'seedream-3': 25, // 25 seconds for Seedream 3 text-to-image
+      'seedance-1-pro': 90 // 90 seconds for Seedance 1 Pro video generation
     };
     return timeEstimates[mode] || 30;
   };
@@ -971,6 +979,7 @@ export default function Home() {
           modes.push('flux-dev'); // Flux Dev as fallback
         } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
           // Video mode: show video variant models (desktop only + secret access required)
+          modes.push('veo3-fast'); // Veo3 Fast image-to-video model
           modes.push('decart-lucy-14b'); // Lucy 14B video variant model
           modes.push('minimax-i2v-director'); // MiniMax I2V Director with camera control
           modes.push('hailuo-02-pro'); // Hailuo 02 Pro video variant model
@@ -988,18 +997,18 @@ export default function Home() {
         modes.push('minimax-2.0'); // End frame generation with Mini Mac's End Frame
         modes.push('minimax-video'); // End frame generation with Minimax Video
         modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
-        modes.push('seedance-pro'); // End frame generation with Seedance Pro
       }
     } else {
       // When no images are uploaded, show text-to-image and text-to-video models
       modes.push('runway-t2i'); // Text-to-image
+      modes.push('seedream-3'); // Seedream 3 text-to-image (base level)
       if (!isMobile) {
         // Video models only on desktop
         modes.push('runway-video'); // Text-to-video with Runway
         modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
         modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
         modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
-        modes.push('seedance-pro-t2v'); // Text-to-video with Seedance Pro
+        modes.push('seedance-1-pro'); // Seedance 1 Pro text-to-video (base level)
       }
       
       // Add unlocked models from secret page (non-video-variant models only)
@@ -1032,7 +1041,9 @@ export default function Home() {
       'minimax-i2v-director': 'MiniMax I2V Director',
       'hailuo-02-pro': 'Hailuo 02 Pro',
       'kling-video-pro': 'Kling Video Pro',
-      'flux-dev': 'Flux Dev'
+      'flux-dev': 'Flux Dev',
+      'seedream-3': 'Seedream 3',
+      'seedance-1-pro': 'Seedance 1 Pro'
     };
     return displayNames[mode] || mode;
   }, []);
@@ -1739,6 +1750,428 @@ export default function Home() {
     }
   };
 
+  // Handle Seedream 3 text-to-image generation
+  const handleSeedream3Generation = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a text prompt to generate an image');
+      showAnimatedErrorNotification('User Error: Please enter a text prompt! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!canGenerate) {
+      setError('Generation limit reached. Please sign up for unlimited generations.');
+      setShowAuthModal(true);
+      return;
+    }
+
+    const actionId = `seedream3-${Date.now()}`;
+    setProcessingAction(actionId);
+
+    try {
+      console.log('🎨 Starting Seedream 3 text-to-image generation:', prompt);
+      
+      setProcessing({
+        isProcessing: true,
+        progress: 10,
+        currentStep: 'Generating image with Seedream 3...'
+      });
+
+      // Check user credits first
+      const creditCheck = await checkUserCredits('bytedance/seedream-3');
+      if (!creditCheck.hasCredits) {
+        throw new Error(creditCheck.error || 'Insufficient credits for Seedream 3');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 30, currentStep: 'Processing with Seedream 3...' }));
+
+      // Call the Seedream 3 API
+      const response = await fetch('/api/replicate/seedream-3', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          size: 'regular',
+          aspectRatio: '16:9',
+          guidanceScale: 2.5,
+          userId: user?.id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start Seedream 3 generation');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Seedream 3 generation failed');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 80, currentStep: 'Processing image...' }));
+
+      // If we got a direct image URL (synchronous completion)
+      if (data.imageUrl) {
+        console.log('✅ Seedream 3 generation completed:', data.imageUrl);
+        
+        // Add to gallery
+        const variation: StoredVariation = {
+          id: `seedream3-${Date.now()}`,
+          description: prompt.trim(),
+          originalPrompt: prompt.trim(),
+          angle: 'Seedream 3',
+          pose: 'AI Generated',
+          imageUrl: data.imageUrl,
+          videoUrl: undefined,
+          fileType: 'image' as const,
+          timestamp: Date.now()
+        };
+
+        setVariations(prev => [variation, ...prev]);
+        addToGallery([variation], prompt.trim());
+        
+        setProcessing({
+          isProcessing: false,
+          progress: 100,
+          currentStep: 'Complete!'
+        });
+
+        // Track usage
+        trackUsage('image_generation', 'seedream_3');
+        
+        setTimeout(() => {
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+        }, 1000);
+
+      } else if (data.predictionId) {
+        // Handle async prediction (polling required)
+        console.log('⏳ Seedream 3 prediction started:', data.predictionId);
+        await pollSeedream3Prediction(data.predictionId, prompt.trim());
+      } else {
+        throw new Error('No image URL or prediction ID received');
+      }
+
+    } catch (error) {
+      console.error('❌ Seedream 3 generation error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate image with Seedream 3');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      setGenerationMode(null);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  // Poll Seedream 3 prediction status
+  const pollSeedream3Prediction = async (predictionId: string, originalPrompt: string) => {
+    const maxAttempts = 60; // 5 minutes max
+    let attempts = 0;
+
+    const poll = async (): Promise<void> => {
+      try {
+        attempts++;
+        
+        const response = await fetch(`/api/replicate/prediction/${predictionId}`);
+        if (!response.ok) {
+          throw new Error('Failed to check prediction status');
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'succeeded' && data.output) {
+          console.log('✅ Seedream 3 prediction completed:', data.output);
+          
+          const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+          
+          // Add to gallery
+          const variation: StoredVariation = {
+            id: `seedream3-${Date.now()}`,
+            description: originalPrompt,
+            originalPrompt: originalPrompt,
+            angle: 'Seedream 3',
+            pose: 'AI Generated',
+            imageUrl: outputUrl,
+            videoUrl: undefined,
+            fileType: 'image' as const,
+            timestamp: Date.now()
+          };
+
+          setVariations(prev => [variation, ...prev]);
+          addToGallery([variation], originalPrompt);
+          
+          setProcessing({
+            isProcessing: false,
+            progress: 100,
+            currentStep: 'Complete!'
+          });
+
+          // Track usage
+          trackUsage('image_generation', 'seedream_3');
+          
+          setTimeout(() => {
+            setProcessing({
+              isProcessing: false,
+              progress: 0,
+              currentStep: ''
+            });
+          }, 1000);
+
+        } else if (data.status === 'failed') {
+          throw new Error(data.error || 'Seedream 3 prediction failed');
+        } else if (data.status === 'processing' || data.status === 'starting') {
+          setProcessing(prev => ({ 
+            ...prev, 
+            progress: Math.min(90, 50 + (attempts * 2)), 
+            currentStep: `Processing... (${attempts}/${maxAttempts})` 
+          }));
+          
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 5000); // Poll every 5 seconds
+          } else {
+            throw new Error('Seedream 3 generation timed out');
+          }
+        } else {
+          throw new Error(`Unexpected prediction status: ${data.status}`);
+        }
+      } catch (error) {
+        console.error('❌ Seedream 3 polling error:', error);
+        setError(error instanceof Error ? error.message : 'Failed to check Seedream 3 status');
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }
+    };
+
+    await poll();
+  };
+
+  // Handle Seedance 1 Pro text-to-video generation
+  const handleSeedance1ProGeneration = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a text prompt to generate a video');
+      showAnimatedErrorNotification('User Error: Please enter a text prompt! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!canGenerate) {
+      setError('Generation limit reached. Please sign up for unlimited generations.');
+      setShowAuthModal(true);
+      return;
+    }
+
+    const actionId = `seedance1pro-${Date.now()}`;
+    setProcessingAction(actionId);
+
+    try {
+      console.log('🎬 Starting Seedance 1 Pro text-to-video generation:', prompt);
+      
+      setProcessing({
+        isProcessing: true,
+        progress: 10,
+        currentStep: 'Generating video with Seedance 1 Pro...'
+      });
+
+      // Check user credits first
+      const creditCheck = await checkUserCredits('bytedance/seedance-1-pro');
+      if (!creditCheck.hasCredits) {
+        throw new Error(creditCheck.error || 'Insufficient credits for Seedance 1 Pro');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 30, currentStep: 'Processing with Seedance 1 Pro...' }));
+
+      // Prepare image input if available
+      let imageInput = null;
+      if (uploadedFiles.length > 0 && uploadedFiles[0].fileType === 'image') {
+        imageInput = uploadedFiles[0].base64;
+        console.log('🎬 Using uploaded image for image-to-video generation');
+      }
+
+      // Call the Seedance 1 Pro API
+      const response = await fetch('/api/replicate/seedance-1-pro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          image: imageInput,
+          duration: 5,
+          resolution: '1080p',
+          aspectRatio: '16:9',
+          fps: 24,
+          cameraFixed: false,
+          userId: user?.id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start Seedance 1 Pro generation');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Seedance 1 Pro generation failed');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 80, currentStep: 'Processing video...' }));
+
+      // If we got a direct video URL (synchronous completion)
+      if (data.videoUrl) {
+        console.log('✅ Seedance 1 Pro generation completed:', data.videoUrl);
+        
+        // Add to gallery
+        const variation: StoredVariation = {
+          id: `seedance1pro-${Date.now()}`,
+          description: prompt.trim(),
+          originalPrompt: prompt.trim(),
+          angle: 'Seedance 1 Pro',
+          pose: 'AI Generated',
+          imageUrl: undefined,
+          videoUrl: data.videoUrl,
+          fileType: 'video' as const,
+          timestamp: Date.now()
+        };
+
+        setVariations(prev => [variation, ...prev]);
+        addToGallery([variation], prompt.trim());
+        
+        setProcessing({
+          isProcessing: false,
+          progress: 100,
+          currentStep: 'Complete!'
+        });
+
+        // Track usage
+        trackUsage('video_generation', 'seedance_1_pro');
+        
+        setTimeout(() => {
+          setProcessing({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+        }, 1000);
+
+      } else if (data.predictionId) {
+        // Handle async prediction (polling required)
+        console.log('⏳ Seedance 1 Pro prediction started:', data.predictionId);
+        await pollSeedance1ProPrediction(data.predictionId, prompt.trim());
+      } else {
+        throw new Error('No video URL or prediction ID received');
+      }
+
+    } catch (error) {
+      console.error('❌ Seedance 1 Pro generation error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate video with Seedance 1 Pro');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      setGenerationMode(null);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  // Poll Seedance 1 Pro prediction status
+  const pollSeedance1ProPrediction = async (predictionId: string, originalPrompt: string) => {
+    const maxAttempts = 120; // 10 minutes max for video generation
+    let attempts = 0;
+
+    const poll = async (): Promise<void> => {
+      try {
+        attempts++;
+        
+        const response = await fetch(`/api/replicate/prediction/${predictionId}`);
+        if (!response.ok) {
+          throw new Error('Failed to check prediction status');
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'succeeded' && data.output) {
+          console.log('✅ Seedance 1 Pro prediction completed:', data.output);
+          
+          const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+          
+          // Add to gallery
+          const variation: StoredVariation = {
+            id: `seedance1pro-${Date.now()}`,
+            description: originalPrompt,
+            originalPrompt: originalPrompt,
+            angle: 'Seedance 1 Pro',
+            pose: 'AI Generated',
+            imageUrl: undefined,
+            videoUrl: outputUrl,
+            fileType: 'video' as const,
+            timestamp: Date.now()
+          };
+
+          setVariations(prev => [variation, ...prev]);
+          addToGallery([variation], originalPrompt);
+          
+          setProcessing({
+            isProcessing: false,
+            progress: 100,
+            currentStep: 'Complete!'
+          });
+
+          // Track usage
+          trackUsage('video_generation', 'seedance_1_pro');
+          
+          setTimeout(() => {
+            setProcessing({
+              isProcessing: false,
+              progress: 0,
+              currentStep: ''
+            });
+          }, 1000);
+
+        } else if (data.status === 'failed') {
+          throw new Error(data.error || 'Seedance 1 Pro prediction failed');
+        } else if (data.status === 'processing' || data.status === 'starting') {
+          setProcessing(prev => ({ 
+            ...prev, 
+            progress: Math.min(90, 50 + (attempts * 0.5)), 
+            currentStep: `Processing video... (${attempts}/${maxAttempts})` 
+          }));
+          
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 5000); // Poll every 5 seconds
+          } else {
+            throw new Error('Seedance 1 Pro generation timed out');
+          }
+        } else {
+          throw new Error(`Unexpected prediction status: ${data.status}`);
+        }
+      } catch (error) {
+        console.error('❌ Seedance 1 Pro polling error:', error);
+        setError(error instanceof Error ? error.message : 'Failed to check Seedance 1 Pro status');
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }
+    };
+
+    await poll();
+  };
+
   const handleFileUpload = useCallback(async (files: File[]) => {
     console.log('📤 handleFileUpload called with files:', files.length, files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     
@@ -2224,9 +2657,39 @@ export default function Home() {
   };
 
   // Route to correct handler based on selected model
+  // Helper function to check credits before generation
+  const checkCreditsBeforeGeneration = async (modelName: string): Promise<boolean> => {
+    if (!user?.id || isAdmin) {
+      return true; // Skip credit check for non-authenticated users or admins
+    }
+
+    const creditCheck = await checkUserCredits(modelName);
+    
+    if (!creditCheck.hasCredits) {
+      const errorMessage = creditCheck.error || `Insufficient credits! You need $${creditCheck.modelCost.toFixed(4)} but only have $${creditCheck.availableCredits.toFixed(2)}. Purchase more credits to continue.`;
+      showAnimatedErrorNotification(`Credit Error: ${errorMessage} TOASTY!`, 'toasty');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Helper function to refresh credit display
+  const refreshCreditDisplay = () => {
+    setTimeout(() => {
+      creditDisplayRef.current?.refresh();
+    }, 1000);
+  };
+
   const handleModelGeneration = async () => {
     if (!generationMode) {
       showAnimatedErrorNotification('User Error: Please select a model first! TOASTY!', 'toasty');
+      return;
+    }
+
+    // Check credits before generation
+    const hasCredits = await checkCreditsBeforeGeneration(generationMode);
+    if (!hasCredits) {
       return;
     }
 
@@ -2240,6 +2703,14 @@ export default function Home() {
       case 'runway-t2i':
         // Text-to-image generation - can work with or without images
         await handleTextToImage();
+        break;
+      case 'seedream-3':
+        // Seedream 3 text-to-image generation
+        await handleSeedream3Generation();
+        break;
+      case 'seedance-1-pro':
+        // Seedance 1 Pro text-to-video generation
+        await handleSeedance1ProGeneration();
         break;
       case 'nano-banana':
         await handleCharacterVariation();
@@ -2340,6 +2811,29 @@ export default function Home() {
         if (filteredVariations.length > 0) {
           addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
           showNotification('🎨 Character variations generated successfully!', 'success');
+          
+          // Deduct credits after successful generation
+          if (user?.id && !isAdmin) {
+            try {
+              const response = await fetch('/api/use-credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: user.id,
+                  modelName: 'nano-banana',
+                  generationType: 'character_variation'
+                })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+                refreshCreditDisplay();
+              }
+            } catch (error) {
+              console.error('Failed to deduct credits:', error);
+            }
+          }
           
           // Clear input after successful generation
           setPrompt('');
@@ -2639,6 +3133,29 @@ export default function Home() {
       if (filteredVariations.length > 0) {
         addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
         showNotification('🎨 Character variations generated with Flux Dev!', 'success');
+        
+        // Deduct credits after successful generation
+        if (user?.id && !isAdmin) {
+          try {
+            const response = await fetch('/api/use-credits', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                modelName: 'flux-dev',
+                generationType: 'image'
+              })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+              refreshCreditDisplay();
+            }
+          } catch (error) {
+            console.error('Failed to deduct credits:', error);
+          }
+        }
         
         // Clear input after successful generation
         setPrompt('');
@@ -3555,6 +4072,31 @@ export default function Home() {
       setPrompt('');
       setUploadedFiles([]);
       console.log('🧹 Cleared input after successful Veo3 Fast generation');
+
+      // Deduct credits after successful generation
+      if (user?.id && !isAdmin) {
+        try {
+          const response = await fetch('/api/use-credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              modelName: 'veo3-fast',
+              generationType: 'video'
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+            refreshCreditDisplay();
+          }
+        } catch (error) {
+          console.error('Failed to deduct credits:', error);
+        }
+      }
+
+      showNotification('🎬 Video generated successfully with Veo3 Fast!', 'success');
 
       setProcessing({
         isProcessing: false,
@@ -4547,6 +5089,13 @@ export default function Home() {
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
             
+            {/* Credit Display - Compact */}
+            {user && (
+              <div className="mb-6">
+                <UserCreditDisplay ref={creditDisplayRef} compact={true} />
+              </div>
+            )}
+            
         {/* Main Content Container - Centered and Unified */}
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
             
@@ -5513,280 +6062,313 @@ export default function Home() {
                               </button>
                 )}
                 </div>
+                </div>
               </div>
             </div>
-        </div>
 
-        {/* Mobile Gallery Panel */}
+        {/* Mobile Gallery Panel - Accordion Style */}
         {showGallery && (
-          <div className="block lg:hidden fixed bottom-16 left-0 right-0 bg-black bg-opacity-95 backdrop-blur-md border-t border-gray-800/50 z-30 max-h-[60vh] overflow-y-auto gallery-container">
-            <div className="p-2 lg:p-6">
-              <div className="flex items-center justify-between mb-2 lg:mb-6">
-                <h2 className="text-lg lg:text-2xl font-semibold flex items-center gap-2 text-white">
-                  <Images className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
-                  <span className="lg:hidden">Library</span>
-                  <span className="hidden lg:inline">Gallery</span> ({filteredGallery.length})
+          <div className="block lg:hidden fixed bottom-16 left-0 right-0 bg-black bg-opacity-95 backdrop-blur-md border-t border-gray-800/50 z-30 max-h-[60vh] overflow-y-auto">
+            <div className="p-3">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
+                  <Images className="w-5 h-5 text-white" />
+                  Library ({filteredGallery.length})
                 </h2>
                   <button
                     onClick={() => setShowGallery(false)}
-                  className="flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-1 lg:py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors text-sm lg:text-base"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors text-sm"
                     title="Hide gallery"
                   >
-                  <X className="w-3 h-3 lg:w-4 lg:h-4" />
-                  <span className="hidden sm:inline">Hide Gallery</span>
+                  <X className="w-4 h-4" />
+                  <span className="hidden sm:inline">Close</span>
                   </button>
               </div>
 
-              {/* Gallery Filter Toggle */}
-              <div className="flex gap-2 lg:gap-3 mb-2 lg:mb-6 overflow-x-auto">
-                <button
-                  onClick={() => setGalleryFilter('all')}
-                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
-                    galleryFilter === 'all'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-transparent lg:bg-gray-700 text-gray-300 hover:bg-gray-600 border border-transparent'
-                  }`}
-                >
-                  All ({gallery.length})
-                </button>
-                <button
-                  onClick={() => setGalleryFilter('images')}
-                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
-                    galleryFilter === 'images'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-transparent lg:bg-gray-700 text-gray-300 hover:bg-gray-600 border border-transparent'
-                  }`}
-                >
-                  Images ({gallery.filter(item => item.imageUrl && !item.videoUrl).length})
-                </button>
-                <button
-                  onClick={() => setGalleryFilter('videos')}
-                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
-                    galleryFilter === 'videos'
-                      ? 'bg-charcoal text-white border border-border-gray'
-                      : 'bg-transparent lg:bg-gray-700 text-gray-300 hover:bg-gray-600 border border-transparent'
-                  }`}
-                >
-                  Videos ({gallery.filter(item => item.videoUrl).length})
-                </button>
-              </div>
-
-              {/* Gallery Content - Mobile Optimized Layout */}
+              {/* Accordion Gallery */}
               {filteredGallery.length === 0 ? (
-                <div className="text-center py-8 lg:py-12">
-                  <Images className="w-12 h-12 lg:w-16 lg:h-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-base lg:text-lg">No images in gallery yet</p>
-                  <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
+                <div className="text-center py-8">
+                  <Images className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-base">No content in gallery yet</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6">
-                  {filteredGallery.map((item: any, index: number) => {
-                    // Create a more robust unique key that handles duplicates
-                    const itemKey = `${item.id}-${item.timestamp}-${index}`;
-                    const isExpanded = expandedPrompts.has(itemKey);
+                <div className="space-y-3">
+                  {/* Recent Creations Accordion */}
+                  <div>
+                <button
+                      className="w-full px-3 py-2.5 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                      onClick={() => setExpandedPrompts(prev => {
+                        const newSet = new Set(prev);
+                        if (newSet.has('mobile-recent')) {
+                          newSet.delete('mobile-recent');
+                        } else {
+                          newSet.add('mobile-recent');
+                        }
+                        return newSet;
+                      })}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
+                          <Images className="w-3 h-3 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-medium text-sm">Recent Creations</h3>
+                          <p className="text-gray-400 text-xs">{filteredGallery.length} items</p>
+                        </div>
+                      </div>
+                      <ChevronDown 
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          expandedPrompts.has('mobile-recent') ? 'rotate-180' : ''
+                        }`} 
+                      />
+                </button>
+                    
+                    <div className={`overflow-hidden transition-all duration-300 ${
+                      expandedPrompts.has('mobile-recent') ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="pt-2">
+                        <div className="grid grid-cols-3 gap-2">
+                          {filteredGallery.slice(0, 6).map((item: any, index: number) => {
+                            const itemKey = `mobile-recent-${item.id}-${item.timestamp}-${index}`;
                     
                     return (
                       <div 
                         key={itemKey} 
-                        className="gallery-item bg-transparent lg:bg-gray-700 lg:bg-opacity-50 border border-transparent lg:border-gray-600 hover:bg-gray-700 transition-all duration-400 relative z-30 overflow-hidden" 
-                        style={{ 
-                          borderRadius: '30px', 
-                          width: '150px', 
-                          height: '150px', 
-                          margin: '3px', 
-                          filter: 'brightness(0.7)',
-                          transition: 'all 0.4s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.filter = 'brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))';
-                          e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
-                          e.currentTarget.style.zIndex = '10';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.filter = 'brightness(0.7)';
-                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                          e.currentTarget.style.zIndex = '30';
-                        }}
-                      >
-                        {/* Image/Video Preview - Full Card */}
-                        <div className="relative w-full h-full">
+                                className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                              >
+                                <div className="aspect-square">
                           {item.fileType === 'video' ? (
                             <video
                               src={item.videoUrl}
-                              className="w-full h-full object-cover cursor-pointer touch-manipulation"
-                              onClick={() => {
-                                console.log('Mobile gallery video tapped:', item.videoUrl);
-                                setFullScreenImage(item.videoUrl);
-                              }}
-                              onTouchStart={(e) => {
-                                e.currentTarget.style.transform = 'scale(0.95)';
-                                e.currentTarget.style.transition = 'transform 0.1s ease';
-                              }}
-                              onTouchEnd={(e) => {
-                                e.currentTarget.style.transform = 'scale(1)';
-                              }}
-                              muted
-                            />
-                          ) : item.imageUrl ? (
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      loop
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.play();
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.pause();
+                                        e.currentTarget.currentTime = 0;
+                                      }}
+                                    />
+                                  ) : (
                             <img
                               src={getProxiedImageUrl(item.imageUrl)}
                               alt="Gallery item"
-                              className="w-full h-full object-cover cursor-pointer touch-manipulation"
-                              onClick={() => {
-                                console.log('Mobile gallery image tapped:', item.imageUrl);
-                                setFullScreenImage(item.imageUrl);
-                              }}
-                              onTouchStart={(e) => {
-                                e.currentTarget.style.transform = 'scale(0.95)';
-                                e.currentTarget.style.transition = 'transform 0.1s ease';
-                              }}
-                              onTouchEnd={(e) => {
-                                e.currentTarget.style.transform = 'scale(1)';
-                              }}
+                                      className="w-full h-full object-cover"
                               onError={(e) => {
-                                console.error('Mobile gallery image failed to load:', item.imageUrl);
-                                // Try fallback to original image preview
-                                if (item.originalImagePreview && e.currentTarget.src !== item.originalImagePreview) {
-                                  e.currentTarget.src = item.originalImagePreview;
-                                } else {
                                   e.currentTarget.src = '/api/placeholder/150/150';
-                                }
                               }}
-                              onLoad={() => {
-                                console.log('Mobile gallery image loaded successfully:', item.imageUrl);
-                              }}
-                              loading="lazy"
                             />
-                          ) : (
-                            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                              <span className="text-gray-400 text-sm">No Image</span>
-                            </div>
                           )}
-                          
-                          {/* Type Badge */}
-                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
-                            {item.fileType?.toUpperCase() || 'IMAGE'}
                           </div>
 
-                          {/* Mobile Overlay Text */}
-                          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                            <div className="text-xs text-white font-medium mb-1">
-                              {new Date(item.timestamp).toLocaleDateString()}
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                    >
+                                      Vary
+                                    </button>
                             </div>
-                            
-                            {item.angle && (
-                              <div className="text-xs text-gray-200 mb-1">
-                                Angle: {item.angle}
                               </div>
-                            )}
-                            
-                            {item.pose && (
-                              <div className="text-xs text-gray-200 mb-2">
-                                Pose: {item.pose}
                               </div>
-                            )}
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-1 flex-wrap">
+                  {/* Video Collection Accordion */}
+                  <div>
                               <button
-                                onClick={() => {
-                                  if (isExpanded) {
-                                    setExpandedPrompts(prev => {
+                      className="w-full px-3 py-2.5 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                      onClick={() => setExpandedPrompts(prev => {
                                       const newSet = new Set(prev);
-                                      newSet.delete(itemKey);
-                                      return newSet;
-                                    });
+                        if (newSet.has('mobile-videos')) {
+                          newSet.delete('mobile-videos');
                                   } else {
-                                    setExpandedPrompts(prev => new Set([...prev, itemKey]));
-                                  }
-                                }}
-                                className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
-                              >
-                                {isExpanded ? 'Hide' : 'Show'}
+                          newSet.add('mobile-videos');
+                        }
+                        return newSet;
+                      })}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-md flex items-center justify-center">
+                          <Images className="w-3 h-3 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-medium text-sm">Video Collection</h3>
+                          <p className="text-gray-400 text-xs">{filteredGallery.filter(item => item.fileType === 'video').length} videos</p>
+                        </div>
+                      </div>
+                      <ChevronDown 
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          expandedPrompts.has('mobile-videos') ? 'rotate-180' : ''
+                        }`} 
+                      />
                               </button>
-                              <button
-                                onClick={() => handleVaryImage(item.imageUrl, item.originalPrompt)}
-                                disabled={processing.isProcessing}
-                                className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Generate variations with nano_banana"
+                    
+                    <div className={`overflow-hidden transition-all duration-300 ${
+                      expandedPrompts.has('mobile-videos') ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="pt-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {filteredGallery.filter(item => item.fileType === 'video').map((item: any, index: number) => {
+                            const itemKey = `mobile-video-${item.id}-${item.timestamp}-${index}`;
+                            
+                            return (
+                              <div 
+                                key={itemKey} 
+                                className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                onClick={() => setFullScreenImage(item.videoUrl)}
                               >
-                                Vary
-                              </button>
+                                <div className="aspect-square">
+                                  <video
+                                    src={item.videoUrl}
+                                    className="w-full h-full object-cover"
+                                    muted
+                                    loop
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.play();
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.pause();
+                                      e.currentTarget.currentTime = 0;
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                  <div className="flex gap-1">
                               <button
-                                onClick={() => handleEditImage(item.imageUrl, item.originalPrompt)}
-                                disabled={processing.isProcessing}
-                                className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Inject into input slot"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditImage(item.videoUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
                               >
                                 Edit
                               </button>
                               <button
-                                onClick={() => handleDeleteFromGallery(item.id)}
-                                className="text-xs text-red-300 hover:text-red-200 transition-colors px-2 py-1 rounded bg-red-900/30 hover:bg-red-900/50"
-                              >
-                                Delete
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleVaryImage(item.videoUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                    >
+                                      Vary
                               </button>
                             </div>
-
-                            {/* Expanded Prompt */}
-                            {isExpanded && (
-                              <div className="mt-2 bg-black/60 backdrop-blur-sm p-2 rounded">
-                                <p className="text-xs text-white leading-relaxed">
-                                  {item.prompt}
-                                </p>
                               </div>
-                            )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                           </div>
                         </div>
 
-                          {/* Desktop Content */}
-                          <div className="hidden lg:block space-y-2 lg:space-y-3 p-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs lg:text-sm text-gray-400">
-                                {new Date(item.timestamp).toLocaleDateString()}
-                              </span>
-                              <div className="flex gap-1 lg:gap-2">
+                  {/* Image Collection Accordion */}
+                  <div>
                                 <button
-                                  onClick={() => {
-                                    if (isExpanded) {
-                                      setExpandedPrompts(prev => {
+                      className="w-full px-3 py-2.5 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                      onClick={() => setExpandedPrompts(prev => {
                                         const newSet = new Set(prev);
-                                        newSet.delete(itemKey);
-                                        return newSet;
-                                      });
+                        if (newSet.has('mobile-images')) {
+                          newSet.delete('mobile-images');
                                     } else {
-                                      setExpandedPrompts(prev => new Set([...prev, itemKey]));
-                                    }
-                                  }}
-                                  className="text-xs lg:text-sm text-accent-gray hover:text-white transition-colors"
-                                >
-                                  {isExpanded ? 'Hide' : 'Show'} Prompt
+                          newSet.add('mobile-images');
+                        }
+                        return newSet;
+                      })}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-md flex items-center justify-center">
+                          <Images className="w-3 h-3 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-medium text-sm">Image Collection</h3>
+                          <p className="text-gray-400 text-xs">{filteredGallery.filter(item => item.fileType === 'image').length} images</p>
+                        </div>
+                      </div>
+                      <ChevronDown 
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          expandedPrompts.has('mobile-images') ? 'rotate-180' : ''
+                        }`} 
+                      />
+                    </button>
+                    
+                    <div className={`overflow-hidden transition-all duration-300 ${
+                      expandedPrompts.has('mobile-images') ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="pt-2">
+                        <div className="grid grid-cols-4 gap-2">
+                          {filteredGallery.filter(item => item.fileType === 'image').map((item: any, index: number) => {
+                            const itemKey = `mobile-image-${item.id}-${item.timestamp}-${index}`;
+                            
+                            return (
+                              <div 
+                                key={itemKey} 
+                                className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                onClick={() => setFullScreenImage(item.imageUrl)}
+                              >
+                                <div className="aspect-square">
+                                  <img
+                                    src={getProxiedImageUrl(item.imageUrl)}
+                                    alt="Gallery item"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '/api/placeholder/150/150';
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditImage(item.imageUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                                    >
+                                      Edit
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteFromGallery(item.id)}
-                                  className="text-xs lg:text-sm text-red-400 hover:text-red-300 transition-colors"
-                                >
-                                  Delete
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleVaryImage(item.imageUrl, item.originalPrompt);
+                                      }}
+                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                    >
+                                      Vary
                                 </button>
                               </div>
                             </div>
-
-                            {isExpanded && (
-                              <div className="bg-transparent lg:bg-gray-800 p-2 lg:p-3 rounded-lg">
-                                <p className="text-xs lg:text-sm text-gray-300">
-                                  {item.prompt}
-                                </p>
                               </div>
-                            )}
-                            
-                            <div className="text-xs lg:text-sm text-gray-400 space-y-1">
-                              {item.angle && <div>Angle: {item.angle}</div>}
-                              {item.pose && <div>Pose: {item.pose}</div>}
+                            );
+                          })}
                             </div>
                           </div>
                       </div>
-                    );
-                  })}
+                  </div>
                 </div>
               )}
 
@@ -5868,65 +6450,99 @@ export default function Home() {
                           <div className="grid grid-cols-4 gap-3">
                             {filteredGallery.slice(0, 8).map((item: any, index: number) => {
                               const itemKey = `recent-${item.id}-${item.timestamp}-${index}`;
-                              
-                              return (
-                                <div 
-                                  key={itemKey} 
+                    
+                    return (
+                        <div 
+                          key={itemKey} 
                                   className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                                  onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
-                                >
-                                  <div className="aspect-square">
-                                    {item.fileType === 'video' ? (
-                                      <video
-                                        src={item.videoUrl}
-                                        className="w-full h-full object-cover"
-                                        muted
-                                        loop
-                                        onMouseEnter={(e) => {
-                                          e.currentTarget.play();
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          e.currentTarget.pause();
-                                          e.currentTarget.currentTime = 0;
-                                        }}
-                                      />
-                                    ) : (
-                                      <img
-                                        src={getProxiedImageUrl(item.imageUrl)}
-                                        alt="Gallery item"
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          e.currentTarget.src = '/api/placeholder/300/300';
-                                        }}
-                                      />
-                                    )}
-                                  </div>
+                          onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                        >
+                          <div className="aspect-square">
+                            {item.fileType === 'video' ? (
+                              <video
+                                src={item.videoUrl}
+                                className="w-full h-full object-cover"
+                                muted
+                                loop
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.play();
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.pause();
+                                  e.currentTarget.currentTime = 0;
+                                }}
+                              />
+                            ) : (
+                              <img
+                                src={getProxiedImageUrl(item.imageUrl)}
+                                alt="Gallery item"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/api/placeholder/300/300';
+                                }}
+                              />
+                            )}
+                          </div>
 
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          {/* Delete Icon - Top Left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromGallery(item.id, item.timestamp);
+                            }}
+                            className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                            title="Delete from gallery"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+
+                          {/* Download Icon - Bottom Left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = item.videoUrl || item.imageUrl;
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `vary-ai-${item.id}.${item.fileType === 'video' ? 'mp4' : 'jpg'}`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                            title="Download file"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </button>
+
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                     <div className="flex gap-1">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                                        }}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                }}
                                         className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                                        }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                }}
                                         className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
-                                      >
-                                        Vary
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                              >
+                                Vary
+                              </button>
+                            </div>
+                          </div>
+                      </div>
+                    );
+                  })}
                           </div>
                         </div>
                       </div>
@@ -5991,6 +6607,41 @@ export default function Home() {
                                       }}
                                     />
                                   </div>
+
+                                  {/* Delete Icon - Top Left */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFromGallery(item.id, item.timestamp);
+                                    }}
+                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    title="Delete from gallery"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+
+                                  {/* Download Icon - Bottom Left */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const url = item.videoUrl;
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = `vary-ai-${item.id}.mp4`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    title="Download file"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </button>
+
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                     <div className="flex gap-1">
                                       <button
@@ -6075,6 +6726,41 @@ export default function Home() {
                                       }}
                                     />
                                   </div>
+
+                                  {/* Delete Icon - Top Left */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFromGallery(item.id, item.timestamp);
+                                    }}
+                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    title="Delete from gallery"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+
+                                  {/* Download Icon - Bottom Left */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const url = item.imageUrl;
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = `vary-ai-${item.id}.jpg`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    title="Download file"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </button>
+
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                     <div className="flex gap-1">
                                       <button
@@ -6104,24 +6790,24 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                </div>
+              )}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Scroll to Top Button */}
-      {showScrollToTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </button>
-      )}
+              {/* Scroll to Top Button */}
+              {showScrollToTop && (
+                <button
+                  onClick={scrollToTop}
+                  className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                  aria-label="Scroll to top"
+                >
+                  <ArrowUp className="w-5 h-5" />
+                </button>
+              )}
 
       {/* Help Modal */}
       <HelpModal 

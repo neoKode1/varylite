@@ -78,6 +78,20 @@ export async function GET(request: NextRequest) {
     
     if (!response.ok) {
       console.error(`❌ Image fetch failed: ${response.status} - ${response.statusText}`);
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        console.warn(`🔒 JWT token expired for URL: ${imageUrl}`);
+        // Return a placeholder image for expired URLs
+        return new NextResponse(null, {
+          status: 302,
+          headers: {
+            'Location': '/api/placeholder/400/400?text=Image+Expired',
+            'Cache-Control': 'no-cache'
+          }
+        });
+      }
+      
       return NextResponse.json({
         error: `Failed to fetch image: ${response.status} ${response.statusText}`
       }, { status: response.status });

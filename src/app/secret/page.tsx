@@ -67,7 +67,14 @@ type SecretGenerationMode =
   | 'wav2lip'
   | 'latentsync'
   | 'sync-fondo'
-  | 'musetalk';
+  | 'musetalk'
+  
+  // Premium Models (Secret Level Only)
+  | 'seedance-pro'
+  | 'seedance-pro-t2v'
+  
+  // Replicate Models (Secret Level Only)
+  | 'sync/lipsync-2-pro';
 
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
@@ -371,8 +378,75 @@ export default function SecretPage() {
       'wav2lip',
       'latentsync',
       'sync-fondo',
-      'musetalk'
+      'musetalk',
+      
+      // Premium Models (Secret Level Only)
+      'seedance-pro',
+      'seedance-pro-t2v',
+      
+      // Replicate Models (Secret Level Only)
+      'sync/lipsync-2-pro'
     ];
+  };
+
+  // Categorize models for better organization
+  const categorizeModels = (models: SecretGenerationMode[]) => {
+    const categories = {
+      'textToImage': {
+        title: '🎨 Text-to-Image Models',
+        description: 'Generate images from text prompts',
+        models: models.filter(model => model.includes('text-to-image'))
+      },
+      'textToVideo': {
+        title: '🎬 Text-to-Video Models', 
+        description: 'Generate videos from text prompts',
+        models: models.filter(model => model.includes('text-to-video'))
+      },
+      'imageToVideo': {
+        title: '🖼️➡️🎬 Image-to-Video Models',
+        description: 'Convert images into videos',
+        models: models.filter(model => model.includes('image-to-video'))
+      },
+      'imageEditing': {
+        title: '✏️ Image Editing Models',
+        description: 'Edit and enhance existing images',
+        models: models.filter(model => model.includes('edit') || model.includes('dreamina'))
+      },
+      'lipSync': {
+        title: '👄 Lip Sync Models',
+        description: 'Synchronize lip movements with audio',
+        models: models.filter(model => ['wav2lip', 'latentsync', 'sync-fondo', 'musetalk', 'sync/lipsync-2-pro'].includes(model))
+      },
+      'textToSpeech': {
+        title: '🔊 Text-to-Speech Models',
+        description: 'Convert text to natural speech',
+        models: models.filter(model => model.includes('tts') || model.includes('speech'))
+      },
+      'premium': {
+        title: '💎 Premium Models',
+        description: 'High-end models with advanced capabilities',
+        models: models.filter(model => ['seedance-pro', 'seedance-pro-t2v', 'bytedance-seedance-v1-pro-image-to-video'].includes(model))
+      },
+      'legacy': {
+        title: '🔄 Legacy Models',
+        description: 'Older models maintained for compatibility',
+        models: models.filter(model => 
+          !model.includes('text-to-image') && 
+          !model.includes('text-to-video') && 
+          !model.includes('image-to-video') && 
+          !model.includes('edit') && 
+          !['wav2lip', 'latentsync', 'sync-fondo', 'musetalk', 'seedance-pro', 'seedance-pro-t2v', 'bytedance-seedance-v1-pro-image-to-video', 'sync/lipsync-2-pro'].includes(model)
+        )
+      }
+    };
+
+    // Remove empty categories
+    return Object.entries(categories).reduce((acc, [key, category]) => {
+      if (category.models.length > 0) {
+        acc[key as keyof typeof categories] = category;
+      }
+      return acc;
+    }, {} as Partial<typeof categories>);
   };
 
   // Get models to display based on admin status and progression
@@ -459,7 +533,12 @@ export default function SecretPage() {
       'wav2lip': 30,
       'latentsync': 45,
       'sync-fondo': 40,
-      'musetalk': 35
+      'musetalk': 35,
+      'sync/lipsync-2-pro': 60, // Studio-grade lipsync takes longer
+      
+      // Premium Models (Secret Level Only)
+      'seedance-pro': 120,
+      'seedance-pro-t2v': 120
     };
     return timeEstimates[mode] || 30;
   };
@@ -533,7 +612,12 @@ export default function SecretPage() {
       'wav2lip': 'Wav2Lip',
       'latentsync': 'LatentSync',
       'sync-fondo': '[sync.] Fondo',
-      'musetalk': 'MuseTalk'
+      'musetalk': 'MuseTalk',
+      'sync/lipsync-2-pro': '🎬 LipSync 2 Pro',
+      
+      // Premium Models (Secret Level Only)
+      'seedance-pro': '💎 Seedance Pro',
+      'seedance-pro-t2v': '💎 Seedance Pro T2V'
     };
     return displayNames[mode] || mode;
   }, []);
@@ -1690,74 +1774,76 @@ export default function SecretPage() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {getDisplayModels().map((mode) => {
-                    const isUnlocked = unlockedModels.has(mode) || isModelUnlocked(mode) || isSecretModelUnlocked(mode);
-                    const isAdminModel = isAdmin;
-                    const costTier = getModelCostTier(mode);
-                    return (
-                      <button
-                        key={mode}
-                        onClick={async () => {
-                          // If model is not unlocked, try to unlock it first
-                          if (!isUnlocked && !isAdminModel) {
-                            const unlocked = await unlockModel(mode);
-                            if (unlocked) {
-                              showError(`🎉 ${getModelDisplayName(mode)} unlocked!`);
-                            } else {
-                              showError('Failed to unlock model. Please try again.');
-                              return;
-                            }
-                          }
-                          setGenerationMode(mode);
-                        }}
-                        disabled={!isUnlocked && !isAdminModel}
-                        className={`p-4 rounded-lg border transition-all duration-300 text-left ${
-                          generationMode === mode
-                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
-                            : isUnlocked || isAdminModel
-                            ? 'border-white/20 hover:border-white/40 text-white/80 hover:text-white'
-                            : 'border-white/10 text-white/40 cursor-not-allowed opacity-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{getModelDisplayName(mode)}</p>
-                            <p className="text-sm opacity-75">
-                              ~{getEstimatedTimeForMode(mode)}s
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              {!isUnlocked && !isAdminModel && (
-                                <p className="text-xs text-red-400">🔒 Locked</p>
-                              )}
-                              {/* Model Type Badges */}
-                              {(mode.includes('text-to-image') || mode.includes('image-to-video')) && (
-                                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">🖼️ Image Model</span>
-                              )}
-                              {mode.includes('video') && (
-                                <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded">🎬 Daily Limit</span>
-                              )}
-                              {costTier === 'high' && (
-                                <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Premium</span>
-                              )}
-                              {costTier === 'medium' && (
-                                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Standard</span>
-                              )}
-                              {costTier === 'low' && (
-                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Economy</span>
-                              )}
+                {/* Categorized Model Display */}
+                {Object.entries(categorizeModels(getDisplayModels())).map(([categoryKey, category]) => (
+                  <div key={categoryKey} className="mb-8">
+                    <div className="mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-1">{category.title}</h4>
+                      <p className="text-sm text-white/60">{category.description}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {category.models.map((mode) => {
+                        const isUnlocked = unlockedModels.has(mode) || isModelUnlocked(mode) || isSecretModelUnlocked(mode);
+                        const isAdminModel = isAdmin;
+                        const costTier = getModelCostTier(mode);
+                        return (
+                          <button
+                            key={mode}
+                            onClick={async () => {
+                              // If model is not unlocked, try to unlock it first
+                              if (!isUnlocked && !isAdminModel) {
+                                const unlocked = await unlockModel(mode);
+                                if (unlocked) {
+                                  showError(`🎉 ${getModelDisplayName(mode)} unlocked!`);
+                                } else {
+                                  showError('Failed to unlock model. Please try again.');
+                                  return;
+                                }
+                              }
+                              setGenerationMode(mode);
+                            }}
+                            disabled={!isUnlocked && !isAdminModel}
+                            className={`p-4 rounded-lg border transition-all duration-300 text-left ${
+                              generationMode === mode
+                                ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
+                                : isUnlocked || isAdminModel
+                                ? 'border-white/20 hover:border-white/40 text-white/80 hover:text-white'
+                                : 'border-white/10 text-white/40 cursor-not-allowed opacity-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{getModelDisplayName(mode)}</p>
+                                <p className="text-xs opacity-75 mt-1">
+                                  ~{getEstimatedTimeForMode(mode)}s
+                                </p>
+                                <div className="flex items-center gap-1 mt-2 flex-wrap">
+                                  {!isUnlocked && !isAdminModel && (
+                                    <span className="text-xs text-red-400 bg-red-500/20 px-2 py-1 rounded">🔒 Locked</span>
+                                  )}
+                                  {costTier === 'high' && (
+                                    <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Premium</span>
+                                  )}
+                                  {costTier === 'medium' && (
+                                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Standard</span>
+                                  )}
+                                  {costTier === 'low' && (
+                                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Economy</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={`w-3 h-3 rounded-full ml-2 ${
+                                isUnlocked || isAdminModel 
+                                  ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                                  : 'bg-gray-500'
+                              }`}></div>
                             </div>
-                          </div>
-                          <div className={`w-3 h-3 rounded-full ${
-                            isUnlocked || isAdminModel 
-                              ? 'bg-gradient-to-r from-purple-500 to-pink-500'
-                              : 'bg-gray-500'
-                          }`}></div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
                 {!isAdmin && (
                   <div className="mt-3 text-center">
                     <p className="text-white/60 text-sm">

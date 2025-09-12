@@ -17,7 +17,7 @@ interface UsageTrackingHook {
   usageStats: UsageStats
   canGenerate: boolean
   remainingGenerations: number
-  trackUsage: (actionType: 'image_generation' | 'video_generation' | 'character_variation' | 'background_change', serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini', metadata?: any) => Promise<void>
+  trackUsage: (actionType: 'image_generation' | 'video_generation' | 'character_variation' | 'background_change', serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini' | 'seedream_3' | 'seedance_1_pro', metadata?: any) => Promise<void>
   getSessionId: () => string
   isAnonymous: boolean
 }
@@ -109,7 +109,7 @@ export const useUsageTracking = (): UsageTrackingHook => {
 
   const trackUsage = useCallback(async (
     actionType: 'image_generation' | 'video_generation' | 'character_variation' | 'background_change',
-    serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini' | 'veo3_fast' | 'minimax_2.0',
+    serviceUsed: 'nano_banana' | 'runway_aleph' | 'minimax_endframe' | 'gemini' | 'veo3_fast' | 'minimax_2.0' | 'seedream_3' | 'seedance_1_pro',
     metadata: any = {}
   ) => {
     try {
