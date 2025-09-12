@@ -279,6 +279,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         throw new Error('Failed to save settings');
       }
 
+      const data = await response.json();
+      console.log('Settings saved successfully:', data);
+      
+      // Update local profile state with the response
+      if (data.profile) {
+        setProfile(data.profile);
+      }
+      
       setSettingsChanged(false);
       setNotification({
         type: 'success',
