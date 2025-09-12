@@ -235,7 +235,7 @@ async function tryAlternativeModels(
   // Last resort: try with default model (no specific model name)
   try {
     console.log('🔄 Trying default Gemini model as last resort...');
-    const defaultModel = genAI.getGenerativeModel({});
+    const defaultModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const result = await defaultModel.generateContent([prompt, ...imageParts]);
     console.log('✅ Successfully used default Gemini model');
     return result;

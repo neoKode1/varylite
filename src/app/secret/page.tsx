@@ -259,7 +259,7 @@ export default function SecretPage() {
       'minimax-hailuo-02-pro-image-to-video',  // FAL proxy (Minimax Image-to-Video) - IMAGE MODEL
       'kling-video-v2-1-master-image-to-video', // FAL proxy (Kling Image-to-Video) - IMAGE MODEL
       'runway-aleph-image-to-video',      // Runway API route (ALEPH Restyled) - IMAGE MODEL
-      'minimax-endframe-text-to-video'   // Direct API route (Minimax Endframe) - VIDEO MODEL
+      'minimax-video-01'   // Direct API route (Minimax Endframe) - VIDEO MODEL
     ];
     setUnlockedModels(new Set(basicModels));
   }, [user, hasSecretAccess]);
@@ -517,8 +517,6 @@ export default function SecretPage() {
       'flux-krea': 'Flux Krea',
       'flux-pro-kontext': 'Flux Pro Kontext',
       'imagen4-preview': 'Imagen4 Preview',
-      'kling-video-v2-1-master-image-to-video': 'Kling V2.1 Master',
-      'minimax-hailuo-02-pro-image-to-video': 'Minimax Hailuo 02 Pro',
       'minimax-video-01': 'Minimax Video 01',
       'minimax-video-generation': 'Minimax Video Gen',
       'nano-banana-edit': 'Nano Banana Edit',
@@ -773,10 +771,10 @@ export default function SecretPage() {
   };
 
   // Helper function to add timeout to API calls
-  const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  const withTimeout = (promise: Promise<any>, timeoutMs: number): Promise<any> => {
     return Promise.race([
       promise,
-      new Promise<T>((_, reject) => 
+      new Promise((_, reject) => 
         setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
       )
     ]);
