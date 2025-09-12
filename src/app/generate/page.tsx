@@ -3962,7 +3962,7 @@ export default function Home() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEditImage(item.imageUrl, item.originalPrompt);
+                            handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
                           }}
                           disabled={processing.isProcessing}
                           className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -3973,7 +3973,7 @@ export default function Home() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleVaryImage(item.imageUrl, item.originalPrompt);
+                            handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
                           }}
                           disabled={processing.isProcessing}
                           className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4194,7 +4194,7 @@ export default function Home() {
             </div>
 
             {/* Mobile Floating Input - Match Community Page Style */}
-            <div className="mobile-chat-interface md:hidden hidden">
+            <div className="mobile-chat-interface md:hidden hidden" data-input-area>
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
                 <div className="mb-3">
@@ -4633,7 +4633,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="generate-floating-input hidden md:block">
+            <div className="generate-floating-input hidden md:block" data-input-area>
               {/* Dynamic Content - Only show when images are uploaded */}
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
