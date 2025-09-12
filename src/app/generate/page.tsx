@@ -3949,40 +3949,39 @@ export default function Home() {
                       />
                     )}
                     
-                    {/* Hover Overlay with Actions - Same as 2x2 grid */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
-                      {/* Top section with variant info */}
-                      <div className="text-white text-sm">
-                        <p className="font-medium truncate">{item.description || 'Generated Content'}</p>
-                        <p className="text-xs opacity-80">{item.fileType?.toUpperCase()}</p>
-                      </div>
-                      
-                      {/* Bottom section with action buttons */}
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                          }}
-                          disabled={processing.isProcessing}
-                          className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Inject into input slot for editing"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                          }}
-                          disabled={processing.isProcessing}
-                          className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Generate variations with nano_banana"
-                        >
-                          Vary
-                        </button>
-                      </div>
-                    </div>
+                          {/* Hover Overlay with Actions - Centered buttons */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            {/* Centered action buttons */}
+                            <div className="flex gap-3">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                }}
+                                disabled={processing.isProcessing}
+                                className="text-sm text-blue-300 hover:text-blue-200 transition-colors px-4 py-2 rounded-lg bg-blue-900/40 hover:bg-blue-900/60 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                title="Inject into input slot for editing"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                }}
+                                disabled={processing.isProcessing}
+                                className="text-sm text-purple-300 hover:text-purple-200 transition-colors px-4 py-2 rounded-lg bg-purple-900/40 hover:bg-purple-900/60 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                title="Generate variations with nano_banana"
+                              >
+                                Vary
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Minimal file type indicator - top right corner */}
+                          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                            {item.fileType === 'video' ? 'VID' : 'IMG'}
+                          </div>
                   </div>
                 </div>
               ))
