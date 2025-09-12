@@ -937,40 +937,6 @@ export default function Home() {
     return null;
   }, [uploadedFiles]);
 
-  // Load user's default model preference from profile
-  const loadUserDefaultModel = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/profile', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const defaultModel = data.profile?.preferences?.defaultModel;
-        if (defaultModel && getAvailableModes().includes(defaultModel as GenerationMode)) {
-          setUserDefaultModel(defaultModel as GenerationMode);
-          // Set as initial generation mode if no files uploaded
-          if (uploadedFiles.length === 0 && !generationMode) {
-            setGenerationMode(defaultModel as GenerationMode);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading user default model:', error);
-    }
-  }, [getAvailableModes, uploadedFiles.length, generationMode]);
-
-  // Load user preferences on component mount
-  useEffect(() => {
-    loadUserDefaultModel();
-  }, [loadUserDefaultModel]);
-
   // Get available generation modes for current state
   const getAvailableModes = useCallback((): GenerationMode[] => {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
@@ -1030,6 +996,40 @@ export default function Home() {
     };
     return displayNames[mode] || mode;
   }, []);
+
+  // Load user's default model preference from profile
+  const loadUserDefaultModel = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const defaultModel = data.profile?.preferences?.defaultModel;
+        if (defaultModel && getAvailableModes().includes(defaultModel as GenerationMode)) {
+          setUserDefaultModel(defaultModel as GenerationMode);
+          // Set as initial generation mode if no files uploaded
+          if (uploadedFiles.length === 0 && !generationMode) {
+            setGenerationMode(defaultModel as GenerationMode);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user default model:', error);
+    }
+  }, [getAvailableModes, uploadedFiles.length, generationMode]);
+
+  // Load user preferences on component mount
+  useEffect(() => {
+    loadUserDefaultModel();
+  }, [loadUserDefaultModel]);
 
   // Mobile image display handlers
   const handleSwipeLeft = useCallback(() => {
