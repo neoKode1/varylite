@@ -74,6 +74,7 @@ import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
 import { HelpModal } from '@/components/HelpModal';
 import { useUserProgression } from '@/hooks/useUserProgression';
+import { useUnlockedModels } from '@/hooks/useUnlockedModels';
 import { LevelProgressionModal } from '@/components/LevelProgressionModal';
 import { LevelProgressIndicator } from '@/components/LevelProgressIndicator';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
@@ -153,6 +154,8 @@ export default function SecretPage() {
     isModelUnlocked,
     getModelCostTier
   } = useUserProgression();
+  
+  const { unlockModel, isSecretModelUnlocked } = useUnlockedModels();
 
   // Authentication states
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1689,13 +1692,25 @@ export default function SecretPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {getDisplayModels().map((mode) => {
-                    const isUnlocked = unlockedModels.has(mode) || isModelUnlocked(mode);
+                    const isUnlocked = unlockedModels.has(mode) || isModelUnlocked(mode) || isSecretModelUnlocked(mode);
                     const isAdminModel = isAdmin;
                     const costTier = getModelCostTier(mode);
                     return (
                       <button
                         key={mode}
-                        onClick={() => setGenerationMode(mode)}
+                        onClick={async () => {
+                          // If model is not unlocked, try to unlock it first
+                          if (!isUnlocked && !isAdminModel) {
+                            const unlocked = await unlockModel(mode);
+                            if (unlocked) {
+                              showNotification(`🎉 ${getModelDisplayName(mode)} unlocked!`, 'success');
+                            } else {
+                              showError('Failed to unlock model. Please try again.');
+                              return;
+                            }
+                          }
+                          setGenerationMode(mode);
+                        }}
                         disabled={!isUnlocked && !isAdminModel}
                         className={`p-4 rounded-lg border transition-all duration-300 text-left ${
                           generationMode === mode

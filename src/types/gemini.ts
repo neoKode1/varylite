@@ -2,6 +2,7 @@ export interface CharacterVariationRequest {
   images: string[]; // array of base64 encoded images
   mimeTypes?: string[]; // array of MIME types for each image
   prompt: string; // user's angle/pose variation prompt
+  useFluxDev?: boolean; // flag to use Flux Dev as fallback instead of Nano Banana
 }
 
 export interface CharacterVariation {
@@ -108,4 +109,34 @@ export interface EndFrameResponse {
   status?: string;
   error?: string;
   retryable?: boolean;
+}
+
+// User Unlocked Models Types
+export interface UserUnlockedModel {
+  id: string;
+  user_id: string;
+  model_name: string;
+  unlocked_at: string;
+  created_at: string;
+}
+
+export interface UnlockModelRequest {
+  modelName: string;
+}
+
+export interface UnlockModelResponse {
+  success: boolean;
+  message?: string;
+  unlockData?: UserUnlockedModel;
+  alreadyUnlocked?: boolean;
+  error?: string;
+}
+
+export interface GetUnlockedModelsResponse {
+  success: boolean;
+  unlockedModels: Array<{
+    model_name: string;
+    unlocked_at: string;
+  }>;
+  error?: string;
 }

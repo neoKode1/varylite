@@ -28,12 +28,19 @@ type GenerationMode =
   | 'minimax-2-t2v'
   | 'kling-2.1-master-t2v'
   | 'seedance-pro'
-  | 'seedance-pro-t2v';
+  | 'seedance-pro-t2v'
+  | 'decart-lucy-14b'
+  | 'minimax-i2v-director'
+  | 'hailuo-02-pro'
+  | 'kling-video-pro'
+  | 'flux-dev';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
 import { HelpModal } from '@/components/HelpModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { useSecretAccess } from '@/hooks/useSecretAccess';
+import { useUnlockedModels } from '@/hooks/useUnlockedModels';
 import { useUserGallery } from '@/hooks/useUserGallery';
 import { getProxiedImageUrl } from '@/lib/imageUtils';
 import { Header } from '@/components/Header';
@@ -645,6 +652,8 @@ interface StoredVariation extends CharacterVariation {
 export default function Home() {
   const { user } = useAuth();
   const { canGenerate, trackUsage, isAnonymous } = useUsageTracking();
+  const { hasSecretAccess, isAdmin, loading: secretAccessLoading } = useSecretAccess();
+  const { unlockedGenerateModels, isGenerateModelUnlocked, isVideoVariantModel } = useUnlockedModels();
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
   const router = useRouter();
   const pathname = usePathname();
@@ -836,7 +845,12 @@ export default function Home() {
       'minimax-2-t2v': 150, // 2.5 minutes for minimax t2v
       'kling-2.1-master-t2v': 120, // 2 minutes for kling t2v
       'seedance-pro': 45, // 45 seconds for seedance pro
-      'seedance-pro-t2v': 60 // 1 minute for seedance pro t2v
+      'seedance-pro-t2v': 60, // 1 minute for seedance pro t2v
+      'decart-lucy-14b': 90, // 1.5 minutes for Lucy 14B video variations
+      'minimax-i2v-director': 120, // 2 minutes for MiniMax I2V Director
+      'hailuo-02-pro': 100, // 1.67 minutes for Hailuo 02 Pro video variations
+      'kling-video-pro': 110, // 1.83 minutes for Kling Video Pro video variations
+      'flux-dev': 20 // 20 seconds for Flux Dev image generation
     };
     return timeEstimates[mode] || 30;
   };
@@ -891,6 +905,7 @@ export default function Home() {
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
   const [endFrameProcessing, setEndFrameProcessing] = useState<boolean>(false); // Track EndFrame generation
   const [processingMode, setProcessingMode] = useState<'variations' | 'endframe'>('variations'); // Track processing mode
+  const [contentMode, setContentMode] = useState<'image' | 'video'>('image'); // Track content mode (image/video)
   const [endFrameTaskId, setEndFrameTaskId] = useState<string | null>(null); // Track EndFrame task ID
   const [endFramePollingTimeout, setEndFramePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
   const [showPromptGuide, setShowPromptGuide] = useState<boolean>(false); // Track prompt guide modal
@@ -942,21 +957,34 @@ export default function Home() {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
+    // Check if device is mobile
+    const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     const modes: GenerationMode[] = [];
     
     if (hasImages) {
-      // When images are uploaded, only show image processing models
       if (uploadedFiles.length === 1) {
-        // Single image - character variation models
-        modes.push('nano-banana');
-        // modes.push('veo3-fast'); // DISABLED: Veo3 Fast temporarily disabled in production
-        modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
-        modes.push('minimax-video'); // Image-to-video with Minimax Video
-        modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
-        modes.push('seedance-pro'); // Image-to-video with Seedance Pro
-      } else if (uploadedFiles.length >= 2) {
-        // Multiple images - end frame models
-        modes.push('nano-banana'); // Can still do character variations
+        // Single image - show models based on content mode
+        if (contentMode === 'image') {
+          // Image mode: show image variation models with fallback
+          modes.push('nano-banana'); // Character variations (primary)
+          modes.push('flux-dev'); // Flux Dev as fallback
+        } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
+          // Video mode: show video variant models (desktop only + secret access required)
+          modes.push('decart-lucy-14b'); // Lucy 14B video variant model
+          modes.push('minimax-i2v-director'); // MiniMax I2V Director with camera control
+          modes.push('hailuo-02-pro'); // Hailuo 02 Pro video variant model
+          modes.push('kling-video-pro'); // Kling Video Pro video variant model
+        }
+        
+        // Add unlocked models from secret page (non-video-variant models only)
+        unlockedGenerateModels.forEach(model => {
+          if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
+            modes.push(model as any);
+          }
+        });
+      } else if (uploadedFiles.length >= 2 && !isMobile) {
+        // Multiple images - end frame models (always video output, desktop only)
         modes.push('minimax-2.0'); // End frame generation with Mini Mac's End Frame
         modes.push('minimax-video'); // End frame generation with Minimax Video
         modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
@@ -965,15 +993,25 @@ export default function Home() {
     } else {
       // When no images are uploaded, show text-to-image and text-to-video models
       modes.push('runway-t2i'); // Text-to-image
-      modes.push('runway-video'); // Text-to-video with Runway
-      modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
-      modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
-      modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
-      modes.push('seedance-pro-t2v'); // Text-to-video with Seedance Pro
+      if (!isMobile) {
+        // Video models only on desktop
+        modes.push('runway-video'); // Text-to-video with Runway
+        modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
+        modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
+        modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
+        modes.push('seedance-pro-t2v'); // Text-to-video with Seedance Pro
+      }
+      
+      // Add unlocked models from secret page (non-video-variant models only)
+      unlockedGenerateModels.forEach(model => {
+        if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
+          modes.push(model as any);
+        }
+      });
     }
     
     return modes;
-  }, [uploadedFiles]);
+  }, [uploadedFiles, contentMode, hasSecretAccess, unlockedGenerateModels, isVideoVariantModel]);
 
   // Get display name for generation mode
   const getModelDisplayName = useCallback((mode: GenerationMode, isMobile: boolean = false): string => {
@@ -989,7 +1027,12 @@ export default function Home() {
       'minimax-2-t2v': 'Minimax 2.0 T2V',
       'kling-2.1-master-t2v': 'Kling 2.1 Master T2V',
       'seedance-pro': 'Seedance Pro',
-      'seedance-pro-t2v': 'Seedance Pro T2V'
+      'seedance-pro-t2v': 'Seedance Pro T2V',
+      'decart-lucy-14b': 'Lucy 14B Video',
+      'minimax-i2v-director': 'MiniMax I2V Director',
+      'hailuo-02-pro': 'Hailuo 02 Pro',
+      'kling-video-pro': 'Kling Video Pro',
+      'flux-dev': 'Flux Dev'
     };
     return displayNames[mode] || mode;
   }, []);
@@ -1205,6 +1248,52 @@ export default function Home() {
       setProcessingMode('variations');
     }
   }, [hasVideoFiles, uploadedFiles.length]);
+
+  // Smart defaults for content mode based on uploads
+  useEffect(() => {
+    // Check if device is mobile
+    const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (hasImageFiles && !hasVideoFiles) {
+      if (uploadedFiles.length === 1) {
+        // Single image upload - enable toggle but don't force mode
+        // User can choose between image variations (Nano Banana) or video generation
+        console.log('🎯 Smart default: Single image detected, toggle enabled for user choice');
+        // Keep current contentMode, don't auto-switch
+        // Force image mode on mobile for single images
+        if (isMobile) {
+          setContentMode('image');
+        }
+      } else if (uploadedFiles.length >= 2) {
+        // Multiple images - likely wants image variations, default to image mode
+        setContentMode('image');
+        console.log('🎯 Smart default: Multiple images detected, switching to image mode');
+      }
+    } else if (hasVideoFiles) {
+      // Video files uploaded - default to video mode (desktop only)
+      if (isMobile) {
+        setContentMode('image');
+        console.log('🎯 Mobile detected: Forcing image mode even for video files');
+      } else {
+        setContentMode('video');
+        console.log('🎯 Smart default: Video files detected, switching to video mode');
+      }
+    }
+  }, [hasImageFiles, hasVideoFiles, uploadedFiles.length]);
+
+  // Clear selected model when content mode changes to force dropdown update
+  useEffect(() => {
+    if (generationMode) {
+      // Check if current model is compatible with new content mode
+      const isVideoModel = generationMode === 'decart-lucy-14b' || generationMode === 'minimax-i2v-director' || generationMode === 'hailuo-02-pro' || generationMode === 'kling-video-pro';
+      const isImageModel = generationMode === 'nano-banana' || generationMode === 'flux-dev';
+      
+      if ((contentMode === 'image' && isVideoModel) || (contentMode === 'video' && isImageModel)) {
+        console.log('🔄 Content mode changed, clearing incompatible model:', generationMode);
+        setGenerationMode(null);
+      }
+    }
+  }, [contentMode, generationMode]);
 
   // Migrate localStorage to database when user signs up
   useEffect(() => {
@@ -2141,6 +2230,12 @@ export default function Home() {
       return;
     }
 
+    // Check if we should use video variations based on content mode
+    if (contentMode === 'video' && (generationMode === 'decart-lucy-14b' || generationMode === 'minimax-i2v-director' || generationMode === 'hailuo-02-pro' || generationMode === 'kling-video-pro')) {
+      await handleVideoVariation();
+      return;
+    }
+
     switch (generationMode) {
       case 'runway-t2i':
         // Text-to-image generation - can work with or without images
@@ -2148,6 +2243,9 @@ export default function Home() {
         break;
       case 'nano-banana':
         await handleCharacterVariation();
+        break;
+      case 'flux-dev':
+        await handleFluxDevGeneration();
         break;
       case 'minimax-2.0':
         // MiniMax End Frame - requires 2 images, uses older /api/endframe infrastructure
@@ -2263,6 +2361,305 @@ export default function Home() {
 
     } catch (err) {
       console.error('❌ Character variation error:', err);
+      
+      // Enhanced error handling with better user messages
+      let userMessage = 'An unexpected error occurred';
+      let retryable = true;
+      
+      if (err instanceof Error) {
+        const message = err.message.toLowerCase();
+        
+        if (message.includes('service unavailable') || message.includes('503')) {
+          userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
+          retryable = true;
+          console.error('Network Error: AI service overloaded!');
+        } else if (message.includes('timeout') || message.includes('504')) {
+          userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
+          retryable = true;
+          console.error('Network Error: Request timed out!');
+        } else if (message.includes('rate limit') || message.includes('429')) {
+          userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+          retryable = true;
+          showAnimatedErrorNotification('User Error: Rate limit exceeded! TOASTY!', 'toasty');
+        } else if (message.includes('content') && message.includes('moderation')) {
+          userMessage = 'Content was flagged by moderation. Please try with a different prompt or image.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Content flagged by moderation! TOASTY!', 'toasty');
+        } else if (message.includes('400') || message.includes('bad request')) {
+          userMessage = 'Invalid request. Please check your images and prompt.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Invalid request! TOASTY!', 'toasty');
+        } else {
+          userMessage = err.message;
+          console.error('Network Error: Something went wrong!');
+        }
+      }
+      
+      setError(userMessage);
+      
+      // Show helpful notification with retry suggestion
+      if (retryable) {
+        showNotification(`⚠️ ${userMessage} Try again?`, 'error');
+      } else {
+        showNotification(`❌ ${userMessage}`, 'error');
+      }
+      
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      stopGenerationTimer();
+    }
+  };
+
+  // Handle video variations generation
+  const handleVideoVariation = async () => {
+    // Check if user can generate
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 20,
+      currentStep: 'Preparing video generation...'
+    });
+
+    try {
+      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading images...' }));
+      
+      const response = await fetch('/api/vary-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: uploadedFiles.map(img => img.base64),
+          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
+          prompt: prompt.trim(),
+          model: generationMode
+        }),
+      });
+
+      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating video variations...' }));
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to process video variations');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
+      const newVariations = data.variations || [];
+      
+      // Filter out bad content variations
+      const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
+        const isBad = isBadContent(variation.description || '') || 
+                     isBadContent(variation.angle || '') || 
+                     isBadContent(variation.pose || '') ||
+                     isBadContent(prompt.trim());
+        
+        if (isBad) {
+          console.log('🚫 Bad content variation detected, filtering out:', variation.description);
+          showContentRejectedAnimation();
+        }
+        
+        return !isBad;
+      });
+      
+      const storedVariations: StoredVariation[] = filteredVariations.map((variation: CharacterVariation, index: number) => ({
+        ...variation,
+        timestamp: Date.now() + index,
+        originalPrompt: prompt.trim(),
+        fileType: 'video' // Always video for this function
+      }));
+      setVariations(storedVariations);
+      
+      // Track usage
+      await trackUsage('video_generation', 'minimax_endframe', {
+        prompt: prompt.trim(),
+        variations_count: filteredVariations.length,
+        file_type: 'video',
+        model: generationMode
+      });
+      
+      // Add to gallery
+      if (filteredVariations.length > 0) {
+        addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
+        showNotification('🎬 Video variations generated successfully!', 'success');
+        
+        // Clear input after successful generation
+        setPrompt('');
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input after successful video variation generation');
+      } else if (newVariations.length > 0) {
+        // All variations were filtered out
+        showNotification('🚫 All generated content was filtered out due to content policy', 'error');
+      }
+      
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+        stopGenerationTimer();
+      }, 1000);
+
+    } catch (err) {
+      console.error('❌ Video variation error:', err);
+      
+      // Enhanced error handling with better user messages
+      let userMessage = 'An unexpected error occurred';
+      let retryable = true;
+      
+      if (err instanceof Error) {
+        const message = err.message.toLowerCase();
+        
+        if (message.includes('service unavailable') || message.includes('503')) {
+          userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
+          retryable = true;
+          console.error('Network Error: AI service overloaded!');
+        } else if (message.includes('timeout') || message.includes('504')) {
+          userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
+          retryable = true;
+          console.error('Network Error: Request timed out!');
+        } else if (message.includes('rate limit') || message.includes('429')) {
+          userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+          retryable = true;
+          showAnimatedErrorNotification('User Error: Rate limit exceeded! TOASTY!', 'toasty');
+        } else if (message.includes('content') && message.includes('moderation')) {
+          userMessage = 'Content was flagged by moderation. Please try with a different prompt or image.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Content flagged by moderation! TOASTY!', 'toasty');
+        } else if (message.includes('400') || message.includes('bad request')) {
+          userMessage = 'Invalid request. Please check your images and prompt.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Invalid request! TOASTY!', 'toasty');
+        } else {
+          userMessage = err.message;
+          console.error('Network Error: Something went wrong!');
+        }
+      }
+      
+      setError(userMessage);
+      
+      // Show helpful notification with retry suggestion
+      if (retryable) {
+        showNotification(`⚠️ ${userMessage} Try again?`, 'error');
+      } else {
+        showNotification(`❌ ${userMessage}`, 'error');
+      }
+      
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      stopGenerationTimer();
+    }
+  };
+
+  // Handle Flux Dev generation as fallback for Nano Banana
+  const handleFluxDevGeneration = async () => {
+    // Check if user can generate
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 20,
+      currentStep: 'Analyzing character with Gemini...'
+    });
+
+    try {
+      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Processing with Gemini AI...' }));
+      
+      // First, get Gemini analysis (same as Nano Banana)
+      const geminiResponse = await fetch('/api/vary-character', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: uploadedFiles.map(img => img.base64),
+          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
+          prompt: prompt.trim(),
+          useFluxDev: true // Flag to indicate we want Flux Dev instead of Nano Banana
+        }),
+      });
+
+      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating variations with Flux Dev...' }));
+
+      const data = await geminiResponse.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to process character variations with Flux Dev');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
+      const newVariations = data.variations || [];
+      
+      // Filter out bad content variations
+      const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
+        const isBad = isBadContent(variation.description || '') || 
+                     isBadContent(variation.angle || '') || 
+                     isBadContent(variation.pose || '') ||
+                     isBadContent(prompt.trim());
+        
+        if (isBad) {
+          console.log('🚫 Bad content variation detected, filtering out:', variation.description);
+          showContentRejectedAnimation();
+        }
+        
+        return !isBad;
+      });
+      
+      const storedVariations: StoredVariation[] = filteredVariations.map((variation: CharacterVariation, index: number) => ({
+        ...variation,
+        timestamp: Date.now() + index,
+        originalPrompt: prompt.trim(),
+        fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
+      }));
+      setVariations(storedVariations);
+      
+      // Track usage
+      await trackUsage('character_variation', 'gemini', {
+        prompt: prompt.trim(),
+        variations_count: filteredVariations.length,
+        file_type: uploadedFiles[0]?.fileType,
+        fallback_used: true
+      });
+      
+      // Add to gallery
+      if (filteredVariations.length > 0) {
+        addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
+        showNotification('🎨 Character variations generated with Flux Dev!', 'success');
+        
+        // Clear input after successful generation
+        setPrompt('');
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input after successful Flux Dev generation');
+      } else if (newVariations.length > 0) {
+        // All variations were filtered out
+        showNotification('🚫 All generated content was filtered out due to content policy', 'error');
+      }
+      
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+        stopGenerationTimer();
+      }, 1000);
+
+    } catch (err) {
+      console.error('❌ Flux Dev generation error:', err);
       
       // Enhanced error handling with better user messages
       let userMessage = 'An unexpected error occurred';
@@ -3985,9 +4382,16 @@ export default function Home() {
                     {item.fileType === 'video' ? (
                       <video
                         src={item.videoUrl}
-                        className="w-full h-full object-cover rounded-[30px]"
+                        className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                         muted
                         loop
+                        onMouseEnter={(e) => {
+                          e.currentTarget.play();
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.pause();
+                          e.currentTarget.currentTime = 0;
+                        }}
                       />
                     ) : (
                       <img
@@ -4001,6 +4405,42 @@ export default function Home() {
                       />
                     )}
                     
+                          {/* Delete Icon - Top Left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromGallery(item.id, item.timestamp);
+                              showNotification('🗑️ Item removed from gallery', 'success');
+                            }}
+                            className="absolute top-2 left-2 w-8 h-8 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                            title="Delete from gallery"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+
+                          {/* Download Icon - Bottom Left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = item.videoUrl || item.imageUrl;
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `vary-ai-${item.id}.${item.fileType === 'video' ? 'mp4' : 'jpg'}`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              showNotification('📥 Download started', 'success');
+                            }}
+                            className="absolute bottom-2 left-2 w-8 h-8 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                            title="Download file"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </button>
+
                           {/* Hover Overlay with Actions - Centered buttons */}
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                             {/* Centered action buttons */}
@@ -4156,11 +4596,18 @@ export default function Home() {
                     {variations[0].fileType === 'video' ? (
                       <video
                         src={variations[0].videoUrl}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover cursor-pointer"
                         controls
                         muted
                         loop
                         onClick={() => setFullScreenImage(variations[0].videoUrl || null)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.play();
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.pause();
+                          e.currentTarget.currentTime = 0;
+                        }}
                       />
                     ) : (
                       <img
@@ -4208,9 +4655,16 @@ export default function Home() {
                       {variation.fileType === 'video' ? (
                         <video
                           src={variation.videoUrl}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover cursor-pointer"
                           muted
                           loop
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0; // Reset to beginning
+                          }}
                         />
                       ) : (
                         <img
@@ -4467,9 +4921,16 @@ export default function Home() {
                       {variations[0].fileType === 'video' ? (
                         <video
                           src={variations[0].videoUrl}
-                          className="w-full h-full object-cover rounded-[30px]"
+                          className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0; // Reset to beginning
+                          }}
                         />
                       ) : (
                         <img
@@ -4530,9 +4991,16 @@ export default function Home() {
                       {variations[1].fileType === 'video' ? (
                         <video
                           src={variations[1].videoUrl}
-                          className="w-full h-full object-cover rounded-[30px]"
+                          className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0; // Reset to beginning
+                          }}
                         />
                       ) : (
                         <img
@@ -4593,9 +5061,16 @@ export default function Home() {
                       {variations[2].fileType === 'video' ? (
                         <video
                           src={variations[2].videoUrl}
-                          className="w-full h-full object-cover rounded-[30px]"
+                          className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0; // Reset to beginning
+                          }}
                         />
                       ) : (
                         <img
@@ -4656,9 +5131,16 @@ export default function Home() {
                       {variations[3].fileType === 'video' ? (
                         <video
                           src={variations[3].videoUrl}
-                          className="w-full h-full object-cover rounded-[30px]"
+                          className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0; // Reset to beginning
+                          }}
                         />
                       ) : (
                         <img
@@ -4750,8 +5232,15 @@ export default function Home() {
                       ) : (
                         <video
                           src={file.preview}
-                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20"
+                          className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20 cursor-pointer"
                           muted
+                          onMouseEnter={(e) => {
+                            e.currentTarget.play();
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0;
+                          }}
                         />
                       )}
                       <button
@@ -4836,6 +5325,48 @@ export default function Home() {
                         ))}
                       </select>
                     </div>
+
+                {/* Content Mode Toggle - Image/Video (Desktop Only) */}
+                {typeof window !== 'undefined' && window.innerWidth >= 768 && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white text-xs font-medium whitespace-nowrap">Mode:</span>
+                    <div className="flex bg-gray-800 bg-opacity-50 rounded-lg p-1 backdrop-blur-sm">
+                      <button
+                        onClick={() => setContentMode('image')}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                          contentMode === 'image'
+                            ? 'bg-purple-600 text-white shadow-sm'
+                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        }`}
+                      >
+                        Image
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!hasSecretAccess) {
+                            showAnimatedErrorNotification('🔒 Video variants require Secret Level access! Enter a promo code in your profile to unlock this feature.', 'toasty');
+                            return;
+                          }
+                          setContentMode('video');
+                        }}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 relative ${
+                          contentMode === 'video'
+                            ? 'bg-purple-600 text-white shadow-sm'
+                            : hasSecretAccess
+                            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                            : 'text-gray-500 cursor-not-allowed opacity-60'
+                        }`}
+                        disabled={!hasSecretAccess}
+                        title={!hasSecretAccess ? 'Secret Level access required - Enter promo code in profile' : 'Switch to video mode'}
+                      >
+                        Video
+                        {!hasSecretAccess && (
+                          <span className="absolute -top-1 -right-1 text-xs">🔒</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick Shot Presets Dropdown - Compact */}
                 <div className="relative">
@@ -4984,6 +5515,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+        </div>
 
         {/* Mobile Gallery Panel */}
         {showGallery && (
@@ -5272,205 +5804,324 @@ export default function Home() {
           </div>
         )}
 
-        {/* Desktop Gallery Panel */}
+        {/* Desktop Gallery Panel - Accordion Style */}
         {showGallery && (
-          <div className="hidden lg:block gallery-container fixed top-20 left-0 right-0 lg:left-[10%] lg:right-[10%] lg:bottom-0 lg:top-auto bg-black bg-opacity-90 backdrop-blur-xl border-t border-gray-800/50 z-30 max-h-[75vh] overflow-y-auto shadow-2xl">
-            <div className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-3 text-white">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Images className="w-5 h-5 text-white" />
-                  </div>
+          <div className="hidden lg:block fixed inset-0 bg-black bg-opacity-95 z-30">
+            <div className="h-full flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                <h2 className="text-2xl font-semibold text-white">
                   Gallery ({filteredGallery.length})
                 </h2>
                 <button
                   onClick={() => setShowGallery(false)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 text-white rounded-xl border border-gray-600/50 transition-all duration-200 backdrop-blur-sm"
-                  title="Hide gallery"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4" />
-                  Hide Gallery
+                  Close
                 </button>
               </div>
 
-              {/* Gallery Filter Toggle */}
-              <div className="flex gap-2 mb-6 p-1 bg-gray-900/50 rounded-xl backdrop-blur-sm border border-gray-700/50">
-                <button
-                  onClick={() => setGalleryFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    galleryFilter === 'all'
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
-                  }`}
-                >
-                  All ({gallery.length})
-                </button>
-                <button
-                  onClick={() => setGalleryFilter('images')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    galleryFilter === 'images'
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
-                  }`}
-                >
-                  Images ({gallery.filter(item => item.imageUrl && !item.videoUrl).length})
-                </button>
-                <button
-                  onClick={() => setGalleryFilter('videos')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    galleryFilter === 'videos'
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
-                  }`}
-                >
-                  Videos ({gallery.filter(item => item.videoUrl).length})
-                </button>
-              </div>
-
-              {/* Gallery Content - Desktop Layout */}
-              {filteredGallery.length === 0 ? (
-                <div className="text-center py-12">
-                  <Images className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">No images in gallery yet</p>
-                  <p className="text-gray-500 text-sm mt-2">Generate some images to see them here</p>
-                </div>
-              ) : (
-                <div className="gallery-container flex flex-wrap justify-start gap-2 sm:gap-3 md:gap-4 max-h-[75vh] overflow-y-auto">
-                  {filteredGallery.map((item: any, index: number) => {
-                    const itemKey = `${item.id}-${item.timestamp}-${index}`;
-                    const isExpanded = expandedPrompts.has(itemKey);
-                    
-                    return (
-                      <div key={itemKey} className="gallery-item border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 relative z-30 shadow-lg hover:shadow-xl group">
-                        {/* Image/Video Preview */}
-                        <div className="relative">
-                          {item.fileType === 'video' ? (
-                            <video
-                              src={item.videoUrl}
-                              className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
-                              onClick={() => setFullScreenImage(item.videoUrl)}
-                              muted
-                            />
-                          ) : item.imageUrl ? (
-                            <img
-                              src={getProxiedImageUrl(item.imageUrl)}
-                              alt="Gallery item"
-                              className="w-full h-auto object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
-                              onClick={() => setFullScreenImage(item.imageUrl)}
-                              onError={(e) => {
-                                console.error('Desktop gallery image failed to load:', item.imageUrl);
-                                // Try fallback to original image preview
-                                if (item.originalImagePreview && e.currentTarget.src !== item.originalImagePreview) {
-                                  e.currentTarget.src = item.originalImagePreview;
-                                } else {
-                                  e.currentTarget.src = '/api/placeholder/400/400';
-                                }
-                              }}
-                              onLoad={() => {
-                                console.log('Desktop gallery image loaded successfully:', item.imageUrl);
-                              }}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-auto bg-gray-700 flex items-center justify-center min-h-[200px]">
-                              <span className="text-gray-400 text-sm">No Image</span>
-                            </div>
-                          )}
-                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg border border-white/20">
-                            {item.fileType?.toUpperCase() || 'IMAGE'}
+              {/* Accordion Gallery */}
+              <div className="flex-1 overflow-y-auto">
+                {filteredGallery.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Images className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">No content in gallery yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-6">
+                    {/* Recent Creations Accordion */}
+                    <div>
+                      <button
+                        className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                        onClick={() => setExpandedPrompts(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has('recent')) {
+                            newSet.delete('recent');
+                          } else {
+                            newSet.add('recent');
+                          }
+                          return newSet;
+                        })}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
+                            <Images className="w-3 h-3 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-medium">Recent Creations</h3>
+                            <p className="text-gray-400 text-xs">{filteredGallery.length} items</p>
                           </div>
                         </div>
+                        <ChevronDown 
+                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                            expandedPrompts.has('recent') ? 'rotate-180' : ''
+                          }`} 
+                        />
+                      </button>
+                      
+                      <div className={`overflow-hidden transition-all duration-300 ${
+                        expandedPrompts.has('recent') ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}>
+                        <div className="pt-3">
+                          <div className="grid grid-cols-4 gap-3">
+                            {filteredGallery.slice(0, 8).map((item: any, index: number) => {
+                              const itemKey = `recent-${item.id}-${item.timestamp}-${index}`;
+                              
+                              return (
+                                <div 
+                                  key={itemKey} 
+                                  className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                  onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                                >
+                                  <div className="aspect-square">
+                                    {item.fileType === 'video' ? (
+                                      <video
+                                        src={item.videoUrl}
+                                        className="w-full h-full object-cover"
+                                        muted
+                                        loop
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.play();
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.pause();
+                                          e.currentTarget.currentTime = 0;
+                                        }}
+                                      />
+                                    ) : (
+                                      <img
+                                        src={getProxiedImageUrl(item.imageUrl)}
+                                        alt="Gallery item"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.src = '/api/placeholder/300/300';
+                                        }}
+                                      />
+                                    )}
+                                  </div>
 
-                        {/* Description Overlay */}
-                        <div className="desc">
-                          <div className="text-sm text-white font-medium mb-1">
-                            {new Date(item.timestamp).toLocaleDateString()}
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                      >
+                                        Vary
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          
-                          {item.angle && (
-                            <div className="text-xs text-gray-200 mb-1">
-                              {item.angle}
-                            </div>
-                          )}
-                          
-                          {item.pose && (
-                            <div className="text-xs text-gray-200 mb-2">
-                              {item.pose}
-                            </div>
-                          )}
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-1 justify-center flex-wrap">
-                            <button
-                              onClick={() => {
-                                if (isExpanded) {
-                                  setExpandedPrompts(prev => {
-                                    const newSet = new Set(prev);
-                                    newSet.delete(itemKey);
-                                    return newSet;
-                                  });
-                                } else {
-                                  setExpandedPrompts(prev => new Set([...prev, itemKey]));
-                                }
-                              }}
-                              className="text-xs text-white hover:text-gray-200 transition-colors px-2 py-1 rounded bg-black/30 hover:bg-black/50"
-                            >
-                              {isExpanded ? 'Hide' : 'Show'}
-                            </button>
-                            <button
-                              onClick={() => handleVaryImage(item.imageUrl, item.originalPrompt)}
-                              disabled={processing.isProcessing}
-                              className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Generate variations with nano_banana"
-                            >
-                              Vary
-                            </button>
-                            <button
-                              onClick={() => handleEditImage(item.imageUrl, item.originalPrompt)}
-                              disabled={processing.isProcessing}
-                              className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Inject into input slot"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteFromGallery(item.id)}
-                              className="text-xs text-red-300 hover:text-red-200 transition-colors px-2 py-1 rounded bg-red-900/30 hover:bg-red-900/50"
-                            >
-                              Delete
-                            </button>
-                          </div>
-
-                          {/* Expanded Prompt */}
-                          {isExpanded && (
-                            <div className="mt-2 bg-black/60 backdrop-blur-sm p-2 rounded">
-                              <p className="text-xs text-white leading-relaxed">
-                                {item.prompt}
-                              </p>
-                            </div>
-                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
 
-              {/* Scroll to Top Button */}
-              {showScrollToTop && (
-                <button
-                  onClick={scrollToTop}
-                  className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
-                  aria-label="Scroll to top"
-                >
-                  <ArrowUp className="w-5 h-5" />
-                </button>
-              )}
+                    {/* Video Collection Accordion */}
+                    <div>
+                      <button
+                        className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                        onClick={() => setExpandedPrompts(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has('videos')) {
+                            newSet.delete('videos');
+                          } else {
+                            newSet.add('videos');
+                          }
+                          return newSet;
+                        })}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-md flex items-center justify-center">
+                            <Images className="w-3 h-3 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-medium">Video Collection</h3>
+                            <p className="text-gray-400 text-xs">{filteredGallery.filter(item => item.fileType === 'video').length} videos</p>
+                          </div>
+                        </div>
+                        <ChevronDown 
+                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                            expandedPrompts.has('videos') ? 'rotate-180' : ''
+                          }`} 
+                        />
+                      </button>
+                      
+                      <div className={`overflow-hidden transition-all duration-300 ${
+                        expandedPrompts.has('videos') ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}>
+                        <div className="pt-3">
+                          <div className="grid grid-cols-5 gap-3">
+                            {filteredGallery.filter(item => item.fileType === 'video').map((item: any, index: number) => {
+                              const itemKey = `video-${item.id}-${item.timestamp}-${index}`;
+                              
+                              return (
+                                <div 
+                                  key={itemKey} 
+                                  className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                  onClick={() => setFullScreenImage(item.videoUrl)}
+                                >
+                                  <div className="aspect-square">
+                                    <video
+                                      src={item.videoUrl}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      loop
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.play();
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.pause();
+                                        e.currentTarget.currentTime = 0;
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditImage(item.videoUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleVaryImage(item.videoUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                      >
+                                        Vary
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Image Collection Accordion */}
+                    <div>
+                      <button
+                        className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-800/30 rounded-lg transition-colors"
+                        onClick={() => setExpandedPrompts(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has('images')) {
+                            newSet.delete('images');
+                          } else {
+                            newSet.add('images');
+                          }
+                          return newSet;
+                        })}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-md flex items-center justify-center">
+                            <Images className="w-3 h-3 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-medium">Image Collection</h3>
+                            <p className="text-gray-400 text-xs">{filteredGallery.filter(item => item.fileType === 'image').length} images</p>
+                          </div>
+                        </div>
+                        <ChevronDown 
+                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                            expandedPrompts.has('images') ? 'rotate-180' : ''
+                          }`} 
+                        />
+                      </button>
+                      
+                      <div className={`overflow-hidden transition-all duration-300 ${
+                        expandedPrompts.has('images') ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}>
+                        <div className="pt-3">
+                          <div className="grid grid-cols-6 gap-3">
+                            {filteredGallery.filter(item => item.fileType === 'image').map((item: any, index: number) => {
+                              const itemKey = `image-${item.id}-${item.timestamp}-${index}`;
+                              
+                              return (
+                                <div 
+                                  key={itemKey} 
+                                  className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                                  onClick={() => setFullScreenImage(item.imageUrl)}
+                                >
+                                  <div className="aspect-square">
+                                    <img
+                                      src={getProxiedImageUrl(item.imageUrl)}
+                                      alt="Gallery item"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.src = '/api/placeholder/300/300';
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditImage(item.imageUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleVaryImage(item.imageUrl, item.originalPrompt);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                                      >
+                                        Vary
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Scroll to Top Button */}
+      {showScrollToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Help Modal */}
       <HelpModal 
@@ -6164,7 +6815,6 @@ export default function Home() {
             </button>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );

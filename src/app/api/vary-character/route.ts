@@ -37,13 +37,123 @@ async function uploadImageToTempUrl(base64Data: string, mimeType: string = 'imag
   }
 }
 
+// Function to call Flux Dev for fallback image generation
+async function callFluxDev(
+  prompt: string,
+  imageUrl: string,
+  timeoutMs: number = 30000
+): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    console.log(`🚀 Making Flux Dev request...`);
+    
+    const response = await fetch('https://fal.run/fal-ai/flux-dev', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${process.env.FAL_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        image_url: imageUrl,
+        num_inference_steps: 4,
+        enable_safety_checker: true
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Flux Dev request failed: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`✅ Flux Dev request completed`);
+    
+    return {
+      data: {
+        images: result.images || [],
+        timings: result.timings,
+        seed: result.seed
+      }
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if ((error as Error).name === 'AbortError') {
+      throw new Error('Flux Dev request timed out');
+    }
+    
+    throw error;
+  }
+}
+
+// Function to call Nano Banana using synchronous requests (faster for quick generations)
+async function callNanoBananaSync(
+  modelName: string,
+  input: {
+    prompt: string;
+    image_urls: string[];
+    num_images: number;
+    output_format: string;
+  },
+  timeoutMs: number = 30000 // 30 second timeout for sync requests
+): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    console.log(`🚀 Making synchronous request to ${modelName}...`);
+    
+    const response = await fetch(`https://fal.run/${modelName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${process.env.FAL_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Synchronous request failed: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`✅ Synchronous request completed in ${result.timings?.inference || 'unknown'}s`);
+    
+    return {
+      data: {
+        images: result.images || [],
+        timings: result.timings,
+        seed: result.seed
+      }
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if ((error as Error).name === 'AbortError') {
+      throw new Error('Synchronous request timed out');
+    }
+    
+    throw error;
+  }
+}
+
 // Enhanced retry configuration for API calls
 const RETRY_CONFIG = {
   maxRetries: 5, // Increased from 3 to handle the 18% failure rate
   baseDelay: 2000, // Increased to 2 seconds for better spacing
   maxDelay: 15000, // Increased to 15 seconds
   backoffMultiplier: 2,
-  timeout: 45000, // Increased to 45 seconds for nano-banana's longer processing times
+  timeout: 45000, // Will be updated dynamically based on sync/queue mode
 };
 
 // Success rate tracking
@@ -83,13 +193,14 @@ async function retryWithBackoff<T>(
   maxRetries: number = RETRY_CONFIG.maxRetries,
   baseDelay: number = RETRY_CONFIG.baseDelay,
   maxDelay: number = RETRY_CONFIG.maxDelay,
-  backoffMultiplier: number = RETRY_CONFIG.backoffMultiplier
+  backoffMultiplier: number = RETRY_CONFIG.backoffMultiplier,
+  timeoutMs: number = RETRY_CONFIG.timeout
 ): Promise<T> {
   let lastError: Error;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await withTimeout(operation(), RETRY_CONFIG.timeout);
+      return await withTimeout(operation(), timeoutMs);
     } catch (error) {
       lastError = error as Error;
       
@@ -321,6 +432,13 @@ function recordSuccess(): void {
   }
 }
 
+// Configuration for Nano Banana requests
+const NANO_BANANA_CONFIG = {
+  useSyncRequests: process.env.NANO_BANANA_SYNC === 'true', // Enable sync requests via env var
+  syncTimeout: 30000, // 30 seconds for sync requests
+  queueTimeout: 45000, // 45 seconds for queue requests
+};
+
 // Configure Fal AI
 if (process.env.FAL_KEY) {
   console.log('🔧 Configuring Fal AI with key...');
@@ -328,6 +446,7 @@ if (process.env.FAL_KEY) {
     credentials: process.env.FAL_KEY
   });
   console.log('✅ Fal AI configured successfully');
+  console.log(`⚡ Nano Banana sync requests: ${NANO_BANANA_CONFIG.useSyncRequests ? 'ENABLED' : 'DISABLED'}`);
 } else {
   console.log('❌ No FAL_KEY found for configuration');
 }
@@ -354,7 +473,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, mimeTypes, prompt } = body;
+    const { images, mimeTypes, prompt, useFluxDev } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
@@ -580,7 +699,11 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     let variationsWithImages = variations;
 
     if (hasFalKey) {
-      console.log('🎨 Generating images with Nano Banana...');
+      if (useFluxDev) {
+        console.log('🎨 Generating images with Flux Dev (fallback)...');
+      } else {
+        console.log('🎨 Generating images with Nano Banana...');
+      }
       // Upload all images to get proper URLs for Nano Banana
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
@@ -644,34 +767,64 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
+            // Use appropriate timeout based on sync/queue mode
+            const timeoutMs = NANO_BANANA_CONFIG.useSyncRequests 
+              ? NANO_BANANA_CONFIG.syncTimeout 
+              : NANO_BANANA_CONFIG.queueTimeout;
+            
             const result = await retryWithBackoff(async () => {
-              console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
-              
-              // Use Nano Banana for image editing with multiple input images
-              const modelName = "fal-ai/nano-banana/edit";
-              console.log(`🤖 Using Nano Banana model: ${modelName}`);
-              
-              // Enhanced debug logging
-              console.log(`🖼️ Image URLs being sent to Nano Banana:`, validatedImageUrls);
-              console.log(`📊 Image count:`, validatedImageUrls.length);
-              console.log(`🎯 Model:`, modelName);
-              console.log(`📝 Prompt:`, nanoBananaPrompt);
-              
-              return await fal.subscribe(modelName, {
-                input: {
+              if (useFluxDev) {
+                console.log(`🔄 Attempting Flux Dev image generation for ${variation.angle}...`);
+                
+                // Use Flux Dev for fallback image generation
+                console.log(`🤖 Using Flux Dev model`);
+                console.log(`🖼️ Image URL being sent to Flux Dev:`, validatedImageUrls[0]);
+                console.log(`📝 Prompt:`, nanoBananaPrompt);
+                
+                return await callFluxDev(nanoBananaPrompt, validatedImageUrls[0], timeoutMs);
+              } else {
+                console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
+                
+                // Use Nano Banana for image editing with multiple input images
+                const modelName = "fal-ai/nano-banana/edit";
+                console.log(`🤖 Using Nano Banana model: ${modelName}`);
+                
+                // Enhanced debug logging
+                console.log(`🖼️ Image URLs being sent to Nano Banana:`, validatedImageUrls);
+                console.log(`📊 Image count:`, validatedImageUrls.length);
+                console.log(`🎯 Model:`, modelName);
+                console.log(`📝 Prompt:`, nanoBananaPrompt);
+                
+                const input = {
                   prompt: nanoBananaPrompt,
                   image_urls: validatedImageUrls, // Use validated image URLs for character + scene combination
                   num_images: 1,
                   output_format: "jpeg"
-                },
-                logs: true,
-                onQueueUpdate: (update) => {
-                  if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                };
+                
+                // Try synchronous request first if enabled (faster for quick generations)
+                if (NANO_BANANA_CONFIG.useSyncRequests) {
+                  try {
+                    console.log(`⚡ Attempting synchronous request for ${variation.angle}...`);
+                    return await callNanoBananaSync(modelName, input, NANO_BANANA_CONFIG.syncTimeout);
+                  } catch (syncError) {
+                    console.log(`⚠️ Synchronous request failed, falling back to queue:`, (syncError as Error).message);
                   }
-                },
-              });
-            });
+                }
+                
+                // Use queue-based request (more reliable for longer processing)
+                console.log(`📋 Using queue-based request for ${variation.angle}...`);
+                return await fal.subscribe(modelName, {
+                  input,
+                  logs: true,
+                  onQueueUpdate: (update) => {
+                    if (update.status === "IN_PROGRESS") {
+                      console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                    }
+                  },
+                });
+              }
+            }, RETRY_CONFIG.maxRetries, RETRY_CONFIG.baseDelay, RETRY_CONFIG.maxDelay, RETRY_CONFIG.backoffMultiplier, timeoutMs);
 
             console.log(`✅ Image ${index + 1} generated successfully`);
             
