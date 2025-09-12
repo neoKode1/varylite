@@ -4,6 +4,15 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
+// StoredVariation type (extends CharacterVariation with additional properties)
+interface StoredVariation extends CharacterVariation {
+  timestamp: number;
+  originalPrompt: string;
+  originalImagePreview?: string;
+  videoUrl?: string;
+  fileType?: 'image' | 'video';
+  databaseId?: string;
+}
 
 // Generation mode types
 type GenerationMode = 
@@ -655,7 +664,7 @@ export default function Home() {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
 
-  const [variations, setVariations] = useState<CharacterVariation[]>([]);
+  const [variations, setVariations] = useState<StoredVariation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
@@ -1473,7 +1482,13 @@ export default function Home() {
 
       const newVariations = data.variations || [];
       console.log('🎨 Received variations:', newVariations.length, newVariations);
-      setVariations(newVariations);
+      const storedVariations: StoredVariation[] = newVariations.map((variation: CharacterVariation, index: number) => ({
+        ...variation,
+        timestamp: Date.now() + index,
+        originalPrompt: varyPrompt,
+        fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
+      }));
+      setVariations(storedVariations);
       
       // Track usage
       await trackUsage('image_generation', 'nano_banana', {
@@ -2156,7 +2171,13 @@ export default function Home() {
         return !isBad;
       });
       
-      setVariations(filteredVariations);
+      const storedVariations: StoredVariation[] = filteredVariations.map((variation: CharacterVariation, index: number) => ({
+        ...variation,
+        timestamp: Date.now() + index,
+        originalPrompt: prompt.trim(),
+        fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
+      }));
+      setVariations(storedVariations);
       
       // Track usage
       await trackUsage('character_variation', 'gemini', {
@@ -2852,7 +2873,13 @@ export default function Home() {
         }));
 
         // Set variations for 2x2 grid display
-        setVariations(generatedVariations);
+        const storedVariations: StoredVariation[] = generatedVariations.map((variation: CharacterVariation, index: number) => ({
+          ...variation,
+          timestamp: Date.now() + index,
+          originalPrompt: originalPrompt,
+          fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
+        }));
+        setVariations(storedVariations);
         setIsGeneratingImages(true);
 
         // Track usage
@@ -3063,7 +3090,13 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
       addToGallery([generatedVariation], prompt.trim());
 
       // Track usage
@@ -3234,9 +3267,16 @@ export default function Home() {
 
       console.log('🎬 Created variation object:', generatedVariation);
 
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+
       console.log('🔄 Adding variation to gallery...');
       setVariations(prev => {
-        const newVariations = [generatedVariation, ...prev];
+        const newVariations = [storedVariation, ...prev];
         console.log('📋 Updated variations:', newVariations);
         return newVariations;
       });
@@ -3368,7 +3408,13 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
       addToGallery([generatedVariation], prompt.trim());
 
       // Track usage
@@ -3470,7 +3516,13 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
       addToGallery([generatedVariation], prompt.trim());
 
       // Track usage
@@ -3568,7 +3620,13 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
       addToGallery([generatedVariation], prompt.trim());
 
       // Track usage
@@ -3666,7 +3724,13 @@ export default function Home() {
         fileType: 'video'
       };
 
-      setVariations(prev => [generatedVariation, ...prev]);
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim(),
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
       addToGallery([generatedVariation], prompt.trim());
 
       // Track usage
