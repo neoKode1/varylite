@@ -4192,7 +4192,7 @@ export default function Home() {
               <div className="generation-grid max-w-4xl mx-auto">
                 {/* Slot 1 */}
                 <div 
-                  className="generation-slot"
+                  className="generation-slot group"
                   onClick={() => variations[0] && setFullScreenImage(variations[0].videoUrl || variations[0].imageUrl || null)}
                 >
                   {variations[0] && (
@@ -4211,12 +4211,47 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
-              </div>
+                      
+                      {/* Hover overlay with action buttons */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                        {/* Top section with variant info */}
+                        <div className="text-white text-sm">
+                          <p className="font-medium">Variant 1</p>
+                          <p className="text-xs opacity-80">Close-up Shot</p>
+                        </div>
+                        
+                        {/* Bottom section with action buttons */}
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditImage(variations[0].imageUrl, variations[0].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Inject into input slot for editing"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVaryImage(variations[0].imageUrl, variations[0].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generate variations with nano_banana"
+                          >
+                            Vary
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
                 {/* Slot 2 */}
                 <div 
-                  className="generation-slot"
+                  className="generation-slot group"
                   onClick={() => variations[1] && setFullScreenImage(variations[1].videoUrl || variations[1].imageUrl || null)}
                 >
                   {variations[1] && (
@@ -4235,12 +4270,47 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
+                      
+                      {/* Hover overlay with action buttons */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                        {/* Top section with variant info */}
+                        <div className="text-white text-sm">
+                          <p className="font-medium">Variant 2</p>
+                          <p className="text-xs opacity-80">Static Shot</p>
+                        </div>
+                        
+                        {/* Bottom section with action buttons */}
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditImage(variations[1].imageUrl, variations[1].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Inject into input slot for editing"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVaryImage(variations[1].imageUrl, variations[1].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generate variations with nano_banana"
+                          >
+                            Vary
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
                 {/* Slot 3 */}
                 <div 
-                  className="generation-slot"
+                  className="generation-slot group"
                   onClick={() => variations[2] && setFullScreenImage(variations[2].videoUrl || variations[2].imageUrl || null)}
                 >
                   {variations[2] && (
@@ -4259,12 +4329,47 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
+                      
+                      {/* Hover overlay with action buttons */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                        {/* Top section with variant info */}
+                        <div className="text-white text-sm">
+                          <p className="font-medium">Variant 3</p>
+                          <p className="text-xs opacity-80">Tracking Shot</p>
+                        </div>
+                        
+                        {/* Bottom section with action buttons */}
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditImage(variations[2].imageUrl, variations[2].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Inject into input slot for editing"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVaryImage(variations[2].imageUrl, variations[2].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generate variations with nano_banana"
+                          >
+                            Vary
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
                 {/* Slot 4 */}
                 <div 
-                  className="generation-slot"
+                  className="generation-slot group"
                   onClick={() => variations[3] && setFullScreenImage(variations[3].videoUrl || variations[3].imageUrl || null)}
                 >
                   {variations[3] && (
@@ -4283,6 +4388,41 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px]"
                         />
                       )}
+                      
+                      {/* Hover overlay with action buttons */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                        {/* Top section with variant info */}
+                        <div className="text-white text-sm">
+                          <p className="font-medium">Variant 4</p>
+                          <p className="text-xs opacity-80">Wide Shot</p>
+                        </div>
+                        
+                        {/* Bottom section with action buttons */}
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditImage(variations[3].imageUrl, variations[3].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Inject into input slot for editing"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVaryImage(variations[3].imageUrl, variations[3].originalPrompt);
+                            }}
+                            disabled={processing.isProcessing}
+                            className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generate variations with nano_banana"
+                          >
+                            Vary
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
