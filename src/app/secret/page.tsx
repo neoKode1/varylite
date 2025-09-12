@@ -891,6 +891,179 @@ export default function SecretPage() {
     localStorage.setItem(lastUsedKey, today);
   };
 
+  // Helper function to convert image URL to base64
+  const urlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting URL to base64:', error);
+      throw new Error('Failed to convert image URL to base64');
+    }
+  };
+
+  // Handle editing an existing image (inject into next available input slot)
+  const handleEditImage = async (imageUrl: string, originalPrompt?: string) => {
+    try {
+      console.log('🎨 Editing image:', imageUrl);
+      
+      // Check if we already have 4 images (max slots)
+      if (uploadedFiles.length >= 4) {
+        showError('Maximum of 4 images allowed. Please remove an image first.');
+        return;
+      }
+      
+      // Convert the image URL to base64
+      const base64Image = await urlToBase64(imageUrl);
+      
+      // Create a new uploaded file object
+      const newFile: UploadedFile = {
+        file: new File([], `edit-image-${Date.now()}.jpg`, { type: 'image/jpeg' }),
+        preview: imageUrl,
+        base64: base64Image,
+        type: 'reference',
+        fileType: 'image'
+      };
+      
+      // Add to existing files (don't replace)
+      setUploadedFiles(prev => [...prev, newFile]);
+      
+      // Note: Secret page doesn't have a prompt input field
+      
+      // Show notification
+      showError(`🎨 Image added to slot ${uploadedFiles.length + 1}! You can add up to 4 images total.`);
+      
+    } catch (error) {
+      console.error('Error loading image for editing:', error);
+      showError('Failed to load image for editing');
+    }
+  };
+
+  // Handle varying an existing generated image
+  const handleVaryImage = async (imageUrl: string, originalPrompt?: string) => {
+    console.log('🎨 handleVaryImage called with:', { imageUrl, originalPrompt });
+    
+    if (processingState.isProcessing) {
+      console.log('⚠️ Already processing, skipping...');
+      showError('Already processing. Please wait...');
+      return;
+    }
+
+    try {
+      console.log('🔄 Starting image variation process...');
+      setGeneratedVariants(prev => prev.map(variant => ({
+        ...variant,
+        loading: false,
+        error: undefined,
+        url: undefined
+      })));
+      
+      setProcessingState({
+        isProcessing: true,
+        progress: 10,
+        currentStep: 'Converting image...'
+      });
+
+      // Convert the image URL to base64
+      console.log('🔄 Converting image URL to base64...');
+      const base64Image = await urlToBase64(imageUrl);
+      console.log('✅ Base64 conversion complete, length:', base64Image.length);
+      
+      setProcessingState({
+        isProcessing: true,
+        progress: 30,
+        currentStep: 'Processing with Gemini AI...'
+      });
+
+      // Use the original prompt or a default variation prompt
+      const varyPrompt = originalPrompt || 'Generate 4 new variations of this character from different angles';
+      console.log('📝 Using prompt:', varyPrompt);
+
+      console.log('🔄 Making API call to /api/vary-character...');
+      const response = await fetch('/api/vary-character', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: [base64Image],
+          prompt: varyPrompt
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate variations');
+      }
+
+      setProcessingState({
+        isProcessing: true,
+        progress: 70,
+        currentStep: 'Generating variations...'
+      });
+
+      const data = await response.json();
+      console.log('✅ Variations received:', data);
+
+      if (data.variations && data.variations.length > 0) {
+        // Update the variants with the new generated images
+        setGeneratedVariants(prev => prev.map((variant, index) => {
+          const variation = data.variations[index];
+          if (variation && variation.imageUrl) {
+            return {
+              ...variant,
+              loading: false,
+              url: variation.imageUrl,
+              type: 'image',
+              error: undefined
+            };
+          }
+          return variant;
+        }));
+
+        setProcessingState({
+          isProcessing: true,
+          progress: 100,
+          currentStep: 'Complete!'
+        });
+
+        setTimeout(() => {
+          setProcessingState({
+            isProcessing: false,
+            progress: 0,
+            currentStep: ''
+          });
+        }, 1000);
+
+        // Clear input images after successful generation
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input images after successful variation generation');
+
+        console.log('✅ Image variation process completed successfully');
+      } else {
+        throw new Error('No variations were generated');
+      }
+
+    } catch (error) {
+      console.error('❌ Error in handleVaryImage:', error);
+      showError(`Failed to generate variations: ${(error as Error).message}`);
+      setProcessingState({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
   // Generation handlers
   const handleSecretGeneration = async () => {
     if (!user) {
@@ -1171,23 +1344,23 @@ export default function SecretPage() {
               addToGallery([{
                 id: variantId,
                 description: `Secret generation variant ${result.index + 1}: ${getModelDisplayName(generationMode)}`,
-                angle: 'Secret Level',
-                pose: 'Advanced AI',
-                imageUrl: undefined,
+          angle: 'Secret Level',
+          pose: 'Advanced AI',
+          imageUrl: undefined,
                 videoUrl: data.video.url,
                 fileType: 'video' as const
-              }], requestBody.prompt || 'Secret generation');
+        }], requestBody.prompt || 'Secret generation');
             } else if (data.image) {
               addToGallery([{
                 id: variantId,
                 description: `Secret generation variant ${result.index + 1}: ${getModelDisplayName(generationMode)}`,
-                angle: 'Secret Level',
-                pose: 'Advanced AI',
+          angle: 'Secret Level',
+          pose: 'Advanced AI',
                 imageUrl: data.image.url,
-                videoUrl: undefined,
+          videoUrl: undefined,
                 fileType: 'image' as const
-              }], requestBody.prompt || 'Secret generation');
-            }
+        }], requestBody.prompt || 'Secret generation');
+      }
           }
         }).catch(error => {
           console.error(`💥 Variant promise error:`, error);
@@ -1218,6 +1391,10 @@ export default function SecretPage() {
       }
       
       console.log(`✅ Secret generation completed - all variants processed`);
+
+      // Clear input images after successful generation
+      setUploadedFiles([]);
+      console.log('🧹 Cleared input images after successful secret generation');
 
       // Results are handled asynchronously above, no need for duplicate processing
 
@@ -1300,9 +1477,9 @@ export default function SecretPage() {
               className="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-6 py-3 rounded-xl border border-white/20 transition-all duration-300"
             >
               Back to Generate
-              </button>
-            </div>
+            </button>
           </div>
+        </div>
       </div>
     );
   }
@@ -1704,8 +1881,8 @@ export default function SecretPage() {
                             <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin" />
                             <p className="text-lg font-medium">Generating Main Result...</p>
                             <p className="text-sm opacity-75">Creating your {mainVideoResult.type || 'content'}</p>
-                          </div>
-                        </div>
+            </div>
+          </div>
                       ) : mainVideoResult.error ? (
                         <div className="w-full h-full flex items-center justify-center">
                           <div className="text-center text-red-400">
@@ -1822,8 +1999,9 @@ export default function SecretPage() {
                               className="w-full h-full object-cover"
                             />
                           )}
-                          {/* Overlay with variant info */}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                          {/* Overlay with variant info and action buttons */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                            {/* Top section with variant info */}
                             <div className="text-white text-sm">
                               <p className="font-medium">Variant {index + 1}</p>
                               <p className="text-xs opacity-80">
@@ -1832,6 +2010,26 @@ export default function SecretPage() {
                                 {index === 2 && 'Tracking Shot'}
                                 {index === 3 && 'Wide Shot'}
                               </p>
+                            </div>
+                            
+                            {/* Bottom section with action buttons */}
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => handleEditImage(variant.url!)}
+                                disabled={processingState.isProcessing}
+                                className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Inject into input slot for editing"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleVaryImage(variant.url!)}
+                                disabled={processingState.isProcessing}
+                                className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Generate variations with nano_banana"
+                              >
+                                Vary
+                              </button>
                             </div>
                           </div>
                         </div>

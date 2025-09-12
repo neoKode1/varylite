@@ -3819,6 +3819,130 @@ export default function Home() {
       {/* Semi-transparent overlay for content readability */}
       <div className="absolute inset-0 bg-black bg-opacity-60 z-10"></div>
       
+      {/* Floating Gallery - Desktop Only */}
+      <div className="hidden lg:block fixed right-4 top-1/2 transform -translate-y-1/2 z-20 w-64 h-96 overflow-hidden">
+        <div 
+          className="floating-gallery-container h-full overflow-y-auto scrollbar-hide"
+          onWheel={(e) => {
+            e.preventDefault();
+            const container = e.currentTarget;
+            const scrollAmount = e.deltaY * 0.5; // Smooth scrolling multiplier
+            container.scrollTop += scrollAmount;
+          }}
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollBehavior: 'smooth'
+          }}
+        >
+          <div className="space-y-3 p-2">
+            {gallery.length === 0 ? (
+              <div className="text-center py-8">
+                <Images className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                <p className="text-gray-400 text-xs">No content yet</p>
+              </div>
+            ) : (
+              gallery.map((item: any, index: number) => (
+                <div
+                  key={`floating-${item.id}-${index}`}
+                  className="floating-gallery-card group relative bg-black bg-opacity-50 rounded-[30px] border border-gray-700 overflow-hidden cursor-pointer transition-all duration-400"
+                  style={{
+                    width: '240px',
+                    height: '160px',
+                    filter: 'brightness(0.7)',
+                    transition: 'all 0.4s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = 'brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))';
+                    e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
+                    e.currentTarget.style.zIndex = '10';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = 'brightness(0.7)';
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.zIndex = '30';
+                  }}
+                  onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                >
+                  {/* Content Preview */}
+                  <div className="relative w-full h-full">
+                    {item.fileType === 'video' ? (
+                      <video
+                        src={item.videoUrl}
+                        className="w-full h-full object-cover rounded-[30px]"
+                        muted
+                        loop
+                      />
+                    ) : (
+                      <img
+                        src={getProxiedImageUrl(item.imageUrl)}
+                        alt="Gallery item"
+                        className="w-full h-full object-cover rounded-[30px]"
+                        onError={(e) => {
+                          e.currentTarget.src = '/api/placeholder/240/160';
+                        }}
+                        loading="lazy"
+                      />
+                    )}
+                    
+                    {/* Hover Overlay with Actions - Same as 2x2 grid */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                      {/* Top section with variant info */}
+                      <div className="text-white text-sm">
+                        <p className="font-medium truncate">{item.description || 'Generated Content'}</p>
+                        <p className="text-xs opacity-80">{item.fileType?.toUpperCase()}</p>
+                      </div>
+                      
+                      {/* Bottom section with action buttons */}
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditImage(item.imageUrl, item.originalPrompt);
+                          }}
+                          disabled={processing.isProcessing}
+                          className="text-xs text-blue-300 hover:text-blue-200 transition-colors px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Inject into input slot for editing"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVaryImage(item.imageUrl, item.originalPrompt);
+                          }}
+                          disabled={processing.isProcessing}
+                          className="text-xs text-purple-300 hover:text-purple-200 transition-colors px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Generate variations with nano_banana"
+                        >
+                          Vary
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        
+        {/* Gallery Header */}
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-3 z-10">
+          <h3 className="text-white text-sm font-medium text-center">Gallery</h3>
+          <p className="text-gray-400 text-xs text-center">{gallery.length} items</p>
+        </div>
+        
+        {/* Scroll Indicator */}
+        {gallery.length > 4 && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
+            <div className="text-center">
+              <div className="w-6 h-1 bg-white/30 rounded-full mx-auto mb-1"></div>
+              <p className="text-gray-400 text-xs">Scroll to browse</p>
+            </div>
+          </div>
+        )}
+      </div>
+      
       {/* Custom Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-2 sm:right-4 z-50 animate-in slide-in-from-top-2 duration-300">
