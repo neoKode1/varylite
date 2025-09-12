@@ -4192,26 +4192,26 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Loading Component - Above Input Areas */}
+            {/* Loading Component - Fixed Overlay Above Everything */}
             {processing.isProcessing && (
-              <div className="w-full max-w-4xl mx-auto mb-6">
-                <div className="bg-black bg-opacity-50 rounded-[30px] border border-gray-700 p-6">
+              <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] backdrop-blur-sm">
+                <div className="bg-black bg-opacity-90 rounded-[30px] border border-gray-700 p-8 max-w-md mx-4">
                   <div className="flex flex-col items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4"></div>
-                    <p className="text-white text-lg font-medium mb-2">Generating Variations...</p>
-                    <p className="text-gray-400 text-sm text-center mb-4">{processing.currentStep}</p>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mb-6"></div>
+                    <p className="text-white text-xl font-medium mb-3">Generating Variations...</p>
+                    <p className="text-gray-400 text-sm text-center mb-6">{processing.currentStep}</p>
                     
                     {/* Progress Bar */}
-                    <div className="w-full max-w-md bg-gray-700 rounded-full h-2 mb-4">
+                    <div className="w-full max-w-sm bg-gray-700 rounded-full h-3 mb-6">
                       <div 
-                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full transition-all duration-300"
                         style={{ width: `${processing.progress}%` }}
                       ></div>
                     </div>
                     
                     {/* Time Remaining */}
                     {timeRemaining !== null && (
-                      <p className="text-gray-400 text-xs">
+                      <p className="text-gray-400 text-sm">
                         Estimated time remaining: {Math.ceil(timeRemaining / 60)}m {timeRemaining % 60}s
                       </p>
                     )}
