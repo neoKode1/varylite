@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 // StoredVariation type (extends CharacterVariation with additional properties)
 interface StoredVariation extends CharacterVariation {
@@ -686,6 +687,7 @@ export default function Home() {
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
+  const [userDefaultModel, setUserDefaultModel] = useState<GenerationMode | null>(null);
   
 
   // User stats state for App Performance Analytics
@@ -918,7 +920,7 @@ export default function Home() {
     }
   }, [showAnimatedError, showNotification]);
 
-  // Determine generation mode based on uploaded files
+  // Determine generation mode based on uploaded files and user preferences
   const determineGenerationMode = useCallback((): GenerationMode | null => {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
@@ -927,11 +929,47 @@ export default function Home() {
       // Ambiguous case - could be nano-banana, runway-t2i, veo3-fast, or minimax-2.0
       return null; // Let user choose
     } else if (!hasImages && !hasVideos) {
-      return 'runway-t2i';
+      // For text-to-image, use user's default preference if available
+      // This will be set from user profile preferences
+      return null; // Will be set from user preferences
     }
     
     return null;
   }, [uploadedFiles]);
+
+  // Load user's default model preference from profile
+  const loadUserDefaultModel = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const defaultModel = data.profile?.preferences?.defaultModel;
+        if (defaultModel && getAvailableModes().includes(defaultModel as GenerationMode)) {
+          setUserDefaultModel(defaultModel as GenerationMode);
+          // Set as initial generation mode if no files uploaded
+          if (uploadedFiles.length === 0 && !generationMode) {
+            setGenerationMode(defaultModel as GenerationMode);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user default model:', error);
+    }
+  }, [getAvailableModes, uploadedFiles.length, generationMode]);
+
+  // Load user preferences on component mount
+  useEffect(() => {
+    loadUserDefaultModel();
+  }, [loadUserDefaultModel]);
 
   // Get available generation modes for current state
   const getAvailableModes = useCallback((): GenerationMode[] => {
@@ -1544,7 +1582,7 @@ export default function Home() {
 
     const actionId = `t2i-${Date.now()}`;
     setProcessingAction(actionId);
-    setGenerationMode('runway-t2i');
+    // No default mode - user must select explicitly
 
     try {
       console.log('🎨 Starting text-to-image generation:', prompt);
