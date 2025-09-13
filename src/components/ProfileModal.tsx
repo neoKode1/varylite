@@ -23,7 +23,8 @@ import {
   BarChart3,
   UserPlus,
   FolderPlus,
-  Crown
+  Crown,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -89,7 +90,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const { user } = useAuth();
   const { gallery, removeDuplicates } = useUserGallery(); // Use real gallery data
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'gallery' | 'settings' | 'stats' | 'admin'>('profile');
   const [loading, setLoading] = useState(false);
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
@@ -201,12 +202,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   // Convert real gallery data to ProfileModal format and ensure unique keys
   const galleryItems: GalleryItem[] = gallery.map((item, index) => ({
     id: `${item.id}-${item.timestamp}-${index}`, // Ensure unique keys by combining ID, timestamp, and index
-    title: item.description,
-    description: `${item.angle} - ${item.pose}`,
+    title: item.description || 'Generated Content',
+    description: `${item.angle || 'Unknown'} - ${item.pose || 'Unknown'}`,
     imageUrl: item.imageUrl,
     videoUrl: item.videoUrl,
-    fileType: item.fileType || 'image',
-    originalPrompt: item.originalPrompt,
+    fileType: item.fileType || (item.videoUrl ? 'video' : 'image'),
+    originalPrompt: item.originalPrompt || 'No prompt available',
     createdAt: new Date(item.timestamp).toISOString(),
     isFavorite: false, // TODO: Add favorite functionality
     isPublic: false,   // TODO: Add public/private functionality
@@ -636,6 +637,73 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     // TODO: Implement public/private functionality with database updates
   };
 
+  const handleDownloadItem = async (item: any) => {
+    try {
+      const url = item.videoUrl || item.imageUrl;
+      if (!url) {
+        console.error('No URL found for item:', item);
+        return;
+      }
+
+      // Check if we're on mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // For mobile, use direct download
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        
+        try {
+          a.download = `vary-ai-${item.id}.${item.videoUrl ? 'mp4' : 'jpg'}`;
+        } catch (e) {
+          console.log('📱 Download attribute not supported');
+        }
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        console.log('📱 Download started for mobile');
+      } else {
+        // For desktop, use blob download
+        const response = await fetch(url, {
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `vary-ai-${item.id}.${item.videoUrl ? 'mp4' : 'jpg'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        
+        console.log('🖥️ Download completed for desktop');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error downloading item:', error);
+      
+      // Fallback: open in new tab
+      const a = document.createElement('a');
+      a.href = item.videoUrl || item.imageUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   const handleDeleteItem = async (itemId: string) => {
     if (!user) return;
     
@@ -886,7 +954,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             { id: 'profile', label: 'Profile', icon: User },
             { id: 'gallery', label: 'Gallery', icon: Heart },
             { id: 'settings', label: 'Settings', icon: Settings },
-            { id: 'stats', label: 'Stats', icon: BarChart3 }
+            { id: 'stats', label: 'Stats', icon: BarChart3 },
+            ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: Crown }] : [])
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -1151,11 +1220,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Gallery Items */}
               <div>
                 <h4 className="text-md font-semibold text-white mb-3">Recent Items</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredGalleryItems.map((item) => (
-                    <div key={item.id} className={`bg-gray-800 rounded-lg overflow-hidden relative ${isSelectionMode ? 'cursor-pointer' : ''}`}>
+                    <div 
+                      key={item.id} 
+                      className={`gallery-item group relative ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                      style={{
+                        width: '180px',
+                        height: '180px',
+                        filter: 'brightness(0.7)',
+                        transition: 'all 0.4s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelectionMode) {
+                          e.currentTarget.style.filter = 'brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))';
+                          e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
+                          e.currentTarget.style.zIndex = '10';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelectionMode) {
+                          e.currentTarget.style.filter = 'brightness(0.7)';
+                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                          e.currentTarget.style.zIndex = '1';
+                        }
+                      }}
+                    >
                       {isSelectionMode && (
-                        <div className="absolute top-2 left-2 z-10">
+                        <div className="absolute top-2 left-2 z-20">
                           <input
                             type="checkbox"
                             checked={selectedItems.includes(item.id)}
@@ -1164,51 +1256,78 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           />
                         </div>
                       )}
-                      <div className="aspect-square bg-gray-700 flex items-center justify-center">
-                        {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                      
+                      {/* Content Preview */}
+                      <div className="relative w-full h-full">
+                        {item.fileType === 'video' ? (
+                          <video 
+                            src={item.videoUrl} 
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                          />
                         ) : (
-                          <div className="text-gray-400">No preview</div>
+                          <img 
+                            src={item.imageUrl || '/api/placeholder/400/400'} 
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('Profile gallery image failed to load:', item.imageUrl);
+                              e.currentTarget.src = '/api/placeholder/400/400';
+                            }}
+                            onLoad={() => {
+                              console.log('Profile gallery image loaded successfully:', item.imageUrl);
+                            }}
+                          />
                         )}
                       </div>
-                      <div className="p-4">
-                        <h5 className="font-medium text-white mb-1">{item.title}</h5>
-                        <p className="text-sm text-gray-400 mb-2">{item.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleToggleFavorite(item.id)}
-                              className={`p-1 rounded ${
-                                item.isFavorite ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'
-                              }`}
-                              title="Toggle favorite"
-                            >
-                              <Star className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleTogglePublic(item.id)}
-                              className={`p-1 rounded ${
-                                item.isPublic ? 'text-green-400' : 'text-gray-400 hover:text-green-400'
-                              }`}
-                              title="Toggle public/private"
-                            >
-                              {item.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            </button>
-                            {!isSelectionMode && (
-                              <button
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="p-1 rounded text-gray-400 hover:text-red-400"
-                                title="Delete item"
-                                disabled={loading}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                          <button className="text-gray-400 hover:text-white" title="Download">
+                      
+                      {/* Overlay Actions */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-[30px] flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleToggleFavorite(item.id)}
+                            className={`p-2 rounded-full ${
+                              item.isFavorite ? 'bg-yellow-400 text-black' : 'bg-white/20 text-white hover:bg-yellow-400 hover:text-black'
+                            } transition-colors`}
+                            title="Toggle favorite"
+                          >
+                            <Star className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleTogglePublic(item.id)}
+                            className={`p-2 rounded-full ${
+                              item.isPublic ? 'bg-green-400 text-black' : 'bg-white/20 text-white hover:bg-green-400 hover:text-black'
+                            } transition-colors`}
+                            title="Toggle public/private"
+                          >
+                            {item.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleDownloadItem(item)}
+                            className="p-2 rounded-full bg-white/20 text-white hover:bg-blue-400 hover:text-black transition-colors"
+                            title="Download item"
+                          >
                             <Download className="w-4 h-4" />
                           </button>
+                          {!isSelectionMode && (
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-2 rounded-full bg-white/20 text-white hover:bg-red-400 hover:text-black transition-colors"
+                              title="Delete item"
+                              disabled={loading}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
+                      </div>
+                      
+                      {/* Description Overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-[30px]">
+                        <p className="text-white text-xs font-medium truncate">{item.title}</p>
+                        <p className="text-white/70 text-xs truncate">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -1529,6 +1648,71 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <p className="text-lg font-bold text-purple-400">{collection.itemCount} items</p>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+            <div className="space-y-6">
+              {/* Admin Dashboard Header */}
+              <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 backdrop-blur-xl rounded-2xl p-6 border border-yellow-500/20 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <Crown className="w-6 h-6 text-yellow-400" />
+                  <h3 className="text-xl font-bold text-white">Admin Dashboard</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Process Weekly Payment */}
+                  <button
+                    onClick={() => window.open('/admin/weekly-payments', '_blank')}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex flex-col items-center gap-2"
+                  >
+                    <BarChart3 className="w-6 h-6" />
+                    <span className="font-medium">Weekly Payments</span>
+                    <span className="text-sm opacity-80">Process user payments</span>
+                  </button>
+
+                  {/* Credit Distribution */}
+                  <button
+                    onClick={() => window.open('/admin/credits', '_blank')}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex flex-col items-center gap-2"
+                  >
+                    <Sparkles className="w-6 h-6" />
+                    <span className="font-medium">Credit Distribution</span>
+                    <span className="text-sm opacity-80">Manage credit grants</span>
+                  </button>
+
+                  {/* Promo Code Generator */}
+                  <button
+                    onClick={() => setShowAdminModal(true)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex flex-col items-center gap-2"
+                  >
+                    <Star className="w-6 h-6" />
+                    <span className="font-medium">Promo Codes</span>
+                    <span className="text-sm opacity-80">Generate access codes</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Admin Promo Users Panel */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Promo Code Management</h4>
+                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-5 h-5 text-yellow-400" />
+                    <span className="text-yellow-400 font-medium">Admin Access</span>
+                  </div>
+                  <p className="text-white/80 text-sm mb-4">
+                    You have admin privileges. Use the buttons above to manage payments, credits, and promo codes.
+                  </p>
+                  <button
+                    onClick={() => setShowAdminModal(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span className="text-sm font-medium">Generate Promo Code</span>
+                  </button>
                 </div>
               </div>
             </div>

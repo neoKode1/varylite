@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { AdminPromoModal } from '@/components/AdminPromoModal';
 import { AdminPromoUsersPanel } from '@/components/AdminPromoUsersPanel';
+import UserCreditDisplay from '@/components/UserCreditDisplay';
 import { 
   User, 
   Settings, 
@@ -413,6 +414,73 @@ export default function ProfilePage() {
     );
   };
 
+  const handleDownloadItem = async (item: any) => {
+    try {
+      const url = item.videoUrl || item.imageUrl;
+      if (!url) {
+        console.error('No URL found for item:', item);
+        return;
+      }
+
+      // Check if we're on mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // For mobile, use direct download
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        
+        try {
+          a.download = `vary-ai-${item.id}.${item.videoUrl ? 'mp4' : 'jpg'}`;
+        } catch (e) {
+          console.log('📱 Download attribute not supported');
+        }
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        console.log('📱 Download started for mobile');
+      } else {
+        // For desktop, use blob download
+        const response = await fetch(url, {
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `vary-ai-${item.id}.${item.videoUrl ? 'mp4' : 'jpg'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        
+        console.log('🖥️ Download completed for desktop');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error downloading item:', error);
+      
+      // Fallback: open in new tab
+      const a = document.createElement('a');
+      a.href = item.videoUrl || item.imageUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   // Removed handleTogglePublic since all gallery items are private
 
   const handleRedeemPromoCode = async () => {
@@ -738,6 +806,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Credit Display */}
+        <div className="mb-8">
+          <UserCreditDisplay showSecretModels={isAdmin} />
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Total Generations */}
@@ -800,6 +873,50 @@ export default function ProfilePage() {
             <div className="text-white/80 text-sm">Last Active</div>
           </div>
         </div>
+
+        {/* Admin Dashboard */}
+        {isAdmin && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 backdrop-blur-xl rounded-2xl p-6 border border-yellow-500/20 shadow-2xl">
+              <div className="flex items-center gap-3 mb-6">
+                <Crown className="w-6 h-6 text-yellow-400" />
+                <h3 className="text-xl font-bold text-white">Admin Dashboard</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Process Weekly Payment */}
+                <button
+                  onClick={() => router.push('/admin/weekly-payments')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex flex-col items-center gap-2"
+                >
+                  <BarChart3 className="w-6 h-6" />
+                  <span className="font-medium">Weekly Payments</span>
+                  <span className="text-sm opacity-80">Process user payments</span>
+                </button>
+
+                {/* Credit Distribution */}
+                <button
+                  onClick={() => router.push('/admin/credits')}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex flex-col items-center gap-2"
+                >
+                  <Sparkles className="w-6 h-6" />
+                  <span className="font-medium">Credit Distribution</span>
+                  <span className="text-sm opacity-80">Manage credit grants</span>
+                </button>
+
+                {/* Promo Code Generator */}
+                <button
+                  onClick={() => setShowAdminModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex flex-col items-center gap-2"
+                >
+                  <Star className="w-6 h-6" />
+                  <span className="font-medium">Promo Codes</span>
+                  <span className="text-sm opacity-80">Generate access codes</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Admin Promo Users Panel */}
         {isAdmin && (
@@ -979,7 +1096,11 @@ export default function ProfilePage() {
                           <Star className="w-4 h-4" />
                         </button>
                         {/* Removed public/private toggle - all items are private */}
-                        <button className="p-2 rounded-full bg-white bg-opacity-20 text-white hover:bg-opacity-30 transition-colors">
+                        <button 
+                          onClick={() => handleDownloadItem(item)}
+                          className="p-2 rounded-full bg-white bg-opacity-20 text-white hover:bg-opacity-30 transition-colors"
+                          title="Download item"
+                        >
                           <Download className="w-4 h-4" />
                         </button>
                       </div>
