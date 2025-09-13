@@ -649,7 +649,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // For mobile, use direct download
+        // For mobile, use direct download with better guidance
         const a = document.createElement('a');
         a.href = url;
         a.target = '_blank';
@@ -666,6 +666,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         document.body.removeChild(a);
         
         console.log('📱 Download started for mobile');
+        
+        // Show mobile-specific guidance
+        setNotification({
+          type: 'success',
+          message: '📱 Download started! If it doesn\'t work, try long-pressing the image and selecting "Save to Photos".'
+        });
       } else {
         // For desktop, use blob download
         const response = await fetch(url, {

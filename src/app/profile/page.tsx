@@ -426,7 +426,7 @@ export default function ProfilePage() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // For mobile, use direct download
+        // For mobile, use direct download with better guidance
         const a = document.createElement('a');
         a.href = url;
         a.target = '_blank';
@@ -443,6 +443,9 @@ export default function ProfilePage() {
         document.body.removeChild(a);
         
         console.log('📱 Download started for mobile');
+        
+        // Show mobile-specific guidance (you might want to add a notification system here)
+        alert('📱 Download started! If it doesn\'t work, try long-pressing the image and selecting "Save to Photos".');
       } else {
         // For desktop, use blob download
         const response = await fetch(url, {

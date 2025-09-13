@@ -936,6 +936,17 @@ export default function Home() {
       message = message.replace('User Error: ', 'Mobile Tip: ');
     }
     
+    // Add mobile-specific guidance for common issues
+    if (isMobile) {
+      if (message.includes('video') && message.includes('not available')) {
+        message = '📱 Mobile users can only generate images. Video generation is available on desktop.';
+      } else if (message.includes('file too large')) {
+        message = '📱 Mobile upload limit: 10MB. Please use smaller files or try desktop.';
+      } else if (message.includes('download failed')) {
+        message = '📱 Mobile download issue. Try long-pressing the image and selecting "Save to Photos".';
+      }
+    }
+    
     if (errorType === 'success') {
       showNotification(message, 'success');
     } else {
@@ -1285,6 +1296,8 @@ export default function Home() {
       if (isMobile) {
         setContentMode('image');
         console.log('🎯 Mobile detected: Forcing image mode even for video files');
+        // Show mobile-specific notification about video limitations
+        showNotification('📱 Mobile users can only generate images. Video generation is available on desktop.', 'info');
       } else {
         setContentMode('video');
         console.log('🎯 Smart default: Video files detected, switching to video mode');
@@ -2571,7 +2584,26 @@ export default function Home() {
         // Check file size more strictly on mobile
         const oversizedFiles = Array.from(files).filter(file => file.size > 10 * 1024 * 1024); // 10MB limit
         if (oversizedFiles.length > 0) {
-          showNotification('Mobile Error: File too large. Please use files under 10MB on mobile.', 'error');
+          const fileNames = oversizedFiles.map(f => f.name).join(', ');
+          showAnimatedErrorNotification(
+            `📱 Mobile upload limit exceeded! Files over 10MB: ${fileNames}. Please compress your files or use desktop for larger uploads.`,
+            'shake-error'
+          );
+          return;
+        }
+        
+        // Check file types more strictly on mobile
+        const unsupportedFiles = Array.from(files).filter(file => {
+          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+          return !validTypes.includes(file.type.toLowerCase());
+        });
+        
+        if (unsupportedFiles.length > 0) {
+          const fileNames = unsupportedFiles.map(f => f.name).join(', ');
+          showAnimatedErrorNotification(
+            `📱 Unsupported file types on mobile: ${fileNames}. Please use JPG, PNG, WebP, or MP4 files.`,
+            'shake-error'
+          );
           return;
         }
       }
@@ -3518,25 +3550,26 @@ export default function Home() {
       
       if (variation.imageUrl) {
         // Download the generated image
-        if (isMobile) {
-          // For mobile, use direct download
-          const a = document.createElement('a');
-          a.href = variation.imageUrl;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          
-          try {
-            a.download = `character-${variation.angle.toLowerCase().replace(/\s+/g, '-')}-${variation.id}.jpg`;
-          } catch (e) {
-            console.log('📱 Download attribute not supported');
-          }
-          
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          showNotification('📱 Image download started!', 'success');
-        } else {
+      if (isMobile) {
+        // For mobile, use direct download with better error handling
+        const a = document.createElement('a');
+        a.href = variation.imageUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        
+        try {
+          a.download = `character-${variation.angle.toLowerCase().replace(/\s+/g, '-')}-${variation.id}.jpg`;
+        } catch (e) {
+          console.log('📱 Download attribute not supported');
+        }
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Show mobile-specific download guidance
+        showNotification('📱 Download started! If it doesn\'t work, try long-pressing the image and selecting "Save to Photos".', 'success');
+      } else {
           // For desktop, use blob download
           const response = await fetch(variation.imageUrl, {
             mode: 'cors',
@@ -3611,8 +3644,8 @@ export default function Home() {
         a.click();
         document.body.removeChild(a);
         
-        // Show notification for mobile users
-        showNotification('📱 Video download started! Check your downloads folder.', 'success');
+        // Show mobile-specific video download guidance
+        showNotification('📱 Video opened in new tab! If download doesn\'t start, try long-pressing the video and selecting "Save to Photos" or "Download".', 'success');
         return;
       }
       
@@ -5107,6 +5140,23 @@ export default function Home() {
         <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat lg:pb-6">
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
+            {/* Mobile Feature Info Banner */}
+            {(() => {
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              if (isMobile) {
+                return (
+                  <div className="w-full mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-200 text-sm">
+                      <span className="text-blue-400">📱</span>
+                      <span className="font-medium">Mobile Mode:</span>
+                      <span>Image generation only. Video features available on desktop.</span>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
               <div className="mb-4 p-4 bg-transparent lg:bg-charcoal lg:bg-opacity-30 backdrop-blur-sm rounded-lg border border-border-gray border-opacity-30">
@@ -5277,6 +5327,16 @@ export default function Home() {
 
             {/* Mobile Floating Input - Match Community Page Style */}
             <div className="mobile-chat-interface md:hidden hidden" data-input-area>
+              {/* Mobile Help Banner */}
+              <div className="mb-3 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+                <div className="text-yellow-200 text-xs">
+                  <div className="font-medium mb-1">📱 Mobile Tips:</div>
+                  <div>• Upload images under 10MB</div>
+                  <div>• Use JPG, PNG, or WebP formats</div>
+                  <div>• Image generation only (video on desktop)</div>
+                </div>
+              </div>
+              
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
                 <div className="mb-3">
