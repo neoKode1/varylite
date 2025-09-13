@@ -4,22 +4,13 @@ import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
 
 // Function to upload image using Fal AI client's built-in upload
-async function uploadImageToTempUrl(base64Data: string, mimeType: string = 'image/jpeg'): Promise<string> {
+async function uploadImageToTempUrl(base64Data: string): Promise<string> {
   try {
-    // Ensure we have the full data URI format
-    const fullDataUri = base64Data.startsWith('data:') 
-      ? base64Data 
-      : `data:${mimeType};base64,${base64Data}`;
+    // Convert base64 to buffer
+    const buffer = Buffer.from(base64Data, 'base64');
     
-    // Extract base64 string and convert to buffer
-    const base64String = fullDataUri.split(',')[1];
-    const buffer = Buffer.from(base64String, 'base64');
-    
-    // Create a File object from the buffer with original MIME type
-    const fileExtension = mimeType.split('/')[1] || 'jpg';
-    const file = new File([buffer], `image.${fileExtension}`, { type: mimeType });
-    
-    console.log(`📤 Uploading image to FAL storage: ${file.name} (${file.size} bytes, ${file.type})`);
+    // Create a File object from the buffer
+    const file = new File([buffer], 'image.jpg', { type: 'image/jpeg' });
     
     // Use Fal AI client's built-in upload functionality
     const url = await fal.storage.upload(file);
@@ -29,121 +20,9 @@ async function uploadImageToTempUrl(base64Data: string, mimeType: string = 'imag
   } catch (error) {
     console.error('❌ Failed to upload image to Fal AI:', error);
     // Fallback to data URI - Nano Banana should accept this according to docs
-    const dataUri = base64Data.startsWith('data:') 
-      ? base64Data 
-      : `data:${mimeType};base64,${base64Data}`;
+    const dataUri = `data:image/jpeg;base64,${base64Data}`;
     console.log(`⚠️ Using data URI directly: ${dataUri.substring(0, 50)}...`);
     return dataUri;
-  }
-}
-
-// Function to call Flux Dev for fallback image generation
-async function callFluxDev(
-  prompt: string,
-  imageUrl: string,
-  timeoutMs: number = 30000
-): Promise<any> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    console.log(`🚀 Making Flux Dev request...`);
-    
-    const response = await fetch('https://fal.run/fal-ai/flux-dev', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${process.env.FAL_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        image_url: imageUrl,
-        num_inference_steps: 4,
-        enable_safety_checker: true
-      }),
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Flux Dev request failed: ${response.status} ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log(`✅ Flux Dev request completed`);
-    
-    return {
-      data: {
-        images: result.images || [],
-        timings: result.timings,
-        seed: result.seed
-      }
-    };
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if ((error as Error).name === 'AbortError') {
-      throw new Error('Flux Dev request timed out');
-    }
-    
-    throw error;
-  }
-}
-
-// Function to call Nano Banana using synchronous requests (faster for quick generations)
-async function callNanoBananaSync(
-  modelName: string,
-  input: {
-    prompt: string;
-    image_urls: string[];
-    num_images: number;
-    output_format: string;
-  },
-  timeoutMs: number = 30000 // 30 second timeout for sync requests
-): Promise<any> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    console.log(`🚀 Making synchronous request to ${modelName}...`);
-    
-    const response = await fetch(`https://fal.run/${modelName}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${process.env.FAL_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(input),
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Synchronous request failed: ${response.status} ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log(`✅ Synchronous request completed in ${result.timings?.inference || 'unknown'}s`);
-    
-    return {
-      data: {
-        images: result.images || [],
-        timings: result.timings,
-        seed: result.seed
-      }
-    };
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if ((error as Error).name === 'AbortError') {
-      throw new Error('Synchronous request timed out');
-    }
-    
-    throw error;
   }
 }
 
@@ -153,7 +32,7 @@ const RETRY_CONFIG = {
   baseDelay: 2000, // Increased to 2 seconds for better spacing
   maxDelay: 15000, // Increased to 15 seconds
   backoffMultiplier: 2,
-  timeout: 45000, // Will be updated dynamically based on sync/queue mode
+  timeout: 45000, // Increased to 45 seconds for nano-banana's longer processing times
 };
 
 // Success rate tracking
@@ -193,14 +72,13 @@ async function retryWithBackoff<T>(
   maxRetries: number = RETRY_CONFIG.maxRetries,
   baseDelay: number = RETRY_CONFIG.baseDelay,
   maxDelay: number = RETRY_CONFIG.maxDelay,
-  backoffMultiplier: number = RETRY_CONFIG.backoffMultiplier,
-  timeoutMs: number = RETRY_CONFIG.timeout
+  backoffMultiplier: number = RETRY_CONFIG.backoffMultiplier
 ): Promise<T> {
   let lastError: Error;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await withTimeout(operation(), timeoutMs);
+      return await withTimeout(operation(), RETRY_CONFIG.timeout);
     } catch (error) {
       lastError = error as Error;
       
@@ -332,7 +210,7 @@ async function tryAlternativeModels(
   const models = [
     { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
     { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' },
-    { name: 'gemini-1.0-pro', description: 'Gemini 1.0 Pro' }
+    { name: 'gemini-pro', description: 'Gemini Pro' }
   ];
   
   for (const modelConfig of models) {
@@ -343,52 +221,12 @@ async function tryAlternativeModels(
       console.log(`✅ Successfully used ${modelConfig.description}`);
       return result;
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      console.log(`❌ ${modelConfig.description} failed:`, errorMessage);
-      
-      // Check if it's a model not found error
-      if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-        console.log(`⚠️ Model ${modelConfig.name} is not available in current API version`);
-      }
+      console.log(`❌ ${modelConfig.description} failed:`, (error as Error).message);
       continue;
     }
   }
   
-  // Last resort: try with default model (no specific model name)
-  try {
-    console.log('🔄 Trying default Gemini model as last resort...');
-    const defaultModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const result = await defaultModel.generateContent([prompt, ...imageParts]);
-    console.log('✅ Successfully used default Gemini model');
-    return result;
-  } catch (error) {
-    console.log('❌ Default Gemini model also failed:', (error as Error).message);
-  }
-  
-  // Log detailed error for debugging but return user-friendly message
-  console.error('💥 All Gemini models failed. Detailed errors logged above.');
-  
-  // Check if it's a circuit breaker issue
-  if (circuitBreakerState.isOpen) {
-    throw new Error('Service temporarily unavailable due to repeated failures. Please try again in a moment.');
-  }
-  
-  // Check if it's an API key issue
-  if (!process.env.GOOGLE_API_KEY) {
-    throw new Error('AI service configuration error. Please contact support.');
-  }
-  
-  // Check if it's a quota/rate limit issue
-  const lastError = arguments[0]; // Get the last error from the loop
-  if (lastError && lastError.message && (
-    lastError.message.includes('quota') || 
-    lastError.message.includes('rate limit') ||
-    lastError.message.includes('overloaded')
-  )) {
-    throw new Error('AI service is currently overloaded. Please try again in a few minutes.');
-  }
-  
-  throw new Error('AI service is temporarily unavailable. Please try again in a moment.');
+  throw new Error('All available Gemini models are currently unavailable');
 }
 
 // Minimal prompt processing to preserve user intent
@@ -453,13 +291,6 @@ function recordSuccess(): void {
   }
 }
 
-// Configuration for Nano Banana requests
-const NANO_BANANA_CONFIG = {
-  useSyncRequests: process.env.NANO_BANANA_SYNC === 'true', // Enable sync requests via env var
-  syncTimeout: 30000, // 30 seconds for sync requests
-  queueTimeout: 45000, // 45 seconds for queue requests
-};
-
 // Configure Fal AI
 if (process.env.FAL_KEY) {
   console.log('🔧 Configuring Fal AI with key...');
@@ -467,7 +298,6 @@ if (process.env.FAL_KEY) {
     credentials: process.env.FAL_KEY
   });
   console.log('✅ Fal AI configured successfully');
-  console.log(`⚡ Nano Banana sync requests: ${NANO_BANANA_CONFIG.useSyncRequests ? 'ENABLED' : 'DISABLED'}`);
 } else {
   console.log('❌ No FAL_KEY found for configuration');
 }
@@ -494,7 +324,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, mimeTypes, prompt, useFluxDev } = body;
+    const { images, prompt } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
@@ -531,10 +361,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🤖 Initializing Gemini AI model...');
-    // Get the generative model - using Gemini 1.5 Pro for better performance
-    // Fallback to other models if 1.5 Pro is overloaded
-    let model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-    console.log('✅ Gemini 1.5 Pro model initialized successfully');
+    // Get the generative model - using Gemini 2.0 Flash for better performance
+    // Fallback to Gemini 1.5 Pro if 2.0 Flash is overloaded
+    let model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    console.log('✅ Gemini 2.0 Flash model initialized successfully');
 
     console.log('📝 Creating enhanced prompt...');
     
@@ -678,22 +508,11 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     try {
       result = await retryWithBackoff(async () => {
         console.log('🔄 Attempting Gemini API call...');
-        console.log(`📊 Circuit breaker state: ${circuitBreakerState.isOpen ? 'OPEN' : 'CLOSED'} (failures: ${circuitBreakerState.failures})`);
-        console.log(`🔑 API Key status: ${process.env.GOOGLE_API_KEY ? 'Present' : 'Missing'}`);
         return await model.generateContent([enhancedPrompt, ...imageParts]);
       });
     } catch (error) {
       console.log('⚠️ Primary model failed, trying alternative models...');
       console.log(`📊 Error details: ${(error as Error).message}`);
-      console.log(`📊 Error type: ${(error as Error).name}`);
-      console.log(`📊 Error stack: ${(error as Error).stack}`);
-      
-      // Check if it's a circuit breaker issue before trying alternatives
-      if (circuitBreakerState.isOpen) {
-        console.log('🚨 Circuit breaker is open, not attempting alternative models');
-        throw new Error('Service temporarily unavailable due to repeated failures. Please try again in a moment.');
-      }
-      
       result = await tryAlternativeModels(genAI, enhancedPrompt, imageParts);
     }
     console.log('📥 Received response from Gemini API');
@@ -731,45 +550,15 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     let variationsWithImages = variations;
 
     if (hasFalKey) {
-      if (useFluxDev) {
-        console.log('🎨 Generating images with Flux Dev (fallback)...');
-      } else {
-        console.log('🎨 Generating images with Nano Banana...');
-      }
+      console.log('🎨 Generating images with Nano Banana...');
       // Upload all images to get proper URLs for Nano Banana
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
-          const mimeType = mimeTypes?.[index] || 'image/jpeg';
-          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI... (${mimeType})`);
-          return await uploadImageToTempUrl(imageData, mimeType);
+          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI...`);
+          return await uploadImageToTempUrl(imageData);
         })
       );
       console.log(`🖼️ Uploaded ${imageUrls.length} images for Nano Banana processing`);
-      
-      // Validate image URLs before sending to Nano Banana
-      console.log('🔍 Validating image URLs...');
-      const validatedImageUrls = await Promise.all(
-        imageUrls.map(async (url, index) => {
-          try {
-            // Skip validation for data URIs
-            if (url.startsWith('data:')) {
-              console.log(`✅ Image ${index + 1}: Using data URI (${url.substring(0, 50)}...)`);
-              return url;
-            }
-            
-            const response = await fetch(url, { method: 'HEAD' });
-            if (!response.ok) {
-              throw new Error(`Image URL not accessible: ${response.status}`);
-            }
-            console.log(`✅ Image ${index + 1}: URL validated (${url})`);
-            return url;
-          } catch (error) {
-            console.error(`❌ Image ${index + 1} URL validation failed:`, url, error);
-            throw error;
-          }
-        })
-      );
-      console.log('✅ All image URLs validated successfully');
       
       // Generate images for each variation using Nano Banana
       variationsWithImages = await Promise.all(
@@ -799,64 +588,28 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
-            // Use appropriate timeout based on sync/queue mode
-            const timeoutMs = NANO_BANANA_CONFIG.useSyncRequests 
-              ? NANO_BANANA_CONFIG.syncTimeout 
-              : NANO_BANANA_CONFIG.queueTimeout;
-            
             const result = await retryWithBackoff(async () => {
-              if (useFluxDev) {
-                console.log(`🔄 Attempting Flux Dev image generation for ${variation.angle}...`);
-                
-                // Use Flux Dev for fallback image generation
-                console.log(`🤖 Using Flux Dev model`);
-                console.log(`🖼️ Image URL being sent to Flux Dev:`, validatedImageUrls[0]);
-                console.log(`📝 Prompt:`, nanoBananaPrompt);
-                
-                return await callFluxDev(nanoBananaPrompt, validatedImageUrls[0], timeoutMs);
-              } else {
-                console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
-                
-                // Use Nano Banana for image editing with multiple input images
-                const modelName = "fal-ai/nano-banana/edit";
-                console.log(`🤖 Using Nano Banana model: ${modelName}`);
-                
-                // Enhanced debug logging
-                console.log(`🖼️ Image URLs being sent to Nano Banana:`, validatedImageUrls);
-                console.log(`📊 Image count:`, validatedImageUrls.length);
-                console.log(`🎯 Model:`, modelName);
-                console.log(`📝 Prompt:`, nanoBananaPrompt);
-                
-                const input = {
-                  prompt: nanoBananaPrompt,
-                  image_urls: validatedImageUrls, // Use validated image URLs for character + scene combination
-                  num_images: 1,
-                  output_format: "jpeg"
-                };
-                
-                // Try synchronous request first if enabled (faster for quick generations)
-                if (NANO_BANANA_CONFIG.useSyncRequests) {
-                  try {
-                    console.log(`⚡ Attempting synchronous request for ${variation.angle}...`);
-                    return await callNanoBananaSync(modelName, input, NANO_BANANA_CONFIG.syncTimeout);
-                  } catch (syncError) {
-                    console.log(`⚠️ Synchronous request failed, falling back to queue:`, (syncError as Error).message);
-                  }
+              console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
+              
+              // Use Nano Banana for image editing with multiple input images
+              const modelName = "fal-ai/nano-banana/edit";
+              console.log(`🤖 Using Nano Banana model: ${modelName}`);
+              
+              return await fal.subscribe(modelName, {
+              input: {
+                prompt: nanoBananaPrompt,
+                image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                num_images: 1,
+                output_format: "jpeg"
+              },
+              logs: true,
+              onQueueUpdate: (update) => {
+                if (update.status === "IN_PROGRESS") {
+                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                 }
-                
-                // Use queue-based request (more reliable for longer processing)
-                console.log(`📋 Using queue-based request for ${variation.angle}...`);
-                return await fal.subscribe(modelName, {
-                  input,
-                  logs: true,
-                  onQueueUpdate: (update) => {
-                    if (update.status === "IN_PROGRESS") {
-                      console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                    }
-                  },
-                });
-              }
-            }, RETRY_CONFIG.maxRetries, RETRY_CONFIG.baseDelay, RETRY_CONFIG.maxDelay, RETRY_CONFIG.backoffMultiplier, timeoutMs);
+              },
+              });
+            });
 
             console.log(`✅ Image ${index + 1} generated successfully`);
             

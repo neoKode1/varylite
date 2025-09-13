@@ -37,7 +37,8 @@ type GenerationMode =
   | 'kling-video-pro'
   | 'flux-dev'
   | 'seedream-3'
-  | 'seedance-1-pro';
+  | 'seedance-1-pro'
+  | 'bytedance-seedream-4';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -860,7 +861,8 @@ export default function Home() {
       'kling-video-pro': 110, // 1.83 minutes for Kling Video Pro video variations
       'flux-dev': 20, // 20 seconds for Flux Dev image generation
       'seedream-3': 25, // 25 seconds for Seedream 3 text-to-image
-      'seedance-1-pro': 90 // 90 seconds for Seedance 1 Pro video generation
+      'seedance-1-pro': 90, // 90 seconds for Seedance 1 Pro video generation
+      'bytedance-seedream-4': 35 // 35 seconds for Seedream 4 with custom sizing
     };
     return timeEstimates[mode] || 30;
   };
@@ -989,6 +991,7 @@ export default function Home() {
         if (contentMode === 'image') {
           // Image mode: show image variation models with fallback
           modes.push('nano-banana'); // Character variations (primary)
+          modes.push('bytedance-seedream-4'); // Seedream 4 with custom sizing
           modes.push('flux-dev'); // Flux Dev as fallback
         } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
           // Video mode: show video variant models (desktop only + secret access required)
@@ -1014,6 +1017,7 @@ export default function Home() {
     } else {
       // When no images are uploaded, show text-to-image and text-to-video models
       modes.push('runway-t2i'); // Text-to-image
+      modes.push('bytedance-seedream-4'); // Seedream 4 text-to-image
       modes.push('seedream-3'); // Seedream 3 text-to-image (base level)
       if (!isMobile) {
         // Video models only on desktop
@@ -1056,7 +1060,8 @@ export default function Home() {
       'kling-video-pro': 'Kling Video Pro',
       'flux-dev': 'Flux Dev',
       'seedream-3': 'Seedream 3',
-      'seedance-1-pro': 'Seedance 1 Pro'
+      'seedance-1-pro': 'Seedance 1 Pro',
+      'bytedance-seedream-4': 'Seedream 4'
     };
     return displayNames[mode] || mode;
   }, []);
@@ -2752,6 +2757,9 @@ export default function Home() {
       case 'flux-dev':
         await handleFluxDevGeneration();
         break;
+      case 'bytedance-seedream-4':
+        await handleSeedream4Generation();
+        break;
       case 'minimax-2.0':
         // MiniMax End Frame - requires 2 images, uses older /api/endframe infrastructure
         await handleEndFrameGeneration();
@@ -3226,6 +3234,181 @@ export default function Home() {
 
     } catch (err) {
       console.error('❌ Flux Dev generation error:', err);
+      
+      // Enhanced error handling with better user messages
+      let userMessage = 'An unexpected error occurred';
+      let retryable = true;
+      
+      if (err instanceof Error) {
+        const message = err.message.toLowerCase();
+        
+        if (message.includes('service unavailable') || message.includes('503')) {
+          userMessage = 'AI service is temporarily overloaded. This is common during peak hours. Please try again in a moment.';
+          retryable = true;
+          console.error('Network Error: AI service overloaded!');
+        } else if (message.includes('timeout') || message.includes('504')) {
+          userMessage = 'Request timed out. The service may be experiencing high demand. Please try again.';
+          retryable = true;
+          console.error('Network Error: Request timed out!');
+        } else if (message.includes('rate limit') || message.includes('429')) {
+          userMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+          retryable = true;
+          showAnimatedErrorNotification('User Error: Rate limit exceeded! TOASTY!', 'toasty');
+        } else if (message.includes('content') && message.includes('moderation')) {
+          userMessage = 'Content was flagged by moderation. Please try with a different prompt or image.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Content flagged by moderation! TOASTY!', 'toasty');
+        } else if (message.includes('400') || message.includes('bad request')) {
+          userMessage = 'Invalid request. Please check your images and prompt.';
+          retryable = false;
+          showAnimatedErrorNotification('User Error: Invalid request! TOASTY!', 'toasty');
+        } else {
+          userMessage = err.message;
+          console.error('Network Error: Something went wrong!');
+        }
+      }
+      
+      setError(userMessage);
+      
+      // Show helpful notification with retry suggestion
+      if (retryable) {
+        showNotification(`⚠️ ${userMessage} Try again?`, 'error');
+      } else {
+        showNotification(`❌ ${userMessage}`, 'error');
+      }
+      
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      stopGenerationTimer();
+    }
+  };
+
+  // Handle Seedream 4 generation with advanced features
+  const handleSeedream4Generation = async () => {
+    // Check if user can generate
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 20,
+      currentStep: 'Preparing Seedream 4 generation...'
+    });
+
+    try {
+      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Generating with Seedream 4...' }));
+      
+      // Call Seedream 4 directly without Gemini analysis
+      const seedreamResponse = await fetch('/api/seedream-4', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: uploadedFiles.map(img => img.base64),
+          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
+          prompt: prompt.trim(),
+          size: "2K",
+          aspect_ratio: "match_input_image",
+          max_images: 4 // Generate multiple variations
+        }),
+      });
+
+      setProcessing(prev => ({ ...prev, progress: 80, currentStep: 'Processing results...' }));
+
+      const data = await seedreamResponse.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate images with Seedream 4');
+      }
+
+      setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
+      const newVariations = data.variations || [];
+      
+      // Filter out bad content variations
+      const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
+        const isBad = isBadContent(variation.description || '') || 
+                     isBadContent(variation.angle || '') || 
+                     isBadContent(variation.pose || '') ||
+                     isBadContent(prompt.trim());
+        
+        if (isBad) {
+          console.log('🚫 Bad content variation detected, filtering out:', variation.description);
+          showContentRejectedAnimation();
+        }
+        
+        return !isBad;
+      });
+      
+      const storedVariations: StoredVariation[] = filteredVariations.map((variation: CharacterVariation, index: number) => ({
+        ...variation,
+        timestamp: Date.now() + index,
+        originalPrompt: prompt.trim(),
+        fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
+      }));
+      setVariations(storedVariations);
+      
+      // Track usage
+      await trackUsage('character_variation', 'gemini', {
+        prompt: prompt.trim(),
+        variations_count: filteredVariations.length,
+        file_type: uploadedFiles[0]?.fileType,
+        model_used: 'seedream-4'
+      });
+      
+      // Add to gallery
+      if (filteredVariations.length > 0) {
+        addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
+        showNotification('🎨 Character variations generated with Seedream 4!', 'success');
+        
+        // Deduct credits after successful generation
+        if (user?.id && !isAdmin) {
+          try {
+            const response = await fetch('/api/use-credits', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                modelName: 'bytedance-seedream-4',
+                generationType: 'image'
+              })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+              refreshCreditDisplay();
+            }
+          } catch (error) {
+            console.error('Failed to deduct credits:', error);
+          }
+        }
+        
+        // Clear input after successful generation
+        setPrompt('');
+        setUploadedFiles([]);
+        console.log('🧹 Cleared input after successful Seedream 4 generation');
+      } else if (newVariations.length > 0) {
+        // All variations were filtered out
+        showNotification('🚫 All generated content was filtered out due to content policy', 'error');
+      }
+      
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+        stopGenerationTimer();
+      }, 1000);
+
+    } catch (err) {
+      console.error('❌ Seedream 4 generation error:', err);
       
       // Enhanced error handling with better user messages
       let userMessage = 'An unexpected error occurred';
@@ -5596,6 +5779,39 @@ export default function Home() {
                           >
                             Vary
                           </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!variations[0].imageUrl) return;
+                              try {
+                                const url = variations[0].imageUrl;
+                                const response = await fetch(url);
+                                const blob = await response.blob();
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = downloadUrl;
+                                link.download = `vary-ai-variant-1-${variations[0].id}.jpg`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(downloadUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct link
+                                const link = document.createElement('a');
+                                link.href = variations[0].imageUrl;
+                                link.download = `vary-ai-variant-1-${variations[0].id}.jpg`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="text-xs text-green-300 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/30 hover:bg-green-900/50"
+                            title="Download image"
+                          >
+                            Download
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -5665,6 +5881,39 @@ export default function Home() {
                             title="Generate variations with nano_banana"
                           >
                             Vary
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!variations[1].imageUrl) return;
+                              try {
+                                const url = variations[1].imageUrl;
+                                const response = await fetch(url);
+                                const blob = await response.blob();
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = downloadUrl;
+                                link.download = `vary-ai-variant-2-${variations[1].id}.jpg`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(downloadUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct link
+                                const link = document.createElement('a');
+                                link.href = variations[1].imageUrl;
+                                link.download = `vary-ai-variant-2-${variations[1].id}.jpg`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="text-xs text-green-300 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/30 hover:bg-green-900/50"
+                            title="Download image"
+                          >
+                            Download
                           </button>
                         </div>
                       </div>
@@ -5736,6 +5985,39 @@ export default function Home() {
                           >
                             Vary
                           </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!variations[2].imageUrl) return;
+                              try {
+                                const url = variations[2].imageUrl;
+                                const response = await fetch(url);
+                                const blob = await response.blob();
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = downloadUrl;
+                                link.download = `vary-ai-variant-3-${variations[2].id}.jpg`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(downloadUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct link
+                                const link = document.createElement('a');
+                                link.href = variations[2].imageUrl;
+                                link.download = `vary-ai-variant-3-${variations[2].id}.jpg`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="text-xs text-green-300 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/30 hover:bg-green-900/50"
+                            title="Download image"
+                          >
+                            Download
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -5805,6 +6087,39 @@ export default function Home() {
                             title="Generate variations with nano_banana"
                           >
                             Vary
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const imageUrl = variations[3].imageUrl;
+                              if (!imageUrl) return;
+                              try {
+                                const response = await fetch(imageUrl);
+                                const blob = await response.blob();
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = downloadUrl;
+                                link.download = `vary-ai-variant-4-${variations[3].id}.jpg`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(downloadUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct link
+                                const link = document.createElement('a');
+                                link.href = imageUrl;
+                                link.download = `vary-ai-variant-4-${variations[3].id}.jpg`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="text-xs text-green-300 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/30 hover:bg-green-900/50"
+                            title="Download image"
+                          >
+                            Download
                           </button>
                         </div>
                       </div>
@@ -6814,15 +7129,31 @@ export default function Home() {
 
                                   {/* Download Icon - Bottom Left */}
                                   <button
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                       e.stopPropagation();
-                                      const url = item.imageUrl;
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download = `vary-ai-${item.id}.jpg`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
+                                      try {
+                                        const url = item.imageUrl;
+                                        const response = await fetch(url);
+                                        const blob = await response.blob();
+                                        const downloadUrl = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = downloadUrl;
+                                        link.download = `vary-ai-${item.id}.jpg`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(downloadUrl);
+                                      } catch (error) {
+                                        console.error('Download failed:', error);
+                                        // Fallback to direct link
+                                        const link = document.createElement('a');
+                                        link.href = item.imageUrl;
+                                        link.download = `vary-ai-${item.id}.jpg`;
+                                        link.target = '_blank';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                      }
                                     }}
                                     className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                                     title="Download file"
