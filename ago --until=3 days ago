@@ -1,0 +1,136 @@
+[33m0ea76c2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: Improve AI service error handling and diagnostics
+[33me7b9567[m fix: Resolve React hydration error caused by mobile detection
+[33m1346375[m fix: Improve Header profile picture fetch error handling
+[33m3dfbd6d[m feat: Improve mobile user experience and reduce errors
+[33md69317c[m fix: Add missing download functionality to gallery cards
+[33mfc50e0a[m fix: Add missing dependencies for Replicate model integration
+[33m814a3a0[m feat: Add three new Replicate AI models
+[33m21f15db[m fix: add proper type annotation for Set in useUnlockedModels hook
+[33me5d9522[m trigger: force new deployment with latest fixes
+[33m80cf123[m fix: replace undefined showNotification with showError in secret page
+[33m9c8c84a[m fix: add null check for supabaseAdmin in vary-video API
+[33m0f657c0[m fix: add null check for supabaseAdmin in unlock-model API
+[33ma48fe46[m feat: implement accordion-style desktop gallery with clean minimal design
+[33m17e9bf4[m Improve image upload handling for Nano Banana integration
+[33m739ef65[m fix: Add runway-t2i support to handleModelGeneration - allows text-to-image with uploaded images
+[33me5949a5[m fix: Correct model selection logic - remove text-to-image when images are uploaded
+[33mfb76295[m fix: Resolve TypeScript error by moving loadUserDefaultModel after getAvailableModes declaration
+[33m66275b8[m feat: Load user's default model preference from profile and set as initial selection
+[33m0080794[m feat: Remove 'Runway' text from mobile model display - show 'Text to Image' instead
+[33m4013efa[m fix: Update ProfileModal to refresh local state after saving settings
+[33m104825e[m fix: Improve error handling in vary-character API with user-friendly messages
+[33m556bbbc[m fix: Update loading component with z-index 60 and full-screen overlay
+[33m1b4240d[m feat: Add loading component above input areas during generation
+[33mc527355[m fix: Change 'New generations' to 'New Variations' in generate page
+[33m16bbd7c[m feat: Redesign floating gallery cards with centered Edit/Vary buttons
+[33m89a421d[m fix: Improve edit/vary button functionality in floating gallery
+[33mdf5ca10[m fix: Resolve TypeScript errors for originalPrompt in 2x2 grid
+[33m8d92ac8[m fix: Add type safety for imageUrl in 2x2 grid edit/vary buttons
+[33ma1225b9[m feat: Implement floating gallery with rolodex scrolling
+[33m91ece4d[m feat: Add edit and vary buttons to 2x2 grid display
+[33ma1cc34f[m feat: Add automatic input clearing after successful generation
+[33m14a9656[m Fix build errors and complete Lucy-14B integration
+[33m09cf03b[m fix: Resolve TypeScript parsing error in secret page
+[33mda44459[m feat: Add Lucy-14B model, cost-saving measures, and dedicated video display panel
+[33me246fb5[m feat: implement promo code system with admin panel
+[33m66b4018[m Fix build errors and implement admin promo users panel
+[33m4b4f58c[m Implement Secret Level Page with Advanced FAL AI Models
+[33m706dc65[m Comprehensive profile schema updates and UI improvements
+[33m5d9a80e[m Implement video-in-text effect for IMAGINE with improved positioning and new video assets
+[33mc71667f[m Display user profile pictures in header across all pages when logged in
+[33me5541e1[m Simplify mobile header - remove back link and optimize for mobile screens
+[33mf8342ac[m Fix mobile profile layout - move edit button inside card and improve responsive wrapping
+[33mb516ac3[m Redesign profile page with modern glassmorphism design and mobile-like desktop layout
+[33m403b46c[m Fix mobile gallery styling and background coverage - Add rounded corners (30px) to mobile gallery cards - Implement spotlight hover effects with glow and zoom - Make images fill entire cards with overlay text - Remove backdrop blur effects for transparency - Fix header border transparency - Ensure full viewport background coverage - Remove bottom padding gaps
+[33mf7fd281[m Fix mobile profile navigation
+[33me2c034b[m Fix Generate page text input width and button alignment
+[33m9736bff[m Fix variable naming conflict in profile page
+[33m3b42df3[m Fix authentication redirect issue and improve mobile UI
+[33m87aaa0f[m Fix mobile video autoplay and improve header layout
+[33mdd0083c[m Improve header layout and move community stats to bottom
+[33m5e17dbd[m Fix branding and improve responsive gallery layout
+[33m2f9e07e[m Fix duplicate image containers and improve responsive layout
+[33m1a45fb9[m Move generation container down to be above text input
+[33m0cb19ec[m Reduce black background opacity to 80% for video visibility
+[33m9df9c1a[m Increase video opacity and restore full black background
+[33me7d7741[m Move video further behind black background for subtle effect
+[33m5222565[m Add video background to generate page
+[33m636b4ea[m Remove vARI Ai branding headers, keep Header component
+[33m6ebb353[m Remove secondary header component
+[33me2ad92d[m Add z-index to gallery items to improve visibility
+[33m0d9768c[m Remove main content container for cleaner layout
+[33mc260e57[m Fix gallery z-index to improve visibility
+[33m7656719[m Remove funding message from mobile view to improve gallery visibility
+[33m8c356b3[m Replace background image with solid black background
+[33mf353d5c[m Increase input field height to 100px for better layout
+[33m2cbde56[m Adjust desktop layout to center main content after Analytics button removal
+[33mdd92a7d[m Remove duplicate Analytics button from generate page
+[33m1a1bb3b[m Move Analytics button to header position on generate page
+[33m35db07c[m Rebrand application from vARYai to vARI Ai
+[33m43f8f4c[m Remove redundant navigation buttons from generate page
+[33m75533dd[m Fix community page mobile upload functionality
+[33m3350f9e[m Improve mobile UI and layout organization
+[33m2733c22[m Implement jet black and gray theme across application
+[33m4bde1eb[m Fix header layout and profile dropdown positioning
+[33md25a271[m feat: Major UI/UX improvements and mobile responsiveness fixes
+[33m3acde30[m Update community page UI with critical balance alert and real usage data from CSV analysis
+[33m22a6923[m Update community energy tracker meter balance to .28
+[33m586a9f7[m Fix mobile image upload slots and update community balance to .10
+[33m8e302dd[m Restructure mobile input layout with 4 image slots and three-container design
+[33mb1b5b8c[m Refactor: Move contributors button to header and improve mobile navigation
+[33m53920dd[m Merge: Update generate page with character variations
+[33ma668fc0[m Fix mobile floating text input visibility on generate and community pages
+[33m037d266[m Change generate button icon from camera to arrow
+[33mfea02fd[m Fix syntax errors and complete character style enhancements
+[33m156a35b[m Remove hardcoded fallback data from frontend components
+[33m22f253c[m Fix UI/UX issues: model selection dropdown, image slots layout, and mobile positioning
+[33ma7bb59a[m Update official user count to 52 across all pages
+[33m123030a[m Add model selection dropdown to floating input
+[33m1210f26[m Fix floating input visibility - add display properties and proper padding
+[33m8a7e0df[m Update community page energy meter to .85 and simplify input box
+[33mebf796e[m Update community energy meter to .85
+[33mf976e5d[m Change model selection dropdown text to 'Select Model'
+[33md54a43c[m Update community energy meter balance to .87
+[33m52dccdf[m Update funding meter to .34 and fix TypeScript errors
+[33mc62d0f9[m Fix duplicate handleSignUp function in community page
+[33mca08bdf[m Fix missing image_uploads table and add user authentication
+[33m8723479[m Add detailed error logging for FAL AI 422 validation errors
+[33mfb81cc7[m Add Header component with profile access to community page
+[33m2f5dfca[m Fix profile data connection between profile modal and community posts
+[33m7028a72[m Update user count to 50 and add debugging for user stats
+[33m33ffc83[m Update community energy meter balance to .51
+[33ma28fae9[m Change button text from 'Show Team' to 'Show Contributors'
+[33m945d5ab[m Add Nayri as Digital Artist & AI Consultant collaborator
+[33mdb05d83[m Add Deep tech Ai as AI Development Consultant collaborator
+[33m7251661[m Add Afro Futcha as AI Filmmaker & Creative Designer collaborator
+[33m0a2012d[m Add Pastor as Product Director collaborator
+[33mf3f3253[m Add BLVCKLIGHT as AI Model Consultant collaborator
+[33m57dfcb5[m Add Grimfel as collaborator for preset features
+[33ma712442[m Add floating collaborators modal to community page
+[33mc348274[m Add artist credit and enhanced debugging for anonymous authors
+[33m3e6a62d[m Make floating input box one-third width and centered - Changed input box from full width to w-1/3 (one-third width) - Added horizontal centering with left-1/2 transform -translate-x-1/2 - Applied to both authenticated and non-authenticated user states - Maintains fixed bottom positioning and all functionality - More compact and less intrusive design
+[33m43b8527[m Add full-screen image viewer to community page
+[33m3b7deb5[m Fix anonymous authors and update FAL balance to .19
+[33m9b5e614[m Fix community database relationships and API queries
+[33m9e01372[m Add comprehensive console logging to community APIs
+[33md80d01e[m Create complete community database schema and fix posting logic
+[33mf5e4297[m Add safe community database schema
+[33m3d01ab2[m Fix community posts showing user names instead of UUIDs
+[33m6d2c4d1[m Fix community API 500 errors and simplify FAL balance system
+[33me95420c[m Update FAL balance to actual .16 for community tracking
+[33m4c07b06[m Implement honest FAL balance reporting with API limitations
+[33m4427a4b[m Enhance FAL balance detection with sophisticated testing and alerts
+[33m7a223fb[m Fix FAL balance tracker with real-time API checking and caching
+[33m6b5e600[m Add post deletion functionality for community page
+[33m0c0f704[m Fix community database relationships and add button debugging
+[33m8c83dd2[m Fix community post creation and improve error handling
+[33mde92d2a[m Implement full community functionality with database integration
+[33m93cd977[m Add 'Coming Soon' labels to bottom 4 AI models on landing page
+[33mcc7688a[m Add intuitive navigation back to Generate page from Community
+[33mf275bb0[m Remove hardcoded balance from FAL AI API
+[33m94c58f7[m Sync App Performance Analytics with real-time Supabase data
+[33m5d2dcbb[m Fix user-stats API build error
+[33m43d4df1[m Add model images integration and fix build issues
+[33ma19ee8f[m feat: Major community and funding system enhancements
+[33ma0a4ccf[m 🔧 Pre-Tailwind v4 upgrade: Fix Nano Banana fileType and profile modal positioning
+[33me2445ae[m Add revenue analytics and frame extraction features

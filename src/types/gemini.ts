@@ -3,6 +3,7 @@ export interface CharacterVariationRequest {
   mimeTypes?: string[]; // array of MIME types for each image
   prompt: string; // user's angle/pose variation prompt
   useFluxDev?: boolean; // flag to use Flux Dev as fallback instead of Nano Banana
+  useSeedream4?: boolean; // flag to use Seedream 4 instead of Nano Banana
 }
 
 export interface CharacterVariation {

@@ -100,9 +100,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setErrors({ general: error.message })
           showError(`User Error: ${error.message}! TOASTY!`, 'toasty')
         } else {
+          console.log('Sign in successful, redirecting to /generate')
           handleClose()
           // Redirect to generate page after successful sign-in
-          router.push('/generate')
+          try {
+            router.push('/generate')
+          } catch (error) {
+            console.error('Navigation error after sign-in:', error)
+          }
         }
       } else if (mode === 'signup') {
         const { error } = await signUp(formData.email, formData.password, formData.name)

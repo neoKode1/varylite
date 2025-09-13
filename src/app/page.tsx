@@ -104,13 +104,24 @@ export default function LandingPage() {
   }, [currentVideoIndex]);
 
   const handleSignIn = () => {
+    console.log('Sign In button clicked');
     setAuthMode('signin');
     setShowAuthModal(true);
   };
 
   const handleSignUp = () => {
+    console.log('Sign Up button clicked');
     setAuthMode('signup');
     setShowAuthModal(true);
+  };
+
+  const handleGetFreeGenerations = () => {
+    console.log('Get Free Generations button clicked, navigating to /generate');
+    try {
+      router.push('/generate');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   return (
@@ -188,8 +199,16 @@ export default function LandingPage() {
             <div className="flex flex-col gap-4 justify-center items-center">
               {/* Free Generations Button - Primary CTA */}
               <button
-                onClick={() => router.push('/generate')}
-                className="flex items-center justify-center space-x-2 text-black bg-white border border-white px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors min-w-[200px] font-semibold text-lg"
+                onClick={handleGetFreeGenerations}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleGetFreeGenerations();
+                  }
+                }}
+                tabIndex={0}
+                aria-label="Get 3 free generations and start creating"
+                className="flex items-center justify-center space-x-2 text-black bg-white border border-white px-8 py-4 rounded-lg hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[200px] font-semibold text-lg"
               >
                 <span>🎨 Get 3 Free Generations</span>
               </button>
@@ -198,14 +217,30 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
                   onClick={handleSignUp}
-                  className="flex items-center justify-center space-x-2 text-white bg-white bg-opacity-10 border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors min-w-[160px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSignUp();
+                    }
+                  }}
+                  tabIndex={0}
+                  aria-label="Create a new account"
+                  className="flex items-center justify-center space-x-2 text-white bg-white bg-opacity-10 border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 focus:bg-white focus:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[160px]"
                 >
                   <span>Create Account</span>
                 </button>
                 
                 <button
                   onClick={handleSignIn}
-                  className="flex items-center justify-center space-x-2 text-white border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-colors min-w-[160px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSignIn();
+                    }
+                  }}
+                  tabIndex={0}
+                  aria-label="Sign in to your account"
+                  className="flex items-center justify-center space-x-2 text-white border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-10 focus:bg-white focus:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[160px]"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>→ Sign In</span>

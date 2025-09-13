@@ -9,14 +9,14 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       services: {
         googleAI: {
-          status: 'unknown',
-          error: null,
+          status: 'unknown' as string,
+          error: null as string | null,
           apiKeyPresent: !!process.env.GOOGLE_API_KEY,
           apiKeyLength: process.env.GOOGLE_API_KEY?.length || 0
         },
         falAI: {
-          status: 'unknown',
-          error: null,
+          status: 'unknown' as string,
+          error: null as string | null,
           apiKeyPresent: !!process.env.FAL_KEY,
           apiKeyLength: process.env.FAL_KEY?.length || 0
         }
