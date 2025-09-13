@@ -29,9 +29,9 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null)
   const router = useRouter()
 
-  // Fetch user's profile picture
+  // Fetch user's profile picture with retry mechanism
   useEffect(() => {
-    const fetchUserProfilePicture = async () => {
+    const fetchUserProfilePicture = async (retryCount = 0) => {
       if (!user) {
         setUserProfilePicture(null)
         return
@@ -39,21 +39,65 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return
+        if (!session) {
+          console.log('No session found for profile picture fetch')
+          return
+        }
 
+        console.log(`Fetching profile picture for user: ${user.id} (attempt ${retryCount + 1})`)
+        
         const response = await fetch('/api/profile', {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          // Add timeout and better error handling
+          signal: AbortSignal.timeout(10000) // 10 second timeout
         })
 
         if (response.ok) {
           const data = await response.json()
+          console.log('Profile picture data received:', data.profile?.profile_picture ? 'Yes' : 'No')
           setUserProfilePicture(data.profile?.profile_picture || null)
+        } else {
+          console.error('Profile API response not ok:', response.status, response.statusText)
+          
+          // Retry on server errors (5xx) but not on client errors (4xx)
+          if (response.status >= 500 && retryCount < 2) {
+            console.log(`Retrying profile fetch in ${(retryCount + 1) * 1000}ms...`)
+            setTimeout(() => fetchUserProfilePicture(retryCount + 1), (retryCount + 1) * 1000)
+            return
+          }
+          
+          setUserProfilePicture(null)
         }
       } catch (error) {
         console.error('Error fetching profile picture:', error)
+        
+        // Provide more specific error information
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          console.error('Network error: Unable to connect to profile API')
+          
+          // Retry on network errors
+          if (retryCount < 2) {
+            console.log(`Retrying profile fetch in ${(retryCount + 1) * 1000}ms...`)
+            setTimeout(() => fetchUserProfilePicture(retryCount + 1), (retryCount + 1) * 1000)
+            return
+          }
+        } else if (error instanceof Error && error.name === 'AbortError') {
+          console.error('Request timeout: Profile API took too long to respond')
+          
+          // Retry on timeout
+          if (retryCount < 1) {
+            console.log('Retrying profile fetch after timeout...')
+            setTimeout(() => fetchUserProfilePicture(retryCount + 1), 2000)
+            return
+          }
+        } else {
+          console.error('Unexpected error:', error instanceof Error ? error.message : String(error))
+        }
+        
         setUserProfilePicture(null)
       }
     }

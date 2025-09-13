@@ -3,19 +3,28 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Profile API GET request received');
+    
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No authorization header found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('🔑 Token extracted, length:', token.length);
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.log('❌ Auth error or no user:', authError?.message || 'No user');
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    console.log('✅ User authenticated:', user.id);
+
     // Get user profile from database
+    console.log('📊 Fetching user profile from database...');
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('*')
@@ -23,11 +32,14 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Error fetching profile:', profileError);
+      console.error('❌ Error fetching profile:', profileError);
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
     }
 
+    console.log('📊 Profile found:', profile ? 'Yes' : 'No');
+
     // Get user's gallery data
+    console.log('🖼️ Fetching user gallery...');
     const { data: gallery, error: galleryError } = await supabase
       .from('galleries')
       .select('*')
@@ -35,8 +47,10 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (galleryError) {
-      console.error('Error fetching gallery:', galleryError);
+      console.error('❌ Error fetching gallery:', galleryError);
       // Don't fail the entire request if gallery fetch fails
+    } else {
+      console.log('🖼️ Gallery items found:', gallery?.length || 0);
     }
 
     // If no profile exists, create a default one
@@ -77,12 +91,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
       }
 
+      console.log('✅ Created new profile and returning response');
       return NextResponse.json({ profile: newProfile, gallery: gallery || [] });
     }
 
+    console.log('✅ Returning existing profile response');
     return NextResponse.json({ profile, gallery: gallery || [] });
   } catch (error) {
-    console.error('Profile API error:', error);
+    console.error('❌ Profile API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
