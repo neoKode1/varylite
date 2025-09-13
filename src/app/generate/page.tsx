@@ -964,8 +964,8 @@ export default function Home() {
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
     if (hasImages && uploadedFiles.length === 1) {
-      // Ambiguous case - could be nano-banana, runway-t2i, veo3-fast, or minimax-2.0
-      return null; // Let user choose
+      // Single image upload - default to nano-banana for character variations
+      return 'nano-banana';
     } else if (!hasImages && !hasVideos) {
       // For text-to-image, use user's default preference if available
       // This will be set from user profile preferences
@@ -2780,6 +2780,78 @@ export default function Home() {
     }
   };
 
+  // Function to upload image to Supabase and get FAL URL
+  const uploadImageToSupabaseAndFal = async (base64Data: string): Promise<string> => {
+    try {
+      // Convert base64 to blob
+      const response = await fetch(base64Data);
+      const blob = await response.blob();
+      
+      // Get user session for auth
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔍 Session check:', { session: !!session, error: sessionError });
+      
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError);
+        throw new Error(`Session error: ${sessionError.message}`);
+      }
+      
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('No active session - please log in again');
+      }
+      
+      console.log('✅ Session found for user:', session.user?.email);
+      
+      // Step 1: Upload to Supabase storage
+      console.log('📤 Uploading to Supabase storage...');
+      console.log('🔑 Using access token:', session.access_token ? 'Present' : 'Missing');
+      
+      const supabaseResponse = await fetch('/api/supabase-upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: blob,
+      });
+      
+      console.log('📥 Supabase upload response status:', supabaseResponse.status);
+      
+      const supabaseData = await supabaseResponse.json();
+      console.log('📥 Supabase upload response data:', supabaseData);
+      
+      if (!supabaseResponse.ok) {
+        throw new Error(`Supabase upload failed (${supabaseResponse.status}): ${supabaseData.error || 'Unknown error'}`);
+      }
+      
+      if (!supabaseData.url) {
+        throw new Error(supabaseData.error || 'Failed to upload to Supabase');
+      }
+      
+      // Step 2: Transfer from Supabase to FAL
+      const falResponse = await fetch('/api/supabase-to-fal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          supabaseUrl: supabaseData.url,
+          sessionId: session.access_token
+        }),
+      });
+      
+      const falData = await falResponse.json();
+      if (!falData.url) {
+        throw new Error(falData.error || 'Failed to transfer to FAL');
+      }
+      
+      return falData.url;
+    } catch (error) {
+      console.error('❌ Failed to upload image to Supabase and FAL:', error);
+      throw error;
+    }
+  };
+
   const handleCharacterVariation = async () => {
     // Check if user can generate
     if (!canGenerate) {
@@ -2790,21 +2862,31 @@ export default function Home() {
     setProcessing({
       isProcessing: true,
       progress: 20,
-      currentStep: 'Analyzing character...'
+      currentStep: 'Processing with FAL AI...'
     });
 
     try {
-      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Processing with Gemini AI...' }));
+      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading image...' }));
       
-      const response = await fetch('/api/vary-character', {
+      // Upload image to Supabase and get FAL URL
+      const imageUrl = await uploadImageToSupabaseAndFal(uploadedFiles[0].base64);
+      
+      setProcessing(prev => ({ ...prev, progress: 60, currentStep: 'Generating variations...' }));
+      
+      // Use FAL API directly for nano-banana
+      const response = await fetch('/api/fal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          images: uploadedFiles.map(img => img.base64),
-          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
-          prompt: prompt.trim()
+          model: 'fal-ai/nano-banana/edit',
+          input: {
+            image_urls: [imageUrl],
+            prompt: prompt.trim() || 'Generate 4 new variations of this character from different angles',
+            num_images: 1,
+            output_format: 'jpeg'
+          }
         }),
       });
 
@@ -2813,26 +2895,21 @@ export default function Home() {
       const data = await response.json();
 
       if (!data.success) {
-        console.error('❌ Character variation API failed:', data.error);
-        
-        // Provide more specific error messages based on the error type
-        let errorMessage = data.error || 'Failed to process character variations';
-        
-        if (data.error?.includes('temporarily unavailable') || data.error?.includes('overloaded')) {
-          errorMessage = 'AI service is currently busy. Please try again in a few moments.';
-        } else if (data.error?.includes('rate limit') || data.error?.includes('quota')) {
-          errorMessage = 'API rate limit reached. Please try again in a few minutes.';
-        } else if (data.error?.includes('configuration') || data.error?.includes('API key')) {
-          errorMessage = 'Service configuration error. Please contact support.';
-        } else if (data.error?.includes('content policy') || data.error?.includes('blocked')) {
-          errorMessage = 'Content was blocked by safety filters. Please try a different prompt or image.';
-        }
-        
-        throw new Error(errorMessage);
+        console.error('❌ FAL API failed:', data.error);
+        throw new Error(data.error || 'Failed to process character variations');
       }
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
-      const newVariations = data.variations || [];
+      
+      // Convert FAL response to variation format
+      const newVariations = [{
+        id: `variation-${Date.now()}`,
+        description: prompt.trim() || 'Character variation',
+        angle: 'Generated variation',
+        pose: 'AI generated',
+        imageUrl: data.data?.images?.[0] || data.data?.image_url,
+        fileType: 'image' as const
+      }];
       
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
@@ -5184,8 +5261,15 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              removeFromGallery(item.id, item.timestamp);
-                              showNotification('🗑️ Item removed from gallery', 'success');
+                              console.log('🗑️ Delete button clicked for item:', item.id, item.timestamp);
+                              try {
+                                removeFromGallery(item.id, item.timestamp);
+                                console.log('✅ removeFromGallery called successfully');
+                                showNotification('🗑️ Item removed from gallery', 'success');
+                              } catch (error) {
+                                console.error('❌ Error in delete button:', error);
+                                showNotification('❌ Failed to remove item from gallery', 'error');
+                              }
                             }}
                             className="absolute top-2 left-2 w-8 h-8 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                             title="Delete from gallery"
@@ -5199,14 +5283,18 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const url = item.videoUrl || item.imageUrl;
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = `vary-ai-${item.id}.${item.fileType === 'video' ? 'mp4' : 'jpg'}`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              showNotification('📥 Download started', 'success');
+                              if (item.fileType === 'video') {
+                                handleDownloadVideo(item.videoUrl, item.originalPrompt || 'Downloaded video');
+                              } else {
+                                handleDownloadVariation({
+                                  id: item.id,
+                                  description: item.originalPrompt || 'Downloaded image',
+                                  angle: 'Gallery item',
+                                  pose: 'Downloaded',
+                                  imageUrl: item.imageUrl,
+                                  fileType: 'image'
+                                });
+                              }
                             }}
                             className="absolute bottom-2 left-2 w-8 h-8 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                             title="Download file"
@@ -6833,8 +6921,9 @@ export default function Home() {
                         expandedPrompts.has('recent') ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
                       }`}>
                         <div className="pt-3">
-                          <div className="grid grid-cols-4 gap-3">
-                            {filteredGallery.slice(0, 8).map((item: any, index: number) => {
+                          <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                            <div className="grid grid-cols-4 gap-3">
+                              {filteredGallery.map((item: any, index: number) => {
                               const itemKey = `recent-${item.id}-${item.timestamp}-${index}`;
                     
                     return (
@@ -6874,7 +6963,14 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              removeFromGallery(item.id, item.timestamp);
+                              console.log('🗑️ Gallery modal delete clicked for item:', item.id, item.timestamp);
+                              try {
+                                removeFromGallery(item.id, item.timestamp);
+                                console.log('✅ Gallery modal removeFromGallery called successfully');
+                              } catch (error) {
+                                console.error('❌ Error in gallery modal delete button:', error);
+                                showNotification('❌ Failed to remove item from gallery', 'error');
+                              }
                             }}
                             className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                             title="Delete from gallery"
@@ -6888,13 +6984,18 @@ export default function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const url = item.videoUrl || item.imageUrl;
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = `vary-ai-${item.id}.${item.fileType === 'video' ? 'mp4' : 'jpg'}`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
+                              if (item.fileType === 'video') {
+                                handleDownloadVideo(item.videoUrl, item.originalPrompt || 'Downloaded video');
+                              } else {
+                                handleDownloadVariation({
+                                  id: item.id,
+                                  description: item.originalPrompt || 'Downloaded image',
+                                  angle: 'Gallery item',
+                                  pose: 'Downloaded',
+                                  imageUrl: item.imageUrl,
+                                  fileType: 'image'
+                                });
+                              }
                             }}
                             className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                             title="Download file"
@@ -6929,6 +7030,7 @@ export default function Home() {
                       </div>
                     );
                   })}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -6998,7 +7100,14 @@ export default function Home() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      removeFromGallery(item.id, item.timestamp);
+                                      console.log('🗑️ Video collection delete clicked for item:', item.id, item.timestamp);
+                                      try {
+                                        removeFromGallery(item.id, item.timestamp);
+                                        console.log('✅ Video collection removeFromGallery called successfully');
+                                      } catch (error) {
+                                        console.error('❌ Error in video collection delete button:', error);
+                                        showNotification('❌ Failed to remove video from gallery', 'error');
+                                      }
                                     }}
                                     className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                                     title="Delete from gallery"
@@ -7012,13 +7121,7 @@ export default function Home() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const url = item.videoUrl;
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download = `vary-ai-${item.id}.mp4`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
+                                      handleDownloadVideo(item.videoUrl, item.originalPrompt || 'Downloaded video');
                                     }}
                                     className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                                     title="Download file"
@@ -7117,7 +7220,14 @@ export default function Home() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      removeFromGallery(item.id, item.timestamp);
+                                      console.log('🗑️ Image collection delete clicked for item:', item.id, item.timestamp);
+                                      try {
+                                        removeFromGallery(item.id, item.timestamp);
+                                        console.log('✅ Image collection removeFromGallery called successfully');
+                                      } catch (error) {
+                                        console.error('❌ Error in image collection delete button:', error);
+                                        showNotification('❌ Failed to remove image from gallery', 'error');
+                                      }
                                     }}
                                     className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
                                     title="Delete from gallery"

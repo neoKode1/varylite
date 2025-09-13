@@ -236,12 +236,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has secret access
+    // Check if user has secret access OR is admin
+    const isAdmin = user.email === '1deeptechnology@gmail.com';
     const { data: hasAccess, error: accessError } = await supabaseAdmin.rpc('user_has_secret_access', {
       user_uuid: user.id
     });
 
-    if (accessError || !hasAccess) {
+    if (!isAdmin && (accessError || !hasAccess)) {
       return NextResponse.json(
         { error: 'Secret Level access required for video variants. Please enter a promo code in your profile.' },
         { status: 403 }
