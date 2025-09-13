@@ -27,7 +27,23 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+
+  // Mobile detection hook that handles SSR
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    // Set initial value
+    checkMobile()
+    
+    // Listen for resize events
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch user's profile picture with retry mechanism
   useEffect(() => {
@@ -443,7 +459,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   onClick={() => {
                     // On mobile, navigate directly to profile page
                     // On desktop, show dropdown menu
-                    if (window.innerWidth < 768) {
+                    if (isMobile) {
                       router.push('/profile');
                     } else {
                       setShowUserMenu(!showUserMenu);

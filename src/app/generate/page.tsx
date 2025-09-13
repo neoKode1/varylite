@@ -46,6 +46,7 @@ import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useSecretAccess } from '@/hooks/useSecretAccess';
 import { useUnlockedModels } from '@/hooks/useUnlockedModels';
 import { useUserGallery } from '@/hooks/useUserGallery';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { getProxiedImageUrl } from '@/lib/imageUtils';
 import { Header } from '@/components/Header';
 import { AuthModal } from '@/components/AuthModal';
@@ -660,6 +661,7 @@ export default function Home() {
   const { unlockedGenerateModels, isGenerateModelUnlocked, isVideoVariantModel } = useUnlockedModels();
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
   const { checkUserCredits, useCredits, checking: creditChecking, using: creditUsing } = useCreditCheck();
+  const { isMobile, isClient } = useMobileDetection();
   const creditDisplayRef = useRef<CreditDisplayRef>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -5141,21 +5143,15 @@ export default function Home() {
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
             {/* Mobile Feature Info Banner */}
-            {(() => {
-              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-              if (isMobile) {
-                return (
-                  <div className="w-full mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-200 text-sm">
-                      <span className="text-blue-400">📱</span>
-                      <span className="font-medium">Mobile Mode:</span>
-                      <span>Image generation only. Video features available on desktop.</span>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+            {isClient && isMobile && (
+              <div className="w-full mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-200 text-sm">
+                  <span className="text-blue-400">📱</span>
+                  <span className="font-medium">Mobile Mode:</span>
+                  <span>Image generation only. Video features available on desktop.</span>
+                </div>
+              </div>
+            )}
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
