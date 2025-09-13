@@ -367,6 +367,27 @@ async function tryAlternativeModels(
   
   // Log detailed error for debugging but return user-friendly message
   console.error('💥 All Gemini models failed. Detailed errors logged above.');
+  
+  // Check if it's a circuit breaker issue
+  if (circuitBreakerState.isOpen) {
+    throw new Error('Service temporarily unavailable due to repeated failures. Please try again in a moment.');
+  }
+  
+  // Check if it's an API key issue
+  if (!process.env.GOOGLE_API_KEY) {
+    throw new Error('AI service configuration error. Please contact support.');
+  }
+  
+  // Check if it's a quota/rate limit issue
+  const lastError = arguments[0]; // Get the last error from the loop
+  if (lastError && lastError.message && (
+    lastError.message.includes('quota') || 
+    lastError.message.includes('rate limit') ||
+    lastError.message.includes('overloaded')
+  )) {
+    throw new Error('AI service is currently overloaded. Please try again in a few minutes.');
+  }
+  
   throw new Error('AI service is temporarily unavailable. Please try again in a moment.');
 }
 
@@ -657,11 +678,22 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     try {
       result = await retryWithBackoff(async () => {
         console.log('🔄 Attempting Gemini API call...');
+        console.log(`📊 Circuit breaker state: ${circuitBreakerState.isOpen ? 'OPEN' : 'CLOSED'} (failures: ${circuitBreakerState.failures})`);
+        console.log(`🔑 API Key status: ${process.env.GOOGLE_API_KEY ? 'Present' : 'Missing'}`);
         return await model.generateContent([enhancedPrompt, ...imageParts]);
       });
     } catch (error) {
       console.log('⚠️ Primary model failed, trying alternative models...');
       console.log(`📊 Error details: ${(error as Error).message}`);
+      console.log(`📊 Error type: ${(error as Error).name}`);
+      console.log(`📊 Error stack: ${(error as Error).stack}`);
+      
+      // Check if it's a circuit breaker issue before trying alternatives
+      if (circuitBreakerState.isOpen) {
+        console.log('🚨 Circuit breaker is open, not attempting alternative models');
+        throw new Error('Service temporarily unavailable due to repeated failures. Please try again in a moment.');
+      }
+      
       result = await tryAlternativeModels(genAI, enhancedPrompt, imageParts);
     }
     console.log('📥 Received response from Gemini API');

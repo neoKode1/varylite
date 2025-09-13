@@ -2805,7 +2805,22 @@ export default function Home() {
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to process character variations');
+        console.error('❌ Character variation API failed:', data.error);
+        
+        // Provide more specific error messages based on the error type
+        let errorMessage = data.error || 'Failed to process character variations';
+        
+        if (data.error?.includes('temporarily unavailable') || data.error?.includes('overloaded')) {
+          errorMessage = 'AI service is currently busy. Please try again in a few moments.';
+        } else if (data.error?.includes('rate limit') || data.error?.includes('quota')) {
+          errorMessage = 'API rate limit reached. Please try again in a few minutes.';
+        } else if (data.error?.includes('configuration') || data.error?.includes('API key')) {
+          errorMessage = 'Service configuration error. Please contact support.';
+        } else if (data.error?.includes('content policy') || data.error?.includes('blocked')) {
+          errorMessage = 'Content was blocked by safety filters. Please try a different prompt or image.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
