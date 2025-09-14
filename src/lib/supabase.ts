@@ -217,6 +217,7 @@ export interface Database {
           user_id: string | null
           session_id: string | null
           created_at: string
+          updated_at: string
           expires_at: string
           is_processed: boolean
           fal_url: string | null
@@ -232,6 +233,7 @@ export interface Database {
           user_id?: string | null
           session_id?: string | null
           created_at?: string
+          updated_at?: string
           expires_at?: string
           is_processed?: boolean
           fal_url?: string | null
@@ -247,6 +249,7 @@ export interface Database {
           user_id?: string | null
           session_id?: string | null
           created_at?: string
+          updated_at?: string
           expires_at?: string
           is_processed?: boolean
           fal_url?: string | null
