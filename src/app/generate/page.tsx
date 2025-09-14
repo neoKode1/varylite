@@ -998,109 +998,31 @@ export default function Home() {
     return null;
   }, [uploadedFiles]);
 
-  // Get available generation modes for current state
+  // Get available generation modes for current state - SIMPLIFIED VERSION
   const getAvailableModes = useCallback((): GenerationMode[] => {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
-    // Check if device is mobile
-    const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
     const modes: GenerationMode[] = [];
     
-    if (hasImages) {
-      if (uploadedFiles.length === 1) {
-        // Single image - show models based on content mode
-        if (contentMode === 'image') {
-          // Image mode: show image variation models with fallback
-          modes.push('seedream-4-edit'); // Seedream 4.0 Edit (primary for character variations)
-          modes.push('nano-banana'); // Character variations (fallback)
-          modes.push('bytedance-seedream-4'); // Seedream 4 with custom sizing
-          modes.push('flux-dev'); // Flux Dev as fallback
-        } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
-          // Video mode: show video variant models (desktop only + secret access required)
-          modes.push('decart-lucy-14b'); // Lucy 14B video variant model
-          
-          // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
-          modes.push('minimax-video-01'); // Minimax Video 01
-          modes.push('minimax-video-generation'); // Minimax Video Generation
-          modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
-          modes.push('modelscope-i2v'); // Modelscope I2V
-          modes.push('text2video-zero-i2v'); // Text2Video Zero
-          
-          // Lower-Tier Image-to-Video Models ($0.10)
-          modes.push('wan-v2-2-a14b-i2v-lora'); // Wan V2.2 LoRA
-          modes.push('cogvideo-i2v'); // CogVideo I2V
-          modes.push('zeroscope-t2v'); // Zeroscope T2V
-        }
-        
-        // Add unlocked models from secret page (non-video-variant models only)
-        unlockedGenerateModels.forEach(model => {
-          if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
-            modes.push(model as any);
-          }
-        });
-      } else if (uploadedFiles.length >= 2 && !isMobile) {
-        // Multiple images - show both image composition models AND end frame models
-        if (contentMode === 'image') {
-          // Image mode: show character scene composition models
-          modes.push('seedream-4-edit'); // Seedream 4.0 Edit (primary for character variations)
-          modes.push('nano-banana'); // Character variations and scene composition
-          modes.push('bytedance-seedream-4'); // Seedream 4 with custom sizing
-          modes.push('flux-dev'); // Flux Dev as fallback
-        } else if (contentMode === 'video' && hasSecretAccess) {
-          // Video mode: show video variant models
-          modes.push('decart-lucy-14b'); // Lucy 14B video variant model
-          
-          // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
-          modes.push('minimax-video-01'); // Minimax Video 01
-          modes.push('minimax-video-generation'); // Minimax Video Generation
-          modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
-          modes.push('modelscope-i2v'); // Modelscope I2V
-          modes.push('text2video-zero-i2v'); // Text2Video Zero
-          
-          // Lower-Tier Image-to-Video Models ($0.10)
-          modes.push('wan-v2-2-a14b-i2v-lora'); // Wan V2.2 LoRA
-          modes.push('cogvideo-i2v'); // CogVideo I2V
-          modes.push('zeroscope-t2v'); // Zeroscope T2V
-        }
-        
-        // Always show end frame models for multiple images (desktop only)
-        modes.push('minimax-2.0'); // End frame generation with Mini Mac's End Frame
-        modes.push('minimax-video'); // End frame generation with Minimax Video
-        modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
-        
-        // Add unlocked models from secret page (non-video-variant models only)
-        unlockedGenerateModels.forEach(model => {
-          if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
-            modes.push(model as any);
-          }
-        });
-      }
-    } else {
-      // When no images are uploaded, show text-to-image and text-to-video models
-      modes.push('runway-t2i'); // Text-to-image
-      modes.push('bytedance-seedream-4'); // Seedream 4 text-to-image
-      modes.push('seedream-3'); // Seedream 3 text-to-image (base level)
-      if (!isMobile) {
-        // Video models only on desktop
-        modes.push('runway-video'); // Text-to-video with Runway
-        modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
-        modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
-        modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
-        modes.push('seedance-1-pro'); // Seedance 1 Pro text-to-video (base level)
-      }
-      
-      // Add unlocked models from secret page (non-video-variant models only)
-      unlockedGenerateModels.forEach(model => {
-        if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
-          modes.push(model as any);
-        }
-      });
+    // Always allow text-to-image
+    modes.push('runway-t2i');
+    
+    if (hasImages && uploadedFiles.length === 1) {
+      modes.push('nano-banana');
+      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
+      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+    }
+    
+    // Add text-to-video modes when no images are uploaded
+    if (!hasImages && !hasVideos) {
+      modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
+      modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
+      modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
     }
     
     return modes;
-  }, [uploadedFiles, contentMode, hasSecretAccess, unlockedGenerateModels, isVideoVariantModel]);
+  }, [uploadedFiles]);
 
   // Get display name for generation mode
   const getModelDisplayName = useCallback((mode: GenerationMode, isMobile: boolean = false): string => {
@@ -2713,40 +2635,17 @@ export default function Home() {
     }
   }, [handleFileUpload, showNotification]);
 
-  // Mobile-specific file upload handler for the new upload slots system
+  // Simplified file upload handler - works for both mobile and desktop
   const handleMobileFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      
-      // Check if we can add more files
-      if (uploadedFiles.length >= 4) {
-        showNotification('Maximum 4 images allowed', 'error');
-        return;
-      }
-      
-      // Check file size
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        showNotification('File too large. Please use files under 10MB.', 'error');
-        return;
-      }
-      
-      // Create new uploaded file object
-      const newFile: UploadedFile = {
-        file,
-        preview: URL.createObjectURL(file),
-        base64: '', // Will be populated later if needed
-        mimeType: file.type,
-        type: 'reference', // Default type
-        fileType: file.type.startsWith('video/') ? 'video' : 'image'
-      };
-      
-      setUploadedFiles(prev => [...prev, newFile]);
+      // Use the existing handleFileUpload function
+      handleFileUpload(Array.from(files));
     }
     
     // Reset the input value
     e.target.value = '';
-  }, [uploadedFiles.length, showNotification]);
+  }, [handleFileUpload]);
 
   const handleProcessCharacter = async () => {
     if (uploadedFiles.length === 0 || !prompt.trim()) {
@@ -6024,7 +5923,7 @@ export default function Home() {
                       })}
                     </div>
                     
-                    {/* Model Selection - Inline with image slots */}
+                    {/* Model Selection - Inline with image slots - SIMPLIFIED */}
                     {uploadedFiles.length > 0 && (
                       <select
                         value={generationMode || ''}
@@ -6032,11 +5931,25 @@ export default function Home() {
                         className="px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200 flex-shrink-0 min-w-[120px]"
                       >
                         <option value="">Select Model</option>
-                        {getAvailableModes().map((mode) => (
-                          <option key={mode} value={mode}>
-                            {getModelDisplayName(mode, true)}
-                          </option>
-                        ))}
+                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
+                          <>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="runway-t2i">Runway T2I</option>
+                          </>
+                        )}
+                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length > 1 && (
+                          <>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="runway-t2i">Runway T2I</option>
+                          </>
+                        )}
+                        {uploadedFiles.some(file => file.fileType === 'video') && (
+                          <>
+                            <option value="veo3-fast">Veo3 Fast</option>
+                            <option value="minimax-2.0">Minimax 2.0</option>
+                            <option value="kling-2.1-master">Kling 2.1</option>
+                          </>
+                        )}
                       </select>
                     )}
                   </div>
