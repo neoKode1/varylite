@@ -39,7 +39,17 @@ type GenerationMode =
   | 'seedream-3'
   | 'seedance-1-pro'
   | 'bytedance-seedream-4'
-  | 'seedream-4-edit';
+  | 'seedream-4-edit'
+  // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
+  | 'minimax-video-01'
+  | 'minimax-video-generation'
+  | 'stable-video-diffusion-i2v'
+  | 'modelscope-i2v'
+  | 'text2video-zero-i2v'
+  // Lower-Tier Image-to-Video Models ($0.10)
+  | 'wan-v2-2-a14b-i2v-lora'
+  | 'cogvideo-i2v'
+  | 'zeroscope-t2v';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -864,7 +874,17 @@ export default function Home() {
       'seedream-3': 25, // 25 seconds for Seedream 3 text-to-image
       'seedance-1-pro': 90, // 90 seconds for Seedance 1 Pro video generation
       'bytedance-seedream-4': 35, // 35 seconds for Seedream 4 with custom sizing
-      'seedream-4-edit': 30 // 30 seconds for Seedream 4.0 Edit image editing
+      'seedream-4-edit': 30, // 30 seconds for Seedream 4.0 Edit image editing
+      // Mid-Tier Image-to-Video Models
+      'minimax-video-01': 60, // 1 minute for Minimax Video 01
+      'minimax-video-generation': 60, // 1 minute for Minimax Video Generation
+      'stable-video-diffusion-i2v': 45, // 45 seconds for Stable Video Diffusion
+      'modelscope-i2v': 40, // 40 seconds for Modelscope I2V
+      'text2video-zero-i2v': 40, // 40 seconds for Text2Video Zero
+      // Lower-Tier Image-to-Video Models
+      'wan-v2-2-a14b-i2v-lora': 50, // 50 seconds for Wan V2.2 LoRA
+      'cogvideo-i2v': 50, // 50 seconds for CogVideo I2V
+      'zeroscope-t2v': 50 // 50 seconds for Zeroscope T2V
     };
     return timeEstimates[mode] || 30;
   };
@@ -1004,6 +1024,18 @@ export default function Home() {
           modes.push('minimax-i2v-director'); // MiniMax I2V Director with camera control
           modes.push('hailuo-02-pro'); // Hailuo 02 Pro video variant model
           modes.push('kling-video-pro'); // Kling Video Pro video variant model
+          
+          // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
+          modes.push('minimax-video-01'); // Minimax Video 01
+          modes.push('minimax-video-generation'); // Minimax Video Generation
+          modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
+          modes.push('modelscope-i2v'); // Modelscope I2V
+          modes.push('text2video-zero-i2v'); // Text2Video Zero
+          
+          // Lower-Tier Image-to-Video Models ($0.10)
+          modes.push('wan-v2-2-a14b-i2v-lora'); // Wan V2.2 LoRA
+          modes.push('cogvideo-i2v'); // CogVideo I2V
+          modes.push('zeroscope-t2v'); // Zeroscope T2V
         }
         
         // Add unlocked models from secret page (non-video-variant models only)
@@ -1051,6 +1083,16 @@ export default function Home() {
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
       'seedream-4-edit': 'Seedream 4 Edit',
+      // Mid-Tier Image-to-Video Models
+      'minimax-video-01': 'Minimax Video 01',
+      'minimax-video-generation': 'Minimax Video Gen',
+      'stable-video-diffusion-i2v': 'Stable Video Diffusion',
+      'modelscope-i2v': 'Modelscope I2V',
+      'text2video-zero-i2v': 'Text2Video Zero',
+      // Lower-Tier Image-to-Video Models
+      'wan-v2-2-a14b-i2v-lora': 'Wan V2.2 LoRA',
+      'cogvideo-i2v': 'CogVideo I2V',
+      'zeroscope-t2v': 'Zeroscope T2V',
       'minimax-2.0': 'MiniMax End Frame',
       'minimax-video': 'Minimax Video',
       'kling-2.1-master': 'Kling 2.1 Master',
