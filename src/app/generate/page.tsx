@@ -5467,25 +5467,7 @@ export default function Home() {
         </div>
       ))}
       
-      <div 
-        className={`relative z-10 flex flex-col lg:flex-row transition-all duration-200 ${
-          isDragOverMain ? 'bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400' : ''
-        }`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragOver}
-        onDragLeave={handleDragLeave}
-      >
-        {/* Drop Zone Overlay */}
-        {isDragOverMain && (
-          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center">
-            <div className="text-center text-blue-200">
-              <Upload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-              <p className="text-xl font-semibold mb-2">Drop images here</p>
-              <p className="text-sm opacity-80">Release to upload files</p>
-            </div>
-          </div>
-        )}
+      <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : 'lg:ml-16'} flex flex-col items-center`}>
           <div className="w-full max-w-6xl mx-auto px-4 py-8 lg:px-8">
@@ -6306,7 +6288,26 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="generate-floating-input hidden md:block" data-input-area>
+            <div 
+              className={`generate-floating-input hidden md:block transition-all duration-200 ${
+                isDragOverMain ? 'bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400' : ''
+              }`}
+              data-input-area
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              {/* Drop Zone Overlay */}
+              {isDragOverMain && (
+                <div className="absolute inset-0 bg-blue-500 bg-opacity-20 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center">
+                  <div className="text-center text-blue-200">
+                    <Upload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+                    <p className="text-xl font-semibold mb-2">Drop images here</p>
+                    <p className="text-sm opacity-80">Release to upload files</p>
+                  </div>
+                </div>
+              )}
               {/* Dynamic Content - Only show when images are uploaded */}
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 mb-4 justify-center w-full">
@@ -7818,7 +7819,25 @@ export default function Home() {
       />
 
       {/* Mobile Dynamic Image Upload System */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent">
+      <div 
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent transition-all duration-200 ${
+          isDragOverMain ? 'bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400' : ''
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {/* Drop Zone Overlay */}
+        {isDragOverMain && (
+          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center">
+            <div className="text-center text-blue-200">
+              <Upload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+              <p className="text-xl font-semibold mb-2">Drop images here</p>
+              <p className="text-sm opacity-80">Release to upload files</p>
+            </div>
+          </div>
+        )}
         {/* Dynamic numbered image slots - ONLY show if images uploaded */}
         {uploadedFiles.length > 0 && (
           <div className="p-4 border-b border-transparent">
