@@ -1167,6 +1167,9 @@ export default function Home() {
     
     if (hasImages && uploadedFiles.length === 1) {
       modes.push('nano-banana');
+      // Image editing models
+      modes.push('seedream-4-edit'); // Seedream 4 Edit
+      modes.push('bytedance-seedream-4'); // Seedream 4
       // Image-to-video models
       modes.push('veo3-fast'); // Veo3 Fast image-to-video
       modes.push('minimax-2.0'); // Minimax 2.0 image-to-video
