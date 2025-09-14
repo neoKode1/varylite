@@ -7668,7 +7668,7 @@ export default function Home() {
                     <div>
                       <h4 className="text-md font-medium text-gray-300 mb-2">Advanced Angles</h4>
                           <div className="flex flex-wrap gap-2">
-                        {EXTENDED_PROMPTS.slice(0, 5).map((example) => (
+                        {EXTENDED_PROMPTS.map((example) => (
                               <button
                                 key={example}
                             onClick={() => {
@@ -7762,9 +7762,9 @@ export default function Home() {
                     </div>
                   </div>
                       <div>
-                        <h4 className="text-md font-medium text-gray-300 mb-3">Extended Shot Types</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {EXTENDED_PROMPTS.slice(0, 10).map((example) => (
+                        <h4 className="text-md font-medium text-gray-300 mb-3">Extended Shot Types ({EXTENDED_PROMPTS.length} total)</h4>
+                        <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto">
+                          {EXTENDED_PROMPTS.map((example) => (
                             <button
                               key={example}
                               onClick={() => {
@@ -7778,11 +7778,6 @@ export default function Home() {
                             </button>
                           ))}
                       </div>
-                        {EXTENDED_PROMPTS.length > 10 && (
-                          <div className="mt-3">
-                            <p className="text-gray-400 text-sm">+ {EXTENDED_PROMPTS.length - 10} more options available</p>
-                    </div>
-                        )}
                       </div>
                     </div>
                   </div>
