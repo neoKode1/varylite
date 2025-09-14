@@ -2909,6 +2909,13 @@ export default function Home() {
       setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating variations...' }));
 
       const data = await response.json();
+      console.log('📥 FAL API Response Status:', response.status);
+      console.log('📥 FAL API Response Data:', data);
+
+      if (!response.ok) {
+        console.error('❌ FAL API HTTP Error:', response.status, response.statusText);
+        throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
+      }
 
       if (!data.success) {
         console.error('❌ FAL API failed:', data.error);
@@ -2918,12 +2925,33 @@ export default function Home() {
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       
       // Convert FAL response to variation format
+      console.log('🔍 FAL API Response:', data);
+      
+      // Extract image URL from FAL response
+      let extractedImageUrl = null;
+      if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
+        // FAL nano-banana/edit returns images array
+        extractedImageUrl = data.data.images[0].url || data.data.images[0];
+      } else if (data.data?.image_url) {
+        // Fallback for other formats
+        extractedImageUrl = data.data.image_url;
+      } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+        // Direct images array
+        extractedImageUrl = data.images[0].url || data.images[0];
+      }
+      
+      console.log('🖼️ Extracted image URL:', extractedImageUrl);
+      
+      if (!extractedImageUrl) {
+        throw new Error('No image URL found in FAL response');
+      }
+      
       const newVariations = [{
         id: `variation-${Date.now()}`,
         description: prompt.trim() || 'Character variation',
         angle: 'Generated variation',
         pose: 'AI generated',
-        imageUrl: data.data?.images?.[0] || data.data?.image_url,
+        imageUrl: extractedImageUrl,
         fileType: 'image' as const
       }];
       
