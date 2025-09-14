@@ -209,9 +209,11 @@ async function uploadVideoToSupabase(videoUrl: string, fileName: string): Promis
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🎬 [VIDEO VARIANCE] Starting video variance generation request');
+  console.log('🎬 [VIDEO VARIANCE] ===== STARTING VIDEO VARIANCE GENERATION REQUEST =====');
+  console.log('📅 [VIDEO VARIANCE] Request timestamp:', new Date().toISOString());
   
   try {
+    console.log('🔍 [VIDEO VARIANCE] Checking database connection...');
     if (!supabaseAdmin) {
       console.error('❌ [VIDEO VARIANCE] Database connection not available');
       return NextResponse.json(
@@ -219,10 +221,16 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+    console.log('✅ [VIDEO VARIANCE] Database connection available');
 
     // Check authorization header
+    console.log('🔐 [VIDEO VARIANCE] Checking authorization header...');
     const authHeader = request.headers.get('authorization');
+    console.log('🔐 [VIDEO VARIANCE] Auth header present:', !!authHeader);
+    console.log('🔐 [VIDEO VARIANCE] Auth header starts with Bearer:', authHeader?.startsWith('Bearer '));
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ [VIDEO VARIANCE] No valid authorization header');
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -230,37 +238,73 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('🔐 [VIDEO VARIANCE] Token extracted, length:', token?.length);
+    console.log('🔐 [VIDEO VARIANCE] Validating token with Supabase...');
+    
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('❌ [VIDEO VARIANCE] Token validation failed:', authError);
       return NextResponse.json(
         { error: 'Invalid authentication' },
         { status: 401 }
       );
     }
+    
+    console.log('✅ [VIDEO VARIANCE] Token validation successful');
+    console.log('👤 [VIDEO VARIANCE] User ID:', user.id);
+    console.log('📧 [VIDEO VARIANCE] User email:', user.email);
 
     // Check if user has secret access OR is admin
+    console.log('🔍 [VIDEO VARIANCE] Checking user access permissions...');
     const isAdmin = user.email === '1deeptechnology@gmail.com';
+    console.log('👑 [VIDEO VARIANCE] Is admin:', isAdmin);
+    
+    console.log('🔍 [VIDEO VARIANCE] Checking secret access via RPC...');
     const { data: hasAccess, error: accessError } = await supabaseAdmin.rpc('user_has_secret_access', {
       user_uuid: user.id
     });
+    
+    console.log('🔐 [VIDEO VARIANCE] Secret access check result:', {
+      hasAccess: hasAccess,
+      accessError: accessError,
+      isAdmin: isAdmin,
+      hasPermission: isAdmin || hasAccess
+    });
 
     if (!isAdmin && (accessError || !hasAccess)) {
+      console.error('❌ [VIDEO VARIANCE] User lacks secret access permission');
       return NextResponse.json(
         { error: 'Secret Level access required for video variants. Please enter a promo code in your profile.' },
         { status: 403 }
       );
     }
+    
+    console.log('✅ [VIDEO VARIANCE] User has required permissions');
 
+    console.log('📥 [VIDEO VARIANCE] Parsing request JSON...');
     const { images, mimeTypes, prompt, model }: VideoVariationRequest = await request.json();
 
     console.log('📋 [VIDEO VARIANCE] Request details:', {
       imageCount: images?.length || 0,
       model: model,
       promptLength: prompt?.length || 0,
-      hasMimeTypes: !!mimeTypes
+      hasMimeTypes: !!mimeTypes,
+      mimeTypesCount: mimeTypes?.length || 0
     });
 
+    // Log each image being processed
+    if (images) {
+      images.forEach((image, index) => {
+        console.log(`🖼️ [VIDEO VARIANCE] Image ${index + 1}:`, {
+          hasData: !!image,
+          dataLength: image?.length || 0,
+          mimeType: mimeTypes?.[index] || 'unknown'
+        });
+      });
+    }
+
+    console.log('🔍 [VIDEO VARIANCE] Starting validation...');
     // Validation
     if (!images || images.length === 0) {
       console.error('❌ [VIDEO VARIANCE] No images provided');
@@ -269,6 +313,7 @@ export async function POST(request: NextRequest) {
         error: 'No images provided' 
       }, { status: 400 });
     }
+    console.log('✅ [VIDEO VARIANCE] Images validation passed');
 
     if (!model) {
       console.error('❌ [VIDEO VARIANCE] No model specified');
@@ -277,50 +322,78 @@ export async function POST(request: NextRequest) {
         error: 'No model specified' 
       }, { status: 400 });
     }
+    console.log('✅ [VIDEO VARIANCE] Model validation passed');
 
-    console.log(`🎬 Generating video variations with ${model}`);
-    console.log(`📝 User prompt: "${prompt || 'None (using default)'}"`);
+    console.log(`🎬 [VIDEO VARIANCE] Generating video variations with model: ${model}`);
+    console.log(`📝 [VIDEO VARIANCE] User prompt: "${prompt || 'None (using default)'}"`);
 
+    console.log('📤 [VIDEO VARIANCE] Starting image upload to Supabase storage...');
     // Upload images to Supabase storage
     const imageUrls = await Promise.all(
       images.map(async (imageData, index) => {
         const mimeType = mimeTypes?.[index] || 'image/jpeg';
-        return await uploadImageToSupabase(imageData, mimeType);
+        console.log(`📤 [VIDEO VARIANCE] Uploading image ${index + 1}/${images.length} to Supabase...`);
+        console.log(`📊 [VIDEO VARIANCE] Image ${index + 1} data length: ${imageData.length} characters`);
+        console.log(`📊 [VIDEO VARIANCE] Image ${index + 1} mime type: ${mimeType}`);
+        
+        const url = await uploadImageToSupabase(imageData, mimeType);
+        console.log(`✅ [VIDEO VARIANCE] Image ${index + 1} uploaded successfully: ${url}`);
+        return url;
       })
     );
 
-    console.log(`📸 Uploaded ${imageUrls.length} images to Supabase storage`);
+    console.log(`📸 [VIDEO VARIANCE] Successfully uploaded ${imageUrls.length} images to Supabase storage`);
+    console.log('🔗 [VIDEO VARIANCE] Image URLs:', imageUrls);
 
+    console.log('🎭 [VIDEO VARIANCE] Selecting random cinematic shots...');
     // Get 4 random cinematic shots
     const selectedShots = getRandomCinematicShots();
-    console.log('🎭 Selected cinematic shots:', selectedShots.map(s => s.name));
+    console.log('🎭 [VIDEO VARIANCE] Selected cinematic shots:', selectedShots.map(s => s.name));
+    selectedShots.forEach((shot, index) => {
+      console.log(`🎬 [VIDEO VARIANCE] Shot ${index + 1}: ${shot.name} - ${shot.description}`);
+    });
 
     // Generate 4 video variations with different cinematic shots
-    console.log(`🎬 [VIDEO VARIANCE] Starting generation of 4 video variations with model: ${model}`);
+    console.log(`🎬 [VIDEO VARIANCE] ===== STARTING PARALLEL VIDEO GENERATION =====`);
+    console.log(`🎬 [VIDEO VARIANCE] Model: ${model}`);
     console.log(`🎭 [VIDEO VARIANCE] Selected cinematic shots:`, selectedShots.map(s => s.name));
+    console.log(`🖼️ [VIDEO VARIANCE] Using image URL: ${imageUrls[0]}`);
     
     const variations = await Promise.all(
       selectedShots.map(async (cinematicShot, index) => {
         try {
+          console.log(`🎬 [VIDEO VARIANCE] ===== STARTING VARIATION ${index + 1}/4 =====`);
+          console.log(`🎬 [VIDEO VARIANCE] Variation ${index + 1} - Shot: ${cinematicShot.name}`);
+          console.log(`🎬 [VIDEO VARIANCE] Variation ${index + 1} - Description: ${cinematicShot.description}`);
+          
           const variationPrompt = buildVariationPrompt(prompt, cinematicShot);
           
           console.log(`🎥 [VIDEO VARIANCE] Generating variation ${index + 1}/4: ${cinematicShot.name}`);
           console.log(`📜 [VIDEO VARIANCE] Variation prompt: "${variationPrompt}"`);
           console.log(`🖼️ [VIDEO VARIANCE] Using image URL: ${imageUrls[0]}`);
 
+          console.log(`🚀 [VIDEO VARIANCE] Variation ${index + 1} - Calling video model API...`);
           // Call video model API
           const result = await callVideoModel(model, {
             image_url: imageUrls[0], // Use first (and typically only) image
             prompt: variationPrompt,
             variation_index: index
           });
+          
+          console.log(`✅ [VIDEO VARIANCE] Variation ${index + 1} - Video model API call successful!`);
+          console.log(`🎬 [VIDEO VARIANCE] Variation ${index + 1} - Video URL: ${result.videoUrl}`);
+          console.log(`⏱️ [VIDEO VARIANCE] Variation ${index + 1} - Duration: ${result.duration}`);
+          console.log(`🖼️ [VIDEO VARIANCE] Variation ${index + 1} - Thumbnail: ${result.thumbnailUrl}`);
 
           // Upload generated video to Supabase
+          console.log(`📤 [VIDEO VARIANCE] Variation ${index + 1} - Uploading video to Supabase...`);
           const timestamp = Date.now();
           const randomId = Math.random().toString(36).substring(2, 15);
           const videoFileName = `video-variations/${timestamp}-${randomId}-${index + 1}.mp4`;
+          console.log(`📁 [VIDEO VARIANCE] Variation ${index + 1} - Video filename: ${videoFileName}`);
           
           const supabaseVideoUrl = await uploadVideoToSupabase(result.videoUrl, videoFileName);
+          console.log(`✅ [VIDEO VARIANCE] Variation ${index + 1} - Video uploaded to Supabase: ${supabaseVideoUrl}`);
 
           return {
             id: `video-variation-${index + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -335,7 +408,9 @@ export async function POST(request: NextRequest) {
           };
 
         } catch (error) {
-          console.error(`❌ Failed to generate variation ${index + 1}:`, error);
+          console.error(`❌ [VIDEO VARIANCE] Variation ${index + 1} failed:`, error);
+          console.error(`🔍 [VIDEO VARIANCE] Variation ${index + 1} error type:`, typeof error);
+          console.error(`🔍 [VIDEO VARIANCE] Variation ${index + 1} error message:`, error instanceof Error ? error.message : 'Unknown error');
           
           // Return error variation that frontend can handle
           return {
@@ -351,8 +426,21 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    console.log(`🎬 [VIDEO VARIANCE] ===== PARALLEL GENERATION COMPLETE =====`);
     const successCount = variations.filter(v => v.videoUrl).length;
-    console.log(`✅ Successfully generated ${successCount}/4 video variations`);
+    const failedCount = variations.filter(v => v.error).length;
+    console.log(`📊 [VIDEO VARIANCE] Total variations: ${variations.length}`);
+    console.log(`✅ [VIDEO VARIANCE] Successful variations: ${successCount}`);
+    console.log(`❌ [VIDEO VARIANCE] Failed variations: ${failedCount}`);
+    
+    // Log each final variation
+    variations.forEach((variation, index) => {
+      if (variation.error) {
+        console.log(`❌ [VIDEO VARIANCE] Final variation ${index + 1} - ERROR: ${variation.error}`);
+      } else {
+        console.log(`✅ [VIDEO VARIANCE] Final variation ${index + 1} - SUCCESS: ${variation.angle} - ${variation.videoUrl}`);
+      }
+    });
 
     return NextResponse.json({ 
       success: true, 
@@ -478,10 +566,14 @@ async function callVideoModel(
     throw new Error(`Unsupported video model: ${model}`);
   }
 
-  console.log(`🎯 [VIDEO VARIANCE] Calling video model: ${model}`);
+  console.log(`🎯 [VIDEO VARIANCE] ===== CALLING VIDEO MODEL API =====`);
+  console.log(`🎯 [VIDEO VARIANCE] Model: ${model}`);
   console.log(`🔗 [VIDEO VARIANCE] Endpoint: ${endpoint}`);
   console.log(`📦 [VIDEO VARIANCE] Request body:`, JSON.stringify(requestBody, null, 2));
+  console.log(`🔑 [VIDEO VARIANCE] FAL Key present: ${!!process.env.FAL_KEY}`);
+  console.log(`🔑 [VIDEO VARIANCE] FAL Key length: ${process.env.FAL_KEY?.length || 0}`);
 
+  console.log(`🚀 [VIDEO VARIANCE] Sending request to FAL API...`);
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -491,22 +583,37 @@ async function callVideoModel(
     body: JSON.stringify(requestBody)
   });
 
+  console.log(`📡 [VIDEO VARIANCE] FAL API Response received!`);
   console.log(`📡 [VIDEO VARIANCE] Response status: ${response.status} ${response.statusText}`);
+  console.log(`📡 [VIDEO VARIANCE] Response ok: ${response.ok}`);
+  console.log(`📡 [VIDEO VARIANCE] Response headers:`, Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
+    console.error(`❌ [VIDEO VARIANCE] FAL API request failed!`);
     const errorText = await response.text();
-    console.error(`❌ [VIDEO VARIANCE] API failed: ${response.status} ${errorText}`);
+    console.error(`❌ [VIDEO VARIANCE] Error response: ${errorText}`);
+    console.error(`❌ [VIDEO VARIANCE] Status: ${response.status} ${response.statusText}`);
     throw new Error(`Video generation API failed: ${response.status} ${errorText}`);
   }
 
+  console.log(`📥 [VIDEO VARIANCE] Parsing FAL API response JSON...`);
   const result = await response.json();
   console.log(`✅ [VIDEO VARIANCE] Video generation successful for ${model}`);
-  console.log(`🎥 [VIDEO VARIANCE] Result:`, JSON.stringify(result, null, 2));
+  console.log(`🎥 [VIDEO VARIANCE] FAL API Result:`, JSON.stringify(result, null, 2));
+  console.log(`📊 [VIDEO VARIANCE] Result data keys:`, Object.keys(result));
   
   // Handle different response formats from the API
+  const videoUrl = result.video?.url || result.video_url || result.url;
+  const duration = result.duration || result.video_length || 4;
+  const thumbnailUrl = result.thumbnail?.url || result.first_frame?.url || result.preview?.url;
+  
+  console.log(`🎬 [VIDEO VARIANCE] Extracted video URL: ${videoUrl}`);
+  console.log(`⏱️ [VIDEO VARIANCE] Extracted duration: ${duration}`);
+  console.log(`🖼️ [VIDEO VARIANCE] Extracted thumbnail: ${thumbnailUrl}`);
+  
   return {
-    videoUrl: result.video?.url || result.video_url || result.url,
-    duration: result.duration || result.video_length || 4,
-    thumbnailUrl: result.thumbnail?.url || result.first_frame?.url || result.preview?.url
+    videoUrl,
+    duration,
+    thumbnailUrl
   };
 }

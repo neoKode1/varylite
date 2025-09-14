@@ -3238,18 +3238,40 @@ export default function Home() {
 
   // Handle video variations generation
   const handleVideoVariation = async () => {
-    console.log('🎬 [FRONTEND VIDEO VARIANCE] Starting video variation generation');
+    console.log('🎬 [FRONTEND VIDEO VARIANCE] ===== STARTING VIDEO VARIATION GENERATION =====');
     console.log('🎯 [FRONTEND VIDEO VARIANCE] Selected model:', generationMode);
-    console.log('📁 [FRONTEND VIDEO VARIANCE] Uploaded files:', uploadedFiles.length);
-    console.log('📝 [FRONTEND VIDEO VARIANCE] Prompt:', prompt.trim());
+    console.log('📁 [FRONTEND VIDEO VARIANCE] Uploaded files count:', uploadedFiles.length);
+    console.log('📝 [FRONTEND VIDEO VARIANCE] User prompt:', prompt.trim());
+    console.log('👤 [FRONTEND VIDEO VARIANCE] User ID:', user?.id);
+    console.log('🔐 [FRONTEND VIDEO VARIANCE] Has secret access:', hasSecretAccess);
+    console.log('📱 [FRONTEND VIDEO VARIANCE] Is mobile:', isMobile);
+    console.log('🎬 [FRONTEND VIDEO VARIANCE] Content mode:', contentMode);
+    
+    // Log all uploaded files details
+    uploadedFiles.forEach((file, index) => {
+      console.log(`📄 [FRONTEND VIDEO VARIANCE] File ${index + 1}:`, {
+        name: file.file?.name || 'unknown',
+        type: file.fileType,
+        mimeType: file.mimeType,
+        size: file.file?.size,
+        hasBase64: !!file.base64,
+        base64Length: file.base64?.length || 0
+      });
+    });
     
     // Check if user can generate
+    console.log('🔍 [FRONTEND VIDEO VARIANCE] Checking if user can generate...');
+    console.log('✅ [FRONTEND VIDEO VARIANCE] Can generate:', canGenerate);
+    
     if (!canGenerate) {
       console.error('❌ [FRONTEND VIDEO VARIANCE] User cannot generate - trial limit reached');
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
     }
+    
+    console.log('✅ [FRONTEND VIDEO VARIANCE] User can generate, proceeding...');
 
+    console.log('⚙️ [FRONTEND VIDEO VARIANCE] Setting processing state...');
     setProcessing({
       isProcessing: true,
       progress: 20,
@@ -3257,19 +3279,40 @@ export default function Home() {
     });
 
     try {
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 20% - Preparing video generation...');
       setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading images...' }));
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 40% - Uploading images...');
       
-      console.log('📤 [FRONTEND VIDEO VARIANCE] Sending request to /api/vary-video');
+      console.log('📤 [FRONTEND VIDEO VARIANCE] Preparing request to /api/vary-video...');
+      console.log('🔧 [FRONTEND VIDEO VARIANCE] Building request body...');
+      
       const requestBody = {
         images: uploadedFiles.map(img => img.base64),
         mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
         prompt: prompt.trim(),
         model: generationMode
       };
-      console.log('📦 [FRONTEND VIDEO VARIANCE] Request body:', {
+      
+      console.log('📦 [FRONTEND VIDEO VARIANCE] Request body details:', {
         imageCount: requestBody.images.length,
         model: requestBody.model,
-        promptLength: requestBody.prompt.length
+        promptLength: requestBody.prompt.length,
+        mimeTypesCount: requestBody.mimeTypes.length
+      });
+      
+      // Log each image being sent
+      requestBody.images.forEach((image, index) => {
+        console.log(`🖼️ [FRONTEND VIDEO VARIANCE] Image ${index + 1} details:`, {
+          hasData: !!image,
+          dataLength: image?.length || 0,
+          mimeType: requestBody.mimeTypes[index]
+        });
+      });
+      
+      console.log('🚀 [FRONTEND VIDEO VARIANCE] Sending API request to /api/vary-video...');
+      console.log('📡 [FRONTEND VIDEO VARIANCE] Request headers:', {
+        'Content-Type': 'application/json',
+        'Body size': JSON.stringify(requestBody).length
       });
       
       const response = await fetch('/api/vary-video', {
@@ -3280,11 +3323,19 @@ export default function Home() {
         body: JSON.stringify(requestBody),
       });
 
-      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating video variations...' }));
+      console.log('📡 [FRONTEND VIDEO VARIANCE] API Response received!');
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Response status:', response.status, response.statusText);
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Response ok:', response.ok);
 
-      console.log('📡 [FRONTEND VIDEO VARIANCE] Response status:', response.status, response.statusText);
+      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating video variations...' }));
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 70% - Generating video variations...');
+
+      console.log('📥 [FRONTEND VIDEO VARIANCE] Parsing response JSON...');
       const data = await response.json();
-      console.log('📥 [FRONTEND VIDEO VARIANCE] Response data:', data);
+      console.log('📥 [FRONTEND VIDEO VARIANCE] Response data received:', data);
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Response success:', data.success);
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Variations count:', data.variations?.length || 0);
 
       if (!data.success) {
         console.error('❌ [FRONTEND VIDEO VARIANCE] API returned error:', data.error);
@@ -3292,9 +3343,23 @@ export default function Home() {
       }
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 100% - Complete!');
+      
       const newVariations = data.variations || [];
       console.log('✅ [FRONTEND VIDEO VARIANCE] Received variations:', newVariations.length);
       
+      // Log each variation received
+      newVariations.forEach((variation: CharacterVariation, index: number) => {
+        console.log(`🎬 [FRONTEND VIDEO VARIANCE] Variation ${index + 1}:`, {
+          angle: variation.angle,
+          description: variation.description,
+          imageUrl: variation.imageUrl,
+          videoUrl: variation.videoUrl,
+          fileType: variation.fileType
+        });
+      });
+      
+      console.log('🔍 [FRONTEND VIDEO VARIANCE] Starting content filtering...');
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
         const isBad = isBadContent(variation.description || '') || 
@@ -3303,11 +3368,19 @@ export default function Home() {
                      isBadContent(prompt.trim());
         
         if (isBad) {
-          console.log('🚫 Bad content variation detected, filtering out:', variation.description);
+          console.log('🚫 [FRONTEND VIDEO VARIANCE] Bad content variation detected, filtering out:', variation.description);
           showContentRejectedAnimation();
+        } else {
+          console.log('✅ [FRONTEND VIDEO VARIANCE] Variation passed content filter:', variation.angle);
         }
         
         return !isBad;
+      });
+      
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Content filtering complete:', {
+        originalCount: newVariations.length,
+        filteredCount: filteredVariations.length,
+        filteredOut: newVariations.length - filteredVariations.length
       });
       
       const storedVariations: StoredVariation[] = filteredVariations.map((variation: CharacterVariation, index: number) => ({
