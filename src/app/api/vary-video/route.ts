@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { fal } from '@fal-ai/client';
+
+// Configure FAL client
+fal.config({
+  credentials: process.env.FAL_KEY!,
+});
 
 // Types
 interface VideoVariationRequest {
@@ -578,50 +584,107 @@ async function callVideoModel(
     throw new Error(`Unsupported video model: ${model}`);
   }
 
-  console.log(`🎯 [VIDEO VARIANCE] ===== CALLING VIDEO MODEL API =====`);
+  // Convert endpoint to FAL model name (remove https://fal.run/ prefix)
+  const falModelName = endpoint.replace('https://fal.run/', '');
+  
+  console.log(`🎯 [VIDEO VARIANCE] ===== CALLING VIDEO MODEL API WITH POLLING =====`);
   console.log(`🎯 [VIDEO VARIANCE] Model: ${model}`);
-  console.log(`🔗 [VIDEO VARIANCE] Endpoint: ${endpoint}`);
-  console.log(`📦 [VIDEO VARIANCE] Request body:`, JSON.stringify(requestBody, null, 2));
+  console.log(`🔗 [VIDEO VARIANCE] FAL Model: ${falModelName}`);
+  console.log(`📦 [VIDEO VARIANCE] Request payload:`, JSON.stringify(requestBody, null, 2));
   console.log(`🔑 [VIDEO VARIANCE] FAL Key present: ${!!process.env.FAL_KEY}`);
   console.log(`🔑 [VIDEO VARIANCE] FAL Key length: ${process.env.FAL_KEY?.length || 0}`);
 
-  console.log(`🚀 [VIDEO VARIANCE] Sending request to FAL API...`);
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Key ${process.env.FAL_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
+  console.log(`🚀 [VIDEO VARIANCE] Submitting to FAL API...`);
+  const falStartTime = Date.now();
+  
+  // Step 1: Submit request to FAL AI
+  const { request_id } = await fal.queue.submit(falModelName, requestBody);
+  
+  console.log(`🆔 [VIDEO VARIANCE] FAL Request ID: ${request_id}`);
+  
+  // Step 2: Poll for status with exponential backoff
+  let status = null;
+  let pollCount = 0;
+  const maxPolls = 30; // Increased for video generation
+  const baseDelay = 2000; // Start with 2 seconds
+  
+  while (pollCount < maxPolls) {
+    await new Promise(resolve => setTimeout(resolve, baseDelay));
+    pollCount++;
+    const pollDelay = Math.min(baseDelay * Math.pow(1.5, pollCount - 1), 10000); // Max 10 seconds
+    
+    console.log(`🔄 [VIDEO VARIANCE] Polling attempt ${pollCount}/${maxPolls} (delay: ${pollDelay}ms)`);
+    
+    try {
+      status = await fal.queue.status(falModelName, {
+        requestId: request_id,
+        logs: true
+      });
+      
+      const queueTime = Date.now() - falStartTime;
+      console.log(`📊 [VIDEO VARIANCE] Status: ${status.status}, Queue time: ${queueTime}ms`);
+      
+      if ('logs' in status && status.logs && status.logs.length > 0) {
+        console.log(`📝 [VIDEO VARIANCE] Latest logs:`, status.logs.slice(-3).map(log => log.message));
+      }
+      
+      if (status.status === "COMPLETED") {
+        console.log(`✅ [VIDEO VARIANCE] Generation completed after ${pollCount} polls`);
+        break;
+      }
+      
+      if ((status as any).status === "FAILED") {
+        console.error(`❌ [VIDEO VARIANCE] Generation failed:`, 'logs' in status ? (status as any).logs : 'No logs available');
+        const errorMessage = ('logs' in status && (status as any).logs) 
+          ? (status as any).logs.map((log: any) => log.message).join(', ')
+          : 'Unknown error';
+        throw new Error(`Video generation failed: ${errorMessage}`);
+      }
+      
+      // Continue polling if still in progress or queued
+      if (status.status === "IN_PROGRESS" || status.status === "IN_QUEUE") {
+        continue;
+      }
+      
+      // If we get here, it's an unexpected status
+      console.warn(`⚠️ [VIDEO VARIANCE] Unexpected status: ${status.status}`);
+      continue;
+      
+    } catch (pollError) {
+      console.error(`❌ [VIDEO VARIANCE] Polling error:`, pollError);
+      if (pollCount >= maxPolls) {
+        throw new Error(`Polling failed after ${maxPolls} attempts: ${pollError}`);
+      }
+    }
+  }
+  
+  if (!status || status.status !== "COMPLETED") {
+    throw new Error(`Video generation timed out after ${maxPolls} polls`);
+  }
+  
+  // Step 3: Retrieve the result
+  console.log(`📥 [VIDEO VARIANCE] Retrieving result...`);
+  const result = await fal.queue.result(falModelName, {
+    requestId: request_id
   });
 
-  console.log(`📡 [VIDEO VARIANCE] FAL API Response received!`);
-  console.log(`📡 [VIDEO VARIANCE] Response status: ${response.status} ${response.statusText}`);
-  console.log(`📡 [VIDEO VARIANCE] Response ok: ${response.ok}`);
-  console.log(`📡 [VIDEO VARIANCE] Response headers:`, Object.fromEntries(response.headers.entries()));
-
-  if (!response.ok) {
-    console.error(`❌ [VIDEO VARIANCE] FAL API request failed!`);
-    const errorText = await response.text();
-    console.error(`❌ [VIDEO VARIANCE] Error response: ${errorText}`);
-    console.error(`❌ [VIDEO VARIANCE] Status: ${response.status} ${response.statusText}`);
-    throw new Error(`Video generation API failed: ${response.status} ${errorText}`);
-  }
-
-  console.log(`📥 [VIDEO VARIANCE] Parsing FAL API response JSON...`);
-  const result = await response.json();
-  console.log(`✅ [VIDEO VARIANCE] Video generation successful for ${model}`);
+  const totalTime = Date.now() - falStartTime;
+  console.log(`✅ [VIDEO VARIANCE] Video generation successful for ${model} in ${totalTime}ms`);
   console.log(`🎥 [VIDEO VARIANCE] FAL API Result:`, JSON.stringify(result, null, 2));
-  console.log(`📊 [VIDEO VARIANCE] Result data keys:`, Object.keys(result));
+  console.log(`📊 [VIDEO VARIANCE] Result data keys:`, Object.keys(result.data || {}));
   
   // Handle different response formats from the API
-  const videoUrl = result.video?.url || result.video_url || result.url;
-  const duration = result.duration || result.video_length || 4;
-  const thumbnailUrl = result.thumbnail?.url || result.first_frame?.url || result.preview?.url;
+  const videoUrl = result.data?.video?.url || result.data?.video_url || result.data?.url;
+  const duration = result.data?.duration || result.data?.video_length || 4;
+  const thumbnailUrl = result.data?.thumbnail?.url || result.data?.first_frame?.url || result.data?.preview?.url;
   
   console.log(`🎬 [VIDEO VARIANCE] Extracted video URL: ${videoUrl}`);
   console.log(`⏱️ [VIDEO VARIANCE] Extracted duration: ${duration}`);
   console.log(`🖼️ [VIDEO VARIANCE] Extracted thumbnail: ${thumbnailUrl}`);
+  
+  if (!videoUrl) {
+    throw new Error(`No video URL returned from ${model}`);
+  }
   
   return {
     videoUrl,
