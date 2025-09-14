@@ -1019,11 +1019,7 @@ export default function Home() {
           modes.push('flux-dev'); // Flux Dev as fallback
         } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
           // Video mode: show video variant models (desktop only + secret access required)
-          modes.push('veo3-fast'); // Veo3 Fast image-to-video model
           modes.push('decart-lucy-14b'); // Lucy 14B video variant model
-          modes.push('minimax-i2v-director'); // MiniMax I2V Director with camera control
-          modes.push('hailuo-02-pro'); // Hailuo 02 Pro video variant model
-          modes.push('kling-video-pro'); // Kling Video Pro video variant model
           
           // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
           modes.push('minimax-video-01'); // Minimax Video 01
@@ -3190,8 +3186,14 @@ export default function Home() {
 
   // Handle video variations generation
   const handleVideoVariation = async () => {
+    console.log('🎬 [FRONTEND VIDEO VARIANCE] Starting video variation generation');
+    console.log('🎯 [FRONTEND VIDEO VARIANCE] Selected model:', generationMode);
+    console.log('📁 [FRONTEND VIDEO VARIANCE] Uploaded files:', uploadedFiles.length);
+    console.log('📝 [FRONTEND VIDEO VARIANCE] Prompt:', prompt.trim());
+    
     // Check if user can generate
     if (!canGenerate) {
+      console.error('❌ [FRONTEND VIDEO VARIANCE] User cannot generate - trial limit reached');
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
     }
@@ -3205,29 +3207,41 @@ export default function Home() {
     try {
       setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading images...' }));
       
+      console.log('📤 [FRONTEND VIDEO VARIANCE] Sending request to /api/vary-video');
+      const requestBody = {
+        images: uploadedFiles.map(img => img.base64),
+        mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
+        prompt: prompt.trim(),
+        model: generationMode
+      };
+      console.log('📦 [FRONTEND VIDEO VARIANCE] Request body:', {
+        imageCount: requestBody.images.length,
+        model: requestBody.model,
+        promptLength: requestBody.prompt.length
+      });
+      
       const response = await fetch('/api/vary-video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          images: uploadedFiles.map(img => img.base64),
-          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
-          prompt: prompt.trim(),
-          model: generationMode
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating video variations...' }));
 
+      console.log('📡 [FRONTEND VIDEO VARIANCE] Response status:', response.status, response.statusText);
       const data = await response.json();
+      console.log('📥 [FRONTEND VIDEO VARIANCE] Response data:', data);
 
       if (!data.success) {
+        console.error('❌ [FRONTEND VIDEO VARIANCE] API returned error:', data.error);
         throw new Error(data.error || 'Failed to process video variations');
       }
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       const newVariations = data.variations || [];
+      console.log('✅ [FRONTEND VIDEO VARIANCE] Received variations:', newVariations.length);
       
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {

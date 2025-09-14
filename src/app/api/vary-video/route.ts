@@ -209,8 +209,11 @@ async function uploadVideoToSupabase(videoUrl: string, fileName: string): Promis
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🎬 [VIDEO VARIANCE] Starting video variance generation request');
+  
   try {
     if (!supabaseAdmin) {
+      console.error('❌ [VIDEO VARIANCE] Database connection not available');
       return NextResponse.json(
         { error: 'Database connection not available' },
         { status: 500 }
@@ -251,8 +254,16 @@ export async function POST(request: NextRequest) {
 
     const { images, mimeTypes, prompt, model }: VideoVariationRequest = await request.json();
 
+    console.log('📋 [VIDEO VARIANCE] Request details:', {
+      imageCount: images?.length || 0,
+      model: model,
+      promptLength: prompt?.length || 0,
+      hasMimeTypes: !!mimeTypes
+    });
+
     // Validation
     if (!images || images.length === 0) {
+      console.error('❌ [VIDEO VARIANCE] No images provided');
       return NextResponse.json({ 
         success: false, 
         error: 'No images provided' 
@@ -260,6 +271,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!model) {
+      console.error('❌ [VIDEO VARIANCE] No model specified');
       return NextResponse.json({ 
         success: false, 
         error: 'No model specified' 
@@ -284,13 +296,17 @@ export async function POST(request: NextRequest) {
     console.log('🎭 Selected cinematic shots:', selectedShots.map(s => s.name));
 
     // Generate 4 video variations with different cinematic shots
+    console.log(`🎬 [VIDEO VARIANCE] Starting generation of 4 video variations with model: ${model}`);
+    console.log(`🎭 [VIDEO VARIANCE] Selected cinematic shots:`, selectedShots.map(s => s.name));
+    
     const variations = await Promise.all(
       selectedShots.map(async (cinematicShot, index) => {
         try {
           const variationPrompt = buildVariationPrompt(prompt, cinematicShot);
           
-          console.log(`🎥 Generating variation ${index + 1}: ${cinematicShot.name}`);
-          console.log(`📜 Full prompt: "${variationPrompt}"`);
+          console.log(`🎥 [VIDEO VARIANCE] Generating variation ${index + 1}/4: ${cinematicShot.name}`);
+          console.log(`📜 [VIDEO VARIANCE] Variation prompt: "${variationPrompt}"`);
+          console.log(`🖼️ [VIDEO VARIANCE] Using image URL: ${imageUrls[0]}`);
 
           // Call video model API
           const result = await callVideoModel(model, {
@@ -393,33 +409,78 @@ async function callVideoModel(
       duration: 4,
       aspect_ratio: '16:9'
     };
-  } else if (model === 'minimax-i2v-director') {
-    // Use the MiniMax I2V Director endpoint with camera control
-    endpoint = 'https://fal.run/fal-ai/minimax/video-01-director/image-to-video';
+  } else if (model === 'minimax-video-01') {
+    // Use Minimax Video 01 endpoint
+    endpoint = 'https://fal.run/fal-ai/minimax/video-01/image-to-video';
     requestBody = {
       image_url,
       prompt,
       prompt_optimizer: true
     };
-  } else if (model === 'hailuo-02-pro') {
-    // Use the Hailuo 02 Pro endpoint
-    endpoint = 'https://fal.run/fal-ai/minimax/hailuo-02/pro/image-to-video';
+  } else if (model === 'minimax-video-generation') {
+    // Use Minimax Video Generation endpoint
+    endpoint = 'https://fal.run/fal-ai/minimax/video-generation/image-to-video';
     requestBody = {
       image_url,
       prompt,
       prompt_optimizer: true
     };
-  } else if (model === 'kling-video-pro') {
-    // Use the Kling Video Pro endpoint
-    endpoint = 'https://fal.run/fal-ai/kling-video/v1.6/pro/image-to-video';
+  } else if (model === 'stable-video-diffusion-i2v') {
+    // Use Stable Video Diffusion I2V endpoint
+    endpoint = 'https://fal.run/fal-ai/stable-video-diffusion/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'modelscope-i2v') {
+    // Use Modelscope I2V endpoint
+    endpoint = 'https://fal.run/fal-ai/modelscope/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'text2video-zero-i2v') {
+    // Use Text2Video Zero I2V endpoint
+    endpoint = 'https://fal.run/fal-ai/text2video-zero/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'wan-v2-2-a14b-i2v-lora') {
+    // Use Wan V2.2 LoRA endpoint
+    endpoint = 'https://fal.run/fal-ai/wan-v2-2-a14b/image-to-video-lora';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'cogvideo-i2v') {
+    // Use CogVideo I2V endpoint
+    endpoint = 'https://fal.run/fal-ai/cogvideo/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'zeroscope-t2v') {
+    // Use Zeroscope T2V endpoint
+    endpoint = 'https://fal.run/fal-ai/zeroscope/text-to-video';
     requestBody = {
       image_url,
       prompt,
       prompt_optimizer: true
     };
   } else {
+    console.error(`❌ [VIDEO VARIANCE] Unsupported video model: ${model}`);
     throw new Error(`Unsupported video model: ${model}`);
   }
+
+  console.log(`🎯 [VIDEO VARIANCE] Calling video model: ${model}`);
+  console.log(`🔗 [VIDEO VARIANCE] Endpoint: ${endpoint}`);
+  console.log(`📦 [VIDEO VARIANCE] Request body:`, JSON.stringify(requestBody, null, 2));
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -430,12 +491,17 @@ async function callVideoModel(
     body: JSON.stringify(requestBody)
   });
 
+  console.log(`📡 [VIDEO VARIANCE] Response status: ${response.status} ${response.statusText}`);
+
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`❌ [VIDEO VARIANCE] API failed: ${response.status} ${errorText}`);
     throw new Error(`Video generation API failed: ${response.status} ${errorText}`);
   }
 
   const result = await response.json();
+  console.log(`✅ [VIDEO VARIANCE] Video generation successful for ${model}`);
+  console.log(`🎥 [VIDEO VARIANCE] Result:`, JSON.stringify(result, null, 2));
   
   // Handle different response formats from the API
   return {
