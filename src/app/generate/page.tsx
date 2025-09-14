@@ -3310,8 +3310,17 @@ export default function Home() {
       });
       
       console.log('🚀 [FRONTEND VIDEO VARIANCE] Sending API request to /api/vary-video...');
+      
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ [FRONTEND VIDEO VARIANCE] No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       console.log('📡 [FRONTEND VIDEO VARIANCE] Request headers:', {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer [REDACTED]',
         'Body size': JSON.stringify(requestBody).length
       });
       
@@ -3319,6 +3328,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestBody),
       });
