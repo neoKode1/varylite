@@ -1513,7 +1513,7 @@ export default function Home() {
   }, []);
 
   // Get all gallery images with URLs for navigation
-  const galleryImagesWithUrls = gallery.filter(item => item.imageUrl);
+  const galleryImagesWithUrls = gallery.filter(item => item.imageUrl || item.videoUrl);
 
   // Gallery navigation functions
   const navigateImage = useCallback((direction: number) => {
@@ -1523,9 +1523,14 @@ export default function Home() {
       const newIndex = prev + direction;
       if (newIndex < 0) return galleryImagesWithUrls.length - 1;
       if (newIndex >= galleryImagesWithUrls.length) return 0;
+      
+      // Update the full screen image to match the new index
+      const nextItem = galleryImagesWithUrls[newIndex];
+      setFullScreenImage(nextItem.videoUrl || nextItem.imageUrl!);
+      
       return newIndex;
     });
-  }, [galleryImagesWithUrls.length]);
+  }, [galleryImagesWithUrls]);
 
   // Delete from gallery function
   const handleDeleteFromGallery = useCallback(async (id: string) => {
@@ -8035,7 +8040,6 @@ export default function Home() {
                     navigateImage(-1);
                   }}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2"
-                  disabled={fullScreenImageIndex === 0}
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -8045,7 +8049,6 @@ export default function Home() {
                     navigateImage(1);
                   }}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2"
-                  disabled={fullScreenImageIndex === galleryImagesWithUrls.length - 1}
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
