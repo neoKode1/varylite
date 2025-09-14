@@ -498,16 +498,28 @@ async function callVideoModel(
       aspect_ratio: '16:9'
     };
   } else if (model === 'minimax-video-01') {
-    // Use Minimax Video 01 endpoint
-    endpoint = 'https://fal.run/fal-ai/minimax/video-01/image-to-video';
+    // Use Minimax Video 01 endpoint - this is text-to-video only, not image-to-video
+    // For image-to-video, we need to use a different model
+    throw new Error('minimax-video-01 is text-to-video only. Please use a different model for image-to-video generation.');
+  } else if (model === 'minimax-video-generation') {
+    // Use Minimax Hailuo 02 Pro endpoint (correct image-to-video model)
+    endpoint = 'https://fal.run/fal-ai/minimax/hailuo-02/pro/image-to-video';
     requestBody = {
       image_url,
       prompt,
       prompt_optimizer: true
     };
-  } else if (model === 'minimax-video-generation') {
-    // Use Minimax Video Generation endpoint
-    endpoint = 'https://fal.run/fal-ai/minimax/video-generation/image-to-video';
+  } else if (model === 'decart-lucy-14b') {
+    // Use Decart Lucy 14B endpoint
+    endpoint = 'https://fal.run/fal-ai/decart/lucy-14b/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'kling-video-pro') {
+    // Use Kling Video Pro endpoint
+    endpoint = 'https://fal.run/fal-ai/kling-video/v2.1/master/image-to-video';
     requestBody = {
       image_url,
       prompt,
