@@ -411,10 +411,21 @@ export async function POST(request: NextRequest) {
       prompt.toLowerCase().includes('encounter')
     );
     
-    const isMultiImageVariation = images.length >= 2 && !isCharacterCombination;
+    // Check for reference-based generation scenarios (Seedream 4.0 feature)
+    const isReferenceBasedGeneration = images.length >= 2 && (
+      prompt.toLowerCase().includes('reference') ||
+      prompt.toLowerCase().includes('based on') ||
+      prompt.toLowerCase().includes('extract') ||
+      prompt.toLowerCase().includes('style transfer') ||
+      prompt.toLowerCase().includes('character design') ||
+      prompt.toLowerCase().includes('product design')
+    );
     
-    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : isCharacterCombination ? 'CHARACTER COMBINATION' : isMultiImageVariation ? 'MULTI-IMAGE VARIATION' : 'SINGLE IMAGE'}`);
+    const isMultiImageVariation = images.length >= 2 && !isCharacterCombination && !isReferenceBasedGeneration;
+    
+    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : isCharacterCombination ? 'CHARACTER COMBINATION' : isReferenceBasedGeneration ? 'REFERENCE-BASED GENERATION' : isMultiImageVariation ? 'MULTI-IMAGE VARIATION' : 'SINGLE IMAGE'}`);
     console.log(`🎭 Character combination detected: ${isCharacterCombination}`);
+    console.log(`🎨 Reference-based generation detected: ${isReferenceBasedGeneration}`);
     console.log(`🖼️ Multi-image variation mode: ${isMultiImageVariation}`);
     
     // Analyze the original prompt for specific instructions
@@ -430,54 +441,97 @@ export async function POST(request: NextRequest) {
     
     // Check for character combination scenarios
     if (isCharacterCombination) {
-      enhancedPrompt = `ADVANCED COMPOSITION ANALYSIS - MULTIPLE ELEMENTS DETECTED
+      enhancedPrompt = `SEEDREAM 4.0 ADVANCED COMPOSITION ANALYSIS - MULTIPLE ELEMENTS DETECTED
 
-You are analyzing ${images.length} separate images to create advanced composite scenes. Each image represents different elements (characters, objects, clothing, scenes) that should be intelligently combined using Nano Banana best practices.
+You are analyzing ${images.length} separate images to create advanced composite scenes using Seedream 4.0 best practices. Each image represents different elements that should be intelligently combined with clear, natural language descriptions.
 
-ANALYSIS INSTRUCTIONS:
+SEEDREAM 4.0 ANALYSIS INSTRUCTIONS:
 1. Analyze each image separately to understand:
    - Element 1: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
    - Element 2: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
    - Additional elements if present
 
-2. Identify composition type:
-   - CHARACTER + CLOTHING: Person wearing specific clothing/item
-   - CHARACTER + SCENE: Person in specific environment/setting
-   - CLOTHING + SCENE: Item/clothing in specific environment
-   - CHARACTER + CHARACTER: Multiple people interaction
-   - COMPLEX COMPOSITION: Multiple elements (character + clothing + scene)
+2. Identify composition type using Seedream 4.0 guidelines:
+   - CHARACTER + CLOTHING: "Dress the character in Image 1 with the outfit from Image 2"
+   - CHARACTER + SCENE: "Place the character from Image 1 in the environment from Image 2"
+   - CLOTHING + SCENE: "Show the clothing from Image 1 in the setting from Image 2"
+   - CHARACTER + CHARACTER: "Combine the characters from Image 1 and Image 2 in a natural interaction"
+   - COMPLEX COMPOSITION: "Create a scene combining elements from all images"
 
-3. Create intelligent composition prompts for Nano Banana:
-   - Use descriptive text for each element's role and positioning
-   - Specify clear spatial relationships ("woman wearing the blue dress", "character in the forest scene")
-   - Maintain element identity while creating natural integration
-   - Use consistent naming/descriptions throughout
+3. Apply Seedream 4.0 best practices:
+   - Use coherent natural language: "subject + action + environment"
+   - Specify application scenario clearly (e.g., "professional e-commerce photography")
+   - Include stylistic descriptors (color, lighting, composition)
+   - Use precise, concise prompts rather than complex vocabulary stacking
+   - Clearly define editing goals and fixed elements
 
 USER REQUEST: "${prompt}"
 
 For each variation, provide:
-- The specific camera angle and composition
-- Clear element integration ("woman from image 2 wearing dress from image 1", "character positioned in scene from image 3")
+- Clear scene description using natural language (subject + action + environment)
+- Specific application scenario (e.g., "professional fashion photography", "e-commerce product shot")
+- Stylistic rendering details (lighting, color, composition)
+- Precise element integration instructions
 - Environmental context that supports all elements
-- Element descriptions that maintain their individual identities
-- Natural interactions and realistic compositions
 
-CRITICAL REQUIREMENTS FOR NANO BANANA:
-- Each variation should show ALL elements clearly integrated
-- Use descriptive language to specify element placement and relationships
-- Maintain element consistency and recognition throughout
-- Create natural, believable compositions
-- Use cinematic compositions that showcase all elements effectively
-- Prevent element blending by using strong descriptive references
+CRITICAL REQUIREMENTS FOR SEEDREAM 4.0:
+- Use concise and precise prompts (better than complex vocabulary stacking)
+- Clearly describe the scene using natural language
+- Specify the image purpose and type explicitly
+- Include precise style keywords for better results
+- Use clear, unambiguous instructions for modifications
+- Avoid vague pronouns - be specific about which elements to modify
 
-NANO BANANA COMPOSITION TIPS:
-- Be descriptive about element positions and relationships
-- Keep element names/roles consistent
-- Specify spatial relationships clearly ("wearing", "in", "on", "with", "beside")
-- Work iteratively if needed for complex compositions
-- Focus on realistic integration of elements
+SEEDREAM 4.0 COMPOSITION BEST PRACTICES:
+- ✅ Recommended: "A woman wearing a blue floral dress walking in a forest scene, professional fashion photography style"
+- ⚠️ Avoid: "Woman, dress, forest, professional style"
+- Use descriptive spatial relationships: "wearing", "in", "on", "with", "beside"
+- Specify what should remain unchanged explicitly
+- Focus on realistic integration with clear visual hierarchy
 
-RESPECT THE USER'S CREATIVE VISION while ensuring all elements are properly integrated using Nano Banana best practices.`;
+RESPECT THE USER'S CREATIVE VISION while applying Seedream 4.0 best practices for optimal composition results.`;
+    } else if (isReferenceBasedGeneration) {
+      enhancedPrompt = `SEEDREAM 4.0 REFERENCE-BASED GENERATION ANALYSIS
+
+You are analyzing ${images.length} images for reference-based generation using Seedream 4.0 best practices. This involves extracting key information from reference images (character design, artistic style, product features) to enable tasks like character creation, style transfer, and product design.
+
+SEEDREAM 4.0 REFERENCE-BASED INSTRUCTIONS:
+1. Analyze reference images to identify:
+   - Character design elements (facial features, clothing style, pose, expression)
+   - Artistic style (color palette, lighting, composition, visual effects)
+   - Product features (materials, textures, design elements, branding)
+   - Visual elements to preserve (specific features, style consistency)
+
+2. Apply Seedream 4.0 reference-based best practices:
+   - Clearly describe elements to be extracted and retained from reference images
+   - Provide detailed information about desired generated content (scene, layout, specifics)
+   - Specify what should remain unchanged explicitly
+   - Use precise technical terminology for accurate representation
+   - Clearly specify desired visualization format, layout, and style
+
+USER REQUEST: "${prompt}"
+
+For each variation, provide:
+- Reference Target: Clear description of elements to extract from reference images
+- Generated Scene Description: Detailed information about desired content
+- Style Consistency: Maintain visual elements from reference
+- Specific Preservation: What should remain unchanged
+- Technical Accuracy: Precise terminology for concepts
+
+CRITICAL REQUIREMENTS FOR REFERENCE-BASED GENERATION:
+- Extract and retain specific features from reference images
+- Maintain style consistency throughout variations
+- Preserve character identity or product design elements
+- Use precise descriptions for technical accuracy
+- Clearly specify what should remain unchanged
+- Focus on high-fidelity representation of reference elements
+
+SEEDREAM 4.0 REFERENCE EXAMPLES:
+- ✅ Character Reference: "Based on the character in the reference image, create variations maintaining facial features and clothing style"
+- ✅ Style Transfer: "Apply the artistic style from Image 1 to the subject in Image 2"
+- ✅ Product Design: "Extract the design elements from the reference and create variations in different colors"
+
+RESPECT THE USER'S CREATIVE VISION while maintaining reference consistency using Seedream 4.0 best practices.`;
     } else if (isMultiImageVariation) {
       enhancedPrompt = `MULTI-IMAGE VARIATION ANALYSIS - SEPARATE CHARACTER VARIATIONS
 
@@ -634,6 +688,10 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
       console.log(`🎭 [CHARACTER COMBINATION] Analyzing ${images.length} separate character images`);
       console.log(`📝 [CHARACTER COMBINATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
       console.log(`🖼️ [CHARACTER COMBINATION] Image parts prepared: ${imageParts.length} images`);
+    } else if (isReferenceBasedGeneration) {
+      console.log(`🎨 [REFERENCE-BASED GENERATION] Analyzing ${images.length} reference images for style/character extraction`);
+      console.log(`📝 [REFERENCE-BASED GENERATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
+      console.log(`🖼️ [REFERENCE-BASED GENERATION] Image parts prepared: ${imageParts.length} images`);
     } else if (isMultiImageVariation) {
       console.log(`🖼️ [MULTI-IMAGE VARIATION] Analyzing ${images.length} separate character images for individual variations`);
       console.log(`📝 [MULTI-IMAGE VARIATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
@@ -647,6 +705,8 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
         console.log('🔄 Attempting Gemini API call...');
         if (isCharacterCombination) {
           console.log('🎭 [CHARACTER COMBINATION] Sending character combination analysis to Gemini...');
+        } else if (isReferenceBasedGeneration) {
+          console.log('🎨 [REFERENCE-BASED GENERATION] Sending reference-based generation analysis to Gemini...');
         } else if (isMultiImageVariation) {
           console.log('🖼️ [MULTI-IMAGE VARIATION] Sending multi-image variation analysis to Gemini...');
         }
@@ -760,15 +820,26 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             // Add general quality improvements
             nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
             
-            // Add element-specific prompts based on combination mode
+            // Add model-specific prompts based on combination mode
             if (isCharacterCombination) {
-              // Advanced composition prompts for multiple elements
-              nanoBananaPrompt += ', maintain element consistency and recognition';
-              nanoBananaPrompt += ', create natural believable element integration';
-              nanoBananaPrompt += ', use descriptive positioning and relationships';
-              nanoBananaPrompt += ', realistic composition with proper element placement';
-              nanoBananaPrompt += ', professional e-commerce style composition';
-              nanoBananaPrompt += ', clear spatial relationships between elements';
+              // Nano Banana specific prompts for multi-character scenes
+              nanoBananaPrompt += ', character consistency maintained';
+              nanoBananaPrompt += ', natural character interactions';
+              nanoBananaPrompt += ', clear character positioning';
+              nanoBananaPrompt += ', realistic character relationships';
+              nanoBananaPrompt += ', professional character photography';
+              nanoBananaPrompt += ', cinematic character composition';
+              nanoBananaPrompt += ', detailed character expressions';
+              nanoBananaPrompt += ', proper character lighting';
+            } else if (isReferenceBasedGeneration) {
+              // Nano Banana specific prompts for reference-based generation
+              nanoBananaPrompt += ', reference style preserved';
+              nanoBananaPrompt += ', character identity maintained';
+              nanoBananaPrompt += ', style consistency throughout';
+              nanoBananaPrompt += ', reference elements extracted';
+              nanoBananaPrompt += ', high-fidelity reference matching';
+              nanoBananaPrompt += ', precise style transfer';
+              nanoBananaPrompt += ', reference-based composition';
             } else {
               // Add subtle negative prompts to prevent character duplication for single character
               nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
@@ -777,17 +848,26 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             if (isCharacterCombination) {
-              console.log(`🎨 [ADVANCED COMPOSITION] Applied Nano Banana multi-element best practices`);
-              console.log(`📝 [ADVANCED COMPOSITION] Using enhanced prompt structure with element separation`);
-              console.log(`🔗 [ADVANCED COMPOSITION] Preventing element blending with identity preservation`);
-              console.log(`⚙️ [ADVANCED COMPOSITION] Using advanced composition specific parameters:`);
-              console.log(`   - aspect_ratio: 1:1 (square for better element positioning)`);
-              console.log(`   - guidance_scale: 8.0 (higher adherence to composition prompt)`);
-              console.log(`   - preserve_identity: true (maintain element consistency)`);
-              console.log(`   - character_separation: 0.8 (prevent element blending)`);
-              console.log(`   - spatial_awareness: true (better element positioning)`);
-              console.log(`   - composition_mode: advanced (enable advanced composition)`);
-              console.log(`   - element_integration: true (enable element integration)`);
+              console.log(`🎭 [NANO BANANA MULTI-CHARACTER] Applied Nano Banana character consistency best practices`);
+              console.log(`📝 [NANO BANANA MULTI-CHARACTER] Using character-focused prompt structure`);
+              console.log(`🔗 [NANO BANANA MULTI-CHARACTER] Preventing character blending with identity preservation`);
+              console.log(`⚙️ [NANO BANANA MULTI-CHARACTER] Using Nano Banana optimized parameters:`);
+              console.log(`   - aspect_ratio: 1:1 (square for better character positioning)`);
+              console.log(`   - guidance_scale: 7.5 (optimal for Nano Banana character consistency)`);
+              console.log(`   - preserve_identity: true (maintain character consistency)`);
+              console.log(`   - character_separation: 0.7 (prevent character blending)`);
+              console.log(`   - spatial_awareness: true (better character positioning)`);
+              console.log(`   - style_consistency: true (maintain style throughout)`);
+              console.log(`   - natural_language_prompting: true (use natural descriptions)`);
+            } else if (isReferenceBasedGeneration) {
+              console.log(`🎨 [SEEDREAM 4.0 REFERENCE] Applied Seedream 4.0 reference-based generation best practices`);
+              console.log(`📝 [SEEDREAM 4.0 REFERENCE] Using reference extraction prompt structure`);
+              console.log(`🔗 [SEEDREAM 4.0 REFERENCE] Enabling reference extraction and style transfer`);
+              console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Seedream 4.0 optimized parameters:`);
+              console.log(`   - reference_extraction: true (enable reference extraction)`);
+              console.log(`   - style_consistency: true (maintain reference style)`);
+              console.log(`   - natural_language_prompting: true (use natural descriptions)`);
+              console.log(`   - preserve_identity: true (maintain character/product identity)`);
             }
             
             const result = await retryWithBackoff(async () => {
@@ -812,19 +892,21 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                   image_urls: imageUrls, // Use all uploaded image URLs for element combination
                   num_images: 1,
                   output_format: "jpeg",
-                  // Critical parameters for advanced composition
-                  aspect_ratio: "1:1", // Square aspect ratio for better element positioning
-                  guidance_scale: 8.0, // Higher guidance for better composition adherence
+                  // Nano Banana optimized parameters for multi-character scenes
+                  aspect_ratio: "1:1", // Square aspect ratio for better character positioning
+                  guidance_scale: 7.5, // Optimal guidance for Nano Banana character consistency
                   seed: Math.floor(Math.random() * 1000000), // Random seed for variation
-                  // Element preservation settings
-                  preserve_identity: true, // Maintain element consistency
-                  strength: 0.75, // Balance between reference and prompt for composition
-                  // Advanced composition specific settings
-                  enable_multi_character: true, // Enable multi-element mode
-                  character_separation: 0.8, // Prevent element blending
-                  spatial_awareness: true, // Better spatial understanding
-                  composition_mode: "advanced", // Advanced composition mode
-                  element_integration: true // Enable element integration
+                  // Character preservation settings (Nano Banana strengths)
+                  preserve_identity: true, // Maintain character consistency
+                  strength: 0.8, // Balance between reference and prompt for character scenes
+                  // Multi-character specific settings (Nano Banana optimized)
+                  enable_multi_character: true, // Enable multi-character mode
+                  character_separation: 0.7, // Prevent character blending
+                  spatial_awareness: true, // Better character positioning
+                  // Seedream 4.0 specific optimizations
+                  style_consistency: true, // Maintain style throughout
+                  reference_extraction: isReferenceBasedGeneration, // Enable reference extraction
+                  natural_language_prompting: true // Use natural language descriptions
                 },
                 logs: true,
                 onQueueUpdate: (update) => {
