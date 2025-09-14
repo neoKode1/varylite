@@ -2891,70 +2891,86 @@ export default function Home() {
       
       setProcessing(prev => ({ ...prev, progress: 60, currentStep: 'Generating variations...' }));
       
-      // Use FAL Image Edit API for nano-banana - generate 4 variations for 2x2 grid
-      const response = await fetch('/api/fal/image-edit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'nano-banana-edit',
-          imageUrls: [imageUrl],
-          prompt: prompt.trim() || 'Generate 4 new variations of this character from different angles',
-          numImages: 4, // Changed from 1 to 4 for 2x2 grid
-          outputFormat: 'jpeg'
-        }),
+      // Create 4 distinct prompts for different angles and perspectives
+      const variationPrompts = [
+        `${prompt.trim()} - extreme close-up shot, dramatic lighting, intense focus on facial features, macro photography style`,
+        `${prompt.trim()} - side profile view, three-quarter angle, cinematic composition, professional portrait lighting`,
+        `${prompt.trim()} - low angle shot looking up, heroic perspective, dramatic shadows, worm's eye view`,
+        `${prompt.trim()} - high angle shot looking down, bird's eye view, environmental context, wide shot composition`
+      ];
+
+      // Generate 4 separate images with different prompts
+      const imagePromises = variationPrompts.map(async (variationPrompt, index) => {
+        try {
+          console.log(`🎨 Generating variation ${index + 1}/4: ${variationPrompt}`);
+          
+          const response = await fetch('/api/fal/image-edit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'nano-banana-edit',
+              imageUrls: [imageUrl],
+              prompt: variationPrompt,
+              numImages: 1, // Generate 1 image per prompt
+              outputFormat: 'jpeg'
+            }),
+          });
+
+          const data = await response.json();
+          console.log(`📥 FAL API Response ${index + 1}:`, data);
+
+          if (!response.ok) {
+            throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
+          }
+
+          if (!data.success) {
+            throw new Error(data.error || 'Failed to process character variation');
+          }
+
+          // Extract image URL from response
+          let extractedImageUrl = null;
+          if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
+            extractedImageUrl = data.data.images[0].url || data.data.images[0];
+          } else if (data.data?.image_url) {
+            extractedImageUrl = data.data.image_url;
+          } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+            extractedImageUrl = data.images[0].url || data.images[0];
+          }
+
+          if (!extractedImageUrl) {
+            throw new Error('No image URL found in FAL response');
+          }
+
+          return {
+            id: `variation-${Date.now()}-${index}`,
+            description: variationPrompt,
+            angle: `Variation ${index + 1}`,
+            pose: `Angle ${index + 1}`,
+            imageUrl: extractedImageUrl,
+            fileType: 'image' as const
+          };
+        } catch (error) {
+          console.error(`❌ Error generating variation ${index + 1}:`, error);
+          // Return a fallback variation
+          return {
+            id: `variation-${Date.now()}-${index}`,
+            description: `${prompt.trim()} - variation ${index + 1}`,
+            angle: `Variation ${index + 1}`,
+            pose: `Fallback ${index + 1}`,
+            imageUrl: null,
+            fileType: 'image' as const
+          };
+        }
       });
 
-      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating variations...' }));
-
-      const data = await response.json();
-      console.log('📥 FAL API Response Status:', response.status);
-      console.log('📥 FAL API Response Data:', data);
-
-      if (!response.ok) {
-        console.error('❌ FAL API HTTP Error:', response.status, response.statusText);
-        throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
-      }
-
-      if (!data.success) {
-        console.error('❌ FAL API failed:', data.error);
-        throw new Error(data.error || 'Failed to process character variations');
-      }
+      // Wait for all 4 variations to complete
+      const newVariations = await Promise.all(imagePromises);
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       
-      // Convert FAL response to variation format
-      console.log('🔍 FAL API Response:', data);
-      
-      // Extract image URLs from FAL response - handle multiple images for 2x2 grid
-      let extractedImageUrls = [];
-      if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
-        // FAL nano-banana/edit returns images array
-        extractedImageUrls = data.data.images.map(img => img.url || img);
-      } else if (data.data?.image_url) {
-        // Fallback for single image format
-        extractedImageUrls = [data.data.image_url];
-      } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-        // Direct images array
-        extractedImageUrls = data.images.map(img => img.url || img);
-      }
-      
-      console.log('🖼️ Extracted image URLs:', extractedImageUrls);
-      
-      if (extractedImageUrls.length === 0) {
-        throw new Error('No image URLs found in FAL response');
-      }
-      
-      // Create 4 variations for 2x2 grid
-      const newVariations = extractedImageUrls.slice(0, 4).map((imageUrl, index) => ({
-        id: `variation-${Date.now()}-${index}`,
-        description: prompt.trim() || `Character variation ${index + 1}`,
-        angle: `Variation ${index + 1}`,
-        pose: `AI generated ${index + 1}`,
-        imageUrl: imageUrl,
-        fileType: 'image' as const
-      }));
+      console.log('🎨 Generated variations:', newVariations.length);
       
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
