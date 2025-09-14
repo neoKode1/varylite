@@ -441,55 +441,52 @@ export async function POST(request: NextRequest) {
     
     // Check for character combination scenarios
     if (isCharacterCombination) {
-      enhancedPrompt = `SEEDREAM 4.0 ADVANCED COMPOSITION ANALYSIS - MULTIPLE ELEMENTS DETECTED
+      enhancedPrompt = `CHARACTER COMBINATION ANALYSIS - PRESERVE EXACT CHARACTER IDENTITY
 
-You are analyzing ${images.length} separate images to create advanced composite scenes using Seedream 4.0 best practices. Each image represents different elements that should be intelligently combined with clear, natural language descriptions.
+You are analyzing ${images.length} separate character images to create scenes where the EXACT same characters interact. Each character must maintain their precise identity, age, appearance, and characteristics.
 
-SEEDREAM 4.0 ANALYSIS INSTRUCTIONS:
-1. Analyze each image separately to understand:
-   - Element 1: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
-   - Element 2: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
-   - Additional elements if present
+CRITICAL CHARACTER PRESERVATION REQUIREMENTS:
+1. Analyze each character image separately to identify:
+   - Character 1: EXACT age, gender, facial features, body type, clothing, hairstyle, distinctive traits
+   - Character 2: EXACT age, gender, facial features, body type, clothing, hairstyle, distinctive traits
+   - Additional characters if present
 
-2. Identify composition type using Seedream 4.0 guidelines:
-   - CHARACTER + CLOTHING: "Dress the character in Image 1 with the outfit from Image 2"
-   - CHARACTER + SCENE: "Place the character from Image 1 in the environment from Image 2"
-   - CLOTHING + SCENE: "Show the clothing from Image 1 in the setting from Image 2"
-   - CHARACTER + CHARACTER: "Combine the characters from Image 1 and Image 2 in a natural interaction"
-   - COMPLEX COMPOSITION: "Create a scene combining elements from all images"
+2. Character Identity Preservation Rules:
+   - NEVER change ages (adult stays adult, child stays child)
+   - NEVER change genders (male stays male, female stays female)
+   - NEVER modify facial features, body type, or distinctive physical traits
+   - NEVER alter clothing, hairstyle, or personal style elements
+   - PRESERVE the exact same person from each reference image
 
-3. Apply Seedream 4.0 best practices:
-   - Use coherent natural language: "subject + action + environment"
-   - Specify application scenario clearly (e.g., "professional e-commerce photography")
-   - Include stylistic descriptors (color, lighting, composition)
-   - Use precise, concise prompts rather than complex vocabulary stacking
-   - Clearly define editing goals and fixed elements
+3. Scene Composition Guidelines:
+   - Create natural interactions between the EXACT same characters
+   - Use clear spatial positioning (left, right, center, foreground, background)
+   - Maintain character recognition and distinctiveness
+   - Focus on the action/scenario while preserving identity
 
 USER REQUEST: "${prompt}"
 
 For each variation, provide:
-- Clear scene description using natural language (subject + action + environment)
-- Specific application scenario (e.g., "professional fashion photography", "e-commerce product shot")
-- Stylistic rendering details (lighting, color, composition)
-- Precise element integration instructions
-- Environmental context that supports all elements
+- Camera angle that showcases both characters clearly
+- Scene description that preserves exact character identity
+- Environmental context that supports the character interaction
+- Lighting and composition that maintains character recognition
 
-CRITICAL REQUIREMENTS FOR SEEDREAM 4.0:
-- Use concise and precise prompts (better than complex vocabulary stacking)
-- Clearly describe the scene using natural language
-- Specify the image purpose and type explicitly
-- Include precise style keywords for better results
-- Use clear, unambiguous instructions for modifications
-- Avoid vague pronouns - be specific about which elements to modify
+CRITICAL CHARACTER PRESERVATION INSTRUCTIONS:
+- Maintain identical character appearance from reference images
+- Preserve exact age, gender, and physical characteristics
+- Keep same clothing, hairstyle, and distinctive features
+- Ensure both characters are clearly visible and recognizable
+- Create natural interactions while preserving character identity
+- Use descriptive positioning language for each character's placement
 
-SEEDREAM 4.0 COMPOSITION BEST PRACTICES:
-- ✅ Recommended: "A woman wearing a blue floral dress walking in a forest scene, professional fashion photography style"
-- ⚠️ Avoid: "Woman, dress, forest, professional style"
-- Use descriptive spatial relationships: "wearing", "in", "on", "with", "beside"
-- Specify what should remain unchanged explicitly
-- Focus on realistic integration with clear visual hierarchy
+CHARACTER COMBINATION EXAMPLES:
+- ✅ Correct: "The adult woman from Image 1 chases the adult man from Image 2 through the forest"
+- ❌ Wrong: "A woman chases a child" (if the second character was an adult)
+- ✅ Correct: "The same characters from both images interact naturally"
+- ❌ Wrong: "Characters with similar features" (must be exact same people)
 
-RESPECT THE USER'S CREATIVE VISION while applying Seedream 4.0 best practices for optimal composition results.`;
+RESPECT THE USER'S CREATIVE VISION while maintaining exact character identity preservation.`;
     } else if (isReferenceBasedGeneration) {
       enhancedPrompt = `SEEDREAM 4.0 REFERENCE-BASED GENERATION ANALYSIS
 
@@ -790,20 +787,22 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             // Add Nano Banana multi-character best practices for character combination
             if (isCharacterCombination) {
-              // Enhanced prompt structure for multi-character generation
-              nanoBananaPrompt = `Create a scene combining multiple characters from the reference images. `;
-              nanoBananaPrompt += `Character 1 (from first reference): `;
-              nanoBananaPrompt += `Character 2 (from second reference): `;
-              nanoBananaPrompt += `Scene composition: ${prompt} - ${variation.angle.toLowerCase()}. `;
-              nanoBananaPrompt += `CRITICAL INSTRUCTIONS: `;
-              nanoBananaPrompt += `- Maintain distinct character identities from reference images `;
-              nanoBananaPrompt += `- Use clear spatial positioning (left, right, center, foreground, background) `;
-              nanoBananaPrompt += `- Prevent character blending or merging `;
+              // Enhanced prompt structure for multi-character generation with explicit character preservation
+              nanoBananaPrompt = `Create a scene with the EXACT same characters from the reference images. `;
+              nanoBananaPrompt += `PRESERVE CHARACTER IDENTITY: `;
+              nanoBananaPrompt += `- Character from Image 1: Keep the EXACT same person, age, appearance, clothing, and features `;
+              nanoBananaPrompt += `- Character from Image 2: Keep the EXACT same person, age, appearance, clothing, and features `;
+              nanoBananaPrompt += `- Do NOT change ages, genders, or physical characteristics `;
+              nanoBananaPrompt += `- Do NOT modify facial features, body type, or distinctive traits `;
+              nanoBananaPrompt += `Scene action: ${prompt} - ${variation.angle.toLowerCase()}. `;
+              nanoBananaPrompt += `CRITICAL CHARACTER PRESERVATION: `;
+              nanoBananaPrompt += `- Maintain identical character appearance from reference images `;
+              nanoBananaPrompt += `- Preserve exact age, gender, and physical characteristics `;
+              nanoBananaPrompt += `- Keep same clothing, hairstyle, and distinctive features `;
+              nanoBananaPrompt += `- Use clear spatial positioning for both characters `;
               nanoBananaPrompt += `- Ensure both characters are clearly visible and recognizable `;
-              nanoBananaPrompt += `- Create natural interactions between characters `;
-              nanoBananaPrompt += `- Use descriptive positioning language for each character's placement `;
-              nanoBananaPrompt += `- Maintain character consistency from reference images `;
-              nanoBananaPrompt += `- Generate high-quality, detailed scene with proper lighting and composition`;
+              nanoBananaPrompt += `- Create natural interactions while preserving character identity `;
+              nanoBananaPrompt += `- Generate high-quality scene with proper lighting and composition`;
             }
             
             // Add quality enhancements based on the specific angle
