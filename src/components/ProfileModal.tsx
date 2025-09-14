@@ -1772,7 +1772,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
         {/* Notification Toast */}
         {notification && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+          <div className="fixed top-4 right-4 z-[120] animate-in slide-in-from-top-2 duration-300">
             <div className={`px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm ${
               notification.type === 'error' 
                 ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 

@@ -5408,7 +5408,7 @@ export default function Home() {
       
       {/* Custom Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-2 sm:right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+        <div className="fixed top-4 right-2 sm:right-4 z-[120] animate-in slide-in-from-top-2 duration-300">
           <div className={`px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-[calc(100vw-1rem)] sm:max-w-sm ${
             notification.type === 'error' 
               ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
@@ -5431,7 +5431,7 @@ export default function Home() {
 
       {/* Animated Error Messages */}
       {animatedErrors.map((error, index) => (
-        <div key={error.id} style={{ bottom: `${20 + (index * 80)}px` }} className="fixed right-4 z-50">
+        <div key={error.id} style={{ bottom: `${20 + (index * 80)}px` }} className="fixed right-4 z-[120]">
           <AnimatedError
             message={error.message}
             type={error.type}
