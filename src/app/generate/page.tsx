@@ -1141,15 +1141,17 @@ export default function Home() {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
+    console.log('🔄 [DETERMINE MODE] hasImages:', hasImages, 'hasVideos:', hasVideos, 'fileCount:', uploadedFiles.length);
+    
     if (hasImages && uploadedFiles.length === 1) {
-      // Single image upload - default to nano-banana for character variations
+      console.log('🔄 [DETERMINE MODE] Single image detected, returning nano-banana');
       return 'nano-banana';
     } else if (!hasImages && !hasVideos) {
-      // For text-to-image, use user's default preference if available
-      // This will be set from user profile preferences
+      console.log('🔄 [DETERMINE MODE] No files, returning null for user preferences');
       return null; // Will be set from user preferences
     }
     
+    console.log('🔄 [DETERMINE MODE] No specific case matched, returning null');
     return null;
   }, [uploadedFiles]);
 
@@ -1180,6 +1182,9 @@ export default function Home() {
     // Add endframe mode when 2 images are uploaded
     if (hasImages && uploadedFiles.length === 2) {
       modes.push('minimax-2.0'); // EndFrame mode for 2 images
+      // Also add image editing models for mobile users
+      modes.push('nano-banana'); // Character combination
+      modes.push('seedream-4-edit'); // Seedream 4 Edit
     }
     
     // Add text-to-video modes when no images are uploaded
@@ -1307,16 +1312,24 @@ export default function Home() {
     }
   }, [processing.isProcessing, isGeneratingImages]);
 
-  // Auto-detect generation mode when files change
+  // Auto-detect generation mode when files change - but don't override user selections
   useEffect(() => {
+    console.log('🔄 [MODEL SELECTION] Auto-detect effect triggered');
+    console.log('🔄 [MODEL SELECTION] Current generationMode:', generationMode);
+    console.log('🔄 [MODEL SELECTION] Uploaded files:', uploadedFiles.length);
+    
     const detectedMode = determineGenerationMode();
-    if (detectedMode !== null) {
+    console.log('🔄 [MODEL SELECTION] Detected mode:', detectedMode);
+    
+    if (detectedMode !== null && !generationMode) {
+      console.log('🔄 [MODEL SELECTION] Auto-setting model to:', detectedMode);
       setGenerationMode(detectedMode);
-    } else {
-      // For ambiguous cases, don't auto-set, let user choose
-      setGenerationMode(null);
+    } else if (detectedMode === null && !generationMode) {
+      console.log('🔄 [MODEL SELECTION] No model detected and none selected - keeping null');
+    } else if (generationMode) {
+      console.log('🔄 [MODEL SELECTION] User has selected model, not overriding:', generationMode);
     }
-  }, [uploadedFiles, determineGenerationMode]);
+  }, [uploadedFiles, determineGenerationMode, generationMode]);
 
   // Check video duration and show Toasty error if too long
   const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
@@ -1478,10 +1491,11 @@ export default function Home() {
 
   // Clear selected model when content mode changes to force dropdown update
   useEffect(() => {
+    console.log('🔄 [CONTENT MODE] Effect triggered - contentMode:', contentMode, 'generationMode:', generationMode);
+    
     if (generationMode) {
       // Check if current model is compatible with new content mode
       const isVideoModel = (
-        generationMode === 'decart-lucy-14b' || 
         generationMode === 'minimax-video-01' ||
         generationMode === 'minimax-video-generation' ||
         generationMode === 'stable-video-diffusion-i2v' ||
@@ -1493,9 +1507,13 @@ export default function Home() {
       );
       const isImageModel = generationMode === 'nano-banana' || generationMode === 'flux-dev' || generationMode === 'seedream-4-edit';
       
+      console.log('🔄 [CONTENT MODE] isVideoModel:', isVideoModel, 'isImageModel:', isImageModel);
+      
       if ((contentMode === 'image' && isVideoModel) || (contentMode === 'video' && isImageModel)) {
-        console.log('🔄 Content mode changed, clearing incompatible model:', generationMode);
+        console.log('🔄 [CONTENT MODE] Clearing incompatible model:', generationMode);
         setGenerationMode(null);
+      } else {
+        console.log('🔄 [CONTENT MODE] Model is compatible, keeping:', generationMode);
       }
     }
   }, [contentMode, generationMode]);
@@ -2899,7 +2917,6 @@ export default function Home() {
 
     // Check if we should use video variations based on content mode
     if (contentMode === 'video' && (
-      generationMode === 'decart-lucy-14b' || 
       generationMode === 'minimax-video-01' ||
       generationMode === 'minimax-video-generation' ||
       generationMode === 'stable-video-diffusion-i2v' ||
@@ -6173,7 +6190,7 @@ export default function Home() {
             )}
 
             {/* Mobile Floating Input - Match Community Page Style */}
-            <div className="mobile-chat-interface md:hidden hidden" data-input-area>
+            <div className="mobile-chat-interface md:hidden" data-input-area>
               {/* Mobile Help Banner */}
               <div className="mb-3 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
                 <div className="text-yellow-200 text-xs">
@@ -6297,7 +6314,10 @@ export default function Home() {
                     {uploadedFiles.length > 0 && (
                       <select
                         value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        onChange={(e) => {
+                          console.log('🔄 [DROPDOWN] Mobile model selection changed to:', e.target.value);
+                          setGenerationMode(e.target.value as GenerationMode);
+                        }}
                         className="px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200 flex-shrink-0 min-w-[120px]"
                       >
                         <option value="">Select Model</option>
@@ -6995,7 +7015,10 @@ export default function Home() {
                     <span className="text-white text-xs font-medium whitespace-nowrap">Model:</span>
                       <select
                         value={generationMode || ''}
-                        onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                        onChange={(e) => {
+                          console.log('🔄 [DROPDOWN] Mobile model selection changed to:', e.target.value);
+                          setGenerationMode(e.target.value as GenerationMode);
+                        }}
                       className="px-2 py-1 bg-transparent border border-white border-opacity-20 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
                       style={{ 
                         fontSize: '12px',
@@ -8645,7 +8668,10 @@ export default function Home() {
             <div className="text-center">
               <select 
                 value={generationMode || ''}
-                onChange={(e) => setGenerationMode(e.target.value as GenerationMode)}
+                onChange={(e) => {
+                  console.log('🔄 [DROPDOWN] Desktop model selection changed to:', e.target.value);
+                  setGenerationMode(e.target.value as GenerationMode);
+                }}
                 className="bg-gray-800 border border-gray-600 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200"
               >
                 <option value="">Select Model</option>
