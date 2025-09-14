@@ -432,41 +432,50 @@ export async function POST(request: NextRequest) {
     if (isCharacterCombination) {
       enhancedPrompt = `CHARACTER COMBINATION ANALYSIS - MULTIPLE IMAGES DETECTED
 
-You are analyzing ${images.length} separate character images to create combined character variations. Each image represents a different character that should be integrated into cohesive scenes.
+You are analyzing ${images.length} separate character images to create combined character variations. Each image represents a different character that should be integrated into cohesive scenes using Nano Banana best practices.
 
 ANALYSIS INSTRUCTIONS:
 1. Analyze each image separately to understand:
-   - Character 1: Physical features, clothing, pose, expression, style
-   - Character 2: Physical features, clothing, pose, expression, style
+   - Character 1: Physical features, clothing, pose, expression, style, distinctive elements
+   - Character 2: Physical features, clothing, pose, expression, style, distinctive elements
    - Additional characters if present
 
-2. Identify key characteristics for combination:
-   - Distinctive features of each character
-   - Compatible styling elements
-   - Appropriate interaction scenarios
-   - Environmental context that works for both characters
+2. Create descriptive character references for Nano Banana:
+   - Use strong descriptive text prompts for each character
+   - Specify individual positions and actions clearly
+   - Prevent character blending by maintaining distinct identities
+   - Use consistent naming/descriptions throughout
 
-3. Create 4 variations that combine these characters naturally:
-   - Maintain each character's unique identity
-   - Show realistic interactions between characters
-   - Use appropriate camera angles and compositions
-   - Ensure both characters are clearly visible and recognizable
+3. Apply Nano Banana multi-character best practices:
+   - Use descriptive language for positioning ("on the left", "behind the table", "to the right of Character A")
+   - Keep character roles and identities consistent
+   - Specify clear spatial relationships between characters
+   - Create natural interactions and compositions
 
 USER REQUEST: "${prompt}"
 
 For each variation, provide:
 - The specific camera angle and composition
-- How the characters interact or are positioned
+- Clear positioning for each character ("Character A is sitting on the left side", "Character B is on the right side")
 - Environmental context that supports both characters
 - Character descriptions that maintain their individual identities
+- Specific actions and interactions between characters
 
-CRITICAL REQUIREMENTS:
-- Each variation should show BOTH characters clearly
-- Maintain character consistency and recognition
+CRITICAL REQUIREMENTS FOR NANO BANANA:
+- Each variation should show BOTH characters clearly with distinct positioning
+- Use descriptive language to specify character placement and actions
+- Maintain character consistency and recognition throughout
 - Create natural, believable character interactions
 - Use cinematic compositions that showcase both characters effectively
+- Prevent character blending by using strong descriptive references
 
-RESPECT THE USER'S CREATIVE VISION while ensuring both characters are properly integrated.`;
+NANO BANANA PROMPTING TIPS:
+- Be descriptive about character positions and actions
+- Keep character names/roles consistent
+- Specify spatial relationships clearly
+- Work iteratively if needed for complex compositions
+
+RESPECT THE USER'S CREATIVE VISION while ensuring both characters are properly integrated using Nano Banana best practices.`;
     } else if (isMultiImageVariation) {
       enhancedPrompt = `MULTI-IMAGE VARIATION ANALYSIS - SEPARATE CHARACTER VARIATIONS
 
@@ -717,6 +726,15 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             // Use the user's original prompt with enhanced quality instructions
             let nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()}`;
             
+            // Add Nano Banana multi-character best practices for character combination
+            if (isCharacterCombination) {
+              nanoBananaPrompt += ', combine the elements from the reference images into a scene';
+              nanoBananaPrompt += ', use strong descriptive references for each character';
+              nanoBananaPrompt += ', specify clear positioning and spatial relationships';
+              nanoBananaPrompt += ', prevent character blending by maintaining distinct identities';
+              nanoBananaPrompt += ', use descriptive language for character placement and actions';
+            }
+            
             // Add quality enhancements based on the specific angle
             if (variation.angle.toLowerCase().includes('worm') && variation.angle.toLowerCase().includes('eye')) {
               nanoBananaPrompt += ', dramatic low-angle perspective, strong upward lighting, cinematic composition';
@@ -731,10 +749,23 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             // Add general quality improvements
             nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
             
-            // Add subtle negative prompts to prevent character duplication
-            nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
+            // Add character-specific prompts based on combination mode
+            if (isCharacterCombination) {
+              nanoBananaPrompt += ', maintain character consistency and recognition';
+              nanoBananaPrompt += ', create natural believable character interactions';
+              nanoBananaPrompt += ', use descriptive positioning (on the left, behind the table, to the right)';
+            } else {
+              // Add subtle negative prompts to prevent character duplication for single character
+              nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
+            }
             
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
+            
+            if (isCharacterCombination) {
+              console.log(`🎭 [CHARACTER COMBINATION] Applied Nano Banana multi-character best practices`);
+              console.log(`📝 [CHARACTER COMBINATION] Using descriptive positioning and spatial relationships`);
+              console.log(`🔗 [CHARACTER COMBINATION] Preventing character blending with strong references`);
+            }
             
             const result = await retryWithBackoff(async () => {
               console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
