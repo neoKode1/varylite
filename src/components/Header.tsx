@@ -49,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
   useEffect(() => {
     const fetchUserProfilePicture = async (retryCount = 0) => {
       if (!user) {
+        console.log('🔍 No user found, skipping profile picture fetch')
         setUserProfilePicture(null)
         return
       }
@@ -56,11 +57,13 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
-          console.log('No session found for profile picture fetch')
+          console.log('🔍 No session found for profile picture fetch')
+          setUserProfilePicture(null)
           return
         }
 
-        console.log(`Fetching profile picture for user: ${user.id} (attempt ${retryCount + 1})`)
+        console.log(`🔍 Fetching profile picture for user: ${user.id} (attempt ${retryCount + 1})`)
+        console.log('🔑 Session token length:', session.access_token?.length || 0)
         
         const response = await fetch('/api/profile', {
           method: 'GET',
@@ -74,14 +77,29 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
         if (response.ok) {
           const data = await response.json()
-          console.log('Profile picture data received:', data.profile?.profile_picture ? 'Yes' : 'No')
+          console.log('✅ Profile picture data received:', data.profile?.profile_picture ? 'Yes' : 'No')
           setUserProfilePicture(data.profile?.profile_picture || null)
         } else {
-          console.error('Profile API response not ok:', response.status, response.statusText)
+          console.error('❌ Profile API response not ok:', response.status, response.statusText)
+          
+          // Handle 401 specifically - token might be expired
+          if (response.status === 401) {
+            console.log('🔑 401 Unauthorized - token may be expired, refreshing session...')
+            try {
+              const { data: { session: newSession } } = await supabase.auth.refreshSession()
+              if (newSession) {
+                console.log('✅ Session refreshed, retrying profile fetch...')
+                setTimeout(() => fetchUserProfilePicture(retryCount + 1), 1000)
+                return
+              }
+            } catch (refreshError) {
+              console.error('❌ Failed to refresh session:', refreshError)
+            }
+          }
           
           // Retry on server errors (5xx) but not on client errors (4xx)
           if (response.status >= 500 && retryCount < 2) {
-            console.log(`Retrying profile fetch in ${(retryCount + 1) * 1000}ms...`)
+            console.log(`🔄 Retrying profile fetch in ${(retryCount + 1) * 1000}ms...`)
             setTimeout(() => fetchUserProfilePicture(retryCount + 1), (retryCount + 1) * 1000)
             return
           }
@@ -89,11 +107,11 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
           setUserProfilePicture(null)
         }
       } catch (error) {
-        console.error('Error fetching profile picture:', error)
+        console.error('❌ Error fetching profile picture:', error)
         
         // Provide more specific error information
         if (error instanceof TypeError && error.message === 'Failed to fetch') {
-          console.error('Network error: Unable to connect to profile API')
+          console.error('🌐 Network error: Unable to connect to profile API')
           
           // Retry on network errors
           if (retryCount < 2) {
@@ -268,6 +286,10 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                         src={userProfilePicture} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('🖼️ Profile picture failed to load, falling back to default')
+                          setUserProfilePicture(null)
+                        }}
                       />
                     ) : (
                       <User className="w-4 h-4 text-white" />
@@ -473,6 +495,10 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                         src={userProfilePicture} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('🖼️ Mobile profile picture failed to load, falling back to default')
+                          setUserProfilePicture(null)
+                        }}
                       />
                     ) : (
                       <User className="w-3 h-3 text-white" />

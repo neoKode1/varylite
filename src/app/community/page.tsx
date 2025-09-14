@@ -552,10 +552,17 @@ export default function CommunityPage() {
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!user) return;
+    console.log('🗑️ [DELETE POST] Starting deletion for post:', postId);
+    console.log('🗑️ [DELETE POST] Current user:', user?.id);
+    
+    if (!user) {
+      console.error('🗑️ [DELETE POST] No user found, cannot delete');
+      return;
+    }
     
     // Confirm deletion
     if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      console.log('🗑️ [DELETE POST] User cancelled deletion');
       return;
     }
 
@@ -678,12 +685,22 @@ export default function CommunityPage() {
                     {user && post.user_id === user.id && (
                       <div className="relative">
                         <button
-                          onClick={() => handleDeletePost(post.id)}
+                          onClick={() => {
+                            console.log('🗑️ Delete button clicked for post:', post.id);
+                            handleDeletePost(post.id);
+                          }}
                           className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                           title="Delete post"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                      </div>
+                    )}
+                    
+                    {/* Debug info - remove this after testing */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Debug: User ID: {user?.id || 'null'}, Post User ID: {post.user_id}, Match: {user && post.user_id === user.id ? 'YES' : 'NO'}
                       </div>
                     )}
                   </div>

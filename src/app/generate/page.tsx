@@ -1359,8 +1359,18 @@ export default function Home() {
   useEffect(() => {
     if (generationMode) {
       // Check if current model is compatible with new content mode
-      const isVideoModel = generationMode === 'decart-lucy-14b' || generationMode === 'minimax-i2v-director' || generationMode === 'hailuo-02-pro' || generationMode === 'kling-video-pro';
-      const isImageModel = generationMode === 'nano-banana' || generationMode === 'flux-dev';
+      const isVideoModel = (
+        generationMode === 'decart-lucy-14b' || 
+        generationMode === 'minimax-video-01' ||
+        generationMode === 'minimax-video-generation' ||
+        generationMode === 'stable-video-diffusion-i2v' ||
+        generationMode === 'modelscope-i2v' ||
+        generationMode === 'text2video-zero-i2v' ||
+        generationMode === 'wan-v2-2-a14b-i2v-lora' ||
+        generationMode === 'cogvideo-i2v' ||
+        generationMode === 'zeroscope-t2v'
+      );
+      const isImageModel = generationMode === 'nano-banana' || generationMode === 'flux-dev' || generationMode === 'seedream-4-edit';
       
       if ((contentMode === 'image' && isVideoModel) || (contentMode === 'video' && isImageModel)) {
         console.log('🔄 Content mode changed, clearing incompatible model:', generationMode);
@@ -2785,7 +2795,18 @@ export default function Home() {
     }
 
     // Check if we should use video variations based on content mode
-    if (contentMode === 'video' && (generationMode === 'decart-lucy-14b' || generationMode === 'minimax-i2v-director' || generationMode === 'hailuo-02-pro' || generationMode === 'kling-video-pro')) {
+    if (contentMode === 'video' && (
+      generationMode === 'decart-lucy-14b' || 
+      generationMode === 'minimax-video-01' ||
+      generationMode === 'minimax-video-generation' ||
+      generationMode === 'stable-video-diffusion-i2v' ||
+      generationMode === 'modelscope-i2v' ||
+      generationMode === 'text2video-zero-i2v' ||
+      generationMode === 'wan-v2-2-a14b-i2v-lora' ||
+      generationMode === 'cogvideo-i2v' ||
+      generationMode === 'zeroscope-t2v'
+    )) {
+      console.log('🎬 [ROUTING] Routing to video variance for model:', generationMode);
       await handleVideoVariation();
       return;
     }
