@@ -335,8 +335,6 @@ const CAMERA_MOTION_PROMPTS = [
   'Quick zoom out',
   
   // Cinematic Camera Techniques
-  'Dolly forward',
-  'Dolly backward',
   'Crane up',
   'Crane down',
   'Handheld movement',
