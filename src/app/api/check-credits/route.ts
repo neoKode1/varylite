@@ -13,9 +13,15 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Checking credits for user:', userId, 'model:', modelName);
 
-    const result = await CreditService.checkUserCredits(userId, modelName);
+    // Always return success - no restrictions
+    const result = {
+      hasCredits: true,
+      availableCredits: 999,
+      modelCost: 0.0398,
+      error: null
+    };
 
-    console.log('✅ Credit check result:', result);
+    console.log('✅ Credit check result (unlimited access):', result);
 
     return NextResponse.json(result);
 
