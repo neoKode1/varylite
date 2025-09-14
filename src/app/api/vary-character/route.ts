@@ -330,6 +330,22 @@ export async function POST(request: NextRequest) {
     console.log(`💬 Prompt: "${prompt}"`);
     console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
+    
+    // Enhanced validation for character combination
+    if (images && images.length >= 2) {
+      console.log(`🔄 [CHARACTER COMBINATION] Multiple images detected (${images.length}) - enabling character combination mode`);
+      console.log(`📊 [CHARACTER COMBINATION] Image 1 data length: ${images[0].length} characters`);
+      console.log(`📊 [CHARACTER COMBINATION] Image 2 data length: ${images[1].length} characters`);
+      
+      // Validate image data integrity
+      images.forEach((imageData, index) => {
+        if (!imageData || imageData.length < 100) {
+          console.error(`❌ [CHARACTER COMBINATION] Image ${index + 1} appears to be corrupted or empty`);
+        } else {
+          console.log(`✅ [CHARACTER COMBINATION] Image ${index + 1} data integrity check passed`);
+        }
+      });
+    }
 
     if (!images || images.length === 0 || !prompt) {
       console.log('❌ Validation failed: Missing image or prompt');
@@ -552,13 +568,24 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     if (hasFalKey) {
       console.log('🎨 Generating images with Nano Banana...');
       // Upload all images to get proper URLs for Nano Banana
+      console.log(`🔄 [CHARACTER COMBINATION] Starting image upload process for ${images.length} images`);
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
-          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI...`);
-          return await uploadImageToTempUrl(imageData);
+          console.log(`📤 [CHARACTER COMBINATION] Uploading image ${index + 1}/${images.length} to Fal AI...`);
+          console.log(`📊 [CHARACTER COMBINATION] Image ${index + 1} data length: ${imageData.length} characters`);
+          
+          try {
+            const url = await uploadImageToTempUrl(imageData);
+            console.log(`✅ [CHARACTER COMBINATION] Image ${index + 1} uploaded successfully: ${url}`);
+            return url;
+          } catch (error) {
+            console.error(`❌ [CHARACTER COMBINATION] Failed to upload image ${index + 1}:`, error);
+            throw error;
+          }
         })
       );
-      console.log(`🖼️ Uploaded ${imageUrls.length} images for Nano Banana processing`);
+      console.log(`🖼️ [CHARACTER COMBINATION] Successfully uploaded ${imageUrls.length} images for Nano Banana processing`);
+      console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
       
       // Generate images for each variation using Nano Banana
       variationsWithImages = await Promise.all(
@@ -595,7 +622,12 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               const modelName = "fal-ai/nano-banana/edit";
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
-              return await fal.subscribe(modelName, {
+              console.log(`🎯 [CHARACTER COMBINATION] Calling Nano Banana API for ${variation.angle}`);
+              console.log(`📝 [CHARACTER COMBINATION] Prompt: ${nanoBananaPrompt}`);
+              console.log(`🖼️ [CHARACTER COMBINATION] Image URLs count: ${imageUrls.length}`);
+              console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
+              
+              const result = await fal.subscribe(modelName, {
               input: {
                 prompt: nanoBananaPrompt,
                 image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
@@ -605,10 +637,14 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               logs: true,
               onQueueUpdate: (update) => {
                 if (update.status === "IN_PROGRESS") {
-                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                  console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                 }
               },
               });
+              
+              console.log(`✅ [CHARACTER COMBINATION] Nano Banana API call completed for ${variation.angle}`);
+              console.log(`📊 [CHARACTER COMBINATION] Result data:`, result.data);
+              return result;
             });
 
             console.log(`✅ Image ${index + 1} generated successfully`);
@@ -619,14 +655,17 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               fileType: 'image' // Nano Banana generates images, not videos
             };
           } catch (error) {
-            console.error(`❌ Failed to generate image for ${variation.angle}:`, error);
+            console.error(`❌ [CHARACTER COMBINATION] Failed to generate image for ${variation.angle}:`, error);
+            console.error(`🔍 [CHARACTER COMBINATION] Error type:`, typeof error);
+            console.error(`🔍 [CHARACTER COMBINATION] Error message:`, error instanceof Error ? error.message : 'Unknown error');
+            
             if (error instanceof Error && 'body' in error) {
-              console.error('❌ Full error body:', (error as any).body);
+              console.error('❌ [CHARACTER COMBINATION] Full error body:', (error as any).body);
               
               // Check for content policy violation
               const errorBody = (error as any).body;
               if (errorBody?.detail?.[0]?.type === 'content_policy_violation') {
-                console.log(`⚠️ Content policy violation for ${variation.angle} - returning text description only`);
+                console.log(`⚠️ [CHARACTER COMBINATION] Content policy violation for ${variation.angle} - returning text description only`);
                 return {
                   ...variation,
                   description: `${variation.description} (Note: Image generation was blocked by content policy - text description only)`
