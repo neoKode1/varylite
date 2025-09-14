@@ -915,6 +915,7 @@ export default function Home() {
   const [textToImageTaskId, setTextToImageTaskId] = useState<string | null>(null); // Track text-to-image task ID
   const [textToImagePollingTimeout, setTextToImagePollingTimeout] = useState<NodeJS.Timeout | null>(null); // Track polling timeout
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null); // Track which slot is being dragged over
+  const [isDragOverMain, setIsDragOverMain] = useState<boolean>(false); // Track if dragging over main area
   const [endFrameProcessing, setEndFrameProcessing] = useState<boolean>(false); // Track EndFrame generation
   const [processingMode, setProcessingMode] = useState<'variations' | 'endframe'>('variations'); // Track processing mode
   const [contentMode, setContentMode] = useState<'image' | 'video'>('image'); // Track content mode (image/video)
@@ -2285,6 +2286,7 @@ export default function Home() {
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragOverMain(false);
     
     console.log('🎯 Drop event triggered');
     const files = Array.from(e.dataTransfer.files);
@@ -2298,7 +2300,15 @@ export default function Home() {
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🔄 Drag over event triggered');
+    setIsDragOverMain(true);
+    console.log('🔄 Drag over main area triggered');
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverMain(false);
+    console.log('🔄 Drag leave main area triggered');
   }, []);
 
   // Handle dropping files into a specific slot
@@ -5457,7 +5467,25 @@ export default function Home() {
         </div>
       ))}
       
-      <div className="relative z-10 flex flex-col lg:flex-row">
+      <div 
+        className={`relative z-10 flex flex-col lg:flex-row transition-all duration-200 ${
+          isDragOverMain ? 'bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400' : ''
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {/* Drop Zone Overlay */}
+        {isDragOverMain && (
+          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center">
+            <div className="text-center text-blue-200">
+              <Upload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+              <p className="text-xl font-semibold mb-2">Drop images here</p>
+              <p className="text-sm opacity-80">Release to upload files</p>
+            </div>
+          </div>
+        )}
         {/* Main Content */}
         <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : 'lg:ml-16'} flex flex-col items-center`}>
           <div className="w-full max-w-6xl mx-auto px-4 py-8 lg:px-8">
