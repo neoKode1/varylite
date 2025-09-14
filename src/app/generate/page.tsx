@@ -5774,11 +5774,17 @@ export default function Home() {
                         controls
                         muted
                         loop
+                        playsInline
+                        preload="metadata"
                         onClick={() => setFullScreenImage(variations[0].videoUrl || null)}
                         onMouseEnter={(e) => {
-                          e.currentTarget.play();
+                          console.log('🎬 Main variation video hover start:', variations[0].videoUrl);
+                          e.currentTarget.play().catch(err => {
+                            console.warn('⚠️ Main variation video autoplay failed:', err);
+                          });
                         }}
                         onMouseLeave={(e) => {
+                          console.log('🎬 Main variation video hover end:', variations[0].videoUrl);
                           e.currentTarget.pause();
                           e.currentTarget.currentTime = 0;
                         }}
@@ -5936,6 +5942,19 @@ export default function Home() {
                               src={file.preview}
                               className="w-12 h-12 object-cover rounded-lg border border-white border-opacity-20"
                               muted
+                              playsInline
+                              preload="metadata"
+                              onMouseEnter={(e) => {
+                                console.log('🎬 Upload preview video hover start:', file.preview);
+                                e.currentTarget.play().catch(err => {
+                                  console.warn('⚠️ Upload preview video autoplay failed:', err);
+                                });
+                              }}
+                              onMouseLeave={(e) => {
+                                console.log('🎬 Upload preview video hover end:', file.preview);
+                                e.currentTarget.pause();
+                                e.currentTarget.currentTime = 0;
+                              }}
                             />
                           )}
                         <button
@@ -6108,10 +6127,16 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          playsInline
+                          preload="metadata"
                           onMouseEnter={(e) => {
-                            e.currentTarget.play();
+                            console.log('🎬 Variation 1 video hover start:', variations[0].videoUrl);
+                            e.currentTarget.play().catch(err => {
+                              console.warn('⚠️ Variation 1 video autoplay failed:', err);
+                            });
                           }}
                           onMouseLeave={(e) => {
+                            console.log('🎬 Variation 1 video hover end:', variations[0].videoUrl);
                             e.currentTarget.pause();
                             e.currentTarget.currentTime = 0; // Reset to beginning
                           }}
@@ -6211,10 +6236,16 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          playsInline
+                          preload="metadata"
                           onMouseEnter={(e) => {
-                            e.currentTarget.play();
+                            console.log('🎬 Variation 2 video hover start:', variations[1].videoUrl);
+                            e.currentTarget.play().catch(err => {
+                              console.warn('⚠️ Variation 2 video autoplay failed:', err);
+                            });
                           }}
                           onMouseLeave={(e) => {
+                            console.log('🎬 Variation 2 video hover end:', variations[1].videoUrl);
                             e.currentTarget.pause();
                             e.currentTarget.currentTime = 0; // Reset to beginning
                           }}
@@ -6314,10 +6345,16 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          playsInline
+                          preload="metadata"
                           onMouseEnter={(e) => {
-                            e.currentTarget.play();
+                            console.log('🎬 Variation 3 video hover start:', variations[2].videoUrl);
+                            e.currentTarget.play().catch(err => {
+                              console.warn('⚠️ Variation 3 video autoplay failed:', err);
+                            });
                           }}
                           onMouseLeave={(e) => {
+                            console.log('🎬 Variation 3 video hover end:', variations[2].videoUrl);
                             e.currentTarget.pause();
                             e.currentTarget.currentTime = 0; // Reset to beginning
                           }}
@@ -6417,10 +6454,16 @@ export default function Home() {
                           className="w-full h-full object-cover rounded-[30px] cursor-pointer"
                           muted
                           loop
+                          playsInline
+                          preload="metadata"
                           onMouseEnter={(e) => {
-                            e.currentTarget.play();
+                            console.log('🎬 Variation 4 video hover start:', variations[3].videoUrl);
+                            e.currentTarget.play().catch(err => {
+                              console.warn('⚠️ Variation 4 video autoplay failed:', err);
+                            });
                           }}
                           onMouseLeave={(e) => {
+                            console.log('🎬 Variation 4 video hover end:', variations[3].videoUrl);
                             e.currentTarget.pause();
                             e.currentTarget.currentTime = 0; // Reset to beginning
                           }}
@@ -6569,10 +6612,16 @@ export default function Home() {
                           src={file.preview}
                           className="w-14 h-14 object-cover rounded-lg border border-white border-opacity-20 cursor-pointer"
                           muted
+                          playsInline
+                          preload="metadata"
                           onMouseEnter={(e) => {
-                            e.currentTarget.play();
+                            console.log('🎬 Character video hover start:', file.preview);
+                            e.currentTarget.play().catch(err => {
+                              console.warn('⚠️ Character video autoplay failed:', err);
+                            });
                           }}
                           onMouseLeave={(e) => {
+                            console.log('🎬 Character video hover end:', file.preview);
                             e.currentTarget.pause();
                             e.currentTarget.currentTime = 0;
                           }}
@@ -6931,10 +6980,16 @@ export default function Home() {
                                       className="w-full h-full object-cover"
                                       muted
                                       loop
+                                      playsInline
+                                      preload="metadata"
                                       onMouseEnter={(e) => {
-                                        e.currentTarget.play();
+                                        console.log('🎬 Mobile video hover start:', item.videoUrl);
+                                        e.currentTarget.play().catch(err => {
+                                          console.warn('⚠️ Mobile video autoplay failed:', err);
+                                        });
                                       }}
                                       onMouseLeave={(e) => {
+                                        console.log('🎬 Mobile video hover end:', item.videoUrl);
                                         e.currentTarget.pause();
                                         e.currentTarget.currentTime = 0;
                                       }}
@@ -7031,10 +7086,16 @@ export default function Home() {
                                     className="w-full h-full object-cover"
                                     muted
                                     loop
+                                    playsInline
+                                    preload="metadata"
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.play();
+                                      console.log('🎬 Mobile gallery video hover start:', item.videoUrl);
+                                      e.currentTarget.play().catch(err => {
+                                        console.warn('⚠️ Mobile gallery video autoplay failed:', err);
+                                      });
                                     }}
                                     onMouseLeave={(e) => {
+                                      console.log('🎬 Mobile gallery video hover end:', item.videoUrl);
                                       e.currentTarget.pause();
                                       e.currentTarget.currentTime = 0;
                                     }}
@@ -7251,10 +7312,16 @@ export default function Home() {
                                 className="w-full h-full object-cover"
                                 muted
                                 loop
+                                playsInline
+                                preload="metadata"
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.play();
+                                  console.log('🎬 Mobile gallery video hover start:', item.videoUrl);
+                                  e.currentTarget.play().catch(err => {
+                                    console.warn('⚠️ Mobile gallery video autoplay failed:', err);
+                                  });
                                 }}
                                 onMouseLeave={(e) => {
+                                  console.log('🎬 Mobile gallery video hover end:', item.videoUrl);
                                   e.currentTarget.pause();
                                   e.currentTarget.currentTime = 0;
                                 }}
@@ -7406,10 +7473,16 @@ export default function Home() {
                                       className="w-full h-full object-cover"
                                       muted
                                       loop
+                                      playsInline
+                                      preload="metadata"
                                       onMouseEnter={(e) => {
-                                        e.currentTarget.play();
+                                        console.log('🎬 Video hover start:', item.videoUrl);
+                                        e.currentTarget.play().catch(err => {
+                                          console.warn('⚠️ Video autoplay failed:', err);
+                                        });
                                       }}
                                       onMouseLeave={(e) => {
+                                        console.log('🎬 Video hover end:', item.videoUrl);
                                         e.currentTarget.pause();
                                         e.currentTarget.currentTime = 0;
                                       }}
@@ -7429,7 +7502,7 @@ export default function Home() {
                                         showNotification('❌ Failed to remove video from gallery', 'error');
                                       }
                                     }}
-                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
                                     title="Delete from gallery"
                                   >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7443,7 +7516,7 @@ export default function Home() {
                                       e.stopPropagation();
                                       handleDownloadVideo(item.videoUrl, item.originalPrompt || 'Downloaded video');
                                     }}
-                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
                                     title="Download file"
                                   >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7451,7 +7524,7 @@ export default function Home() {
                                     </svg>
                                   </button>
 
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
                                     <div className="flex gap-1">
                                       <button
                                         onClick={(e) => {
@@ -7549,7 +7622,7 @@ export default function Home() {
                                         showNotification('❌ Failed to remove image from gallery', 'error');
                                       }
                                     }}
-                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    className="absolute top-2 left-2 w-6 h-6 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
                                     title="Delete from gallery"
                                   >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7585,7 +7658,7 @@ export default function Home() {
                                         document.body.removeChild(link);
                                       }
                                     }}
-                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                    className="absolute bottom-2 left-2 w-6 h-6 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
                                     title="Download file"
                                   >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7593,7 +7666,7 @@ export default function Home() {
                                     </svg>
                                   </button>
 
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
                                     <div className="flex gap-1">
                                       <button
                                         onClick={(e) => {
