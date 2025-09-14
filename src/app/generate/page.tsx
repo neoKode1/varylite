@@ -38,7 +38,8 @@ type GenerationMode =
   | 'flux-dev'
   | 'seedream-3'
   | 'seedance-1-pro'
-  | 'bytedance-seedream-4';
+  | 'bytedance-seedream-4'
+  | 'seedream-4-edit';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -991,7 +992,8 @@ export default function Home() {
         // Single image - show models based on content mode
         if (contentMode === 'image') {
           // Image mode: show image variation models with fallback
-          modes.push('nano-banana'); // Character variations (primary)
+          modes.push('seedream-4-edit'); // Seedream 4.0 Edit (primary for character variations)
+          modes.push('nano-banana'); // Character variations (fallback)
           modes.push('bytedance-seedream-4'); // Seedream 4 with custom sizing
           modes.push('flux-dev'); // Flux Dev as fallback
         } else if (contentMode === 'video' && !isMobile && hasSecretAccess) {
@@ -1047,6 +1049,7 @@ export default function Home() {
       'runway-t2i': isMobile ? 'Text to Image' : 'Runway T2I', // Remove "Runway" from mobile view
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
+      'seedream-4-edit': 'Seedream 4 Edit',
       'minimax-2.0': 'MiniMax End Frame',
       'minimax-video': 'Minimax Video',
       'kling-2.1-master': 'Kling 2.1 Master',
@@ -2914,18 +2917,34 @@ export default function Home() {
         try {
           console.log(`🎨 Generating variation ${index + 1}/4: ${variationPrompt}`);
           
-          const response = await fetch('/api/fal/image-edit', {
+          // Use the selected model for character variations
+          const apiEndpoint = generationMode === 'seedream-4-edit' 
+            ? '/api/fal/seedream-4-edit' 
+            : '/api/fal/image-edit';
+          
+          const requestBody = generationMode === 'seedream-4-edit' 
+            ? {
+                prompt: variationPrompt,
+                imageUrls: [imageUrl],
+                imageSize: 'square_hd',
+                numImages: 1,
+                maxImages: 1,
+                enableSafetyChecker: true
+              }
+            : {
+                model: 'nano-banana-edit',
+                imageUrls: [imageUrl],
+                prompt: variationPrompt,
+                numImages: 1,
+                outputFormat: 'jpeg'
+              };
+
+          const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              model: 'nano-banana-edit',
-              imageUrls: [imageUrl],
-              prompt: variationPrompt,
-              numImages: 1, // Generate 1 image per prompt
-              outputFormat: 'jpeg'
-            }),
+            body: JSON.stringify(requestBody),
           });
 
           const data = await response.json();
@@ -2939,10 +2958,10 @@ export default function Home() {
             throw new Error(data.error || 'Failed to process character variation');
           }
 
-          // Extract image URL from response
+          // Extract image URL from Seedream 4.0 Edit response
           let extractedImageUrl = null;
           if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
-            extractedImageUrl = data.data.images[0].url || data.data.images[0];
+            extractedImageUrl = data.data.images[0].url;
           } else if (data.data?.image_url) {
             extractedImageUrl = data.data.image_url;
           } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
@@ -2981,6 +3000,12 @@ export default function Home() {
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       
       console.log('🎨 Generated variations:', newVariations.length);
+      console.log('🎨 Variations details:', newVariations.map(v => ({ 
+        id: v.id, 
+        hasImageUrl: !!v.imageUrl, 
+        imageUrl: v.imageUrl,
+        description: v.description 
+      })));
       
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
@@ -3004,6 +3029,14 @@ export default function Home() {
         fileType: variation.fileType || (variation.videoUrl ? 'video' : 'image')
       }));
       setVariations(storedVariations);
+      
+      console.log('🎨 Final stored variations:', storedVariations.length);
+      console.log('🎨 Stored variations details:', storedVariations.map(v => ({ 
+        id: v.id, 
+        hasImageUrl: !!v.imageUrl, 
+        imageUrl: v.imageUrl,
+        description: v.description 
+      })));
       
       // Track usage
       await trackUsage('character_variation', 'gemini', {
