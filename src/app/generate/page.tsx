@@ -2891,7 +2891,7 @@ export default function Home() {
       
       setProcessing(prev => ({ ...prev, progress: 60, currentStep: 'Generating variations...' }));
       
-      // Use FAL Image Edit API for nano-banana
+      // Use FAL Image Edit API for nano-banana - generate 4 variations for 2x2 grid
       const response = await fetch('/api/fal/image-edit', {
         method: 'POST',
         headers: {
@@ -2901,7 +2901,7 @@ export default function Home() {
           model: 'nano-banana-edit',
           imageUrls: [imageUrl],
           prompt: prompt.trim() || 'Generate 4 new variations of this character from different angles',
-          numImages: 1,
+          numImages: 4, // Changed from 1 to 4 for 2x2 grid
           outputFormat: 'jpeg'
         }),
       });
@@ -2927,33 +2927,34 @@ export default function Home() {
       // Convert FAL response to variation format
       console.log('🔍 FAL API Response:', data);
       
-      // Extract image URL from FAL response
-      let extractedImageUrl = null;
+      // Extract image URLs from FAL response - handle multiple images for 2x2 grid
+      let extractedImageUrls = [];
       if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
         // FAL nano-banana/edit returns images array
-        extractedImageUrl = data.data.images[0].url || data.data.images[0];
+        extractedImageUrls = data.data.images.map(img => img.url || img);
       } else if (data.data?.image_url) {
-        // Fallback for other formats
-        extractedImageUrl = data.data.image_url;
+        // Fallback for single image format
+        extractedImageUrls = [data.data.image_url];
       } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
         // Direct images array
-        extractedImageUrl = data.images[0].url || data.images[0];
+        extractedImageUrls = data.images.map(img => img.url || img);
       }
       
-      console.log('🖼️ Extracted image URL:', extractedImageUrl);
+      console.log('🖼️ Extracted image URLs:', extractedImageUrls);
       
-      if (!extractedImageUrl) {
-        throw new Error('No image URL found in FAL response');
+      if (extractedImageUrls.length === 0) {
+        throw new Error('No image URLs found in FAL response');
       }
       
-      const newVariations = [{
-        id: `variation-${Date.now()}`,
-        description: prompt.trim() || 'Character variation',
-        angle: 'Generated variation',
-        pose: 'AI generated',
-        imageUrl: extractedImageUrl,
+      // Create 4 variations for 2x2 grid
+      const newVariations = extractedImageUrls.slice(0, 4).map((imageUrl, index) => ({
+        id: `variation-${Date.now()}-${index}`,
+        description: prompt.trim() || `Character variation ${index + 1}`,
+        angle: `Variation ${index + 1}`,
+        pose: `AI generated ${index + 1}`,
+        imageUrl: imageUrl,
         fileType: 'image' as const
-      }];
+      }));
       
       // Filter out bad content variations
       const filteredVariations = newVariations.filter((variation: CharacterVariation) => {
