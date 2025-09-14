@@ -183,17 +183,23 @@ export const useUserGallery = (): UserGalleryHook => {
   }
 
   const removeFromGallery = useCallback(async (variationId: string, timestamp: number) => {
+    console.log('🗑️ [REMOVE FROM GALLERY] Starting deletion:', { variationId, timestamp, user: user?.id })
+    
     if (user) {
       // Find the item to get its database ID
       const itemToDelete = gallery.find(item => item.id === variationId && item.timestamp === timestamp)
       
+      console.log('🗑️ [REMOVE FROM GALLERY] Item found:', itemToDelete)
+      
       if (!itemToDelete || !itemToDelete.databaseId) {
-        console.error('Item not found or missing database ID:', { variationId, timestamp })
+        console.error('❌ [REMOVE FROM GALLERY] Item not found or missing database ID:', { variationId, timestamp, itemToDelete })
         return
       }
 
       // Remove from database using the primary key
       try {
+        console.log('🗑️ [REMOVE FROM GALLERY] Deleting from database:', itemToDelete.databaseId)
+        
         const { error } = await supabase
           .from('galleries')
           .delete()
@@ -201,31 +207,38 @@ export const useUserGallery = (): UserGalleryHook => {
           .eq('user_id', user.id) // Extra security check
 
         if (error) {
-          console.error('Error removing from database:', error)
+          console.error('❌ [REMOVE FROM GALLERY] Error removing from database:', error)
           return
         }
         
-        console.log('Successfully deleted item from database:', itemToDelete.databaseId)
+        console.log('✅ [REMOVE FROM GALLERY] Successfully deleted item from database:', itemToDelete.databaseId)
       } catch (error) {
-        console.error('Error removing from database:', error)
+        console.error('❌ [REMOVE FROM GALLERY] Error removing from database:', error)
         return
       }
     } else {
       // Remove from localStorage
       try {
+        console.log('🗑️ [REMOVE FROM GALLERY] Removing from localStorage')
         const currentGallery = JSON.parse(localStorage.getItem('vari-ai-gallery') || '[]')
         const newGallery = currentGallery.filter((item: StoredVariation) => 
           !(item.id === variationId && item.timestamp === timestamp)
         )
         localStorage.setItem('vari-ai-gallery', JSON.stringify(newGallery))
+        console.log('✅ [REMOVE FROM GALLERY] Successfully removed from localStorage')
       } catch (error) {
-        console.error('Error removing from localStorage:', error)
+        console.error('❌ [REMOVE FROM GALLERY] Error removing from localStorage:', error)
         return
       }
     }
 
-    setGallery(prev => prev.filter(item => !(item.id === variationId && item.timestamp === timestamp)))
-  }, [user, gallery])
+    console.log('🗑️ [REMOVE FROM GALLERY] Updating local state')
+    setGallery(prev => {
+      const newGallery = prev.filter(item => !(item.id === variationId && item.timestamp === timestamp))
+      console.log('✅ [REMOVE FROM GALLERY] Updated gallery state, new count:', newGallery.length)
+      return newGallery
+    })
+  }, [user]) // Removed gallery dependency to avoid stale closure
 
   const clearGallery = useCallback(async () => {
     if (user) {

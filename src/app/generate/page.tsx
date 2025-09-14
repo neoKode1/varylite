@@ -5444,6 +5444,13 @@ export default function Home() {
                             onClick={(e) => {
                               e.stopPropagation();
                               console.log('🗑️ Delete button clicked for item:', item.id, item.timestamp);
+                              
+                              // Confirm deletion
+                              if (!confirm('Are you sure you want to delete this item from your gallery? This action cannot be undone.')) {
+                                console.log('🗑️ User cancelled deletion');
+                                return;
+                              }
+                              
                               try {
                                 removeFromGallery(item.id, item.timestamp);
                                 console.log('✅ removeFromGallery called successfully');
@@ -7165,9 +7172,17 @@ export default function Home() {
                             onClick={(e) => {
                               e.stopPropagation();
                               console.log('🗑️ Gallery modal delete clicked for item:', item.id, item.timestamp);
+                              
+                              // Confirm deletion
+                              if (!confirm('Are you sure you want to delete this item from your gallery? This action cannot be undone.')) {
+                                console.log('🗑️ User cancelled deletion');
+                                return;
+                              }
+                              
                               try {
                                 removeFromGallery(item.id, item.timestamp);
                                 console.log('✅ Gallery modal removeFromGallery called successfully');
+                                showNotification('🗑️ Item removed from gallery', 'success');
                               } catch (error) {
                                 console.error('❌ Error in gallery modal delete button:', error);
                                 showNotification('❌ Failed to remove item from gallery', 'error');
