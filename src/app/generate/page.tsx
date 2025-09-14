@@ -2780,12 +2780,30 @@ export default function Home() {
     }
   };
 
+  // Function to convert base64 to blob
+  const base64ToBlob = (base64Data: string): Blob => {
+    // Remove data URL prefix if present
+    const base64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+    
+    // Convert base64 to binary
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Determine MIME type from base64 data
+    const mimeType = base64Data.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+    
+    return new Blob([bytes], { type: mimeType });
+  };
+
   // Function to upload image to Supabase and get FAL URL
   const uploadImageToSupabaseAndFal = async (base64Data: string): Promise<string> => {
     try {
       // Convert base64 to blob
-      const response = await fetch(base64Data);
-      const blob = await response.blob();
+      const blob = base64ToBlob(base64Data);
       
       // Get user session for auth
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
