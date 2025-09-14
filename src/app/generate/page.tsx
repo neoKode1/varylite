@@ -5691,7 +5691,7 @@ export default function Home() {
       
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${showGallery ? 'w-full lg:w-2/3' : 'w-full'} ${showGallery ? 'lg:pr-0' : 'lg:ml-16'} flex flex-col items-center`}>
+        <div className={`transition-all duration-300 w-full ${showGallery ? 'lg:pr-0' : 'lg:ml-16'} flex flex-col items-center`}>
           <div className="w-full max-w-6xl mx-auto px-4 py-8 lg:px-8">
             {/* Usage Limit Banner */}
             <UsageLimitBanner 
