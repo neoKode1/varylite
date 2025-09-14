@@ -3,19 +3,24 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create a server-side Supabase client
 const supabaseUrl = 'https://vqmzepfbgbwtzbpmrevx.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+if (!supabaseServiceKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for server-side operations');
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseAnonKey) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required for user authentication');
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 Supabase Storage Upload API called');
     
-    // Get the authorization header
+    // Get the authorization header for user identification
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       console.log('❌ No authorization header provided');
@@ -25,8 +30,9 @@ export async function POST(request: NextRequest) {
     // Extract the token from the header
     const token = authHeader.replace('Bearer ', '');
     
-    // Verify the token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // Create a client with anon key to verify user token
+    const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey!);
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
     
     if (authError || !user) {
       console.error('❌ Auth error:', authError);
