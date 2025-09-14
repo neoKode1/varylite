@@ -1169,6 +1169,11 @@ export default function Home() {
       modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
     }
     
+    // Add endframe mode when 2 images are uploaded
+    if (hasImages && uploadedFiles.length === 2) {
+      modes.push('minimax-2.0'); // EndFrame mode for 2 images
+    }
+    
     // Add text-to-video modes when no images are uploaded
     if (!hasImages && !hasVideos) {
         modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
