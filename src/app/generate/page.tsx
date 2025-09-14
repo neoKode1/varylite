@@ -1185,6 +1185,7 @@ export default function Home() {
       // Also add image editing models for mobile users
       modes.push('nano-banana'); // Character combination
       modes.push('seedream-4-edit'); // Seedream 4 Edit
+      modes.push('bytedance-seedream-4'); // Seedream 4
     }
     
     // Add text-to-video modes when no images are uploaded
