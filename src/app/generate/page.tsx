@@ -1041,10 +1041,41 @@ export default function Home() {
           }
         });
       } else if (uploadedFiles.length >= 2 && !isMobile) {
-        // Multiple images - end frame models (always video output, desktop only)
+        // Multiple images - show both image composition models AND end frame models
+        if (contentMode === 'image') {
+          // Image mode: show character scene composition models
+          modes.push('seedream-4-edit'); // Seedream 4.0 Edit (primary for character variations)
+          modes.push('nano-banana'); // Character variations and scene composition
+          modes.push('bytedance-seedream-4'); // Seedream 4 with custom sizing
+          modes.push('flux-dev'); // Flux Dev as fallback
+        } else if (contentMode === 'video' && hasSecretAccess) {
+          // Video mode: show video variant models
+          modes.push('decart-lucy-14b'); // Lucy 14B video variant model
+          
+          // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
+          modes.push('minimax-video-01'); // Minimax Video 01
+          modes.push('minimax-video-generation'); // Minimax Video Generation
+          modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
+          modes.push('modelscope-i2v'); // Modelscope I2V
+          modes.push('text2video-zero-i2v'); // Text2Video Zero
+          
+          // Lower-Tier Image-to-Video Models ($0.10)
+          modes.push('wan-v2-2-a14b-i2v-lora'); // Wan V2.2 LoRA
+          modes.push('cogvideo-i2v'); // CogVideo I2V
+          modes.push('zeroscope-t2v'); // Zeroscope T2V
+        }
+        
+        // Always show end frame models for multiple images (desktop only)
         modes.push('minimax-2.0'); // End frame generation with Mini Mac's End Frame
         modes.push('minimax-video'); // End frame generation with Minimax Video
         modes.push('kling-2.1-master'); // End frame generation with Kling 2.1 Master
+        
+        // Add unlocked models from secret page (non-video-variant models only)
+        unlockedGenerateModels.forEach(model => {
+          if (!isVideoVariantModel(model) && !modes.includes(model as any)) {
+            modes.push(model as any);
+          }
+        });
       }
     } else {
       // When no images are uploaded, show text-to-image and text-to-video models
