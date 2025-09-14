@@ -1165,8 +1165,16 @@ export default function Home() {
     
     if (hasImages && uploadedFiles.length === 1) {
       modes.push('nano-banana');
-      modes.push('minimax-2.0'); // Image-to-video with Minimax 2.0
-      modes.push('kling-2.1-master'); // Image-to-video with Kling 2.1 Master
+      // Image-to-video models
+      modes.push('veo3-fast'); // Veo3 Fast image-to-video
+      modes.push('minimax-2.0'); // Minimax 2.0 image-to-video
+      modes.push('kling-2.1-master'); // Kling 2.1 Master image-to-video
+      modes.push('decart-lucy-14b'); // Lucy 14B video variations
+      modes.push('minimax-video-01'); // Minimax Video 01
+      modes.push('minimax-video-generation'); // Minimax Video Generation
+      modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
+      modes.push('modelscope-i2v'); // Modelscope I2V
+      modes.push('text2video-zero-i2v'); // Text2Video Zero
     }
     
     // Add endframe mode when 2 images are uploaded
