@@ -863,7 +863,8 @@ export default function Home() {
       'flux-dev': 20, // 20 seconds for Flux Dev image generation
       'seedream-3': 25, // 25 seconds for Seedream 3 text-to-image
       'seedance-1-pro': 90, // 90 seconds for Seedance 1 Pro video generation
-      'bytedance-seedream-4': 35 // 35 seconds for Seedream 4 with custom sizing
+      'bytedance-seedream-4': 35, // 35 seconds for Seedream 4 with custom sizing
+      'seedream-4-edit': 30 // 30 seconds for Seedream 4.0 Edit image editing
     };
     return timeEstimates[mode] || 30;
   };
