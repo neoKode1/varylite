@@ -831,7 +831,45 @@ export default function Home() {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [activeBackgroundTab, setActiveBackgroundTab] = useState<'removal' | 'studio' | 'natural' | 'indoor' | 'creative' | 'themed' | 'style'>('removal');
+  const [presetCount, setPresetCount] = useState(0);
+  const [showTokenWarning, setShowTokenWarning] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // Handle preset combination logic
+  const handlePresetClick = useCallback((presetText: string) => {
+    const currentPrompt = prompt.trim();
+    
+    if (currentPrompt === '') {
+      // First preset - just set it
+      setPrompt(presetText);
+      setPresetCount(1);
+    } else {
+      // Add comma and new preset
+      const newPrompt = `${currentPrompt}, ${presetText}`;
+      setPrompt(newPrompt);
+      setPresetCount(prev => prev + 1);
+      
+      // Show warning after 3 presets
+      if (presetCount >= 2) {
+        setShowTokenWarning(true);
+        // Auto-hide warning after 3 seconds
+        setTimeout(() => setShowTokenWarning(false), 3000);
+      }
+    }
+    
+    // Close modal after selection
+    setShowPresetModal(false);
+    setActivePresetTab(null);
+  }, [prompt, presetCount]);
+
+  // Reset preset count when prompt is manually cleared
+  useEffect(() => {
+    if (prompt.trim() === '') {
+      setPresetCount(0);
+      setShowTokenWarning(false);
+    }
+  }, [prompt]);
+
   const [generationMode, setGenerationMode] = useState<GenerationMode | null>(null);
   const [userDefaultModel, setUserDefaultModel] = useState<GenerationMode | null>(null);
   
@@ -5829,7 +5867,7 @@ export default function Home() {
                                   if (item.fileType === 'video') {
                                     handleVideoCardVariation(item);
                                   } else {
-                                    handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                  handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
                                   }
                                 }}
                                 disabled={processing.isProcessing}
@@ -6291,6 +6329,16 @@ export default function Home() {
                   rows={1}
                   style={{ fontSize: '16px' }}
                 />
+                
+                {/* Token Warning Message */}
+                {showTokenWarning && (
+                  <div className="mt-2 px-3 py-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                    <div className="text-yellow-200 text-xs flex items-center gap-2">
+                      <span className="text-yellow-400">⚠️</span>
+                      <span>Better adherence with fewer presets (3+ may reduce quality)</span>
+                    </div>
+                  </div>
+                )}
                 </div>
                 
                 {/* Bottom Container: Action Buttons */}
@@ -7083,6 +7131,16 @@ export default function Home() {
                 rows={1}
                 style={{ fontSize: '16px' }} // Prevents zoom on iOS
               />
+              
+              {/* Token Warning Message - Desktop */}
+              {showTokenWarning && (
+                <div className="mt-2 px-3 py-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                  <div className="text-yellow-200 text-xs flex items-center gap-2">
+                    <span className="text-yellow-400">⚠️</span>
+                    <span>Better adherence with fewer presets (3+ may reduce quality)</span>
+                  </div>
+                </div>
+              )}
               
               <div className="generate-floating-buttons">
                 {/* Upload Button */}
@@ -8209,11 +8267,7 @@ export default function Home() {
                           {BASIC_PROMPTS.map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
                             >
                               {example}
@@ -8227,11 +8281,7 @@ export default function Home() {
                             {EXTENDED_PROMPTS.map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="px-3 py-1 text-sm bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
                             >
                               {example}
@@ -8247,20 +8297,20 @@ export default function Home() {
                           <h4 className="text-md font-medium text-gray-300 mb-3">🎬 Camera Motion Presets ({CAMERA_MOTION_PROMPTS.length} total)</h4>
                           <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto">
                             {CAMERA_MOTION_PROMPTS.map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => {
-                                  setPrompt(example);
-                                  setShowPresetModal(false);
-                                  setActivePresetTab(null);
-                                }}
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
                                 className="px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full hover:bg-orange-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                            >
+                              {example}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
                       </div>
                     </div>
                   </div>
@@ -8284,21 +8334,21 @@ export default function Home() {
                               '1980s slasher movie setting',
                               'Giallo movie setting',
                               'Steven Spielberg movie setting'
-                            ].map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => {
-                                  setPrompt(example);
-                                  setShowPresetModal(false);
-                                  setActivePresetTab(null);
-                                }}
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
                                 className="w-full text-left px-3 py-2 text-sm bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
-                              >
-                                {example}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                            >
+                              {example}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
                       </div>
                       
                       {/* Right Column - Modern Cinema & Sci-Fi */}
@@ -8315,14 +8365,14 @@ export default function Home() {
                               'Mad Max setting',
                               'The Matrix setting',
                               'Inception setting'
-                            ].map((example) => (
-                              <button
-                                key={example}
-                                onClick={() => {
-                                  setPrompt(example);
-                                  setShowPresetModal(false);
-                                  setActivePresetTab(null);
-                                }}
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
                                 className="w-full text-left px-3 py-2 text-sm bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
                               >
                                 {example}
@@ -8346,11 +8396,7 @@ export default function Home() {
                           ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-purple-100 text-purple-800 rounded hover:bg-purple-200 transition-colors"
                             >
                               {example}
@@ -8366,11 +8412,7 @@ export default function Home() {
                           ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
                             >
                               {example}
@@ -8395,11 +8437,7 @@ export default function Home() {
                           ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-orange-100 text-orange-800 rounded hover:bg-orange-200 transition-colors"
                             >
                               {example}
@@ -8418,11 +8456,7 @@ export default function Home() {
                             ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
                             >
                               {example}
@@ -8441,11 +8475,7 @@ export default function Home() {
                             ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
                             >
                               {example}
@@ -8467,11 +8497,7 @@ export default function Home() {
                           {CHARACTER_STYLE_PROMPTS.map((style) => (
                             <button
                               key={style.name}
-                              onClick={() => {
-                                setPrompt(style.prompt);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(style.prompt)}
                               className="w-full text-left px-3 py-2 text-sm bg-pink-100 text-pink-800 rounded hover:bg-pink-200 transition-colors"
                               title={style.description}
                             >
@@ -8496,11 +8522,7 @@ export default function Home() {
                           ].map((example) => (
                             <button
                               key={example}
-                              onClick={() => {
-                                setPrompt(example);
-                                setShowPresetModal(false);
-                                setActivePresetTab(null);
-                              }}
+                              onClick={() => handlePresetClick(example)}
                               className="w-full text-left px-3 py-2 text-sm bg-indigo-100 text-indigo-800 rounded hover:bg-indigo-200 transition-colors"
                             >
                               {example}
