@@ -58,6 +58,34 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 </ul>
               </div>
 
+              {/* Advanced Composition Examples */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Image className="w-5 h-5 text-green-400" />
+                  Advanced Composition Examples
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-white font-medium text-sm">👗 Character + Clothing</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      &ldquo;Dress the woman from Image 1 with the blue floral dress from Image 2, professional fashion photography style&rdquo;
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">🏞️ Character + Scene</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      &ldquo;Place the character from Image 1 in the forest environment from Image 2, cinematic lighting&rdquo;
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">🎨 Style Transfer</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      &ldquo;Apply the artistic style from Image 1 to the subject in Image 2, maintaining character identity&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Upload Types */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -86,30 +114,60 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Pro Tips */}
+              {/* CURB Prompt Guidelines */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-yellow-400" />
-                  Pro Tips
+                  CURB Prompt Guidelines
                 </h3>
-                <ul className="text-gray-300 text-sm space-y-1">
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400 mt-1">•</span>
-                    <span>Be specific in your prompts for better results</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400 mt-1">•</span>
-                    <span>Use Quick Shot Presets for common variations</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400 mt-1">•</span>
-                    <span>Try different models to see which works best</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400 mt-1">•</span>
-                    <span>Save favorites to your gallery for easy access</span>
-                  </li>
-                </ul>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-white font-medium text-sm">✅ DO - Clear & Specific</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      &ldquo;A woman wearing a blue floral dress walking in a forest scene, professional fashion photography style&rdquo;
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">❌ AVOID - Vague Lists</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      &ldquo;Woman, dress, forest, professional style&rdquo;
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">🎯 Use Natural Language</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      Subject + Action + Environment format works best
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Model-Specific Tips */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-purple-400" />
+                  Model-Specific Tips
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-white font-medium text-sm">🍌 Nano Banana</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      Best for character consistency. Use descriptive positioning: &ldquo;character on the left&rdquo;, &ldquo;behind the table&rdquo;
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">🎨 Seedream 4.0</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      Concise prompts work better than complex vocabulary. Specify application scenario clearly.
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">🎬 Video Models</span>
+                    <p className="text-gray-300 text-xs mt-1">
+                      Include motion descriptions: &ldquo;walking&rdquo;, &ldquo;dancing&rdquo;, &ldquo;flying&rdquo;. Specify camera angles for better results.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -119,7 +177,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Camera className="w-5 h-5 text-orange-400" />
-                  AI Models
+                  AI Models & Best Use Cases
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -127,27 +185,64 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     <div>
                       <span className="text-white font-medium text-sm">Nano Banana</span>
                       <p className="text-gray-300 text-xs">
-                        Best for character variations and image-to-image transformations.
+                        Character variations, multi-character scenes, consistent identity preservation.
+                      </p>
+                      <p className="text-blue-300 text-xs mt-1">
+                        💡 Use: &ldquo;Character A sitting on the left, Character B standing on the right&rdquo;
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🎨</span>
+                    <div>
+                      <span className="text-white font-medium text-sm">Seedream 4.0</span>
+                      <p className="text-gray-300 text-xs">
+                        Reference-based generation, style transfer, product design.
+                      </p>
+                      <p className="text-blue-300 text-xs mt-1">
+                        💡 Use: &ldquo;Based on the character in Image 1, create variations in different poses&rdquo;
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">🎬</span>
                     <div>
-                      <span className="text-white font-medium text-sm">Minimax 2.0</span>
+                      <span className="text-white font-medium text-sm">Video Models</span>
                       <p className="text-gray-300 text-xs">
-                        Excellent for video generation and complex scene transformations.
+                        Image-to-video, scene transformations, motion generation.
+                      </p>
+                      <p className="text-blue-300 text-xs mt-1">
+                        💡 Use: &ldquo;Character walking through the scene with cinematic camera movement&rdquo;
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">⚡</span>
-                    <div>
-                      <span className="text-white font-medium text-sm">Veo3 Fast</span>
-                      <p className="text-gray-300 text-xs">
-                        Fast video generation with good quality for quick iterations.
-                      </p>
-                    </div>
+                </div>
+              </div>
+
+              {/* Avoiding Rejections */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-red-400" />
+                  Avoiding Rejections
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-white font-medium text-sm">🚫 Common Mistakes</span>
+                    <ul className="text-gray-300 text-xs mt-1 space-y-1">
+                      <li>• Vague pronouns: &ldquo;put that one in pink clothes&rdquo;</li>
+                      <li>• Conflicting terms: &ldquo;dark bright lighting&rdquo;</li>
+                      <li>• Missing context: &ldquo;change the background&rdquo; (to what?)</li>
+                      <li>• Overly complex vocabulary stacking</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <span className="text-white font-medium text-sm">✅ Better Alternatives</span>
+                    <ul className="text-gray-300 text-xs mt-1 space-y-1">
+                      <li>• &ldquo;Dress the tallest character in pink clothes&rdquo;</li>
+                      <li>• &ldquo;Soft natural lighting with warm tones&rdquo;</li>
+                      <li>• &ldquo;Change background to a modern cityscape&rdquo;</li>
+                      <li>• Use concise, precise descriptions</li>
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -155,7 +250,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               {/* Support */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-red-400" />
+                  <HelpCircle className="w-5 h-5 text-green-400" />
                   Need More Help?
                 </h3>
                 <p className="text-gray-300 text-sm mb-3">

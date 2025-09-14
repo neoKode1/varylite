@@ -27,72 +27,112 @@ interface VideoVariation {
   cinematicShot: string;
 }
 
-// Cinematic shot types for random selection
+// Cinematic shot types for random selection - Enhanced with Camera Control Logic
 const CINEMATIC_SHOTS = [
   {
     name: 'Close-up Push-in',
-    prompt: 'slow push-in close-up shot',
+    prompt: 'slow dolly forward toward character, creating intimate connection with cinematic camera work',
     description: 'Intimate close-up with subtle push-in movement'
   },
   {
     name: 'Tracking Shot',
-    prompt: 'smooth tracking shot following the subject',
+    prompt: 'smooth tracking shot following character movement, professional camera pursuit',
     description: 'Dynamic tracking movement following action'
   },
   {
     name: 'Pan Left',
-    prompt: 'slow pan to the left revealing scene',
+    prompt: 'cinematic pan left to right across scene, elegant sweeping movement',
     description: 'Cinematic left pan revealing environment'
   },
   {
     name: 'Pan Right', 
-    prompt: 'smooth pan to the right',
+    prompt: 'smooth pan right to left across scene, professional camera sweep',
     description: 'Elegant right pan movement'
   },
   {
     name: 'Pull Out Shot',
-    prompt: 'slow pull out shot revealing wider scene',
+    prompt: 'slow dolly backward away from character, revealing wider environment',
     description: 'Dramatic pull-out revealing context'
   },
   {
     name: 'Tilt Up',
-    prompt: 'slow tilt up movement',
+    prompt: 'dramatic tilt up to reveal character, ascending cinematic perspective',
     description: 'Upward tilt revealing scale and grandeur'
   },
   {
     name: 'Tilt Down',
-    prompt: 'smooth tilt down shot',
+    prompt: 'smooth tilt down to reveal character, descending dramatic movement',
     description: 'Downward tilt for dramatic reveal'
   },
   {
     name: 'Dolly In',
-    prompt: 'smooth dolly in movement toward subject',
+    prompt: 'smooth dolly forward toward character, approaching with cinematic purpose',
     description: 'Forward dolly creating intimacy'
   },
   {
     name: 'Dolly Out',
-    prompt: 'slow dolly out movement away from subject',
+    prompt: 'slow dolly backward away from character, creating dramatic distance',
     description: 'Backward dolly for dramatic distance'
   },
   {
     name: 'Orbital Shot',
-    prompt: 'slow orbital movement around subject',
+    prompt: 'orbital movement around character, circular cinematic motion',
     description: 'Circular movement around the focal point'
   },
   {
-    name: 'Static with Parallax',
-    prompt: 'subtle parallax movement with depth',
-    description: 'Gentle parallax creating dimensional depth'
+    name: 'Crane Shot',
+    prompt: 'crane shot moving up and over character, ascending cinematic perspective',
+    description: 'Elevated movement revealing scope and scale'
+  },
+  {
+    name: 'Aerial Shot',
+    prompt: 'aerial shot from above character, bird\'s eye cinematic perspective',
+    description: 'Elevated viewpoint with dramatic scope'
+  },
+  {
+    name: 'Low Angle',
+    prompt: 'low angle shot from below character, dramatic upward cinematic view',
+    description: 'Powerful upward perspective'
   },
   {
     name: 'Zoom In',
-    prompt: 'slow zoom in focusing on details',
+    prompt: 'slow zoom in on character, creating intimate focus with cinematic emphasis',
     description: 'Gradual zoom revealing intricate details'
+  },
+  {
+    name: 'Zoom Out',
+    prompt: 'slow zoom out from character, expanding cinematic scope and environment',
+    description: 'Expanding perspective revealing context'
+  },
+  {
+    name: 'Handheld',
+    prompt: 'handheld camera movement for realistic feel, natural cinematic motion',
+    description: 'Authentic camera movement with subtle shake'
+  },
+  {
+    name: 'Steadicam',
+    prompt: 'steadicam following character movement, smooth pursuit cinematic motion',
+    description: 'Professional smooth tracking movement'
+  },
+  {
+    name: 'Whip Pan',
+    prompt: 'whip pan between characters, rapid directional change with cinematic energy',
+    description: 'Dynamic rapid camera movement'
+  },
+  {
+    name: 'Spiral In',
+    prompt: 'spiral inward toward character, tightening focus with cinematic motion',
+    description: 'Converging circular movement'
+  },
+  {
+    name: 'Spiral Out',
+    prompt: 'spiral outward from character, expanding perspective with cinematic motion',
+    description: 'Diverging circular movement'
   }
 ];
 
-// Default prompt for empty prompt field
-const DEFAULT_PROMPT = "add subtle variation and movement to the image for smooth dynamic video";
+// Default prompt for empty prompt field - Enhanced with Camera Control Logic
+const DEFAULT_PROMPT = "slow dolly forward toward character with subtle camera movement, creating intimate cinematic video";
 
 // Shuffle and select 4 unique cinematic shots
 function getRandomCinematicShots() {

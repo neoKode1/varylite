@@ -207,35 +207,41 @@ const BACKGROUND_PROMPTS = [
   'Change background to a surreal field of oversized potatoes - Potato Cult Filter',
   'Change background to a dreamlike landscape with giant potatoes - Potato Cult preset',
   
-  // Halloween Horror Movie Themes
-  'Change background to spooky lake setting - Horror Movie Filter',
-  'Change background to dark neighborhood street - Horror Movie preset',
-  'Change background to suburban Halloween setting - Horror Movie Filter',
-  'Change background to eerie house exterior - Horror Movie preset',
-  'Change background to mysterious hotel exterior - Horror Movie Filter',
-  'Change background to vintage motel setting - Horror Movie preset',
-  'Change background to small town setting - Horror Movie Filter',
-  'Change background to foggy street scene - Horror Movie preset',
-  'Change background to misty graveyard - Horror Movie Filter',
-  'Change background to abandoned building with lights - Horror Movie preset',
-  'Change background to forest cabin setting - Horror Movie Filter',
-  'Change background to Victorian mansion exterior - Horror Movie preset',
+  // Halloween Horror Movie Themes - Iconic Horror Films
+  'Place character in Halloween movie setting - suburban street with jack-o-lanterns and autumn leaves',
+  'Place character in Nightmare on Elm Street setting - dark suburban neighborhood with eerie streetlights',
+  'Place character in Friday the 13th setting - Camp Crystal Lake with foggy forest and rustic cabins',
+  'Place character in The Exorcist setting - Georgetown townhouse with vintage architecture and dim lighting',
+  'Place character in Poltergeist setting - suburban home with supernatural atmosphere and warm interior lighting',
+  'Place character in The Shining setting - Overlook Hotel corridor with red carpet and eerie lighting',
+  'Place character in Psycho setting - Bates Motel with vintage neon sign and gothic architecture',
+  'Place character in Carrie setting - high school prom with dramatic red lighting and vintage 1970s atmosphere',
+  'Place character in A Nightmare Before Christmas setting - Halloween Town with gothic architecture and orange lighting',
+  'Place character in Beetlejuice setting - haunted house with quirky gothic interior and green lighting',
+  'Place character in The Addams Family setting - Victorian mansion with dark gothic architecture and warm candlelight',
+  'Place character in Hocus Pocus setting - Salem with colonial architecture and autumn atmosphere',
   
-  // Thanksgiving Themes
-  'Change background to cozy Thanksgiving dining room - Thanksgiving Filter',
-  'Change background to autumn harvest table setting - Thanksgiving preset',
-  'Change background to warm kitchen with turkey cooking - Thanksgiving Filter',
-  'Change background to fall foliage and pumpkins - Thanksgiving preset',
-  'Change background to family gathering around fireplace - Thanksgiving Filter',
-  'Change background to rustic farmhouse dining - Thanksgiving preset',
+  // Thanksgiving Movie Themes - Iconic Thanksgiving Films
+  'Place character in National Lampoon\'s Thanksgiving setting - suburban home with chaotic family gathering atmosphere',
+  'Place character in Planes, Trains and Automobiles setting - Chicago airport with vintage 1980s atmosphere',
+  'Place character in Home for the Holidays setting - family home with warm autumn lighting and cozy interior',
+  'Place character in The Ice Storm setting - suburban Connecticut with cold autumn atmosphere and vintage 1970s styling',
+  'Place character in Pieces of April setting - New York apartment with urban autumn atmosphere',
+  'Place character in Hannah and Her Sisters setting - Manhattan brownstone with warm family gathering atmosphere',
   
-  // Christmas Themes
-  'Change background to snowy Christmas village - Christmas Filter',
-  'Change background to cozy living room with Christmas tree - Christmas preset',
-  'Change background to winter wonderland with snow - Christmas Filter',
-  'Change background to festive holiday market - Christmas preset',
-  'Change background to warm fireplace with stockings - Christmas Filter',
-  'Change background to magical Christmas forest - Christmas preset',
+  // Christmas Movie Themes - Iconic Christmas Films
+  'Place character in A Christmas Carol setting - Victorian London with foggy streets and warm candlelit interiors',
+  'Place character in It\'s a Wonderful Life setting - Bedford Falls with snowy streets and warm small-town atmosphere',
+  'Place character in Home Alone setting - suburban Chicago home with Christmas decorations and warm interior lighting',
+  'Place character in Elf setting - New York City with Christmas decorations and festive atmosphere',
+  'Place character in The Grinch setting - Whoville with whimsical architecture and colorful Christmas decorations',
+  'Place character in Miracle on 34th Street setting - New York City with vintage department store and Christmas atmosphere',
+  'Place character in White Christmas setting - Vermont inn with snowy landscape and warm lodge atmosphere',
+  'Place character in A Christmas Story setting - suburban Cleveland with vintage 1940s Christmas decorations',
+  'Place character in National Lampoon\'s Christmas Vacation setting - suburban home with chaotic Christmas decorations',
+  'Place character in The Polar Express setting - magical train with warm golden lighting and winter atmosphere',
+  'Place character in How the Grinch Stole Christmas setting - Whoville with Dr. Seuss-inspired architecture and Christmas lights',
+  'Place character in The Santa Clause setting - suburban home with Christmas decorations and magical atmosphere',
   
   // Background replacement - Indoor/Architectural
   'Change background to modern office interior',
@@ -273,38 +279,149 @@ const BACKGROUND_PROMPTS = [
   'Change background to tropical paradise',
   'Change background to urban street scene',
   
-  // Style Transfer Options
-  'Apply Ghibli anime style - Studio Ghibli magical colorful animation aesthetic',
-  'Apply Van Gogh painting style - impressionist brushstrokes and vibrant colors',
-  'Apply cinematic style similar to The Matrix - green-tinted digital rain atmosphere',
-  'Apply green-tinted, high-contrast cinematic style - dramatic lighting and color grading',
-  'Apply watercolor painting style - soft blended colors and artistic texture',
-  'Apply oil painting style - rich textures and classical art aesthetic',
-  'Apply cyberpunk neon style - electric colors and futuristic lighting',
-  'Apply film noir style - high contrast black and white with dramatic shadows',
-  'Apply vintage photography style - sepia tones and nostalgic atmosphere',
-  'Apply digital art style - clean lines and modern graphic design aesthetic',
-  'Apply charcoal sketch style - monochrome artistic drawing technique',
-  'Apply pop art style - bold colors and graphic design elements',
-  'Apply surrealist style - dreamlike and imaginative artistic approach',
-  'Apply minimalist style - clean simple design with focus on essential elements',
-  'Apply abstract expressionist style - bold colors and emotional artistic expression',
-  'Apply photorealistic style - ultra-detailed realistic rendering',
-  'Apply comic book style - bold outlines and vibrant comic art aesthetic',
-  'Apply pencil sketch style - detailed hand-drawn artistic technique',
-  'Apply pastel art style - soft muted colors and gentle artistic approach',
-  'Apply graffiti art style - street art aesthetic with bold urban design',
-  'Apply stained glass style - colorful translucent artistic effect',
-  'Apply mosaic art style - fragmented colorful tile artistic pattern',
-  'Apply origami paper style - folded paper geometric artistic aesthetic',
-  'Apply holographic style - iridescent colors and futuristic shine effect',
-  'Apply marble sculpture style - classical stone carving artistic texture',
-  'Apply wood carving style - natural wood grain artistic texture',
-  'Apply metal sculpture style - metallic reflective artistic surface',
-  'Apply glass art style - transparent and translucent artistic effect',
-  'Apply textile art style - fabric and woven material artistic texture',
-  'Apply ceramic art style - glazed pottery artistic surface texture'
+  // Iconic Movie Scene Backgrounds - Character placed in cinematic environments
+  'Place character in Saw movie franchise setting - dark industrial bathroom with rusty pipes and cold blue lighting',
+  'Place character in Terminator 2 scene - futuristic Los Angeles with orange fire glow and metallic surfaces',
+  'Place character in Eternal Sunshine of the Spotless Mind setting - dreamy beach house with soft pastel lighting',
+  'Place character in The Truman Show setting - perfect suburban neighborhood with artificial bright lighting',
+  'Place character in Batman movie setting - dark Gotham City with neon lights and gothic architecture',
+  'Place character in 1980s slasher movie setting - dark forest cabin with warm firelight and shadows',
+  'Place character in Giallo movie setting - Italian villa with rich red and yellow color palette',
+  'Place character in Steven Spielberg movie setting - suburban street with warm golden hour lighting',
+  'Place character in Stephen King movie setting - small town Maine with eerie fog and vintage Americana',
+  'Place character in Quentin Tarantino movie setting - retro diner with neon signs and bold color grading',
+  'Place character in Sin City movie setting - black and white noir with selective red color accents',
+  'Place character in Spider-Man movie setting - New York City skyline with web-slinging action',
+  'Place character in Blade Runner setting - cyberpunk cityscape with neon rain and futuristic architecture',
+  'Place character in Mad Max setting - post-apocalyptic desert wasteland with orange dust storms',
+  'Place character in The Matrix setting - green-tinted digital world with code rain effects',
+  'Place character in Inception setting - dreamlike city with impossible architecture and muted colors',
+  'Place character in Avatar setting - Pandora jungle with bioluminescent plants and blue lighting',
+  'Place character in Star Wars setting - Tatooine desert with twin suns and sandy dunes',
+  'Place character in Lord of the Rings setting - Middle-earth Shire with rolling green hills',
+  'Place character in Harry Potter setting - Hogwarts castle with magical atmosphere and warm lighting',
+  'Place character in The Shining setting - Overlook Hotel corridor with red carpet and eerie lighting',
+  'Place character in Pulp Fiction setting - retro diner with checkerboard floors and neon signs',
+  'Place character in Kill Bill setting - Japanese garden with cherry blossoms and traditional architecture',
+  'Place character in Reservoir Dogs setting - warehouse with industrial lighting and urban decay',
+  'Place character in Django Unchained setting - southern plantation with golden hour lighting',
+  'Place character in Inglourious Basterds setting - French countryside with warm European lighting',
+  'Place character in Once Upon a Time in Hollywood setting - 1960s Los Angeles with vintage neon',
+  'Place character in The Hateful Eight setting - snowy mountain cabin with warm firelight',
+  'Place character in Jackie Brown setting - California beach with sunset lighting and palm trees',
+  'Place character in Death Proof setting - Texas roadhouse with neon signs and desert lighting'
 ];
+
+// Camera Motion Presets - User-Friendly Display Text
+const CAMERA_MOTION_PROMPTS = [
+  // Basic Camera Movements
+  'Slow zoom in',
+  'Slow zoom out',
+  'Pan left to right',
+  'Pan right to left',
+  'Tilt up',
+  'Tilt down',
+  'Dolly forward',
+  'Dolly backward',
+  
+  // Dynamic Camera Movements
+  'Orbital movement',
+  'Spiral inward',
+  'Spiral outward',
+  'Tracking shot',
+  'Leading camera',
+  'Whip pan',
+  'Quick zoom in',
+  'Quick zoom out',
+  
+  // Cinematic Camera Techniques
+  'Dolly forward',
+  'Dolly backward',
+  'Crane up',
+  'Crane down',
+  'Handheld movement',
+  'Steadicam',
+  'Aerial shot',
+  'Low angle shot',
+  
+  // Advanced Camera Movements
+  '360-degree rotation',
+  'Bullet time effect',
+  'Parallax movement',
+  'Rack focus',
+  'Push-in',
+  'Pull-out',
+  'Tilt shift',
+  
+  // Action Camera Movements
+  'Camera shake',
+  'Smooth glide',
+  'Snap zoom',
+  'Slow motion',
+  'Time-lapse',
+  'Hyperlapse',
+  'Drone movement',
+  'Underwater movement',
+  
+  // Creative Camera Movements
+  'Through character',
+  'Mirror reflection',
+  'Split screen',
+  'Picture-in-picture',
+  'Kaleidoscope effect',
+  'Tunnel vision',
+  'Fish-eye lens',
+  'Wide-angle lens'
+];
+
+// Camera Motion Enhanced Prompts - Backend Logic (Hidden from User)
+const CAMERA_MOTION_ENHANCED_PROMPTS = {
+  'Slow zoom in': 'Slow zoom in on character, creating intimate connection with cinematic camera work',
+  'Slow zoom out': 'Slow zoom out from character, revealing wider environment with cinematic scope',
+  'Pan left to right': 'Smooth pan left to right across scene, cinematic sweep movement',
+  'Pan right to left': 'Smooth pan right to left across scene, elegant movement',
+  'Tilt up': 'Tilt up to reveal character, dramatic upward movement',
+  'Tilt down': 'Tilt down to reveal character, descending perspective',
+  'Dolly forward': 'Dolly forward toward character, approaching with cinematic purpose',
+  'Dolly backward': 'Dolly backward away from character, creating dramatic distance',
+  'Orbital movement': 'Orbital movement around character, circular cinematic motion',
+  'Spiral inward': 'Spiral inward toward character, tightening focus with cinematic motion',
+  'Spiral outward': 'Spiral outward from character, expanding perspective with cinematic motion',
+  'Tracking shot': 'Tracking shot following character movement, smooth pursuit cinematic motion',
+  'Leading camera': 'Leading camera movement, anticipating character action',
+  'Whip pan': 'Whip pan between characters, rapid directional change with cinematic energy',
+  'Quick zoom in': 'Quick zoom in for dramatic emphasis, sudden focus',
+  'Quick zoom out': 'Quick zoom out for reveal, expanding scope',
+  'Crane up': 'Crane shot moving up and over character, ascending cinematic perspective',
+  'Crane down': 'Crane shot moving down and under character, descending viewpoint',
+  'Handheld movement': 'Handheld camera movement for realistic feel, natural cinematic motion',
+  'Steadicam': 'Steadicam following character movement, smooth pursuit cinematic motion',
+  'Aerial shot': 'Aerial shot from above character, bird\'s eye cinematic perspective',
+  'Low angle shot': 'Low angle shot from below character, dramatic upward cinematic view',
+  '360-degree rotation': '360-degree rotation around character, complete circular motion',
+  'Bullet time effect': 'Matrix-style bullet time effect, frozen moment in motion',
+  'Parallax movement': 'Parallax movement with depth, layered perspective',
+  'Rack focus': 'Rack focus from background to character, depth transition',
+  'Push-in': 'Push-in with shallow depth of field, intimate approach',
+  'Pull-out': 'Pull-out with expanding depth of field, widening scope',
+  'Tilt shift': 'Tilt shift effect for miniature look, selective focus',
+  'Camera shake': 'Camera shake for action sequence, intense movement',
+  'Smooth glide': 'Smooth glide for elegant movement, fluid motion',
+  'Snap zoom': 'Snap zoom for emphasis, sudden dramatic focus',
+  'Slow motion': 'Slow motion camera movement, time-stretched motion',
+  'Time-lapse': 'Time-lapse camera movement, accelerated perspective',
+  'Hyperlapse': 'Hyperlapse camera movement, rapid spatial progression',
+  'Drone movement': 'Drone-like aerial movement, floating perspective',
+  'Underwater movement': 'Underwater camera movement, fluid aquatic motion',
+  'Through character': 'Through character movement, immersive perspective',
+  'Mirror reflection': 'Mirror reflection camera work, symmetrical composition',
+  'Split screen': 'Split screen camera movement, divided perspective',
+  'Picture-in-picture': 'Picture-in-picture camera work, layered composition',
+  'Kaleidoscope effect': 'Kaleidoscope camera effect, fragmented perspective',
+  'Tunnel vision': 'Tunnel vision camera movement, focused perspective',
+  'Fish-eye lens': 'Fish-eye camera distortion, wide-angle curvature',
+  'Wide-angle lens': 'Wide-angle camera distortion, expanded field of view'
+};
 
 // Video-specific prompts organized by movie genres
 // Character Style Presets for Restyle tab
@@ -1016,9 +1133,9 @@ export default function Home() {
     
     // Add text-to-video modes when no images are uploaded
     if (!hasImages && !hasVideos) {
-      modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
-      modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
-      modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
+        modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
+        modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
+        modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
     }
     
     return modes;
@@ -2922,11 +3039,11 @@ export default function Home() {
                 enableSafetyChecker: true
               }
             : {
-                model: 'nano-banana-edit',
-                imageUrls: [imageUrl],
+          model: 'nano-banana-edit',
+          imageUrls: [imageUrl],
                 prompt: variationPrompt,
-                numImages: 1,
-                outputFormat: 'jpeg'
+          numImages: 1,
+          outputFormat: 'jpeg'
               };
 
           const response = await fetch(apiEndpoint, {
@@ -2937,38 +3054,38 @@ export default function Home() {
             body: JSON.stringify(requestBody),
           });
 
-          const data = await response.json();
+      const data = await response.json();
           console.log(`📥 FAL API Response ${index + 1}:`, data);
 
-          if (!response.ok) {
-            throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
-          }
+      if (!response.ok) {
+        throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
+      }
 
-          if (!data.success) {
+      if (!data.success) {
             throw new Error(data.error || 'Failed to process character variation');
           }
 
           // Extract image URL from Seedream 4.0 Edit response
-          let extractedImageUrl = null;
-          if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
+      let extractedImageUrl = null;
+      if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
             extractedImageUrl = data.data.images[0].url;
-          } else if (data.data?.image_url) {
-            extractedImageUrl = data.data.image_url;
-          } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-            extractedImageUrl = data.images[0].url || data.images[0];
-          }
-
-          if (!extractedImageUrl) {
-            throw new Error('No image URL found in FAL response');
-          }
-
+      } else if (data.data?.image_url) {
+        extractedImageUrl = data.data.image_url;
+      } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+        extractedImageUrl = data.images[0].url || data.images[0];
+      }
+      
+      if (!extractedImageUrl) {
+        throw new Error('No image URL found in FAL response');
+      }
+      
           return {
             id: `variation-${Date.now()}-${index}`,
             description: variationPrompt,
             angle: `Variation ${index + 1}`,
             pose: `Angle ${index + 1}`,
-            imageUrl: extractedImageUrl,
-            fileType: 'image' as const
+        imageUrl: extractedImageUrl,
+        fileType: 'image' as const
           };
         } catch (error) {
           console.error(`❌ Error generating variation ${index + 1}:`, error);
@@ -3135,6 +3252,166 @@ export default function Home() {
     }
   };
 
+  // Helper function to determine if generation should be enabled
+  const canGenerateWithCurrentState = () => {
+    // For video models, allow generation if images are uploaded (even without prompt)
+    if (generationMode && isVideoVariantModel(generationMode)) {
+      return uploadedFiles.length > 0;
+    }
+    
+    // For other models, require both images and prompt
+    return uploadedFiles.length > 0 && prompt.trim().length > 0;
+  };
+
+  // Get model-specific default prompt for video generation - Enhanced with Camera Control Logic
+  const getDefaultPromptForModel = (model: string) => {
+    const defaultPrompts = {
+      'decart-lucy-14b': 'slow dolly forward toward character with subtle camera movement, creating intimate cinematic video',
+      'minimax-i2v-director': 'smooth tracking shot following character movement with professional camera work',
+      'hailuo-02-pro': 'elegant crane shot moving up and over character, cinematic perspective transition',
+      'kling-video-pro': 'dynamic orbital movement around character with fluid camera motion',
+      'veo3-fast': 'quick zoom in on character with natural camera movement for emphasis',
+      'minimax-2-t2v': 'cinematic pan left to right across scene with professional camera work',
+      'kling-2.1-master-t2v': 'smooth tilt up to reveal character with dramatic upward camera movement'
+    };
+    
+    return defaultPrompts[model as keyof typeof defaultPrompts] || 'slow zoom in on character with subtle camera movement, creating dynamic cinematic video';
+  };
+
+  // Get enhanced prompt for camera motion (backend logic)
+  const getEnhancedCameraPrompt = (userPrompt: string) => {
+    return CAMERA_MOTION_ENHANCED_PROMPTS[userPrompt as keyof typeof CAMERA_MOTION_ENHANCED_PROMPTS] || userPrompt;
+  };
+
+  // Extrapolate prompt for video variations - add subtle nuances
+  const extrapolateVideoPrompt = (originalPrompt: string) => {
+    const variations = [
+      // Camera movement variations
+      'with subtle camera movement',
+      'with gentle camera motion',
+      'with cinematic camera work',
+      'with dynamic camera movement',
+      'with fluid camera motion',
+      
+      // Lighting variations
+      'with enhanced lighting',
+      'with dramatic lighting',
+      'with soft lighting',
+      'with moody lighting',
+      'with atmospheric lighting',
+      
+      // Style variations
+      'with cinematic style',
+      'with artistic flair',
+      'with professional quality',
+      'with enhanced detail',
+      'with refined aesthetics',
+      
+      // Motion variations
+      'with subtle motion',
+      'with gentle movement',
+      'with dynamic motion',
+      'with fluid movement',
+      'with natural motion'
+    ];
+    
+    // If prompt already has camera/lighting/style keywords, add motion variations
+    const hasCameraKeywords = /camera|movement|motion|pan|zoom|dolly|tracking/i.test(originalPrompt);
+    const hasLightingKeywords = /lighting|light|shadow|bright|dark/i.test(originalPrompt);
+    const hasStyleKeywords = /cinematic|artistic|professional|dramatic/i.test(originalPrompt);
+    
+    let selectedVariations = [];
+    
+    if (!hasCameraKeywords) {
+      selectedVariations.push(variations[Math.floor(Math.random() * 5)]); // Camera variations
+    }
+    if (!hasLightingKeywords) {
+      selectedVariations.push(variations[5 + Math.floor(Math.random() * 5)]); // Lighting variations
+    }
+    if (!hasStyleKeywords) {
+      selectedVariations.push(variations[10 + Math.floor(Math.random() * 5)]); // Style variations
+    }
+    
+    // Always add a motion variation
+    selectedVariations.push(variations[15 + Math.floor(Math.random() * 5)]); // Motion variations
+    
+    // Combine original prompt with selected variations
+    const extrapolatedPrompt = `${originalPrompt} ${selectedVariations.join(', ')}`;
+    
+    console.log('🎬 [VIDEO VARIATION] Original prompt:', originalPrompt);
+    console.log('🎬 [VIDEO VARIATION] Extrapolated prompt:', extrapolatedPrompt);
+    
+    return extrapolatedPrompt;
+  };
+
+  // Handle video variation from existing video card
+  const handleVideoCardVariation = async (videoItem: any) => {
+    console.log('🎬 [VIDEO CARD VARIATION] ===== STARTING VIDEO CARD VARIATION =====');
+    console.log('🎯 [VIDEO CARD VARIATION] Video item:', videoItem);
+    
+    try {
+      // Set processing state
+      setProcessing(prev => ({ 
+        ...prev, 
+        isProcessing: true, 
+        progress: 0, 
+        currentStep: 'Preparing video variation...' 
+      }));
+
+      // Extrapolate the original prompt
+      const originalPrompt = videoItem.originalPrompt || 'cinematic video';
+      const extrapolatedPrompt = extrapolateVideoPrompt(originalPrompt);
+      
+      console.log('📝 [VIDEO CARD VARIATION] Using extrapolated prompt:', extrapolatedPrompt);
+      
+      // Set the prompt in the textarea
+      setPrompt(extrapolatedPrompt);
+      
+      // Upload the video's thumbnail/frame as the source image
+      if (videoItem.imageUrl) {
+        console.log('📤 [VIDEO CARD VARIATION] Using video thumbnail as source:', videoItem.imageUrl);
+        
+        // Create a file object from the video thumbnail
+        const response = await fetch(videoItem.imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `video-thumbnail-${videoItem.id}.jpg`, { type: 'image/jpeg' });
+        
+        // Add to uploaded files
+        setUploadedFiles([{
+          file: file,
+          preview: videoItem.imageUrl,
+          base64: '', // Will be populated by the file processing
+          mimeType: 'image/jpeg',
+          type: 'reference',
+          fileType: 'image'
+        }]);
+        
+        console.log('✅ [VIDEO CARD VARIATION] Video thumbnail added as source image');
+      }
+      
+      // Set processing state for generation
+      setProcessing(prev => ({ 
+        ...prev, 
+        progress: 20, 
+        currentStep: 'Ready to generate video variation...' 
+      }));
+      
+      // Show success notification
+      showNotification('🎬 Video variation ready! Click generate to create your variation.', 'success');
+      
+    } catch (error) {
+      console.error('❌ [VIDEO CARD VARIATION] Error:', error);
+      showNotification('❌ Failed to prepare video variation. Please try again.', 'error');
+    } finally {
+      setProcessing(prev => ({ 
+        ...prev, 
+        isProcessing: false, 
+        progress: 0, 
+        currentStep: '' 
+      }));
+    }
+  };
+
   // Handle video variations generation
   const handleVideoVariation = async () => {
     console.log('🎬 [FRONTEND VIDEO VARIANCE] ===== STARTING VIDEO VARIATION GENERATION =====');
@@ -3167,7 +3444,7 @@ export default function Home() {
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
     }
-    
+
     console.log('✅ [FRONTEND VIDEO VARIANCE] User can generate, proceeding...');
 
     console.log('⚙️ [FRONTEND VIDEO VARIANCE] Setting processing state...');
@@ -3185,10 +3462,20 @@ export default function Home() {
       console.log('📤 [FRONTEND VIDEO VARIANCE] Preparing request to /api/vary-video...');
       console.log('🔧 [FRONTEND VIDEO VARIANCE] Building request body...');
       
+      // Use enhanced camera prompt or model-specific default prompt
+      const userPrompt = prompt.trim();
+      const finalPrompt = userPrompt 
+        ? getEnhancedCameraPrompt(userPrompt) 
+        : getDefaultPromptForModel(generationMode || 'default');
+      
+      if (!prompt.trim()) {
+        console.log('🎯 [FRONTEND VIDEO VARIANCE] No user prompt provided, using model-specific default:', finalPrompt);
+      }
+      
       const requestBody = {
         images: uploadedFiles.map(img => img.base64),
         mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
-        prompt: prompt.trim(),
+        prompt: finalPrompt,
         model: generationMode
       };
       
@@ -5422,7 +5709,17 @@ export default function Home() {
                     e.currentTarget.style.transform = 'translateY(0) scale(1)';
                     e.currentTarget.style.zIndex = '30';
                   }}
-                  onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('🖥️ Desktop gallery item clicked for full-screen view:', item);
+                    const imageUrl = item.videoUrl || item.imageUrl;
+                    setFullScreenImage(imageUrl);
+                    // Find the index in galleryImagesWithUrls
+                    const index = galleryImagesWithUrls.findIndex(galleryItem => 
+                      galleryItem.imageUrl === imageUrl || galleryItem.videoUrl === imageUrl
+                    );
+                    setFullScreenImageIndex(index >= 0 ? index : 0);
+                  }}
                 >
                   {/* Content Preview */}
                   <div className="relative w-full h-full">
@@ -5524,11 +5821,15 @@ export default function Home() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                  if (item.fileType === 'video') {
+                                    handleVideoCardVariation(item);
+                                  } else {
+                                    handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
+                                  }
                                 }}
                                 disabled={processing.isProcessing}
                                 className="text-sm text-purple-300 hover:text-purple-200 transition-colors px-4 py-2 rounded-lg bg-purple-900/40 hover:bg-purple-900/60 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                                title="Generate variations with nano_banana"
+                                title={item.fileType === 'video' ? "Generate video variation with extrapolated prompt" : "Generate variations with nano_banana"}
                               >
                                 Vary
                               </button>
@@ -5826,6 +6127,19 @@ export default function Home() {
                   <div>• Image generation only (video on desktop)</div>
                 </div>
               </div>
+
+              {/* Quick Shots Button - Only show when image is uploaded */}
+              {uploadedFiles.length > 0 && uploadedFiles.some(file => file.fileType === 'image') && (
+                <div className="mb-3">
+                  <button
+                    onClick={() => setShowPresetModal(true)}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Camera className="w-5 h-5" />
+                    Quick Shots
+                  </button>
+                </div>
+              )}
               
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
@@ -6004,7 +6318,7 @@ export default function Home() {
                     // Video generation
                     <button
                       onClick={handleRunwayVideoEditing}
-                      disabled={processing.isProcessing || !prompt.trim()}
+                      disabled={processing.isProcessing || !canGenerateWithCurrentState()}
                       className="mobile-send-button"
                       title="Generate Video"
                     >
@@ -6018,7 +6332,7 @@ export default function Home() {
                     // Character variations
                     <button
                       onClick={handleModelGeneration}
-                      disabled={processing.isProcessing || !prompt.trim()}
+                      disabled={processing.isProcessing || !canGenerateWithCurrentState()}
                       className="mobile-send-button"
                       title="Generate Variation"
                     >
@@ -6794,7 +7108,7 @@ export default function Home() {
                   // Video generation
                               <button
                     onClick={handleRunwayVideoEditing}
-                    disabled={processing.isProcessing || !prompt.trim()}
+                    disabled={processing.isProcessing || !canGenerateWithCurrentState()}
                     className="generate-floating-send-button"
                     title="Generate Video"
                   >
@@ -6808,7 +7122,7 @@ export default function Home() {
                   // Character variations
                           <button
                     onClick={handleModelGeneration}
-                    disabled={processing.isProcessing || !prompt.trim()}
+                    disabled={processing.isProcessing || !canGenerateWithCurrentState()}
                     className="generate-floating-send-button"
                     title="Generate Variation"
                   >
@@ -6824,9 +7138,9 @@ export default function Home() {
               </div>
             </div>
 
-        {/* Mobile Gallery Panel - Accordion Style */}
+        {/* Mobile Gallery Panel - Full Viewport */}
         {showGallery && (
-          <div className="block lg:hidden fixed bottom-16 left-0 right-0 bg-black bg-opacity-95 backdrop-blur-md border-t border-gray-800/50 z-30 max-h-[60vh] overflow-y-auto">
+          <div className="block lg:hidden fixed inset-0 bg-black bg-opacity-95 backdrop-blur-md z-30 overflow-y-auto">
             <div className="p-3">
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
@@ -6882,19 +7196,29 @@ export default function Home() {
                       />
                 </button>
                     
-                    <div className={`overflow-hidden transition-all duration-300 ${
-                      expandedPrompts.has('mobile-recent') ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+                    <div className={`transition-all duration-300 ${
+                      expandedPrompts.has('mobile-recent') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2">
+                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-3 gap-2">
-                          {filteredGallery.slice(0, 6).map((item: any, index: number) => {
+                          {filteredGallery.map((item: any, index: number) => {
                             const itemKey = `mobile-recent-${item.id}-${item.timestamp}-${index}`;
                     
                     return (
                       <div 
                         key={itemKey} 
                                 className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                                onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log('📱 Mobile gallery item clicked for full-screen view:', item);
+                                  const imageUrl = item.videoUrl || item.imageUrl;
+                                  setFullScreenImage(imageUrl);
+                                  // Find the index in galleryImagesWithUrls
+                                  const index = galleryImagesWithUrls.findIndex(galleryItem => 
+                                    galleryItem.imageUrl === imageUrl || galleryItem.videoUrl === imageUrl
+                                  );
+                                  setFullScreenImageIndex(index >= 0 ? index : 0);
+                                }}
                               >
                                 <div className="aspect-square">
                           {item.fileType === 'video' ? (
@@ -6929,28 +7253,6 @@ export default function Home() {
                           )}
                           </div>
 
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                  <div className="flex gap-1">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleVaryImage(item.imageUrl || item.videoUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
-                                    >
-                                      Vary
-                                    </button>
-                            </div>
-                              </div>
                               </div>
                             );
                           })}
@@ -6989,10 +7291,10 @@ export default function Home() {
                       />
                               </button>
                     
-                    <div className={`overflow-hidden transition-all duration-300 ${
-                      expandedPrompts.has('mobile-videos') ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+                    <div className={`transition-all duration-300 ${
+                      expandedPrompts.has('mobile-videos') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2">
+                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-2 gap-2">
                           {filteredGallery.filter(item => item.fileType === 'video').map((item: any, index: number) => {
                             const itemKey = `mobile-video-${item.id}-${item.timestamp}-${index}`;
@@ -7001,7 +7303,16 @@ export default function Home() {
                               <div 
                                 key={itemKey} 
                                 className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                                onClick={() => setFullScreenImage(item.videoUrl)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log('📱 Mobile video gallery item clicked for full-screen view:', item);
+                                  setFullScreenImage(item.videoUrl);
+                                  // Find the index in galleryImagesWithUrls
+                                  const index = galleryImagesWithUrls.findIndex(galleryItem => 
+                                    galleryItem.videoUrl === item.videoUrl
+                                  );
+                                  setFullScreenImageIndex(index >= 0 ? index : 0);
+                                }}
                               >
                                 <div className="aspect-square">
                                   <video
@@ -7025,28 +7336,6 @@ export default function Home() {
                                   />
                                 </div>
 
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                  <div className="flex gap-1">
-                              <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditImage(item.videoUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleVaryImage(item.videoUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
-                                    >
-                                      Vary
-                              </button>
-                            </div>
-                              </div>
                               </div>
                             );
                           })}
@@ -7085,10 +7374,10 @@ export default function Home() {
                       />
                     </button>
                     
-                    <div className={`overflow-hidden transition-all duration-300 ${
-                      expandedPrompts.has('mobile-images') ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+                    <div className={`transition-all duration-300 ${
+                      expandedPrompts.has('mobile-images') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2">
+                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-4 gap-2">
                           {filteredGallery.filter(item => item.fileType === 'image').map((item: any, index: number) => {
                             const itemKey = `mobile-image-${item.id}-${item.timestamp}-${index}`;
@@ -7110,28 +7399,6 @@ export default function Home() {
                                   />
                                 </div>
 
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                  <div className="flex gap-1">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditImage(item.imageUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-                                    >
-                                      Edit
-                                </button>
-                                <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleVaryImage(item.imageUrl, item.originalPrompt);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
-                                    >
-                                      Vary
-                                </button>
-                              </div>
-                            </div>
                               </div>
                             );
                           })}
@@ -7226,7 +7493,17 @@ export default function Home() {
                         <div 
                           key={itemKey} 
                                   className="group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                          onClick={() => setFullScreenImage(item.videoUrl || item.imageUrl)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('🖥️ Desktop recent gallery item clicked for full-screen view:', item);
+                            const imageUrl = item.videoUrl || item.imageUrl;
+                            setFullScreenImage(imageUrl);
+                            // Find the index in galleryImagesWithUrls
+                            const index = galleryImagesWithUrls.findIndex(galleryItem => 
+                              galleryItem.imageUrl === imageUrl || galleryItem.videoUrl === imageUrl
+                            );
+                            setFullScreenImageIndex(index >= 0 ? index : 0);
+                          }}
                         >
                           <div className="aspect-square">
                             {item.fileType === 'video' ? (
@@ -7686,6 +7963,69 @@ export default function Home() {
               <X className="w-6 h-6" />
                           </button>
 
+            {/* Action buttons row - Positioned higher to avoid mobile footer */}
+            <div className="absolute bottom-1/3 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+              {/* Edit button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentItem = galleryImagesWithUrls[fullScreenImageIndex];
+                  if (currentItem && (currentItem.imageUrl || currentItem.videoUrl)) {
+                    handleEditImage(currentItem.imageUrl || currentItem.videoUrl!, currentItem.originalPrompt);
+                    closeFullScreen();
+                  }
+                }}
+                className="w-12 h-12 bg-blue-600/80 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                title="Edit image"
+              >
+                <Edit className="w-6 h-6" />
+              </button>
+
+              {/* Vary button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentItem = galleryImagesWithUrls[fullScreenImageIndex];
+                  if (currentItem && (currentItem.imageUrl || currentItem.videoUrl)) {
+                    if (currentItem.fileType === 'video') {
+                      handleVideoCardVariation(currentItem);
+                    } else {
+                      handleVaryImage(currentItem.imageUrl || currentItem.videoUrl!, currentItem.originalPrompt);
+                    }
+                    closeFullScreen();
+                  }
+                }}
+                className="w-12 h-12 bg-purple-600/80 hover:bg-purple-600 text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                title="Generate variations"
+              >
+                <Sparkles className="w-6 h-6" />
+              </button>
+
+              {/* Download button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentItem = galleryImagesWithUrls[fullScreenImageIndex];
+                  if (currentItem?.fileType === 'video' && currentItem.videoUrl) {
+                    handleDownloadVideo(currentItem.videoUrl!, currentItem.originalPrompt || 'Downloaded video');
+                  } else {
+                    handleDownloadVariation({
+                      id: currentItem?.id || 'gallery-item',
+                      description: currentItem?.originalPrompt || 'Downloaded image',
+                      angle: 'Gallery item',
+                      pose: 'Downloaded',
+                      imageUrl: fullScreenImage || '',
+                      fileType: 'image'
+                    });
+                  }
+                }}
+                className="w-12 h-12 bg-green-600/80 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                title="Download file"
+              >
+                <Download className="w-6 h-6" />
+              </button>
+            </div>
+
             {/* Navigation arrows */}
             {galleryImagesWithUrls.length > 1 && (
               <>
@@ -7857,7 +8197,9 @@ export default function Home() {
                 {activePresetTab === 'shot' && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4">📸 Professional Camera Angles & Shot Types</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left Column - Shot Types */}
+                      <div className="space-y-4">
                       <div>
                         <h4 className="text-md font-medium text-gray-300 mb-3">Basic Angles</h4>
                         <div className="flex flex-wrap gap-2">
@@ -7877,9 +8219,9 @@ export default function Home() {
                     </div>
                   </div>
                       <div>
-                        <h4 className="text-md font-medium text-gray-300 mb-3">Extended Shot Types ({EXTENDED_PROMPTS.length} total)</h4>
-                        <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto">
-                          {EXTENDED_PROMPTS.map((example) => (
+                          <h4 className="text-md font-medium text-gray-300 mb-3">Extended Shot Types ({EXTENDED_PROMPTS.length} total)</h4>
+                          <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
+                            {EXTENDED_PROMPTS.map((example) => (
                             <button
                               key={example}
                               onClick={() => {
@@ -7893,6 +8235,29 @@ export default function Home() {
                             </button>
                           ))}
                       </div>
+                    </div>
+                      </div>
+                      
+                      {/* Right Column - Camera Motion */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-md font-medium text-gray-300 mb-3">🎬 Camera Motion Presets ({CAMERA_MOTION_PROMPTS.length} total)</h4>
+                          <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto">
+                            {CAMERA_MOTION_PROMPTS.map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => {
+                                  setPrompt(example);
+                                  setShowPresetModal(false);
+                                  setActivePresetTab(null);
+                                }}
+                                className="px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full hover:bg-orange-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -7900,20 +8265,81 @@ export default function Home() {
 
                 {activePresetTab === 'background' && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-4">🎨 Background Removal & Replacement Options</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">🎬 Iconic Movie Scene Backgrounds</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left Column - Classic Movie Scenes */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-md font-medium text-gray-300 mb-3">🎭 Classic Cinema</h4>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {[
+                              'Saw movie franchise setting',
+                              'Terminator 2 scene',
+                              'Eternal Sunshine of the Spotless Mind setting',
+                              'The Truman Show setting',
+                              'Batman movie setting',
+                              '1980s slasher movie setting',
+                              'Giallo movie setting',
+                              'Steven Spielberg movie setting'
+                            ].map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => {
+                                  setPrompt(example);
+                                  setShowPresetModal(false);
+                                  setActivePresetTab(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Right Column - Modern Cinema & Sci-Fi */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-md font-medium text-gray-300 mb-3">🚀 Modern Cinema & Sci-Fi</h4>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {[
+                              'Stephen King movie setting',
+                              'Quentin Tarantino movie setting',
+                              'Sin City movie setting',
+                              'Spider-Man movie setting',
+                              'Blade Runner setting',
+                              'Mad Max setting',
+                              'The Matrix setting',
+                              'Inception setting'
+                            ].map((example) => (
+                              <button
+                                key={example}
+                                onClick={() => {
+                                  setPrompt(example);
+                                  setShowPresetModal(false);
+                                  setActivePresetTab(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+                              >
+                                {example}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Additional Movie Categories */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-medium text-gray-300 mb-3">🎪 Fantasy & Adventure</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-800 rounded-lg p-4">
-                        <h4 className="text-md font-medium text-gray-300 mb-3">Background Changes</h4>
                         <div className="space-y-2">
                           {[
-                            'Change background to a modern office',
-                            'Place character in a forest setting',
-                            'Background: beach sunset scene',
-                            'Set in a futuristic cityscape',
-                            'Background: cozy living room',
-                            'Place in a magical garden',
-                            'Background: mountain landscape',
-                            'Set in a space station interior'
+                            'Avatar setting',
+                            'Star Wars setting',
+                            'Lord of the Rings setting',
+                            'Harry Potter setting'
                           ].map((example) => (
                             <button
                               key={example}
@@ -7922,25 +8348,47 @@ export default function Home() {
                                 setShowPresetModal(false);
                                 setActivePresetTab(null);
                               }}
-                              className="w-full text-left px-3 py-2 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
+                              className="w-full text-left px-3 py-2 text-sm bg-purple-100 text-purple-800 rounded hover:bg-purple-200 transition-colors"
                             >
                               {example}
                             </button>
                           ))}
                       </div>
-                    </div>
-                      <div className="bg-gray-800 rounded-lg p-4">
-                        <h4 className="text-md font-medium text-gray-300 mb-3">Style Transfers</h4>
                         <div className="space-y-2">
                           {[
-                            'Convert to anime style',
-                            'Make it look like a painting',
-                            'Style: watercolor art',
-                            'Convert to cartoon style',
-                            'Style: oil painting',
-                            'Make it look like a sketch',
-                            'Style: digital art',
-                            'Convert to realistic photo'
+                            'The Shining setting',
+                            'Pulp Fiction setting',
+                            'Kill Bill setting',
+                            'Reservoir Dogs setting'
+                          ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                    </div>
+                      </div>
+                    </div>
+                    
+                    {/* Holiday Movie Categories */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-medium text-gray-300 mb-3">🎃🎄 Holiday Movie Classics</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Halloween Movies */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-400 mb-2">🎃 Halloween Classics</h5>
+                            {[
+                              'Halloween movie setting',
+                              'Nightmare on Elm Street setting',
+                              'Friday the 13th setting',
+                              'The Exorcist setting'
                           ].map((example) => (
                             <button
                               key={example}
@@ -7955,6 +8403,52 @@ export default function Home() {
                             </button>
                           ))}
                   </div>
+                        
+                        {/* Thanksgiving Movies */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-400 mb-2">🦃 Thanksgiving Films</h5>
+                            {[
+                              'National Lampoon\'s Thanksgiving setting',
+                              'Planes, Trains and Automobiles setting',
+                              'Home for the Holidays setting',
+                              'The Ice Storm setting'
+                            ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        {/* Christmas Movies */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-400 mb-2">🎄 Christmas Classics</h5>
+                            {[
+                              'A Christmas Carol setting',
+                              'It\'s a Wonderful Life setting',
+                              'Home Alone setting',
+                              'Elf setting'
+                            ].map((example) => (
+                            <button
+                              key={example}
+                              onClick={() => {
+                                setPrompt(example);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                        </div>
                   </div>
                   </div>
                   </div>
@@ -8162,7 +8656,13 @@ export default function Home() {
                           <img 
                             src={image} 
                             alt={`Generated variation ${index + 1}`}
-                            className="max-w-full max-h-full object-contain rounded-[30px]"
+                            className="max-w-full max-h-full object-contain rounded-[30px] cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('📱 Generated image clicked for full-screen view:', image);
+                              setFullScreenImage(image);
+                              setFullScreenImageIndex(index);
+                            }}
                           />
                         </div>
                       ))}
@@ -8178,7 +8678,13 @@ export default function Home() {
                             <img 
                               src={displayedImages[index]} 
                               alt={`Generated variation ${index + 1}`}
-                              className="max-w-full max-h-full object-contain rounded-lg"
+                              className="max-w-full max-h-full object-contain rounded-lg cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('🖥️ Generated image clicked for full-screen view:', displayedImages[index]);
+                                setFullScreenImage(displayedImages[index]);
+                                setFullScreenImageIndex(index);
+                              }}
                             />
                           ) : (
                             <div className="text-gray-500 text-sm">Slot {index + 1}</div>
