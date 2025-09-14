@@ -430,52 +430,54 @@ export async function POST(request: NextRequest) {
     
     // Check for character combination scenarios
     if (isCharacterCombination) {
-      enhancedPrompt = `CHARACTER COMBINATION ANALYSIS - MULTIPLE IMAGES DETECTED
+      enhancedPrompt = `ADVANCED COMPOSITION ANALYSIS - MULTIPLE ELEMENTS DETECTED
 
-You are analyzing ${images.length} separate character images to create combined character variations. Each image represents a different character that should be integrated into cohesive scenes using Nano Banana best practices.
+You are analyzing ${images.length} separate images to create advanced composite scenes. Each image represents different elements (characters, objects, clothing, scenes) that should be intelligently combined using Nano Banana best practices.
 
 ANALYSIS INSTRUCTIONS:
 1. Analyze each image separately to understand:
-   - Character 1: Physical features, clothing, pose, expression, style, distinctive elements
-   - Character 2: Physical features, clothing, pose, expression, style, distinctive elements
-   - Additional characters if present
+   - Element 1: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
+   - Element 2: Type (character/person, clothing/item, scene/environment), key features, style, distinctive elements
+   - Additional elements if present
 
-2. Create descriptive character references for Nano Banana:
-   - Use strong descriptive text prompts for each character
-   - Specify individual positions and actions clearly
-   - Prevent character blending by maintaining distinct identities
+2. Identify composition type:
+   - CHARACTER + CLOTHING: Person wearing specific clothing/item
+   - CHARACTER + SCENE: Person in specific environment/setting
+   - CLOTHING + SCENE: Item/clothing in specific environment
+   - CHARACTER + CHARACTER: Multiple people interaction
+   - COMPLEX COMPOSITION: Multiple elements (character + clothing + scene)
+
+3. Create intelligent composition prompts for Nano Banana:
+   - Use descriptive text for each element's role and positioning
+   - Specify clear spatial relationships ("woman wearing the blue dress", "character in the forest scene")
+   - Maintain element identity while creating natural integration
    - Use consistent naming/descriptions throughout
-
-3. Apply Nano Banana multi-character best practices:
-   - Use descriptive language for positioning ("on the left", "behind the table", "to the right of Character A")
-   - Keep character roles and identities consistent
-   - Specify clear spatial relationships between characters
-   - Create natural interactions and compositions
 
 USER REQUEST: "${prompt}"
 
 For each variation, provide:
 - The specific camera angle and composition
-- Clear positioning for each character ("Character A is sitting on the left side", "Character B is on the right side")
-- Environmental context that supports both characters
-- Character descriptions that maintain their individual identities
-- Specific actions and interactions between characters
+- Clear element integration ("woman from image 2 wearing dress from image 1", "character positioned in scene from image 3")
+- Environmental context that supports all elements
+- Element descriptions that maintain their individual identities
+- Natural interactions and realistic compositions
 
 CRITICAL REQUIREMENTS FOR NANO BANANA:
-- Each variation should show BOTH characters clearly with distinct positioning
-- Use descriptive language to specify character placement and actions
-- Maintain character consistency and recognition throughout
-- Create natural, believable character interactions
-- Use cinematic compositions that showcase both characters effectively
-- Prevent character blending by using strong descriptive references
+- Each variation should show ALL elements clearly integrated
+- Use descriptive language to specify element placement and relationships
+- Maintain element consistency and recognition throughout
+- Create natural, believable compositions
+- Use cinematic compositions that showcase all elements effectively
+- Prevent element blending by using strong descriptive references
 
-NANO BANANA PROMPTING TIPS:
-- Be descriptive about character positions and actions
-- Keep character names/roles consistent
-- Specify spatial relationships clearly
+NANO BANANA COMPOSITION TIPS:
+- Be descriptive about element positions and relationships
+- Keep element names/roles consistent
+- Specify spatial relationships clearly ("wearing", "in", "on", "with", "beside")
 - Work iteratively if needed for complex compositions
+- Focus on realistic integration of elements
 
-RESPECT THE USER'S CREATIVE VISION while ensuring both characters are properly integrated using Nano Banana best practices.`;
+RESPECT THE USER'S CREATIVE VISION while ensuring all elements are properly integrated using Nano Banana best practices.`;
     } else if (isMultiImageVariation) {
       enhancedPrompt = `MULTI-IMAGE VARIATION ANALYSIS - SEPARATE CHARACTER VARIATIONS
 
@@ -758,11 +760,15 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             // Add general quality improvements
             nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
             
-            // Add character-specific prompts based on combination mode
+            // Add element-specific prompts based on combination mode
             if (isCharacterCombination) {
-              nanoBananaPrompt += ', maintain character consistency and recognition';
-              nanoBananaPrompt += ', create natural believable character interactions';
-              nanoBananaPrompt += ', use descriptive positioning (on the left, behind the table, to the right)';
+              // Advanced composition prompts for multiple elements
+              nanoBananaPrompt += ', maintain element consistency and recognition';
+              nanoBananaPrompt += ', create natural believable element integration';
+              nanoBananaPrompt += ', use descriptive positioning and relationships';
+              nanoBananaPrompt += ', realistic composition with proper element placement';
+              nanoBananaPrompt += ', professional e-commerce style composition';
+              nanoBananaPrompt += ', clear spatial relationships between elements';
             } else {
               // Add subtle negative prompts to prevent character duplication for single character
               nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
@@ -771,15 +777,17 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             if (isCharacterCombination) {
-              console.log(`🎭 [CHARACTER COMBINATION] Applied Nano Banana multi-character best practices`);
-              console.log(`📝 [CHARACTER COMBINATION] Using enhanced prompt structure with character separation`);
-              console.log(`🔗 [CHARACTER COMBINATION] Preventing character blending with identity preservation`);
-              console.log(`⚙️ [CHARACTER COMBINATION] Using multi-character specific parameters:`);
-              console.log(`   - aspect_ratio: 1:1 (square for better positioning)`);
-              console.log(`   - guidance_scale: 7.5 (higher adherence to prompt)`);
-              console.log(`   - preserve_identity: true (maintain character consistency)`);
-              console.log(`   - character_separation: 0.7 (prevent blending)`);
-              console.log(`   - spatial_awareness: true (better positioning)`);
+              console.log(`🎨 [ADVANCED COMPOSITION] Applied Nano Banana multi-element best practices`);
+              console.log(`📝 [ADVANCED COMPOSITION] Using enhanced prompt structure with element separation`);
+              console.log(`🔗 [ADVANCED COMPOSITION] Preventing element blending with identity preservation`);
+              console.log(`⚙️ [ADVANCED COMPOSITION] Using advanced composition specific parameters:`);
+              console.log(`   - aspect_ratio: 1:1 (square for better element positioning)`);
+              console.log(`   - guidance_scale: 8.0 (higher adherence to composition prompt)`);
+              console.log(`   - preserve_identity: true (maintain element consistency)`);
+              console.log(`   - character_separation: 0.8 (prevent element blending)`);
+              console.log(`   - spatial_awareness: true (better element positioning)`);
+              console.log(`   - composition_mode: advanced (enable advanced composition)`);
+              console.log(`   - element_integration: true (enable element integration)`);
             }
             
             const result = await retryWithBackoff(async () => {
@@ -789,44 +797,46 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               const modelName = "fal-ai/nano-banana/edit";
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
-              console.log(`🎯 [CHARACTER COMBINATION] Calling Nano Banana API for ${variation.angle}`);
-              console.log(`📝 [CHARACTER COMBINATION] Prompt: ${nanoBananaPrompt}`);
-              console.log(`🖼️ [CHARACTER COMBINATION] Image URLs count: ${imageUrls.length}`);
-              console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
+              console.log(`🎯 [ADVANCED COMPOSITION] Calling Nano Banana API for ${variation.angle}`);
+              console.log(`📝 [ADVANCED COMPOSITION] Prompt: ${nanoBananaPrompt}`);
+              console.log(`🖼️ [ADVANCED COMPOSITION] Image URLs count: ${imageUrls.length}`);
+              console.log(`🔗 [ADVANCED COMPOSITION] Image URLs:`, imageUrls);
               
               // Try enhanced parameters first, fallback to basic if needed
               let result;
               try {
-                console.log(`🚀 [CHARACTER COMBINATION] Attempting with enhanced multi-character parameters...`);
+                console.log(`🚀 [ADVANCED COMPOSITION] Attempting with enhanced multi-element parameters...`);
                 result = await fal.subscribe(modelName, {
                 input: {
                   prompt: nanoBananaPrompt,
-                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                  image_urls: imageUrls, // Use all uploaded image URLs for element combination
                   num_images: 1,
                   output_format: "jpeg",
-                  // Critical parameters for multi-character generation
-                  aspect_ratio: "1:1", // Square aspect ratio for better character positioning
-                  guidance_scale: 7.5, // Higher guidance for better prompt adherence
+                  // Critical parameters for advanced composition
+                  aspect_ratio: "1:1", // Square aspect ratio for better element positioning
+                  guidance_scale: 8.0, // Higher guidance for better composition adherence
                   seed: Math.floor(Math.random() * 1000000), // Random seed for variation
-                  // Identity preservation settings
-                  preserve_identity: true, // Maintain character consistency
-                  strength: 0.8, // Balance between reference and prompt
-                  // Multi-character specific settings
-                  enable_multi_character: true, // Enable multi-character mode
-                  character_separation: 0.7, // Prevent character blending
-                  spatial_awareness: true // Better spatial understanding
+                  // Element preservation settings
+                  preserve_identity: true, // Maintain element consistency
+                  strength: 0.75, // Balance between reference and prompt for composition
+                  // Advanced composition specific settings
+                  enable_multi_character: true, // Enable multi-element mode
+                  character_separation: 0.8, // Prevent element blending
+                  spatial_awareness: true, // Better spatial understanding
+                  composition_mode: "advanced", // Advanced composition mode
+                  element_integration: true // Enable element integration
                 },
                 logs: true,
                 onQueueUpdate: (update) => {
                   if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                    console.log(`📊 [ADVANCED COMPOSITION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                   }
                 },
                 });
-                console.log(`✅ [CHARACTER COMBINATION] Enhanced parameters successful!`);
+                console.log(`✅ [ADVANCED COMPOSITION] Enhanced parameters successful!`);
               } catch (enhancedError) {
-                console.log(`⚠️ [CHARACTER COMBINATION] Enhanced parameters failed, trying basic parameters...`);
-                console.log(`🔍 [CHARACTER COMBINATION] Enhanced error:`, enhancedError);
+                console.log(`⚠️ [ADVANCED COMPOSITION] Enhanced parameters failed, trying basic parameters...`);
+                console.log(`🔍 [ADVANCED COMPOSITION] Enhanced error:`, enhancedError);
                 
                 // Fallback to basic parameters
                 result = await fal.subscribe(modelName, {
@@ -843,7 +853,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                 logs: true,
                 onQueueUpdate: (update) => {
                   if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                    console.log(`📊 [ADVANCED COMPOSITION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                   }
                 },
                 });
