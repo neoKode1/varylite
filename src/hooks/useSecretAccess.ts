@@ -18,43 +18,11 @@ export const useSecretAccess = () => {
   const [loading, setLoading] = useState(true);
 
   const checkSecretAccess = useCallback(async () => {
-    if (!user) {
-      setHasSecretAccess(false);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setHasSecretAccess(false);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/promo', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data: SecretAccessData = await response.json();
-        setHasSecretAccess(data.hasAccess);
-        setIsAdmin(data.isAdmin || false);
-        setAdminUser(data.adminUser || null);
-      } else {
-        setHasSecretAccess(false);
-        setIsAdmin(false);
-        setAdminUser(null);
-      }
-    } catch (error) {
-      console.error('Error checking secret access:', error);
-      setHasSecretAccess(false);
-    } finally {
-      setLoading(false);
-    }
+    // Give everyone access - no restrictions
+    setHasSecretAccess(true);
+    setIsAdmin(false);
+    setAdminUser(null);
+    setLoading(false);
   }, [user]);
 
   // Check access when user changes
@@ -63,10 +31,10 @@ export const useSecretAccess = () => {
   }, [checkSecretAccess]);
 
   return {
-    hasSecretAccess: hasSecretAccess === true,
-    isAdmin,
-    adminUser,
-    loading,
+    hasSecretAccess: true, // Always true - no restrictions
+    isAdmin: false,
+    adminUser: null,
+    loading: false,
     checkSecretAccess
   };
 };

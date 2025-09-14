@@ -57,52 +57,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the current session
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 }
-      );
-    }
-
-    // Hardcoded admin access for Chad (@1deeptechnology)
-    if (user.email === '1deeptechnology@gmail.com') {
-      return NextResponse.json({ 
-        hasAccess: true, 
-        isAdmin: true,
-        adminUser: 'Chad (@1deeptechnology)'
-      });
-    }
-
-    // Check if user has secret access via promo codes
-    const { data, error } = await supabase.rpc('user_has_secret_access', {
-      user_uuid: user.id
+    // Give everyone access - no restrictions
+    return NextResponse.json({ 
+      hasAccess: true, // Always true - no restrictions
+      isAdmin: false,
+      adminUser: null
     });
-
-    if (error) {
-      console.error('Error checking secret access:', error);
-      return NextResponse.json(
-        { error: 'Failed to check access' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ hasAccess: data });
   } catch (error) {
     console.error('Error in promo access check API:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        hasAccess: true, // Even on error, give access
+        isAdmin: false,
+        adminUser: null,
+        error: 'Internal server error' 
+      },
       { status: 500 }
     );
   }
