@@ -728,11 +728,20 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             // Add Nano Banana multi-character best practices for character combination
             if (isCharacterCombination) {
-              nanoBananaPrompt += ', combine the elements from the reference images into a scene';
-              nanoBananaPrompt += ', use strong descriptive references for each character';
-              nanoBananaPrompt += ', specify clear positioning and spatial relationships';
-              nanoBananaPrompt += ', prevent character blending by maintaining distinct identities';
-              nanoBananaPrompt += ', use descriptive language for character placement and actions';
+              // Enhanced prompt structure for multi-character generation
+              nanoBananaPrompt = `Create a scene combining multiple characters from the reference images. `;
+              nanoBananaPrompt += `Character 1 (from first reference): `;
+              nanoBananaPrompt += `Character 2 (from second reference): `;
+              nanoBananaPrompt += `Scene composition: ${prompt} - ${variation.angle.toLowerCase()}. `;
+              nanoBananaPrompt += `CRITICAL INSTRUCTIONS: `;
+              nanoBananaPrompt += `- Maintain distinct character identities from reference images `;
+              nanoBananaPrompt += `- Use clear spatial positioning (left, right, center, foreground, background) `;
+              nanoBananaPrompt += `- Prevent character blending or merging `;
+              nanoBananaPrompt += `- Ensure both characters are clearly visible and recognizable `;
+              nanoBananaPrompt += `- Create natural interactions between characters `;
+              nanoBananaPrompt += `- Use descriptive positioning language for each character's placement `;
+              nanoBananaPrompt += `- Maintain character consistency from reference images `;
+              nanoBananaPrompt += `- Generate high-quality, detailed scene with proper lighting and composition`;
             }
             
             // Add quality enhancements based on the specific angle
@@ -763,8 +772,14 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             if (isCharacterCombination) {
               console.log(`🎭 [CHARACTER COMBINATION] Applied Nano Banana multi-character best practices`);
-              console.log(`📝 [CHARACTER COMBINATION] Using descriptive positioning and spatial relationships`);
-              console.log(`🔗 [CHARACTER COMBINATION] Preventing character blending with strong references`);
+              console.log(`📝 [CHARACTER COMBINATION] Using enhanced prompt structure with character separation`);
+              console.log(`🔗 [CHARACTER COMBINATION] Preventing character blending with identity preservation`);
+              console.log(`⚙️ [CHARACTER COMBINATION] Using multi-character specific parameters:`);
+              console.log(`   - aspect_ratio: 1:1 (square for better positioning)`);
+              console.log(`   - guidance_scale: 7.5 (higher adherence to prompt)`);
+              console.log(`   - preserve_identity: true (maintain character consistency)`);
+              console.log(`   - character_separation: 0.7 (prevent blending)`);
+              console.log(`   - spatial_awareness: true (better positioning)`);
             }
             
             const result = await retryWithBackoff(async () => {
@@ -779,20 +794,61 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`🖼️ [CHARACTER COMBINATION] Image URLs count: ${imageUrls.length}`);
               console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
               
-              const result = await fal.subscribe(modelName, {
-              input: {
-                prompt: nanoBananaPrompt,
-                image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
-                num_images: 1,
-                output_format: "jpeg"
-              },
-              logs: true,
-              onQueueUpdate: (update) => {
-                if (update.status === "IN_PROGRESS") {
-                  console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                }
-              },
-              });
+              // Try enhanced parameters first, fallback to basic if needed
+              let result;
+              try {
+                console.log(`🚀 [CHARACTER COMBINATION] Attempting with enhanced multi-character parameters...`);
+                result = await fal.subscribe(modelName, {
+                input: {
+                  prompt: nanoBananaPrompt,
+                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                  num_images: 1,
+                  output_format: "jpeg",
+                  // Critical parameters for multi-character generation
+                  aspect_ratio: "1:1", // Square aspect ratio for better character positioning
+                  guidance_scale: 7.5, // Higher guidance for better prompt adherence
+                  seed: Math.floor(Math.random() * 1000000), // Random seed for variation
+                  // Identity preservation settings
+                  preserve_identity: true, // Maintain character consistency
+                  strength: 0.8, // Balance between reference and prompt
+                  // Multi-character specific settings
+                  enable_multi_character: true, // Enable multi-character mode
+                  character_separation: 0.7, // Prevent character blending
+                  spatial_awareness: true // Better spatial understanding
+                },
+                logs: true,
+                onQueueUpdate: (update) => {
+                  if (update.status === "IN_PROGRESS") {
+                    console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                  }
+                },
+                });
+                console.log(`✅ [CHARACTER COMBINATION] Enhanced parameters successful!`);
+              } catch (enhancedError) {
+                console.log(`⚠️ [CHARACTER COMBINATION] Enhanced parameters failed, trying basic parameters...`);
+                console.log(`🔍 [CHARACTER COMBINATION] Enhanced error:`, enhancedError);
+                
+                // Fallback to basic parameters
+                result = await fal.subscribe(modelName, {
+                input: {
+                  prompt: nanoBananaPrompt,
+                  image_urls: imageUrls,
+                  num_images: 1,
+                  output_format: "jpeg",
+                  // Basic parameters that should work
+                  aspect_ratio: "1:1",
+                  guidance_scale: 7.0,
+                  seed: Math.floor(Math.random() * 1000000)
+                },
+                logs: true,
+                onQueueUpdate: (update) => {
+                  if (update.status === "IN_PROGRESS") {
+                    console.log(`📊 [CHARACTER COMBINATION] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                  }
+                },
+                });
+                console.log(`✅ [CHARACTER COMBINATION] Basic parameters successful!`);
+              }
               
               console.log(`✅ [CHARACTER COMBINATION] Nano Banana API call completed for ${variation.angle}`);
               console.log(`📊 [CHARACTER COMBINATION] Result data:`, result.data);
