@@ -9,7 +9,7 @@ fal.config({
 // Model configurations for image editing models
 const MODEL_CONFIGS = {
   'nano-banana-edit': {
-    endpoint: 'fal-ai/nano-banana-edit',
+    endpoint: 'fal-ai/nano-banana/edit',
     maxPromptLength: 200,
     supportedOperations: ['edit', 'inpaint', 'outpaint']
   },
@@ -23,7 +23,17 @@ const MODEL_CONFIGS = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { model, imageUrl, prompt, operation = 'edit', maskUrl, strength = 0.8, seed } = body;
+    const { 
+      model, 
+      imageUrls, 
+      prompt, 
+      numImages = 1, 
+      outputFormat = 'jpeg',
+      operation = 'edit', 
+      maskUrl, 
+      strength = 0.8, 
+      seed 
+    } = body;
 
     if (!model || !MODEL_CONFIGS[model as keyof typeof MODEL_CONFIGS]) {
       return NextResponse.json({ 
@@ -32,8 +42,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (!imageUrl) {
-      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return NextResponse.json({ error: 'Image URLs array is required' }, { status: 400 });
     }
 
     if (!prompt) {
@@ -57,32 +67,39 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`🚀 FAL Image Edit Request - Model: ${model}`, { 
-      imageUrl, 
+      imageUrls, 
       prompt, 
+      numImages,
+      outputFormat,
       operation, 
       maskUrl, 
       strength, 
       seed 
     });
 
-    // Prepare input based on model
+    // Prepare input based on FAL nano-banana/edit schema
     let input: any = {
-      image_url: imageUrl,
+      image_urls: imageUrls,
       prompt,
-      operation
+      num_images: numImages,
+      output_format: outputFormat
     };
 
-    // Add model-specific parameters
-    if (maskUrl && (operation === 'inpaint' || operation === 'outpaint')) {
-      input.mask_url = maskUrl;
-    }
+    // Add model-specific parameters for other models
+    if (model !== 'nano-banana-edit') {
+      input.operation = operation;
+      
+      if (maskUrl && (operation === 'inpaint' || operation === 'outpaint')) {
+        input.mask_url = maskUrl;
+      }
 
-    if (strength !== undefined) {
-      input.strength = strength;
-    }
+      if (strength !== undefined) {
+        input.strength = strength;
+      }
 
-    if (seed) {
-      input.seed = seed;
+      if (seed) {
+        input.seed = seed;
+      }
     }
 
     // Submit the request to FAL
@@ -106,8 +123,10 @@ export async function POST(request: NextRequest) {
       data: result.data,
       requestId: result.requestId,
       model,
-      imageUrl,
+      imageUrls,
       prompt,
+      numImages,
+      outputFormat,
       operation
     });
 

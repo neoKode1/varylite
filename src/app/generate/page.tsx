@@ -2891,20 +2891,18 @@ export default function Home() {
       
       setProcessing(prev => ({ ...prev, progress: 60, currentStep: 'Generating variations...' }));
       
-      // Use FAL API directly for nano-banana
-      const response = await fetch('/api/fal', {
+      // Use FAL Image Edit API for nano-banana
+      const response = await fetch('/api/fal/image-edit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'fal-ai/nano-banana/edit',
-          input: {
-            image_urls: [imageUrl],
-            prompt: prompt.trim() || 'Generate 4 new variations of this character from different angles',
-            num_images: 1,
-            output_format: 'jpeg'
-          }
+          model: 'nano-banana-edit',
+          imageUrls: [imageUrl],
+          prompt: prompt.trim() || 'Generate 4 new variations of this character from different angles',
+          numImages: 1,
+          outputFormat: 'jpeg'
         }),
       });
 
