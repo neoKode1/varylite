@@ -386,7 +386,36 @@ export async function POST(request: NextRequest) {
     
     // Determine if this is a "vary" request (single image from URL) vs multi-image upload
     const isVaryRequest = images.length === 1 && prompt.includes('Generate 4 new variations');
-    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : 'MULTI-IMAGE upload'}`);
+    
+    // Intelligent character combination detection based on user intent
+    const isCharacterCombination = images.length >= 2 && (
+      // Explicit character combination keywords
+      prompt.toLowerCase().includes('combine') ||
+      prompt.toLowerCase().includes('together') ||
+      prompt.toLowerCase().includes('both characters') ||
+      prompt.toLowerCase().includes('multiple characters') ||
+      prompt.toLowerCase().includes('scene with') ||
+      prompt.toLowerCase().includes('add to scene') ||
+      prompt.toLowerCase().includes('put together') ||
+      prompt.toLowerCase().includes('merge') ||
+      prompt.toLowerCase().includes('blend') ||
+      // Scene-based keywords
+      prompt.toLowerCase().includes('scene') ||
+      prompt.toLowerCase().includes('environment') ||
+      prompt.toLowerCase().includes('setting') ||
+      prompt.toLowerCase().includes('background') ||
+      // Interaction keywords
+      prompt.toLowerCase().includes('interaction') ||
+      prompt.toLowerCase().includes('conversation') ||
+      prompt.toLowerCase().includes('meeting') ||
+      prompt.toLowerCase().includes('encounter')
+    );
+    
+    const isMultiImageVariation = images.length >= 2 && !isCharacterCombination;
+    
+    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : isCharacterCombination ? 'CHARACTER COMBINATION' : isMultiImageVariation ? 'MULTI-IMAGE VARIATION' : 'SINGLE IMAGE'}`);
+    console.log(`🎭 Character combination detected: ${isCharacterCombination}`);
+    console.log(`🖼️ Multi-image variation mode: ${isMultiImageVariation}`);
     
     // Analyze the original prompt for specific instructions
     const hasBackgroundRemoval = prompt.toLowerCase().includes('remove background') || 
@@ -399,8 +428,79 @@ export async function POST(request: NextRequest) {
     
     let enhancedPrompt;
     
-    // Check for character style transformations and enhance accordingly
-    if (prompt.includes('Make into Freddy Krueger style')) {
+    // Check for character combination scenarios
+    if (isCharacterCombination) {
+      enhancedPrompt = `CHARACTER COMBINATION ANALYSIS - MULTIPLE IMAGES DETECTED
+
+You are analyzing ${images.length} separate character images to create combined character variations. Each image represents a different character that should be integrated into cohesive scenes.
+
+ANALYSIS INSTRUCTIONS:
+1. Analyze each image separately to understand:
+   - Character 1: Physical features, clothing, pose, expression, style
+   - Character 2: Physical features, clothing, pose, expression, style
+   - Additional characters if present
+
+2. Identify key characteristics for combination:
+   - Distinctive features of each character
+   - Compatible styling elements
+   - Appropriate interaction scenarios
+   - Environmental context that works for both characters
+
+3. Create 4 variations that combine these characters naturally:
+   - Maintain each character's unique identity
+   - Show realistic interactions between characters
+   - Use appropriate camera angles and compositions
+   - Ensure both characters are clearly visible and recognizable
+
+USER REQUEST: "${prompt}"
+
+For each variation, provide:
+- The specific camera angle and composition
+- How the characters interact or are positioned
+- Environmental context that supports both characters
+- Character descriptions that maintain their individual identities
+
+CRITICAL REQUIREMENTS:
+- Each variation should show BOTH characters clearly
+- Maintain character consistency and recognition
+- Create natural, believable character interactions
+- Use cinematic compositions that showcase both characters effectively
+
+RESPECT THE USER'S CREATIVE VISION while ensuring both characters are properly integrated.`;
+    } else if (isMultiImageVariation) {
+      enhancedPrompt = `MULTI-IMAGE VARIATION ANALYSIS - SEPARATE CHARACTER VARIATIONS
+
+You are analyzing ${images.length} separate character images to create individual character variations. Each image represents a different character that should be varied independently, not combined.
+
+ANALYSIS INSTRUCTIONS:
+1. Analyze each image separately to understand:
+   - Character 1: Physical features, clothing, pose, expression, style
+   - Character 2: Physical features, clothing, pose, expression, style
+   - Additional characters if present
+
+2. Create 4 variations that focus on the PRIMARY character (first image):
+   - Use the first character as the main subject
+   - Apply the user's requested variations to this character
+   - Other characters can be referenced for style consistency if needed
+   - Focus on individual character development, not combination
+
+USER REQUEST: "${prompt}"
+
+For each variation, provide:
+- The specific camera angle and composition for the main character
+- Character description that focuses on the primary subject
+- Environmental context that supports the character
+- Individual character development and variation
+
+CRITICAL REQUIREMENTS:
+- Focus on the PRIMARY character (first image) for variations
+- Create individual character variations, not combinations
+- Maintain character consistency and recognition
+- Use cinematic compositions that showcase the main character effectively
+- Other uploaded characters serve as reference/style guides only
+
+RESPECT THE USER'S CREATIVE VISION while focusing on individual character variation.`;
+    } else if (prompt.includes('Make into Freddy Krueger style')) {
       enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
 
 CHARACTER STYLE TRANSFORMATION - FREDDY KRUGER:
@@ -519,11 +619,26 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     console.log('🚀 Sending request to Gemini API...');
     console.log(`📊 Circuit breaker state: ${circuitBreakerState.isOpen ? 'OPEN' : 'CLOSED'} (failures: ${circuitBreakerState.failures})`);
     
+    if (isCharacterCombination) {
+      console.log(`🎭 [CHARACTER COMBINATION] Analyzing ${images.length} separate character images`);
+      console.log(`📝 [CHARACTER COMBINATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
+      console.log(`🖼️ [CHARACTER COMBINATION] Image parts prepared: ${imageParts.length} images`);
+    } else if (isMultiImageVariation) {
+      console.log(`🖼️ [MULTI-IMAGE VARIATION] Analyzing ${images.length} separate character images for individual variations`);
+      console.log(`📝 [MULTI-IMAGE VARIATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
+      console.log(`🖼️ [MULTI-IMAGE VARIATION] Image parts prepared: ${imageParts.length} images`);
+    }
+    
     // Generate content with text and all images using retry mechanism with model fallback
     let result;
     try {
       result = await retryWithBackoff(async () => {
         console.log('🔄 Attempting Gemini API call...');
+        if (isCharacterCombination) {
+          console.log('🎭 [CHARACTER COMBINATION] Sending character combination analysis to Gemini...');
+        } else if (isMultiImageVariation) {
+          console.log('🖼️ [MULTI-IMAGE VARIATION] Sending multi-image variation analysis to Gemini...');
+        }
         return await model.generateContent([enhancedPrompt, ...imageParts]);
       });
     } catch (error) {
@@ -537,7 +652,13 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     const text = response.text();
     console.log(`📊 Response text length: ${text ? text.length : 0} characters`);
     
-    if (isVaryRequest) {
+    if (isCharacterCombination) {
+      console.log('🎭 [CHARACTER COMBINATION] Gemini analysis completed for character combination');
+      console.log(`📊 [CHARACTER COMBINATION] Analysis preview: ${text.substring(0, 300)}...`);
+    } else if (isMultiImageVariation) {
+      console.log('🖼️ [MULTI-IMAGE VARIATION] Gemini analysis completed for multi-image variation');
+      console.log(`📊 [MULTI-IMAGE VARIATION] Analysis preview: ${text.substring(0, 300)}...`);
+    } else if (isVaryRequest) {
       console.log('🔍 Enhanced character analysis completed for Vary request');
       console.log(`📊 Analysis preview: ${text.substring(0, 200)}...`);
     }
