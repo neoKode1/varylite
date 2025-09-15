@@ -7232,6 +7232,19 @@ export default function Home() {
                     </div>
                 </div>
 
+                {/* Aspect Ratio & Settings Button - Show when model is selected and image is uploaded */}
+                {generationMode && uploadedFiles.some(file => file.fileType === 'image') && (
+                  <div className="text-center mt-3">
+                    <button
+                      onClick={() => setShowAspectRatioModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Aspect Ratio & Settings
+                    </button>
+                  </div>
+                )}
+
                 {/* Preset Buttons - Compact */}
                 <div className="flex gap-1">
                   <button
