@@ -243,14 +243,14 @@
        display: flex !important;
        flex-direction: column !important;
        align-items: stretch !important;
-       gap: 12px !important;
+       gap: 8px !important;
        background: transparent !important;
        border: none !important;
        border-radius: 16px !important;
-       padding: 16px 20px !important;
+       padding: 12px 16px !important;
        backdrop-filter: none !important;
        transition: all 0.2s ease !important;
-       min-height: 80px !important;
+       min-height: 60px !important;
        width: 100% !important;
        margin: 0 !important;
        box-shadow: none !important;
@@ -327,6 +327,22 @@
     /* Hide desktop prompt input on mobile when using fixed chat */
     .desktop-prompt-input {
       display: none !important;
+    }
+    
+    /* Mobile Select Dropdown Styling */
+    select {
+      background-color: #1f2937 !important;
+      color: white !important;
+    }
+    
+    select option {
+      background-color: #1f2937 !important;
+      color: white !important;
+      padding: 8px 12px !important;
+    }
+    
+    select option:hover {
+      background-color: #374151 !important;
     }
     
     /* Auto-expand textarea */

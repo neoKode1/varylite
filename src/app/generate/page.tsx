@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User, Settings } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import UserCreditDisplay, { CreditDisplayRef } from '@/components/UserCreditDisplay';
 import { useCreditCheck } from '@/hooks/useCreditCheck';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 // StoredVariation type (extends CharacterVariation with additional properties)
@@ -893,7 +892,6 @@ export default function Home() {
   const { gallery, addToGallery, removeFromGallery, clearGallery, removeDuplicates, migrateLocalStorageToDatabase, saveToAccount } = useUserGallery();
   const { checkUserCredits, useCredits, checking: creditChecking, using: creditUsing } = useCreditCheck();
   const { isMobile, isClient } = useMobileDetection();
-  const creditDisplayRef = useRef<CreditDisplayRef>(null);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -3032,12 +3030,6 @@ export default function Home() {
     return true;
   };
 
-  // Helper function to refresh credit display
-  const refreshCreditDisplay = () => {
-    setTimeout(() => {
-      creditDisplayRef.current?.refresh();
-    }, 1000);
-  };
 
   const handleModelGeneration = async () => {
     if (!generationMode) {
@@ -3337,7 +3329,6 @@ export default function Home() {
               if (response.ok) {
                 const result = await response.json();
                 console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-                refreshCreditDisplay();
               }
             } catch (error) {
               console.error('Failed to deduct credits:', error);
@@ -3932,7 +3923,6 @@ export default function Home() {
             if (response.ok) {
               const result = await response.json();
               console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-              refreshCreditDisplay();
             }
           } catch (error) {
             console.error('Failed to deduct credits:', error);
@@ -4107,7 +4097,6 @@ export default function Home() {
             if (response.ok) {
               const result = await response.json();
               console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-              refreshCreditDisplay();
             }
           } catch (error) {
             console.error('Failed to deduct credits:', error);
@@ -5047,7 +5036,6 @@ export default function Home() {
           if (response.ok) {
             const result = await response.json();
             console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-            refreshCreditDisplay();
           }
         } catch (error) {
           console.error('Failed to deduct credits:', error);
@@ -6072,12 +6060,6 @@ export default function Home() {
             {/* Usage Counter */}
             <UsageCounter onSignUpClick={handleSignUpClick} />
             
-            {/* Credit Display - Compact */}
-            {user && (
-              <div className="mb-6">
-                <UserCreditDisplay ref={creditDisplayRef} compact={true} />
-              </div>
-            )}
             
         {/* Main Content Container - Centered and Unified */}
         <div className="w-full max-w-6xl mx-auto px-3 lg:px-4 py-6 lg:py-8 lg:pt-16 flex flex-col items-center">
@@ -6090,16 +6072,6 @@ export default function Home() {
         <div className="flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 mobile-content-with-chat lg:pb-6">
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
-            {/* Mobile Feature Info Banner */}
-            {isClient && isMobile && (
-              <div className="w-full mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-                <div className="flex items-center gap-2 text-blue-200 text-sm">
-                  <span className="text-blue-400">📱</span>
-                  <span className="font-medium">Mobile Mode:</span>
-                  <span>Image generation only. Video features available on desktop.</span>
-                </div>
-              </div>
-            )}
 
             {/* Usage Statistics - Left Corner */}
             {userStats.totalGenerations > 0 && (
@@ -6276,22 +6248,17 @@ export default function Home() {
             )}
 
             {/* Mobile Floating Input - Match Community Page Style */}
+            {!showGallery && (
             <div className="mobile-chat-interface md:hidden" data-input-area>
-              {/* Mobile Help Banner */}
-              <div className="mb-3 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                <div className="text-yellow-200 text-xs">
-                  <div className="font-medium mb-1">📱 Mobile Tips:</div>
-                  <div>• Upload images under 10MB</div>
-                  <div>• Use JPG, PNG, or WebP formats</div>
-                  <div>• Image generation only (video on desktop)</div>
-                </div>
-              </div>
 
               {/* Quick Shots Button - Only show when image is uploaded */}
               {uploadedFiles.length > 0 && uploadedFiles.some(file => file.fileType === 'image') && (
                 <div className="mb-3">
                   <button
-                    onClick={() => setShowPresetModal(true)}
+                    onClick={() => {
+                      setActivePresetTab('shot');
+                      setShowPresetModal(true);
+                    }}
                     className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Camera className="w-5 h-5" />
@@ -6302,7 +6269,7 @@ export default function Home() {
               
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
-                <div className="mb-3">
+                <div className="mb-2">
                   <div className="flex gap-2 items-center overflow-x-auto pt-3">
                     {/* 4 Image Upload Slots - Mobile */}
                     <div className="flex gap-2 flex-shrink-0 pb-3">
@@ -6404,26 +6371,23 @@ export default function Home() {
                           console.log('🔄 [DROPDOWN] Mobile model selection changed to:', e.target.value);
                           setGenerationMode(e.target.value as GenerationMode);
                         }}
-                        className="px-3 py-2 bg-transparent border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200 flex-shrink-0 min-w-[120px]"
+                        className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 flex-shrink-0 min-w-[120px]"
+                        style={{ 
+                          backgroundColor: '#1f2937',
+                          color: 'white'
+                        }}
                       >
                         <option value="">Select Model</option>
-                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length === 1 && (
+                        {uploadedFiles.some(file => file.fileType === 'image') && (
                           <>
-                            <option value="nano-banana">Nano Banana</option>
-                            <option value="runway-t2i">Runway T2I</option>
-                          </>
-                        )}
-                        {uploadedFiles.some(file => file.fileType === 'image') && uploadedFiles.length > 1 && (
-                          <>
-                            <option value="nano-banana">Nano Banana</option>
-                            <option value="runway-t2i">Runway T2I</option>
+                            <option value="nano-banana">Nano Banana Edit</option>
+                            <option value="seedream-4-edit">SeedDance 4 Edit</option>
+                            <option value="gemini-25-flash-image-edit">Gemini Flash Edit</option>
                           </>
                         )}
                         {uploadedFiles.some(file => file.fileType === 'video') && (
                           <>
-                            <option value="veo3-fast">Veo3 Fast</option>
-                            <option value="minimax-2.0">Minimax 2.0</option>
-                            <option value="kling-2.1-master">Kling 2.1</option>
+                            <option value="minimax-2.0">MiniMax End Frame</option>
                           </>
                         )}
                       </select>
@@ -6431,23 +6395,25 @@ export default function Home() {
                   </div>
                   
                   {/* Text Input - Directly below the top container */}
-                <textarea
-                  id="prompt-mobile"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    hasVideoFiles 
-                      ? "Describe the scene changes..." 
-                      : processingMode === 'endframe'
-                      ? "Describe the transition..."
-                      : uploadedFiles.length === 0
-                      ? "Describe the image you want to generate..."
-                      : "Describe the variations you want..."
-                  }
-                    className="mobile-chat-input mt-3"
-                  rows={1}
-                  style={{ fontSize: '16px' }}
-                />
+                <div className="mt-2">
+                  <textarea
+                    id="prompt-mobile"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder={
+                      hasVideoFiles 
+                        ? "Describe the scene changes..." 
+                        : processingMode === 'endframe'
+                        ? "Describe the transition..."
+                        : uploadedFiles.length === 0
+                        ? "Describe the image you want to generate..."
+                        : "Describe the variations you want..."
+                    }
+                    className="mobile-chat-input w-full bg-gray-800/50 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={2}
+                    style={{ fontSize: '16px', minHeight: '44px' }}
+                  />
+                </div>
                 
                 {/* Token Warning Message */}
                 {showTokenWarning && (
@@ -6518,6 +6484,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Desktop Generation Panel */}
             <div className="hidden lg:block generation-panel mb-6 lg:mb-8" style={{ top: '-200px' }}>
@@ -8273,8 +8240,8 @@ export default function Home() {
 
       {/* Prompt Guide Modal */}
       {showPromptGuide && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+          <div className="bg-gray-900 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">📸 Prompt Guide: Camera Angles & Background Changes</h2>
@@ -8360,8 +8327,8 @@ export default function Home() {
 
       {/* Preset Modal */}
       {showPresetModal && activePresetTab && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+          <div className="bg-gray-900 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -8547,6 +8514,51 @@ export default function Home() {
         onSaveSettings={handleSaveGenerationSettings}
         currentSettings={generationSettings}
       />
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4">
+        <div className="flex bg-gray-800 rounded-xl overflow-hidden">
+          <button 
+            onClick={() => {
+              if (pathname === '/generate') {
+                // If already on generate page, close gallery to show generation interface
+                setShowGallery(false);
+              } else {
+                // Navigate to generate page
+                router.push('/generate');
+              }
+            }}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/generate' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Grid3X3 className="w-5 h-5" />
+            <span className="text-xs font-medium">Home</span>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/community')}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/community' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs font-medium">Chat</span>
+          </button>
+          
+          <button 
+            onClick={() => setShowGallery(!showGallery)}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${showGallery ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
+          >
+            <FolderOpen className="w-5 h-5" />
+            <span className="text-xs font-medium">Library</span>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/profile')}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${pathname === '/profile' ? 'bg-gray-600/80 text-gray-200' : 'text-gray-400 hover:text-white'}`}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-xs font-medium">Profile</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

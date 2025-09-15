@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { AdminPromoModal } from '@/components/AdminPromoModal';
 import { AdminPromoUsersPanel } from '@/components/AdminPromoUsersPanel';
-import UserCreditDisplay from '@/components/UserCreditDisplay';
+import UserCreditDisplay, { CreditDisplayRef } from '@/components/UserCreditDisplay';
 import { 
   User, 
   Settings, 
@@ -103,6 +103,8 @@ export default function ProfilePage() {
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showMobileTips, setShowMobileTips] = useState(false);
+  const creditDisplayRef = useRef<CreditDisplayRef>(null);
 
   // Redirect if not authenticated (but wait for auth to finish loading)
   useEffect(() => {
@@ -644,6 +646,46 @@ export default function ProfilePage() {
       </div>
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Mobile Mode Banner */}
+        <div className="mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+          <div className="flex items-center gap-2 text-blue-200 text-sm">
+            <span className="text-blue-400">📱</span>
+            <span className="font-medium">Mobile Mode:</span>
+            <span>Image generation only. Video features available on desktop.</span>
+          </div>
+        </div>
+
+        {/* Mobile Tips - Collapsible */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowMobileTips(!showMobileTips)}
+            className="w-full p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg text-left transition-all duration-200 hover:bg-yellow-900/30"
+          >
+            <div className="text-yellow-200 text-sm flex items-center justify-between">
+              <span className="font-medium">📱 Mobile Tips</span>
+              <span className="text-yellow-400">{showMobileTips ? '−' : '+'}</span>
+            </div>
+          </button>
+          {showMobileTips && (
+            <div className="mt-2 p-3 bg-yellow-900/10 border border-yellow-500/20 rounded-lg">
+              <div className="text-yellow-200 text-sm space-y-2">
+                <div>• Upload images under 10MB</div>
+                <div>• Use JPG, PNG, or WebP formats</div>
+                <div>• Image generation only (video on desktop)</div>
+                <div>• Tap and hold images to save them</div>
+                <div>• Use Quick Shots for camera angle presets</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Credit Display */}
+        {user && (
+          <div className="mb-6">
+            <UserCreditDisplay ref={creditDisplayRef} compact={true} />
+          </div>
+        )}
+
         {/* Profile Header */}
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 lg:p-8 mb-6 lg:mb-8 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
           <div className="flex flex-col lg:flex-row items-start gap-6">
