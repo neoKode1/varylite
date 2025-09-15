@@ -251,7 +251,7 @@ export const useUserGallery = (): UserGalleryHook => {
       console.log('✅ [REMOVE FROM GALLERY] Updated gallery state, new count:', newGallery.length)
       return newGallery
     })
-  }, [user]) // Removed gallery dependency to avoid stale closure
+  }, [user, gallery]) // Include gallery dependency to get current state
 
   const clearGallery = useCallback(async () => {
     if (user) {
