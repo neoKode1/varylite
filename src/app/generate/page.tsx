@@ -6396,19 +6396,19 @@ export default function Home() {
                   
                   {/* Text Input - Directly below the top container */}
                 <div className="mt-2">
-                  <textarea
-                    id="prompt-mobile"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={
-                      hasVideoFiles 
-                        ? "Describe the scene changes..." 
-                        : processingMode === 'endframe'
-                        ? "Describe the transition..."
-                        : uploadedFiles.length === 0
-                        ? "Describe the image you want to generate..."
-                        : "Describe the variations you want..."
-                    }
+                <textarea
+                  id="prompt-mobile"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={
+                    hasVideoFiles 
+                      ? "Describe the scene changes..." 
+                      : processingMode === 'endframe'
+                      ? "Describe the transition..."
+                      : uploadedFiles.length === 0
+                      ? "Describe the image you want to generate..."
+                      : "Describe the variations you want..."
+                  }
                     className="mobile-chat-input w-full bg-gray-800/50 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     rows={2}
                     style={{ fontSize: '16px', minHeight: '44px' }}
