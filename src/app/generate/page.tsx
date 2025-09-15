@@ -5887,6 +5887,7 @@ export default function Home() {
                                   }
                                   
                                   try {
+                                    console.log('🗑️ Gallery sidebar delete - item data:', { id: item.id, timestamp: item.timestamp, fullItem: item });
                                     removeFromGallery(item.id, item.timestamp);
                                     console.log('✅ removeFromGallery called successfully');
                                     showNotification('✅ Item removed from gallery', 'success');
@@ -7684,6 +7685,7 @@ export default function Home() {
                                   }
                                   
                                   try {
+                                    console.log('🗑️ Gallery modal delete - item data:', { id: item.id, timestamp: item.timestamp, fullItem: item });
                                     removeFromGallery(item.id, item.timestamp);
                                     console.log('✅ Gallery modal removeFromGallery called successfully');
                                     showNotification('🗑️ Item removed from gallery', 'success');
