@@ -4,6 +4,18 @@ export interface CharacterVariationRequest {
   prompt: string; // user's angle/pose variation prompt
   useFluxDev?: boolean; // flag to use Flux Dev as fallback instead of Nano Banana
   useSeedream4?: boolean; // flag to use Seedream 4 instead of Nano Banana
+  generationSettings?: {
+    aspectRatio?: string;
+    guidanceScale?: number;
+    strength?: number;
+    seed?: number;
+    duration?: number;
+    resolution?: string;
+    outputFormat?: string;
+    styleConsistency?: boolean;
+    characterSeparation?: number;
+    spatialAwareness?: boolean;
+  };
 }
 
 export interface CharacterVariation {

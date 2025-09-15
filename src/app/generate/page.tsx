@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User } from 'lucide-react';
+import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Trash2, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit, MessageCircle, HelpCircle, ArrowRight, ArrowUp, FolderOpen, Grid3X3, User, Settings } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import UserCreditDisplay, { CreditDisplayRef } from '@/components/UserCreditDisplay';
@@ -54,6 +54,7 @@ import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
 import { HelpModal } from '@/components/HelpModal';
+import AspectRatioModal, { GenerationSettings } from '@/components/AspectRatioModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { useSecretAccess } from '@/hooks/useSecretAccess';
 import { useUnlockedModels } from '@/hooks/useUnlockedModels';
@@ -832,6 +833,27 @@ export default function Home() {
   const [presetCount, setPresetCount] = useState(0);
   const [showTokenWarning, setShowTokenWarning] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  
+  // Aspect ratio and generation settings
+  const [showAspectRatioModal, setShowAspectRatioModal] = useState(false);
+  const [generationSettings, setGenerationSettings] = useState<GenerationSettings>({
+    aspectRatio: '1:1',
+    guidanceScale: 7.5,
+    strength: 0.8,
+    seed: Math.floor(Math.random() * 1000000),
+    duration: 5,
+    resolution: '1280x720',
+    outputFormat: 'jpeg',
+    styleConsistency: true,
+    characterSeparation: 0.7,
+    spatialAwareness: true
+  });
+
+  // Handle generation settings save
+  const handleSaveGenerationSettings = useCallback((settings: GenerationSettings) => {
+    setGenerationSettings(settings);
+    console.log('🎛️ Generation settings saved:', settings);
+  }, []);
 
   // Handle preset combination logic
   const handlePresetClick = useCallback((presetText: string) => {
@@ -1827,7 +1849,8 @@ export default function Home() {
         body: JSON.stringify({
           images: [base64Image],
           mimeTypes: ['image/jpeg'], // Default MIME type for URL-converted images
-          prompt: varyPrompt
+          prompt: varyPrompt,
+          generationSettings: generationSettings
         }),
       });
 
@@ -3774,7 +3797,8 @@ export default function Home() {
           images: uploadedFiles.map(img => img.base64),
           mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
           prompt: prompt.trim(),
-          useFluxDev: true // Flag to indicate we want Flux Dev instead of Nano Banana
+          useFluxDev: true, // Flag to indicate we want Flux Dev instead of Nano Banana
+          generationSettings: generationSettings
         }),
       });
 
@@ -8669,6 +8693,19 @@ export default function Home() {
                 ))}
               </select>
             </div>
+
+            {/* Aspect Ratio Button - Show when model is selected and image is uploaded */}
+            {generationMode && uploadedFiles.some(file => file.fileType === 'image') && (
+              <div className="text-center mt-3">
+                <button
+                  onClick={() => setShowAspectRatioModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Settings className="w-4 h-4" />
+                  Aspect Ratio & Settings
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -8900,6 +8937,15 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Aspect Ratio Modal */}
+      <AspectRatioModal
+        isOpen={showAspectRatioModal}
+        onClose={() => setShowAspectRatioModal(false)}
+        selectedModel={generationMode || ''}
+        onSaveSettings={handleSaveGenerationSettings}
+        currentSettings={generationSettings}
+      />
     </div>
   );
 }

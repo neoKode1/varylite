@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, prompt } = body;
+    const { images, prompt, generationSettings } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
@@ -892,9 +892,9 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                   num_images: 1,
                   output_format: "jpeg",
                   // Nano Banana optimized parameters for multi-character scenes
-                  aspect_ratio: "1:1", // Square aspect ratio for better character positioning
-                  guidance_scale: 7.5, // Optimal guidance for Nano Banana character consistency
-                  seed: Math.floor(Math.random() * 1000000), // Random seed for variation
+                  aspect_ratio: generationSettings?.aspectRatio || "1:1", // User-selected aspect ratio
+                  guidance_scale: generationSettings?.guidanceScale || 7.5, // User-selected guidance scale
+                  seed: generationSettings?.seed || Math.floor(Math.random() * 1000000), // User-selected or random seed
                   // Character preservation settings (Nano Banana strengths)
                   preserve_identity: true, // Maintain character consistency
                   strength: 0.8, // Balance between reference and prompt for character scenes
@@ -925,11 +925,11 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                   prompt: nanoBananaPrompt,
                   image_urls: imageUrls,
                   num_images: 1,
-                  output_format: "jpeg",
+                  output_format: generationSettings?.outputFormat || "jpeg",
                   // Basic parameters that should work
-                  aspect_ratio: "1:1",
-                  guidance_scale: 7.0,
-                  seed: Math.floor(Math.random() * 1000000)
+                  aspect_ratio: generationSettings?.aspectRatio || "1:1",
+                  guidance_scale: generationSettings?.guidanceScale || 7.0,
+                  seed: generationSettings?.seed || Math.floor(Math.random() * 1000000)
                 },
                 logs: true,
                 onQueueUpdate: (update) => {
