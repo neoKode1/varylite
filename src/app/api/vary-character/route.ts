@@ -851,19 +851,21 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`📝 [GEMINI 2.5 FLASH MULTI-CHARACTER] Using character-focused prompt structure`);
               console.log(`🔗 [GEMINI 2.5 FLASH MULTI-CHARACTER] Preventing character blending with identity preservation`);
               console.log(`⚙️ [GEMINI 2.5 FLASH MULTI-CHARACTER] Using Gemini 2.5 Flash Image official parameters:`);
-              console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
-              console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
+              console.log(`   - prompt: ${nanoBananaPrompt.substring(0, 100)}...`);
               console.log(`   - image_urls: ${imageUrls.length} images (multi-image support)`);
-              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"} (user-selected format)`);
+              console.log(`   - num_images: 1`);
+              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"}`);
+              console.log(`   - sync_mode: false (return URLs)`);
             } else if (isReferenceBasedGeneration) {
               console.log(`🎨 [SEEDREAM 4.0 REFERENCE] Applied Seedream 4.0 reference-based generation best practices`);
               console.log(`📝 [SEEDREAM 4.0 REFERENCE] Using reference extraction prompt structure`);
               console.log(`🔗 [SEEDREAM 4.0 REFERENCE] Enabling reference extraction and style transfer`);
               console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Gemini 2.5 Flash Image official parameters:`);
-              console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
-              console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
+              console.log(`   - prompt: ${nanoBananaPrompt.substring(0, 100)}...`);
               console.log(`   - image_urls: ${imageUrls.length} images (reference-based processing)`);
-              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"} (user-selected format)`);
+              console.log(`   - num_images: 1`);
+              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"}`);
+              console.log(`   - sync_mode: false (return URLs)`);
             }
             
             const result = await retryWithBackoff(async () => {
@@ -886,9 +888,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                   image_urls: imageUrls, // Use all uploaded image URLs for multi-image processing
                   num_images: 1,
                   output_format: generationSettings?.outputFormat || "jpeg",
-                  aspect_ratio: generationSettings?.aspectRatio || "1:1",
-                  guidance_scale: generationSettings?.guidanceScale || 7.0,
-                  seed: generationSettings?.seed || Math.floor(Math.random() * 1000000)
+                  sync_mode: false // Return URLs instead of data URIs
                 },
                 logs: true,
                 onQueueUpdate: (update) => {
