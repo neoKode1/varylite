@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, prompt, generationSettings } = body;
+    const { images, prompt, generationSettings, generationMode } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
@@ -871,17 +871,27 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             const result = await retryWithBackoff(async () => {
               console.log(`🔄 Attempting Gemini 2.5 Flash Image generation for ${variation.angle}...`);
               
-              // Use Gemini 2.5 Flash Image for image editing with multiple input images
-              const modelName = "fal-ai/gemini-25-flash-image/edit";
-              console.log(`🤖 Using Gemini 2.5 Flash Image model: ${modelName}`);
+              // Use the correct model based on the generation mode - all models have cross-functionality
+              let modelName;
+              if (generationMode === 'seedream-4-edit') {
+                modelName = "fal-ai/bytedance/seedream/v4/edit";
+                console.log(`🤖 Using Seedream 4.0 Edit model: ${modelName}`);
+              } else if (generationMode === 'gemini-25-flash-image-edit') {
+                modelName = "fal-ai/gemini-25-flash-image/edit";
+                console.log(`🤖 Using Gemini 2.5 Flash Image model: ${modelName}`);
+              } else {
+                // Default to Nano Banana (character variations, image editing, multiple characters)
+                modelName = "fal-ai/nano-banana/edit";
+                console.log(`🤖 Using Nano Banana model: ${modelName}`);
+              }
               
-              console.log(`🎯 [GEMINI 2.5 FLASH] Calling Gemini 2.5 Flash Image API for ${variation.angle}`);
-              console.log(`📝 [GEMINI 2.5 FLASH] Prompt: ${nanoBananaPrompt}`);
-              console.log(`🖼️ [GEMINI 2.5 FLASH] Image URLs count: ${imageUrls.length}`);
-              console.log(`🔗 [GEMINI 2.5 FLASH] Image URLs:`, imageUrls);
+              console.log(`🎯 [MODEL API] Calling ${modelName} API for ${variation.angle}`);
+              console.log(`📝 [MODEL API] Prompt: ${nanoBananaPrompt}`);
+              console.log(`🖼️ [MODEL API] Image URLs count: ${imageUrls.length}`);
+              console.log(`🔗 [MODEL API] Image URLs:`, imageUrls);
               
-              // Use Gemini 2.5 Flash Image's official supported parameters
-              console.log(`🚀 [GEMINI 2.5 FLASH] Using official Gemini 2.5 Flash Image parameters for multi-image generation...`);
+              // Use model-specific official supported parameters
+              console.log(`🚀 [MODEL API] Using official ${modelName} parameters for multi-image generation...`);
               const result = await fal.subscribe(modelName, {
                 input: {
                   prompt: nanoBananaPrompt,
@@ -893,13 +903,13 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                 logs: true,
                 onQueueUpdate: (update) => {
                   if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 [GEMINI 2.5 FLASH] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                    console.log(`📊 [MODEL API] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                   }
                 },
               });
-              console.log(`✅ [GEMINI 2.5 FLASH] API call successful with official parameters!`);
+              console.log(`✅ [MODEL API] ${modelName} API call successful with official parameters!`);
               
-              console.log(`✅ [CHARACTER COMBINATION] Gemini 2.5 Flash Image API call completed for ${variation.angle}`);
+              console.log(`✅ [CHARACTER COMBINATION] ${modelName} API call completed for ${variation.angle}`);
               console.log(`📊 [CHARACTER COMBINATION] Result data:`, result.data);
               return result;
             });

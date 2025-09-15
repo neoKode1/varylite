@@ -4,6 +4,7 @@ export interface CharacterVariationRequest {
   prompt: string; // user's angle/pose variation prompt
   useFluxDev?: boolean; // flag to use Flux Dev as fallback instead of Nano Banana
   useSeedream4?: boolean; // flag to use Seedream 4 instead of Nano Banana
+  generationMode?: string; // the selected generation mode (e.g., 'seedream-4-edit', 'gemini-25-flash-image-edit')
   generationSettings?: {
     aspectRatio?: string;
     guidanceScale?: number;

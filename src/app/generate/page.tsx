@@ -1959,6 +1959,7 @@ export default function Home() {
           images: [base64Image],
           mimeTypes: ['image/jpeg'], // Default MIME type for URL-converted images
           prompt: varyPrompt,
+          generationMode: generationMode,
           generationSettings: generationSettings
         }),
       });
@@ -3909,6 +3910,7 @@ export default function Home() {
           images: uploadedFiles.map(img => img.base64),
           mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
           prompt: prompt.trim(),
+          generationMode: generationMode,
           useFluxDev: true, // Flag to indicate we want Flux Dev instead of Nano Banana
           generationSettings: generationSettings
         }),
