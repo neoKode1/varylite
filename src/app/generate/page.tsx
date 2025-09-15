@@ -172,146 +172,247 @@ const EXTENDED_PROMPTS = [
   'Character in power pose stance'
 ];
 
-// Background removal and switching prompts
-const BACKGROUND_PROMPTS = [
-  // Background removal
-  'Remove the background completely, transparent background',
-  'Remove background, clean transparent background',
-  'Remove all background elements, transparent background',
-  'Remove background, keep only the character',
-  'Remove background, create transparent background',
-  'Remove background, isolate character on transparent background',
-  'Remove background, clean cutout with transparent background',
-  'Remove background, professional transparent background',
-  
-  // Background replacement - Studio/Professional
-  'Change background to professional studio backdrop',
-  'Change background to clean white studio background',
-  'Change background to neutral gray studio background',
-  'Change background to professional photography backdrop',
-  'Change background to seamless studio background',
-  'Change background to clean gradient background',
-  'Change background to solid color background',
-  'Change background to minimalist background',
-  
-  // Background replacement - Natural/Outdoor
-  'Change background to natural outdoor setting',
-  'Change background to forest environment',
-  'Change background to beach scene',
-  'Change background to mountain landscape',
-  'Change background to city skyline',
-  'Change background to park setting',
-  'Change background to garden environment',
-  'Change background to sunset landscape',
-  'Change background to ocean view',
-  'Change background to countryside setting',
-  'Change background to a surreal field of oversized potatoes - Potato Cult Filter',
-  'Change background to a dreamlike landscape with giant potatoes - Potato Cult preset',
-  
-  // Halloween Horror Movie Themes - Iconic Horror Films
-  'Place character in Halloween movie setting - suburban street with jack-o-lanterns and autumn leaves',
-  'Place character in Nightmare on Elm Street setting - dark suburban neighborhood with eerie streetlights',
-  'Place character in Friday the 13th setting - Camp Crystal Lake with foggy forest and rustic cabins',
-  'Place character in The Exorcist setting - Georgetown townhouse with vintage architecture and dim lighting',
-  'Place character in Poltergeist setting - suburban home with supernatural atmosphere and warm interior lighting',
-  'Place character in The Shining setting - Overlook Hotel corridor with red carpet and eerie lighting',
-  'Place character in Psycho setting - Bates Motel with vintage neon sign and gothic architecture',
-  'Place character in Carrie setting - high school prom with dramatic red lighting and vintage 1970s atmosphere',
-  'Place character in A Nightmare Before Christmas setting - Halloween Town with gothic architecture and orange lighting',
-  'Place character in Beetlejuice setting - haunted house with quirky gothic interior and green lighting',
-  'Place character in The Addams Family setting - Victorian mansion with dark gothic architecture and warm candlelight',
-  'Place character in Hocus Pocus setting - Salem with colonial architecture and autumn atmosphere',
-  
-  // Thanksgiving Movie Themes - Iconic Thanksgiving Films
-  'Place character in National Lampoon\'s Thanksgiving setting - suburban home with chaotic family gathering atmosphere',
-  'Place character in Planes, Trains and Automobiles setting - Chicago airport with vintage 1980s atmosphere',
-  'Place character in Home for the Holidays setting - family home with warm autumn lighting and cozy interior',
-  'Place character in The Ice Storm setting - suburban Connecticut with cold autumn atmosphere and vintage 1970s styling',
-  'Place character in Pieces of April setting - New York apartment with urban autumn atmosphere',
-  'Place character in Hannah and Her Sisters setting - Manhattan brownstone with warm family gathering atmosphere',
-  
-  // Christmas Movie Themes - Iconic Christmas Films
-  'Place character in A Christmas Carol setting - Victorian London with foggy streets and warm candlelit interiors',
-  'Place character in It\'s a Wonderful Life setting - Bedford Falls with snowy streets and warm small-town atmosphere',
-  'Place character in Home Alone setting - suburban Chicago home with Christmas decorations and warm interior lighting',
-  'Place character in Elf setting - New York City with Christmas decorations and festive atmosphere',
-  'Place character in The Grinch setting - Whoville with whimsical architecture and colorful Christmas decorations',
-  'Place character in Miracle on 34th Street setting - New York City with vintage department store and Christmas atmosphere',
-  'Place character in White Christmas setting - Vermont inn with snowy landscape and warm lodge atmosphere',
-  'Place character in A Christmas Story setting - suburban Cleveland with vintage 1940s Christmas decorations',
-  'Place character in National Lampoon\'s Christmas Vacation setting - suburban home with chaotic Christmas decorations',
-  'Place character in The Polar Express setting - magical train with warm golden lighting and winter atmosphere',
-  'Place character in How the Grinch Stole Christmas setting - Whoville with Dr. Seuss-inspired architecture and Christmas lights',
-  'Place character in The Santa Clause setting - suburban home with Christmas decorations and magical atmosphere',
-  
-  // Background replacement - Indoor/Architectural
-  'Change background to modern office interior',
-  'Change background to luxury home interior',
-  'Change background to contemporary living room',
-  'Change background to elegant bedroom',
-  'Change background to modern kitchen',
-  'Change background to library setting',
-  'Change background to art gallery',
-  'Change background to hotel lobby',
-  'Change background to restaurant interior',
-  'Change background to modern architecture',
-  
-  // Background replacement - Creative/Artistic
-  'Change background to abstract artistic background',
-  'Change background to geometric pattern background',
-  'Change background to colorful gradient background',
-  'Change background to artistic texture background',
-  'Change background to creative digital background',
-  'Change background to fantasy environment',
-  'Change background to sci-fi setting',
-  'Change background to dreamy atmosphere',
-  'Change background to artistic illustration background',
-  'Change background to creative concept background',
-  
-  // Background replacement - Themed
-  'Change background to winter scene',
-  'Change background to autumn forest',
-  'Change background to spring garden',
-  'Change background to summer beach',
-  'Change background to night cityscape',
-  'Change background to rainy day scene',
-  'Change background to snowy landscape',
-  'Change background to desert scene',
-  'Change background to tropical paradise',
-  'Change background to urban street scene',
-  
-  // Iconic Movie Scene Backgrounds - Character placed in cinematic environments
-  'Place character in Saw movie franchise setting - dark industrial bathroom with rusty pipes and cold blue lighting',
-  'Place character in Terminator 2 scene - futuristic Los Angeles with orange fire glow and metallic surfaces',
-  'Place character in Eternal Sunshine of the Spotless Mind setting - dreamy beach house with soft pastel lighting',
-  'Place character in The Truman Show setting - perfect suburban neighborhood with artificial bright lighting',
-  'Place character in Batman movie setting - dark Gotham City with neon lights and gothic architecture',
-  'Place character in 1980s slasher movie setting - dark forest cabin with warm firelight and shadows',
-  'Place character in Giallo movie setting - Italian villa with rich red and yellow color palette',
-  'Place character in Steven Spielberg movie setting - suburban street with warm golden hour lighting',
-  'Place character in Stephen King movie setting - small town Maine with eerie fog and vintage Americana',
-  'Place character in Quentin Tarantino movie setting - retro diner with neon signs and bold color grading',
-  'Place character in Sin City movie setting - black and white noir with selective red color accents',
-  'Place character in Spider-Man movie setting - New York City skyline with web-slinging action',
-  'Place character in Blade Runner setting - cyberpunk cityscape with neon rain and futuristic architecture',
-  'Place character in Mad Max setting - post-apocalyptic desert wasteland with orange dust storms',
-  'Place character in The Matrix setting - green-tinted digital world with code rain effects',
-  'Place character in Inception setting - dreamlike city with impossible architecture and muted colors',
-  'Place character in Avatar setting - Pandora jungle with bioluminescent plants and blue lighting',
-  'Place character in Star Wars setting - Tatooine desert with twin suns and sandy dunes',
-  'Place character in Lord of the Rings setting - Middle-earth Shire with rolling green hills',
-  'Place character in Harry Potter setting - Hogwarts castle with magical atmosphere and warm lighting',
-  'Place character in The Shining setting - Overlook Hotel corridor with red carpet and eerie lighting',
-  'Place character in Pulp Fiction setting - retro diner with checkerboard floors and neon signs',
-  'Place character in Kill Bill setting - Japanese garden with cherry blossoms and traditional architecture',
-  'Place character in Reservoir Dogs setting - warehouse with industrial lighting and urban decay',
-  'Place character in Django Unchained setting - southern plantation with golden hour lighting',
-  'Place character in Inglourious Basterds setting - French countryside with warm European lighting',
-  'Place character in Once Upon a Time in Hollywood setting - 1960s Los Angeles with vintage neon',
-  'Place character in The Hateful Eight setting - snowy mountain cabin with warm firelight',
-  'Place character in Jackie Brown setting - California beach with sunset lighting and palm trees',
-  'Place character in Death Proof setting - Texas roadhouse with neon signs and desert lighting'
-];
+// Background prompts organized by categories with tabs and dropdowns
+const BACKGROUND_PROMPTS_BY_CATEGORY = {
+  removal: {
+    name: 'Background Removal',
+    icon: '🗑️',
+    prompts: [
+      'Remove the background completely, transparent background',
+      'Remove background, clean transparent background',
+      'Remove all background elements, transparent background',
+      'Remove background, keep only the character',
+      'Remove background, create transparent background',
+      'Remove background, isolate character on transparent background',
+      'Remove background, clean cutout with transparent background',
+      'Remove background, professional transparent background'
+    ]
+  },
+  studio: {
+    name: 'Studio & Professional',
+    icon: '📸',
+    prompts: [
+      'Change background to professional studio backdrop',
+      'Change background to clean white studio background',
+      'Change background to neutral gray studio background',
+      'Change background to professional photography backdrop',
+      'Change background to seamless studio background',
+      'Change background to clean gradient background',
+      'Change background to solid color background',
+      'Change background to minimalist background'
+    ]
+  },
+  natural: {
+    name: 'Natural & Outdoor',
+    icon: '🌲',
+    prompts: [
+      'Change background to natural outdoor setting',
+      'Change background to forest environment',
+      'Change background to beach scene',
+      'Change background to mountain landscape',
+      'Change background to city skyline',
+      'Change background to park setting',
+      'Change background to garden environment',
+      'Change background to sunset landscape',
+      'Change background to ocean view',
+      'Change background to countryside setting',
+      'Change background to a surreal field of oversized potatoes - Potato Cult Filter',
+      'Change background to a dreamlike landscape with giant potatoes - Potato Cult preset'
+    ]
+  },
+  indoor: {
+    name: 'Indoor & Architectural',
+    icon: '🏠',
+    prompts: [
+      'Change background to modern office interior',
+      'Change background to luxury home interior',
+      'Change background to contemporary living room',
+      'Change background to elegant bedroom',
+      'Change background to modern kitchen',
+      'Change background to library setting',
+      'Change background to art gallery',
+      'Change background to hotel lobby',
+      'Change background to restaurant interior',
+      'Change background to modern architecture'
+    ]
+  },
+  creative: {
+    name: 'Creative & Artistic',
+    icon: '🎨',
+    prompts: [
+      'Change background to abstract artistic background',
+      'Change background to geometric pattern background',
+      'Change background to colorful gradient background',
+      'Change background to artistic texture background',
+      'Change background to creative digital background',
+      'Change background to fantasy environment',
+      'Change background to sci-fi setting',
+      'Change background to dreamy atmosphere',
+      'Change background to artistic illustration background',
+      'Change background to creative concept background'
+    ]
+  },
+  themed: {
+    name: 'Seasonal & Themed',
+    icon: '🎭',
+    prompts: [
+      'Change background to winter scene',
+      'Change background to autumn forest',
+      'Change background to spring garden',
+      'Change background to summer beach',
+      'Change background to night cityscape',
+      'Change background to rainy day scene',
+      'Change background to snowy landscape',
+      'Change background to desert scene',
+      'Change background to tropical paradise',
+      'Change background to urban street scene'
+    ]
+  },
+  horror: {
+    name: 'Horror Movies',
+    icon: '👻',
+    prompts: [
+      'Place character in Halloween movie setting - suburban street with jack-o-lanterns and autumn leaves, cinematic low-angle lighting with deep shadows and warm orange glow',
+      'Place character in Nightmare on Elm Street setting - dark suburban neighborhood with eerie streetlights, fog machine atmosphere and dramatic chiaroscuro lighting',
+      'Place character in Friday the 13th setting - Camp Crystal Lake with foggy forest and rustic cabins, moonlight filtering through trees with cold blue undertones',
+      'Place character in The Exorcist setting - Georgetown townhouse with vintage architecture and dim lighting, candlelit interiors with flickering shadows and gothic atmosphere',
+      'Place character in Poltergeist setting - suburban home with supernatural atmosphere and warm interior lighting, Spielbergian golden hour with supernatural elements',
+      'Place character in The Shining setting - Overlook Hotel corridor with red carpet and eerie lighting, Kubrickian symmetrical composition with unsettling color grading',
+      'Place character in Psycho setting - Bates Motel with vintage neon sign and gothic architecture, Hitchcockian suspense lighting with dramatic shadows',
+      'Place character in Carrie setting - high school prom with dramatic red lighting and vintage 1970s atmosphere, De Palma split-screen cinematography with blood-red color palette',
+      'Place character in A Nightmare Before Christmas setting - Halloween Town with gothic architecture and orange lighting, Burtonesque stop-motion aesthetic with warm Halloween glow',
+      'Place character in Beetlejuice setting - haunted house with quirky gothic interior and green lighting, Tim Burton\'s signature dark whimsy with neon accents',
+      'Place character in The Addams Family setting - Victorian mansion with dark gothic architecture and warm candlelight, macabre elegance with Victorian-era lighting',
+      'Place character in Hocus Pocus setting - Salem with colonial architecture and autumn atmosphere, Disney magic with historical New England charm',
+      'Place character in Saw movie franchise setting - dark industrial bathroom with rusty pipes and cold blue lighting, torture porn aesthetic with clinical horror atmosphere',
+      'Place character in The Ring setting - dark well with eerie water and supernatural atmosphere, J-horror cinematography with muted colors and water imagery',
+      'Place character in The Grudge setting - Japanese house with dark shadows and supernatural presence, atmospheric horror with traditional Japanese architecture',
+      'Place character in Insidious setting - haunted house with red door and supernatural atmosphere, James Wan\'s signature jump-scare lighting with red door symbolism',
+      'Place character in The Conjuring setting - haunted farmhouse with vintage furniture and supernatural lighting, period-accurate 1970s atmosphere with paranormal elements',
+      'Place character in Annabelle setting - vintage doll room with creepy atmosphere and warm lighting, doll horror aesthetic with vintage toy collection',
+      'Place character in It setting - Derry sewers with red balloons and clown imagery, Stephen King\'s small-town horror with Pennywise\'s circus aesthetic',
+      'Place character in The Babadook setting - dark house with children\'s book illustrations and eerie atmosphere, psychological horror with illustrated book elements',
+      'Place character in Hereditary setting - family home with miniature models and supernatural elements, Ari Aster\'s slow-burn horror with family trauma themes',
+      'Place character in Midsommar setting - Swedish countryside with bright daylight and pagan rituals, daylight horror with Swedish midsummer festival atmosphere',
+      'Place character in Get Out setting - suburban home with hypnotic atmosphere and psychological horror, Jordan Peele\'s social horror with suburban nightmare',
+      'Place character in Us setting - Santa Cruz beach house with doppelganger imagery and red lighting, psychological thriller with mirror imagery and red symbolism',
+      'Place character in A Quiet Place setting - abandoned farm with sound-sensitive creatures and tense atmosphere, silence-based horror with rural isolation',
+      'Place character in The Witch setting - Puritan New England with dark forest and supernatural elements, period horror with 1630s Puritan atmosphere',
+      'Place character in The Lighthouse setting - isolated lighthouse with black and white cinematography and madness, psychological horror with maritime isolation',
+      'Place character in Suspiria setting - German dance academy with vibrant colors and supernatural horror, Argento\'s giallo aesthetic with dance academy atmosphere',
+      'Place character in The Texas Chain Saw Massacre setting - rural Texas farmhouse with industrial horror atmosphere, grindhouse aesthetic with rural Texas setting',
+      'Place character in Hellraiser setting - puzzle box dimension with leather-clad cenobites and gothic horror, Clive Barker\'s body horror with puzzle box imagery'
+    ]
+  },
+  scifi: {
+    name: 'Sci-Fi Movies',
+    icon: '🚀',
+    prompts: [
+      'Place character in Blade Runner setting - cyberpunk cityscape with neon rain and futuristic architecture, Ridley Scott\'s noir cinematography with rain-soaked streets and neon reflections',
+      'Place character in The Matrix setting - green-tinted digital world with code rain effects, Wachowski\'s bullet-time cinematography with digital rain and green color grading',
+      'Place character in Star Wars setting - Tatooine desert with twin suns and sandy dunes, Lucas\'s space opera aesthetic with binary sunset and desert cinematography',
+      'Place character in Avatar setting - Pandora jungle with bioluminescent plants and blue lighting, Cameron\'s 3D cinematography with Na\'vi bioluminescence and alien flora',
+      'Place character in Terminator 2 scene - futuristic Los Angeles with orange fire glow and metallic surfaces, Cameron\'s action cinematography with molten metal and fire effects',
+      'Place character in Mad Max setting - post-apocalyptic desert wasteland with orange dust storms, Miller\'s wasteland cinematography with desert storms and vehicular mayhem',
+      'Place character in Inception setting - dreamlike city with impossible architecture and muted colors, Nolan\'s dream logic cinematography with gravity-defying architecture',
+      'Place character in Interstellar setting - space station with Earth view and cosmic atmosphere, Nolan\'s space cinematography with cosmic vistas and time dilation effects',
+      'Place character in Gravity setting - space with Earth\'s atmosphere and cosmic isolation, Cuarón\'s long-take cinematography with zero-gravity camera work',
+      'Place character in Arrival setting - alien spacecraft with mysterious atmosphere and linguistic themes, Villeneuve\'s atmospheric cinematography with alien linguistics',
+      'Place character in Ex Machina setting - modern house with AI laboratory and sleek technology, Garland\'s minimalist cinematography with AI consciousness themes',
+      'Place character in Her setting - futuristic Los Angeles with warm technology and emotional AI, Jonze\'s intimate cinematography with AI romance and warm color palette',
+      'Place character in Minority Report setting - futuristic Washington DC with precrime technology, Spielberg\'s future noir with precognitive technology and urban surveillance',
+      'Place character in Total Recall setting - Mars colony with red atmosphere and futuristic technology, Verhoeven\'s action sci-fi with Mars terraforming and memory themes',
+      'Place character in RoboCop setting - Detroit with corporate dystopia and cybernetic law enforcement, Verhoeven\'s satirical sci-fi with corporate corruption and cyborg justice',
+      'Place character in Aliens setting - LV-426 colony with industrial horror and xenomorph atmosphere, Cameron\'s action horror with industrial spaceship and alien infestation',
+      'Place character in Predator setting - Central American jungle with alien technology and military action, McTiernan\'s action cinematography with alien camouflage and jungle warfare',
+      'Place character in The Thing setting - Antarctic research station with paranoia and body horror, Carpenter\'s isolation horror with Antarctic blizzard and alien transformation',
+      'Place character in Event Horizon setting - spaceship with hell dimension and cosmic horror, Anderson\'s space horror with dimensional travel and hell imagery',
+      'Place character in Sunshine setting - spaceship with solar mission and cosmic isolation, Boyle\'s space cinematography with solar mission and cosmic isolation',
+      'Place character in Moon setting - lunar base with cloning technology and psychological isolation, Jones\'s minimalist sci-fi with lunar mining and identity themes',
+      'Place character in District 9 setting - Johannesburg with alien refugee camp and apartheid themes, Blomkamp\'s social sci-fi with alien apartheid and documentary style',
+      'Place character in Elysium setting - space station with luxury and Earth\'s poverty contrast, Blomkamp\'s social commentary with orbital luxury and Earth\'s slums',
+      'Place character in Oblivion setting - post-apocalyptic Earth with drone technology and mystery, Kosinski\'s post-apocalyptic cinematography with drone surveillance and memory themes',
+      'Place character in Edge of Tomorrow setting - alien invasion with time loop and military action, Liman\'s time-loop action with alien invasion and military sci-fi',
+      'Place character in Ready Player One setting - virtual reality world with 1980s nostalgia and gaming, Spielberg\'s VR cinematography with retro gaming and virtual worlds',
+      'Place character in Tron setting - digital world with neon grids and computer aesthetics, Lisberger\'s digital cinematography with computer-generated environments and neon grids',
+      'Place character in The Fifth Element setting - futuristic New York with colorful aliens and action, Besson\'s colorful sci-fi with alien diversity and futuristic New York',
+      'Place character in Dune setting - Arrakis desert with spice mining and feudal politics, Villeneuve\'s epic sci-fi with desert cinematography and spice mining operations',
+      'Place character in Ghost in the Shell setting - cyberpunk Tokyo with cyborg technology and philosophy, Oshii\'s cyberpunk cinematography with cyborg consciousness and urban futurism'
+    ]
+  },
+  christmas: {
+    name: 'Christmas Movies',
+    icon: '🎄',
+    prompts: [
+      'Place character in A Christmas Carol setting - Victorian London with foggy streets and warm candlelit interiors',
+      'Place character in It\'s a Wonderful Life setting - Bedford Falls with snowy streets and warm small-town atmosphere',
+      'Place character in Home Alone setting - suburban Chicago home with Christmas decorations and warm interior lighting',
+      'Place character in Elf setting - New York City with Christmas decorations and festive atmosphere',
+      'Place character in The Grinch setting - Whoville with whimsical architecture and colorful Christmas decorations',
+      'Place character in Miracle on 34th Street setting - New York City with vintage department store and Christmas atmosphere',
+      'Place character in White Christmas setting - Vermont inn with snowy landscape and warm lodge atmosphere',
+      'Place character in A Christmas Story setting - suburban Cleveland with vintage 1940s Christmas decorations',
+      'Place character in National Lampoon\'s Christmas Vacation setting - suburban home with chaotic Christmas decorations',
+      'Place character in The Polar Express setting - magical train with warm golden lighting and winter atmosphere',
+      'Place character in How the Grinch Stole Christmas setting - Whoville with Dr. Seuss-inspired architecture and Christmas lights',
+      'Place character in The Santa Clause setting - suburban home with Christmas decorations and magical atmosphere'
+    ]
+  },
+  thanksgiving: {
+    name: 'Thanksgiving Movies',
+    icon: '🦃',
+    prompts: [
+      'Place character in National Lampoon\'s Thanksgiving setting - suburban home with chaotic family gathering atmosphere',
+      'Place character in Planes, Trains and Automobiles setting - Chicago airport with vintage 1980s atmosphere',
+      'Place character in Home for the Holidays setting - family home with warm autumn lighting and cozy interior',
+      'Place character in The Ice Storm setting - suburban Connecticut with cold autumn atmosphere and vintage 1970s styling',
+      'Place character in Pieces of April setting - New York apartment with urban autumn atmosphere',
+      'Place character in Hannah and Her Sisters setting - Manhattan brownstone with warm family gathering atmosphere'
+    ]
+  },
+  action: {
+    name: 'Action Movies',
+    icon: '💥',
+    prompts: [
+      'Place character in Batman movie setting - dark Gotham City with neon lights and gothic architecture, Nolan\'s dark knight cinematography with urban decay and dramatic shadows',
+      'Place character in Spider-Man movie setting - New York City skyline with web-slinging action, Marvel\'s superhero cinematography with web-slinging dynamics and urban acrobatics',
+      'Place character in 1980s slasher movie setting - dark forest cabin with warm firelight and shadows, Carpenter\'s slasher cinematography with practical effects and atmospheric lighting',
+      'Place character in Steven Spielberg movie setting - suburban street with warm golden hour lighting, Spielberg\'s signature cinematography with suburban wonder and golden hour magic',
+      'Place character in Quentin Tarantino movie setting - retro diner with neon signs and bold color grading, Tarantino\'s stylized cinematography with bold colors and retro aesthetics',
+      'Place character in Sin City movie setting - black and white noir with selective red color accents, Rodriguez\'s neo-noir cinematography with high contrast and selective color',
+      'Place character in Pulp Fiction setting - retro diner with checkerboard floors and neon signs, Tarantino\'s postmodern cinematography with retro diner aesthetics and neon lighting',
+      'Place character in Kill Bill setting - Japanese garden with cherry blossoms and traditional architecture, Tarantino\'s martial arts cinematography with Japanese aesthetics and cherry blossom symbolism',
+      'Place character in Reservoir Dogs setting - warehouse with industrial lighting and urban decay, Tarantino\'s debut cinematography with warehouse atmosphere and criminal aesthetics',
+      'Place character in Django Unchained setting - southern plantation with golden hour lighting, Tarantino\'s western cinematography with plantation aesthetics and golden hour cinematography',
+      'Place character in Inglourious Basterds setting - French countryside with warm European lighting, Tarantino\'s war cinematography with European countryside and warm lighting',
+      'Place character in Once Upon a Time in Hollywood setting - 1960s Los Angeles with vintage neon, Tarantino\'s period cinematography with 1960s Los Angeles and vintage neon aesthetics',
+      'Place character in The Hateful Eight setting - snowy mountain cabin with warm firelight, Tarantino\'s western cinematography with cabin atmosphere and warm firelight',
+      'Place character in Jackie Brown setting - California beach with sunset lighting and palm trees, Tarantino\'s blaxploitation cinematography with California beach aesthetics',
+      'Place character in Death Proof setting - Texas roadhouse with neon signs and desert lighting, Tarantino\'s grindhouse cinematography with Texas roadhouse and desert atmosphere'
+    ]
+  },
+  fantasy: {
+    name: 'Fantasy Movies',
+    icon: '🧙‍♂️',
+    prompts: [
+      'Place character in Lord of the Rings setting - Middle-earth Shire with rolling green hills, Jackson\'s epic fantasy cinematography with New Zealand landscapes and hobbit architecture',
+      'Place character in Harry Potter setting - Hogwarts castle with magical atmosphere and warm lighting, Columbus\'s magical cinematography with castle architecture and warm candlelight',
+      'Place character in The Hobbit setting - Middle-earth with dwarven halls and magical landscapes, Jackson\'s fantasy cinematography with dwarven architecture and magical landscapes',
+      'Place character in Game of Thrones setting - Westeros with medieval castles and political intrigue, HBO\'s fantasy cinematography with medieval architecture and political drama',
+      'Place character in The Chronicles of Narnia setting - magical wardrobe world with talking animals, Adamson\'s fantasy cinematography with magical creatures and wardrobe portal',
+      'Place character in Pan\'s Labyrinth setting - Spanish Civil War with dark fantasy and magical creatures, del Toro\'s dark fantasy cinematography with faun creatures and Spanish Civil War',
+      'Place character in The Princess Bride setting - medieval kingdom with swashbuckling adventure, Reiner\'s fairy tale cinematography with medieval aesthetics and swashbuckling romance',
+      'Place character in Labyrinth setting - Goblin King\'s castle with puppets and musical fantasy, Henson\'s puppet fantasy cinematography with goblin puppets and musical sequences',
+      'Place character in The Dark Crystal setting - Thra with puppets and dark fantasy atmosphere, Henson\'s puppet fantasy cinematography with crystal technology and dark fantasy creatures',
+      'Place character in Willow setting - fantasy kingdom with magic and adventure, Howard\'s fantasy cinematography with magical creatures and adventure quest aesthetics',
+      'Place character in The NeverEnding Story setting - Fantasia with flying dragon and magical creatures, Petersen\'s fantasy cinematography with flying dragon and magical book world',
+      'Place character in Legend setting - fantasy forest with unicorns and dark magic, Scott\'s fantasy cinematography with unicorn mythology and dark forest atmosphere'
+    ]
+  }
+};
+
+// Legacy array for backward compatibility
+const BACKGROUND_PROMPTS = Object.values(BACKGROUND_PROMPTS_BY_CATEGORY).flatMap(category => category.prompts);
 
 // Camera Motion Presets - User-Friendly Display Text
 const CAMERA_MOTION_PROMPTS = [
@@ -8365,7 +8466,50 @@ export default function Home() {
 
                 {activePresetTab === 'background' && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-4">🎬 Iconic Movie Scene Backgrounds</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">🎬 Movie Background Presets</h3>
+                    
+                    {/* Background Category Tabs */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {Object.entries(BACKGROUND_PROMPTS_BY_CATEGORY).map(([key, category]) => (
+                        <button
+                          key={key}
+                          onClick={() => setActiveBackgroundTab(key as any)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeBackgroundTab === key
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          {category.icon} {category.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Background Prompts Dropdown */}
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-md font-medium text-gray-300 mb-3">
+                          {BACKGROUND_PROMPTS_BY_CATEGORY[activeBackgroundTab]?.name} ({BACKGROUND_PROMPTS_BY_CATEGORY[activeBackgroundTab]?.prompts.length} options)
+                        </h4>
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                          {BACKGROUND_PROMPTS_BY_CATEGORY[activeBackgroundTab]?.prompts.map((prompt) => (
+                            <button
+                              key={prompt}
+                              onClick={() => {
+                                handlePresetClick(prompt);
+                                setShowPresetModal(false);
+                                setActivePresetTab(null);
+                              }}
+                              className="w-full text-left px-4 py-3 text-sm bg-gray-800 text-gray-200 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600 hover:border-purple-500"
+                            >
+                              {prompt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Left Column - Classic Movie Scenes */}
                       <div className="space-y-4">
