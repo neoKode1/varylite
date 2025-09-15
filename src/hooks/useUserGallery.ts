@@ -184,6 +184,7 @@ export const useUserGallery = (): UserGalleryHook => {
 
   const removeFromGallery = useCallback(async (variationId: string, timestamp: number) => {
     console.log('🗑️ [REMOVE FROM GALLERY] Starting deletion:', { variationId, timestamp, user: user?.id })
+    console.log('🗑️ [REMOVE FROM GALLERY] Current gallery items:', gallery.map(item => ({ id: item.id, timestamp: item.timestamp, databaseId: item.databaseId })))
     
     if (user) {
       // Find the item to get its database ID
@@ -191,8 +192,20 @@ export const useUserGallery = (): UserGalleryHook => {
       
       console.log('🗑️ [REMOVE FROM GALLERY] Item found:', itemToDelete)
       
-      if (!itemToDelete || !itemToDelete.databaseId) {
-        console.error('❌ [REMOVE FROM GALLERY] Item not found or missing database ID:', { variationId, timestamp, itemToDelete })
+      if (!itemToDelete) {
+        console.error('❌ [REMOVE FROM GALLERY] Item not found:', { variationId, timestamp })
+        console.log('🗑️ [REMOVE FROM GALLERY] Available items:', gallery.map(item => ({ id: item.id, timestamp: item.timestamp, hasDatabaseId: !!item.databaseId })))
+        return
+      }
+
+      // If item doesn't have databaseId, just remove from local state (for older items)
+      if (!itemToDelete.databaseId) {
+        console.log('⚠️ [REMOVE FROM GALLERY] Item found but no databaseId, removing from local state only')
+        setGallery(prev => {
+          const newGallery = prev.filter(item => !(item.id === variationId && item.timestamp === timestamp))
+          console.log('✅ [REMOVE FROM GALLERY] Updated gallery state (local only), new count:', newGallery.length)
+          return newGallery
+        })
         return
       }
 
