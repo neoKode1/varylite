@@ -286,24 +286,24 @@
     
     /* Modern Send Button */
     .mobile-send-button {
-      width: 40px !important;
-      height: 40px !important;
+      width: 44px !important;
+      height: 44px !important;
       border-radius: 50% !important;
-      background: rgba(55, 65, 81, 0.8) !important;
-      border: 1px solid rgba(75, 85, 99, 0.5) !important;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+      border: 2px solid rgba(255, 255, 255, 0.2) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
       flex-shrink: 0 !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
     }
     
     .mobile-send-button:hover {
       transform: scale(1.05) !important;
-      background: rgba(55, 65, 81, 0.9) !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+      background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
     }
     
     .mobile-send-button:active {
@@ -311,10 +311,12 @@
     }
     
     .mobile-send-button:disabled {
-      background: rgba(255, 255, 255, 0.2) !important;
+      background: rgba(75, 85, 99, 0.8) !important;
       cursor: not-allowed !important;
       transform: none !important;
-      box-shadow: none !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+      opacity: 0.9 !important;
+      border: 2px solid rgba(255, 255, 255, 0.1) !important;
     }
     
     /* Send Icon */

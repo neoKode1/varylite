@@ -3411,11 +3411,15 @@ export default function Home() {
   const canGenerateWithCurrentState = () => {
     // For video models, allow generation if images are uploaded (even without prompt)
     if (generationMode && isVideoVariantModel(generationMode)) {
-      return uploadedFiles.length > 0;
+      const result = uploadedFiles.length > 0;
+      console.log('🎯 [canGenerateWithCurrentState] Video model:', generationMode, 'uploadedFiles:', uploadedFiles.length, 'result:', result);
+      return result;
     }
     
     // For other models, require both images and prompt
-    return uploadedFiles.length > 0 && prompt.trim().length > 0;
+    const result = uploadedFiles.length > 0 && prompt.trim().length > 0;
+    console.log('🎯 [canGenerateWithCurrentState] Image model:', generationMode, 'uploadedFiles:', uploadedFiles.length, 'prompt length:', prompt.trim().length, 'result:', result);
+    return result;
   };
 
   // Get model-specific default prompt for video generation - Enhanced with Camera Control Logic
