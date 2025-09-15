@@ -50,7 +50,8 @@ type GenerationMode =
   | 'wan-v2-2-a14b-i2v-lora'
   | 'cogvideo-i2v'
   | 'zeroscope-t2v'
-  | 'kling-ai-avatar';
+  | 'kling-ai-avatar'
+  | 'gemini-25-flash-image-edit';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1162,7 +1163,8 @@ export default function Home() {
       'wan-v2-2-a14b-i2v-lora': 50, // 50 seconds for Wan V2.2 LoRA
       'cogvideo-i2v': 50, // 50 seconds for CogVideo I2V
       'zeroscope-t2v': 50, // 50 seconds for Zeroscope T2V
-      'kling-ai-avatar': 60 // 60 seconds for Kling AI Avatar
+      'kling-ai-avatar': 60, // 60 seconds for Kling AI Avatar
+      'gemini-25-flash-image-edit': 20 // 20 seconds for Gemini 2.5 Flash Image Edit
     };
     return timeEstimates[mode] || 30;
   };
@@ -1293,6 +1295,7 @@ export default function Home() {
       // Image editing models
       modes.push('seedream-4-edit'); // Seedream 4 Edit
       modes.push('bytedance-seedream-4'); // Seedream 4
+      modes.push('gemini-25-flash-image-edit'); // Gemini 2.5 Flash Image Edit
       // Image-to-video models
       modes.push('veo3-fast'); // Veo3 Fast image-to-video
       modes.push('minimax-2.0'); // Minimax 2.0 image-to-video
@@ -1333,6 +1336,8 @@ export default function Home() {
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
       'seedream-4-edit': 'Seedream 4 Edit',
+      'bytedance-seedream-4': 'Seedream 4',
+      'gemini-25-flash-image-edit': 'Gemini Flash Edit',
       'kling-ai-avatar': 'Kling AI Avatar',
       // Mid-Tier Image-to-Video Models
       'minimax-video-01': 'Minimax Video 01',
@@ -1358,8 +1363,7 @@ export default function Home() {
       'kling-video-pro': 'Kling Video Pro',
       'flux-dev': 'Flux Dev',
       'seedream-3': 'Seedream 3',
-      'seedance-1-pro': 'Seedance 1 Pro',
-      'bytedance-seedream-4': 'Seedream 4'
+      'seedance-1-pro': 'Seedance 1 Pro'
     };
     return displayNames[mode] || mode;
   }, []);
@@ -3082,6 +3086,9 @@ export default function Home() {
         break;
       case 'bytedance-seedream-4':
         await handleSeedream4Generation();
+        break;
+      case 'gemini-25-flash-image-edit':
+        await handleCharacterVariation(); // Use the same handler as nano-banana since it's also character variation
         break;
       case 'minimax-2.0':
         // MiniMax End Frame - requires 2 images, uses older /api/endframe infrastructure
