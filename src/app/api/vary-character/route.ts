@@ -755,8 +755,8 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     let variationsWithImages = variations;
 
     if (hasFalKey) {
-      console.log('🎨 Generating images with Nano Banana...');
-      // Upload all images to get proper URLs for Nano Banana
+      console.log('🎨 Generating images with Gemini 2.5 Flash Image...');
+      // Upload all images to get proper URLs for Gemini 2.5 Flash Image
       console.log(`🔄 [CHARACTER COMBINATION] Starting image upload process for ${images.length} images`);
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
@@ -773,10 +773,10 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
           }
         })
       );
-      console.log(`🖼️ [CHARACTER COMBINATION] Successfully uploaded ${imageUrls.length} images for Nano Banana processing`);
+      console.log(`🖼️ [CHARACTER COMBINATION] Successfully uploaded ${imageUrls.length} images for Gemini 2.5 Flash Image processing`);
       console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
       
-      // Generate images for each variation using Nano Banana
+      // Generate images for each variation using Gemini 2.5 Flash Image
       variationsWithImages = await Promise.all(
         variations.map(async (variation, index) => {
           try {
@@ -844,13 +844,13 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
             }
             
-            console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
+            console.log(`🎨 Enhanced Gemini 2.5 Flash Image prompt for ${variation.angle}:`, nanoBananaPrompt);
             
             if (isCharacterCombination) {
-              console.log(`🎭 [NANO BANANA MULTI-CHARACTER] Applied Nano Banana character consistency best practices`);
-              console.log(`📝 [NANO BANANA MULTI-CHARACTER] Using character-focused prompt structure`);
-              console.log(`🔗 [NANO BANANA MULTI-CHARACTER] Preventing character blending with identity preservation`);
-              console.log(`⚙️ [NANO BANANA MULTI-CHARACTER] Using Nano Banana official parameters:`);
+              console.log(`🎭 [GEMINI 2.5 FLASH MULTI-CHARACTER] Applied Gemini 2.5 Flash Image character consistency best practices`);
+              console.log(`📝 [GEMINI 2.5 FLASH MULTI-CHARACTER] Using character-focused prompt structure`);
+              console.log(`🔗 [GEMINI 2.5 FLASH MULTI-CHARACTER] Preventing character blending with identity preservation`);
+              console.log(`⚙️ [GEMINI 2.5 FLASH MULTI-CHARACTER] Using Gemini 2.5 Flash Image official parameters:`);
               console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
               console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
               console.log(`   - image_urls: ${imageUrls.length} images (multi-image support)`);
@@ -859,7 +859,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`🎨 [SEEDREAM 4.0 REFERENCE] Applied Seedream 4.0 reference-based generation best practices`);
               console.log(`📝 [SEEDREAM 4.0 REFERENCE] Using reference extraction prompt structure`);
               console.log(`🔗 [SEEDREAM 4.0 REFERENCE] Enabling reference extraction and style transfer`);
-              console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Nano Banana official parameters:`);
+              console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Gemini 2.5 Flash Image official parameters:`);
               console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
               console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
               console.log(`   - image_urls: ${imageUrls.length} images (reference-based processing)`);
@@ -867,19 +867,19 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             }
             
             const result = await retryWithBackoff(async () => {
-              console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
+              console.log(`🔄 Attempting Gemini 2.5 Flash Image generation for ${variation.angle}...`);
               
-              // Use Nano Banana for image editing with multiple input images
-              const modelName = "fal-ai/nano-banana/edit";
-              console.log(`🤖 Using Nano Banana model: ${modelName}`);
+              // Use Gemini 2.5 Flash Image for image editing with multiple input images
+              const modelName = "fal-ai/gemini-25-flash-image/edit";
+              console.log(`🤖 Using Gemini 2.5 Flash Image model: ${modelName}`);
               
-              console.log(`🎯 [ADVANCED COMPOSITION] Calling Nano Banana API for ${variation.angle}`);
-              console.log(`📝 [ADVANCED COMPOSITION] Prompt: ${nanoBananaPrompt}`);
-              console.log(`🖼️ [ADVANCED COMPOSITION] Image URLs count: ${imageUrls.length}`);
-              console.log(`🔗 [ADVANCED COMPOSITION] Image URLs:`, imageUrls);
+              console.log(`🎯 [GEMINI 2.5 FLASH] Calling Gemini 2.5 Flash Image API for ${variation.angle}`);
+              console.log(`📝 [GEMINI 2.5 FLASH] Prompt: ${nanoBananaPrompt}`);
+              console.log(`🖼️ [GEMINI 2.5 FLASH] Image URLs count: ${imageUrls.length}`);
+              console.log(`🔗 [GEMINI 2.5 FLASH] Image URLs:`, imageUrls);
               
-              // Use only Nano Banana's official supported parameters
-              console.log(`🚀 [NANO BANANA] Using official Nano Banana parameters for multi-image generation...`);
+              // Use Gemini 2.5 Flash Image's official supported parameters
+              console.log(`🚀 [GEMINI 2.5 FLASH] Using official Gemini 2.5 Flash Image parameters for multi-image generation...`);
               const result = await fal.subscribe(modelName, {
                 input: {
                   prompt: nanoBananaPrompt,
@@ -893,13 +893,13 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
                 logs: true,
                 onQueueUpdate: (update) => {
                   if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 [NANO BANANA] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                    console.log(`📊 [GEMINI 2.5 FLASH] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
                   }
                 },
               });
-              console.log(`✅ [NANO BANANA] API call successful with official parameters!`);
+              console.log(`✅ [GEMINI 2.5 FLASH] API call successful with official parameters!`);
               
-              console.log(`✅ [CHARACTER COMBINATION] Nano Banana API call completed for ${variation.angle}`);
+              console.log(`✅ [CHARACTER COMBINATION] Gemini 2.5 Flash Image API call completed for ${variation.angle}`);
               console.log(`📊 [CHARACTER COMBINATION] Result data:`, result.data);
               return result;
             });
@@ -909,7 +909,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             return {
               ...variation,
               imageUrl: result.data.images[0]?.url || undefined,
-              fileType: 'image' // Nano Banana generates images, not videos
+              fileType: 'image' // Gemini 2.5 Flash Image generates images, not videos
             };
           } catch (error) {
             console.error(`❌ [CHARACTER COMBINATION] Failed to generate image for ${variation.angle}:`, error);
