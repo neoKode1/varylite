@@ -49,7 +49,8 @@ type GenerationMode =
   // Lower-Tier Image-to-Video Models ($0.10)
   | 'wan-v2-2-a14b-i2v-lora'
   | 'cogvideo-i2v'
-  | 'zeroscope-t2v';
+  | 'zeroscope-t2v'
+  | 'kling-ai-avatar';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1160,7 +1161,8 @@ export default function Home() {
       // Lower-Tier Image-to-Video Models
       'wan-v2-2-a14b-i2v-lora': 50, // 50 seconds for Wan V2.2 LoRA
       'cogvideo-i2v': 50, // 50 seconds for CogVideo I2V
-      'zeroscope-t2v': 50 // 50 seconds for Zeroscope T2V
+      'zeroscope-t2v': 50, // 50 seconds for Zeroscope T2V
+      'kling-ai-avatar': 60 // 60 seconds for Kling AI Avatar
     };
     return timeEstimates[mode] || 30;
   };
@@ -1295,6 +1297,7 @@ export default function Home() {
       modes.push('veo3-fast'); // Veo3 Fast image-to-video
       modes.push('minimax-2.0'); // Minimax 2.0 image-to-video
       modes.push('kling-2.1-master'); // Kling 2.1 Master image-to-video
+      modes.push('kling-ai-avatar'); // Kling AI Avatar
       modes.push('decart-lucy-14b'); // Lucy 14B video variations
       modes.push('minimax-video-01'); // Minimax Video 01
       modes.push('minimax-video-generation'); // Minimax Video Generation
@@ -1330,6 +1333,7 @@ export default function Home() {
       'runway-video': 'Runway Video',
       'veo3-fast': 'Veo3 Fast',
       'seedream-4-edit': 'Seedream 4 Edit',
+      'kling-ai-avatar': 'Kling AI Avatar',
       // Mid-Tier Image-to-Video Models
       'minimax-video-01': 'Minimax Video 01',
       'minimax-video-generation': 'Minimax Video Gen',

@@ -324,28 +324,12 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📝 Parsing request body...');
     const body: CharacterVariationRequest = await request.json();
-    const { images, prompt, generationSettings } = body;
+    const { images, prompt } = body;
 
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
     console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
-    
-    // Enhanced validation for character combination
-    if (images && images.length >= 2) {
-      console.log(`🔄 [CHARACTER COMBINATION] Multiple images detected (${images.length}) - enabling character combination mode`);
-      console.log(`📊 [CHARACTER COMBINATION] Image 1 data length: ${images[0].length} characters`);
-      console.log(`📊 [CHARACTER COMBINATION] Image 2 data length: ${images[1].length} characters`);
-      
-      // Validate image data integrity
-      images.forEach((imageData, index) => {
-        if (!imageData || imageData.length < 100) {
-          console.error(`❌ [CHARACTER COMBINATION] Image ${index + 1} appears to be corrupted or empty`);
-        } else {
-          console.log(`✅ [CHARACTER COMBINATION] Image ${index + 1} data integrity check passed`);
-        }
-      });
-    }
 
     if (!images || images.length === 0 || !prompt) {
       console.log('❌ Validation failed: Missing image or prompt');
@@ -386,47 +370,7 @@ export async function POST(request: NextRequest) {
     
     // Determine if this is a "vary" request (single image from URL) vs multi-image upload
     const isVaryRequest = images.length === 1 && prompt.includes('Generate 4 new variations');
-    
-    // Intelligent character combination detection based on user intent
-    const isCharacterCombination = images.length >= 2 && (
-      // Explicit character combination keywords
-      prompt.toLowerCase().includes('combine') ||
-      prompt.toLowerCase().includes('together') ||
-      prompt.toLowerCase().includes('both characters') ||
-      prompt.toLowerCase().includes('multiple characters') ||
-      prompt.toLowerCase().includes('scene with') ||
-      prompt.toLowerCase().includes('add to scene') ||
-      prompt.toLowerCase().includes('put together') ||
-      prompt.toLowerCase().includes('merge') ||
-      prompt.toLowerCase().includes('blend') ||
-      // Scene-based keywords
-      prompt.toLowerCase().includes('scene') ||
-      prompt.toLowerCase().includes('environment') ||
-      prompt.toLowerCase().includes('setting') ||
-      prompt.toLowerCase().includes('background') ||
-      // Interaction keywords
-      prompt.toLowerCase().includes('interaction') ||
-      prompt.toLowerCase().includes('conversation') ||
-      prompt.toLowerCase().includes('meeting') ||
-      prompt.toLowerCase().includes('encounter')
-    );
-    
-    // Check for reference-based generation scenarios (Seedream 4.0 feature)
-    const isReferenceBasedGeneration = images.length >= 2 && (
-      prompt.toLowerCase().includes('reference') ||
-      prompt.toLowerCase().includes('based on') ||
-      prompt.toLowerCase().includes('extract') ||
-      prompt.toLowerCase().includes('style transfer') ||
-      prompt.toLowerCase().includes('character design') ||
-      prompt.toLowerCase().includes('product design')
-    );
-    
-    const isMultiImageVariation = images.length >= 2 && !isCharacterCombination && !isReferenceBasedGeneration;
-    
-    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : isCharacterCombination ? 'CHARACTER COMBINATION' : isReferenceBasedGeneration ? 'REFERENCE-BASED GENERATION' : isMultiImageVariation ? 'MULTI-IMAGE VARIATION' : 'SINGLE IMAGE'}`);
-    console.log(`🎭 Character combination detected: ${isCharacterCombination}`);
-    console.log(`🎨 Reference-based generation detected: ${isReferenceBasedGeneration}`);
-    console.log(`🖼️ Multi-image variation mode: ${isMultiImageVariation}`);
+    console.log(`🔄 Request type: ${isVaryRequest ? 'VARY existing image' : 'MULTI-IMAGE upload'}`);
     
     // Analyze the original prompt for specific instructions
     const hasBackgroundRemoval = prompt.toLowerCase().includes('remove background') || 
@@ -439,198 +383,8 @@ export async function POST(request: NextRequest) {
     
     let enhancedPrompt;
     
-    // Check for character combination scenarios
-    if (isCharacterCombination) {
-      enhancedPrompt = `CHARACTER COMBINATION ANALYSIS - PRESERVE EXACT CHARACTER IDENTITY
-
-You are analyzing ${images.length} separate character images to create scenes where the EXACT same characters interact. Each character must maintain their precise identity, age, appearance, and characteristics.
-
-CRITICAL CHARACTER PRESERVATION REQUIREMENTS:
-1. Analyze each character image separately to identify:
-   - Character 1: EXACT age, gender, facial features, body type, clothing, hairstyle, distinctive traits
-   - Character 2: EXACT age, gender, facial features, body type, clothing, hairstyle, distinctive traits
-   - Additional characters if present
-
-2. Character Identity Preservation Rules:
-   - NEVER change ages (adult stays adult, child stays child)
-   - NEVER change genders (male stays male, female stays female)
-   - NEVER modify facial features, body type, or distinctive physical traits
-   - NEVER alter clothing, hairstyle, or personal style elements
-   - PRESERVE the exact same person from each reference image
-
-3. Scene Composition Guidelines:
-   - Create natural interactions between the EXACT same characters
-   - Use clear spatial positioning (left, right, center, foreground, background)
-   - Maintain character recognition and distinctiveness
-   - Focus on the action/scenario while preserving identity
-
-USER REQUEST: "${prompt}"
-
-For each variation, provide:
-- Camera angle that showcases both characters clearly
-- Scene description that preserves exact character identity
-- Environmental context that supports the character interaction
-- Lighting and composition that maintains character recognition
-
-CRITICAL CHARACTER PRESERVATION INSTRUCTIONS:
-- Maintain identical character appearance from reference images
-- Preserve exact age, gender, and physical characteristics
-- Keep same clothing, hairstyle, and distinctive features
-- Ensure both characters are clearly visible and recognizable
-- Create natural interactions while preserving character identity
-- Use descriptive positioning language for each character's placement
-
-CHARACTER COMBINATION EXAMPLES:
-- ✅ Correct: "The adult woman from Image 1 chases the adult man from Image 2 through the forest"
-- ❌ Wrong: "A woman chases a child" (if the second character was an adult)
-- ✅ Correct: "The same characters from both images interact naturally"
-- ❌ Wrong: "Characters with similar features" (must be exact same people)
-
-RESPECT THE USER'S CREATIVE VISION while maintaining exact character identity preservation.`;
-    } else if (isReferenceBasedGeneration) {
-      enhancedPrompt = `SEEDREAM 4.0 REFERENCE-BASED GENERATION ANALYSIS
-
-You are analyzing ${images.length} images for reference-based generation using Seedream 4.0 best practices. This involves extracting key information from reference images (character design, artistic style, product features) to enable tasks like character creation, style transfer, and product design.
-
-SEEDREAM 4.0 REFERENCE-BASED INSTRUCTIONS:
-1. Analyze reference images to identify:
-   - Character design elements (facial features, clothing style, pose, expression)
-   - Artistic style (color palette, lighting, composition, visual effects)
-   - Product features (materials, textures, design elements, branding)
-   - Visual elements to preserve (specific features, style consistency)
-
-2. Apply Seedream 4.0 reference-based best practices:
-   - Clearly describe elements to be extracted and retained from reference images
-   - Provide detailed information about desired generated content (scene, layout, specifics)
-   - Specify what should remain unchanged explicitly
-   - Use precise technical terminology for accurate representation
-   - Clearly specify desired visualization format, layout, and style
-
-USER REQUEST: "${prompt}"
-
-For each variation, provide:
-- Reference Target: Clear description of elements to extract from reference images
-- Generated Scene Description: Detailed information about desired content
-- Style Consistency: Maintain visual elements from reference
-- Specific Preservation: What should remain unchanged
-- Technical Accuracy: Precise terminology for concepts
-
-CRITICAL REQUIREMENTS FOR REFERENCE-BASED GENERATION:
-- Extract and retain specific features from reference images
-- Maintain style consistency throughout variations
-- Preserve character identity or product design elements
-- Use precise descriptions for technical accuracy
-- Clearly specify what should remain unchanged
-- Focus on high-fidelity representation of reference elements
-
-SEEDREAM 4.0 REFERENCE EXAMPLES:
-- ✅ Character Reference: "Based on the character in the reference image, create variations maintaining facial features and clothing style"
-- ✅ Style Transfer: "Apply the artistic style from Image 1 to the subject in Image 2"
-- ✅ Product Design: "Extract the design elements from the reference and create variations in different colors"
-
-RESPECT THE USER'S CREATIVE VISION while maintaining reference consistency using Seedream 4.0 best practices.`;
-    } else if (isMultiImageVariation) {
-      enhancedPrompt = `MULTI-IMAGE VARIATION ANALYSIS - SEPARATE CHARACTER VARIATIONS
-
-You are analyzing ${images.length} separate character images to create individual character variations. Each image represents a different character that should be varied independently, not combined.
-
-ANALYSIS INSTRUCTIONS:
-1. Analyze each image separately to understand:
-   - Character 1: Physical features, clothing, pose, expression, style
-   - Character 2: Physical features, clothing, pose, expression, style
-   - Additional characters if present
-
-2. Create 4 variations that focus on the PRIMARY character (first image):
-   - Use the first character as the main subject
-   - Apply the user's requested variations to this character
-   - Other characters can be referenced for style consistency if needed
-   - Focus on individual character development, not combination
-
-USER REQUEST: "${prompt}"
-
-For each variation, provide:
-- The specific camera angle and composition for the main character
-- Character description that focuses on the primary subject
-- Environmental context that supports the character
-- Individual character development and variation
-
-CRITICAL REQUIREMENTS:
-- Focus on the PRIMARY character (first image) for variations
-- Create individual character variations, not combinations
-- Maintain character consistency and recognition
-- Use cinematic compositions that showcase the main character effectively
-- Other uploaded characters serve as reference/style guides only
-
-RESPECT THE USER'S CREATIVE VISION while focusing on individual character variation.`;
-    } else if (prompt.includes('Make into Freddy Krueger style')) {
-      enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
-
-CHARACTER STYLE TRANSFORMATION - FREDDY KRUGER:
-- Transform the character into Freddy Krueger's iconic appearance
-- Include burned, scarred face with distinctive facial features
-- Add the classic red and green striped sweater
-- Include the signature clawed glove with metal blades
-- Maintain the nightmare-inducing, menacing presence
-- Preserve the user's original character details while applying Freddy's styling
-- Create realistic, photo-realistic Freddy Krueger aesthetic
-
-CRITICAL INSTRUCTIONS:
-- PRESERVE the user's exact specifications and character details
-- Apply Freddy Krueger's distinctive visual elements
-- Maintain high detail in character features and styling
-- Ensure character consistency across variations
-- Focus on the user's unique vision enhanced with Freddy's iconic look
-
-CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
-
-RESPECT THE USER'S CREATIVE VISION while applying the Freddy Krueger transformation.`;
-    } else if (prompt.includes('Make into Pinhead from Hellraiser style')) {
-      enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
-
-CHARACTER STYLE TRANSFORMATION - PINHEAD FROM HELLRAISER:
-- Transform the character into Pinhead's iconic appearance from Hellraiser
-- Include the distinctive bald head with grid pattern of nails/pins
-- Add the pale, almost translucent skin with dark, sunken eyes
-- Include the black leather outfit with studs and chains
-- Maintain the cold, calculating, and menacing presence
-- Preserve the user's original character details while applying Pinhead's styling
-- Create realistic, photo-realistic Pinhead aesthetic
-
-CRITICAL INSTRUCTIONS:
-- PRESERVE the user's exact specifications and character details
-- Apply Pinhead's distinctive visual elements (nails in head, leather outfit)
-- Maintain high detail in character features and styling
-- Ensure character consistency across variations
-- Focus on the user's unique vision enhanced with Pinhead's iconic look
-
-CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
-
-RESPECT THE USER'S CREATIVE VISION while applying the Pinhead transformation.`;
-    } else if (prompt.includes('Make into Jason Voorhees style')) {
-      enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
-
-CHARACTER STYLE TRANSFORMATION - JASON VOORHEES:
-- Transform the character into Jason Voorhees' iconic appearance from Friday the 13th
-- Include the distinctive hockey mask (white or dirty white)
-- Add the large, imposing physique and dark clothing
-- Include the machete or other weapon
-- Maintain the silent, menacing presence
-- Preserve the user's original character details while applying Jason's styling
-- Create realistic, photo-realistic Jason Voorhees aesthetic
-
-CRITICAL INSTRUCTIONS:
-- PRESERVE the user's exact specifications and character details
-- Apply Jason's distinctive visual elements (hockey mask, machete, imposing build)
-- Maintain high detail in character features and styling
-- Ensure character consistency across variations
-- Focus on the user's unique vision enhanced with Jason's iconic look
-
-CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
-
-RESPECT THE USER'S CREATIVE VISION while applying the Jason Voorhees transformation.`;
-    } else {
-      // Preserve user's original prompt intent with enhanced camera angle understanding
-      enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
+    // Preserve user's original prompt intent with enhanced camera angle understanding
+    enhancedPrompt = `Generate 4 high-quality character variations based on the user's specific request: "${prompt}"
 
 CRITICAL CAMERA ANGLE INSTRUCTIONS:
 - For "worm's eye view": Camera must be at GROUND LEVEL looking dramatically upward at the character, showing floor/ground in foreground, character towering above with converging vertical lines
@@ -665,7 +419,6 @@ QUALITY ENHANCEMENTS (only if they support the user's vision):
 CRITICAL: Each variation should show a SINGLE character only - no duplicates, no multiple versions of the same person in one image.
 
 RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their specific requests.`;
-    }
 
     // Convert all base64 images to the format expected by Gemini
     const imageParts = images.map((imageData, index) => {
@@ -681,32 +434,11 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     console.log('🚀 Sending request to Gemini API...');
     console.log(`📊 Circuit breaker state: ${circuitBreakerState.isOpen ? 'OPEN' : 'CLOSED'} (failures: ${circuitBreakerState.failures})`);
     
-    if (isCharacterCombination) {
-      console.log(`🎭 [CHARACTER COMBINATION] Analyzing ${images.length} separate character images`);
-      console.log(`📝 [CHARACTER COMBINATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
-      console.log(`🖼️ [CHARACTER COMBINATION] Image parts prepared: ${imageParts.length} images`);
-    } else if (isReferenceBasedGeneration) {
-      console.log(`🎨 [REFERENCE-BASED GENERATION] Analyzing ${images.length} reference images for style/character extraction`);
-      console.log(`📝 [REFERENCE-BASED GENERATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
-      console.log(`🖼️ [REFERENCE-BASED GENERATION] Image parts prepared: ${imageParts.length} images`);
-    } else if (isMultiImageVariation) {
-      console.log(`🖼️ [MULTI-IMAGE VARIATION] Analyzing ${images.length} separate character images for individual variations`);
-      console.log(`📝 [MULTI-IMAGE VARIATION] Enhanced prompt length: ${enhancedPrompt.length} characters`);
-      console.log(`🖼️ [MULTI-IMAGE VARIATION] Image parts prepared: ${imageParts.length} images`);
-    }
-    
     // Generate content with text and all images using retry mechanism with model fallback
     let result;
     try {
       result = await retryWithBackoff(async () => {
         console.log('🔄 Attempting Gemini API call...');
-        if (isCharacterCombination) {
-          console.log('🎭 [CHARACTER COMBINATION] Sending character combination analysis to Gemini...');
-        } else if (isReferenceBasedGeneration) {
-          console.log('🎨 [REFERENCE-BASED GENERATION] Sending reference-based generation analysis to Gemini...');
-        } else if (isMultiImageVariation) {
-          console.log('🖼️ [MULTI-IMAGE VARIATION] Sending multi-image variation analysis to Gemini...');
-        }
         return await model.generateContent([enhancedPrompt, ...imageParts]);
       });
     } catch (error) {
@@ -720,13 +452,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     const text = response.text();
     console.log(`📊 Response text length: ${text ? text.length : 0} characters`);
     
-    if (isCharacterCombination) {
-      console.log('🎭 [CHARACTER COMBINATION] Gemini analysis completed for character combination');
-      console.log(`📊 [CHARACTER COMBINATION] Analysis preview: ${text.substring(0, 300)}...`);
-    } else if (isMultiImageVariation) {
-      console.log('🖼️ [MULTI-IMAGE VARIATION] Gemini analysis completed for multi-image variation');
-      console.log(`📊 [MULTI-IMAGE VARIATION] Analysis preview: ${text.substring(0, 300)}...`);
-    } else if (isVaryRequest) {
+    if (isVaryRequest) {
       console.log('🔍 Enhanced character analysis completed for Vary request');
       console.log(`📊 Analysis preview: ${text.substring(0, 200)}...`);
     }
@@ -757,24 +483,13 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     if (hasFalKey) {
       console.log('🎨 Generating images with Nano Banana...');
       // Upload all images to get proper URLs for Nano Banana
-      console.log(`🔄 [CHARACTER COMBINATION] Starting image upload process for ${images.length} images`);
       const imageUrls = await Promise.all(
         images.map(async (imageData, index) => {
-          console.log(`📤 [CHARACTER COMBINATION] Uploading image ${index + 1}/${images.length} to Fal AI...`);
-          console.log(`📊 [CHARACTER COMBINATION] Image ${index + 1} data length: ${imageData.length} characters`);
-          
-          try {
-            const url = await uploadImageToTempUrl(imageData);
-            console.log(`✅ [CHARACTER COMBINATION] Image ${index + 1} uploaded successfully: ${url}`);
-            return url;
-          } catch (error) {
-            console.error(`❌ [CHARACTER COMBINATION] Failed to upload image ${index + 1}:`, error);
-            throw error;
-          }
+          console.log(`📤 Uploading image ${index + 1}/${images.length} to Fal AI...`);
+          return await uploadImageToTempUrl(imageData);
         })
       );
-      console.log(`🖼️ [CHARACTER COMBINATION] Successfully uploaded ${imageUrls.length} images for Nano Banana processing`);
-      console.log(`🔗 [CHARACTER COMBINATION] Image URLs:`, imageUrls);
+      console.log(`🖼️ Uploaded ${imageUrls.length} images for Nano Banana processing`);
       
       // Generate images for each variation using Nano Banana
       variationsWithImages = await Promise.all(
@@ -784,26 +499,6 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             // Use the user's original prompt with enhanced quality instructions
             let nanoBananaPrompt = `${prompt} - ${variation.angle.toLowerCase()}`;
-            
-            // Add Nano Banana multi-character best practices for character combination
-            if (isCharacterCombination) {
-              // Enhanced prompt structure for multi-character generation with explicit character preservation
-              nanoBananaPrompt = `Create a scene with the EXACT same characters from the reference images. `;
-              nanoBananaPrompt += `PRESERVE CHARACTER IDENTITY: `;
-              nanoBananaPrompt += `- Character from Image 1: Keep the EXACT same person, age, appearance, clothing, and features `;
-              nanoBananaPrompt += `- Character from Image 2: Keep the EXACT same person, age, appearance, clothing, and features `;
-              nanoBananaPrompt += `- Do NOT change ages, genders, or physical characteristics `;
-              nanoBananaPrompt += `- Do NOT modify facial features, body type, or distinctive traits `;
-              nanoBananaPrompt += `Scene action: ${prompt} - ${variation.angle.toLowerCase()}. `;
-              nanoBananaPrompt += `CRITICAL CHARACTER PRESERVATION: `;
-              nanoBananaPrompt += `- Maintain identical character appearance from reference images `;
-              nanoBananaPrompt += `- Preserve exact age, gender, and physical characteristics `;
-              nanoBananaPrompt += `- Keep same clothing, hairstyle, and distinctive features `;
-              nanoBananaPrompt += `- Use clear spatial positioning for both characters `;
-              nanoBananaPrompt += `- Ensure both characters are clearly visible and recognizable `;
-              nanoBananaPrompt += `- Create natural interactions while preserving character identity `;
-              nanoBananaPrompt += `- Generate high-quality scene with proper lighting and composition`;
-            }
             
             // Add quality enhancements based on the specific angle
             if (variation.angle.toLowerCase().includes('worm') && variation.angle.toLowerCase().includes('eye')) {
@@ -819,52 +514,10 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             // Add general quality improvements
             nanoBananaPrompt += ', high detail, realistic textures, professional photography, sharp focus';
             
-            // Add model-specific prompts based on combination mode
-            if (isCharacterCombination) {
-              // Nano Banana specific prompts for multi-character scenes
-              nanoBananaPrompt += ', character consistency maintained';
-              nanoBananaPrompt += ', natural character interactions';
-              nanoBananaPrompt += ', clear character positioning';
-              nanoBananaPrompt += ', realistic character relationships';
-              nanoBananaPrompt += ', professional character photography';
-              nanoBananaPrompt += ', cinematic character composition';
-              nanoBananaPrompt += ', detailed character expressions';
-              nanoBananaPrompt += ', proper character lighting';
-            } else if (isReferenceBasedGeneration) {
-              // Nano Banana specific prompts for reference-based generation
-              nanoBananaPrompt += ', reference style preserved';
-              nanoBananaPrompt += ', character identity maintained';
-              nanoBananaPrompt += ', style consistency throughout';
-              nanoBananaPrompt += ', reference elements extracted';
-              nanoBananaPrompt += ', high-fidelity reference matching';
-              nanoBananaPrompt += ', precise style transfer';
-              nanoBananaPrompt += ', reference-based composition';
-            } else {
-              // Add subtle negative prompts to prevent character duplication for single character
-              nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
-            }
+            // Add subtle negative prompts to prevent character duplication
+            nanoBananaPrompt += ', single character only, no duplicates, no multiple versions of the same person';
             
             console.log(`🎨 Enhanced Nano Banana prompt for ${variation.angle}:`, nanoBananaPrompt);
-            
-            if (isCharacterCombination) {
-              console.log(`🎭 [NANO BANANA MULTI-CHARACTER] Applied Nano Banana character consistency best practices`);
-              console.log(`📝 [NANO BANANA MULTI-CHARACTER] Using character-focused prompt structure`);
-              console.log(`🔗 [NANO BANANA MULTI-CHARACTER] Preventing character blending with identity preservation`);
-              console.log(`⚙️ [NANO BANANA MULTI-CHARACTER] Using Nano Banana official parameters:`);
-              console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
-              console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
-              console.log(`   - image_urls: ${imageUrls.length} images (multi-image support)`);
-              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"} (user-selected format)`);
-            } else if (isReferenceBasedGeneration) {
-              console.log(`🎨 [SEEDREAM 4.0 REFERENCE] Applied Seedream 4.0 reference-based generation best practices`);
-              console.log(`📝 [SEEDREAM 4.0 REFERENCE] Using reference extraction prompt structure`);
-              console.log(`🔗 [SEEDREAM 4.0 REFERENCE] Enabling reference extraction and style transfer`);
-              console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Nano Banana official parameters:`);
-              console.log(`   - aspect_ratio: ${generationSettings?.aspectRatio || "1:1"} (user-selected aspect ratio)`);
-              console.log(`   - guidance_scale: ${generationSettings?.guidanceScale || 7.0} (user-selected guidance scale)`);
-              console.log(`   - image_urls: ${imageUrls.length} images (reference-based processing)`);
-              console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"} (user-selected format)`);
-            }
             
             const result = await retryWithBackoff(async () => {
               console.log(`🔄 Attempting Nano Banana image generation for ${variation.angle}...`);
@@ -873,35 +526,20 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               const modelName = "fal-ai/nano-banana/edit";
               console.log(`🤖 Using Nano Banana model: ${modelName}`);
               
-              console.log(`🎯 [ADVANCED COMPOSITION] Calling Nano Banana API for ${variation.angle}`);
-              console.log(`📝 [ADVANCED COMPOSITION] Prompt: ${nanoBananaPrompt}`);
-              console.log(`🖼️ [ADVANCED COMPOSITION] Image URLs count: ${imageUrls.length}`);
-              console.log(`🔗 [ADVANCED COMPOSITION] Image URLs:`, imageUrls);
-              
-              // Use only Nano Banana's official supported parameters
-              console.log(`🚀 [NANO BANANA] Using official Nano Banana parameters for multi-image generation...`);
-              const result = await fal.subscribe(modelName, {
-                input: {
+              return await fal.subscribe(modelName, {
+              input: {
                   prompt: nanoBananaPrompt,
-                  image_urls: imageUrls, // Use all uploaded image URLs for multi-image processing
-                  num_images: 1,
-                  output_format: generationSettings?.outputFormat || "jpeg",
-                  aspect_ratio: generationSettings?.aspectRatio || "1:1",
-                  guidance_scale: generationSettings?.guidanceScale || 7.0,
-                  seed: generationSettings?.seed || Math.floor(Math.random() * 1000000)
-                },
-                logs: true,
-                onQueueUpdate: (update) => {
-                  if (update.status === "IN_PROGRESS") {
-                    console.log(`📊 [NANO BANANA] Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
-                  }
-                },
+                  image_urls: imageUrls, // Use all uploaded image URLs for character + scene combination
+                num_images: 1,
+                output_format: "jpeg"
+              },
+              logs: true,
+              onQueueUpdate: (update) => {
+                if (update.status === "IN_PROGRESS") {
+                  console.log(`📊 Generation progress for ${variation.angle}:`, update.logs?.map(log => log.message).join(', '));
+                }
+              },
               });
-              console.log(`✅ [NANO BANANA] API call successful with official parameters!`);
-              
-              console.log(`✅ [CHARACTER COMBINATION] Nano Banana API call completed for ${variation.angle}`);
-              console.log(`📊 [CHARACTER COMBINATION] Result data:`, result.data);
-              return result;
             });
 
             console.log(`✅ Image ${index + 1} generated successfully`);
@@ -912,17 +550,14 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               fileType: 'image' // Nano Banana generates images, not videos
             };
           } catch (error) {
-            console.error(`❌ [CHARACTER COMBINATION] Failed to generate image for ${variation.angle}:`, error);
-            console.error(`🔍 [CHARACTER COMBINATION] Error type:`, typeof error);
-            console.error(`🔍 [CHARACTER COMBINATION] Error message:`, error instanceof Error ? error.message : 'Unknown error');
-            
+            console.error(`❌ Failed to generate image for ${variation.angle}:`, error);
             if (error instanceof Error && 'body' in error) {
-              console.error('❌ [CHARACTER COMBINATION] Full error body:', (error as any).body);
+              console.error('❌ Full error body:', (error as any).body);
               
               // Check for content policy violation
               const errorBody = (error as any).body;
               if (errorBody?.detail?.[0]?.type === 'content_policy_violation') {
-                console.log(`⚠️ [CHARACTER COMBINATION] Content policy violation for ${variation.angle} - returning text description only`);
+                console.log(`⚠️ Content policy violation for ${variation.angle} - returning text description only`);
                 return {
                   ...variation,
                   description: `${variation.description} (Note: Image generation was blocked by content policy - text description only)`
@@ -990,8 +625,8 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
       } else if (error.message.includes('invalid api key') || error.message.includes('authentication')) {
         errorMessage = 'Authentication failed. Please check your API configuration.';
         statusCode = 401;
-      } else if (error.message.includes('content policy violation') || error.message.includes('prohibited_content') || error.message.includes('blocked due to prohibited content')) {
-        errorMessage = 'Content blocked due to policy restrictions. Please try a different prompt or image.';
+      } else if (error.message.includes('content policy violation')) {
+        errorMessage = 'The request was blocked due to content policy violations.';
         statusCode = 400;
       } else if (error.message.includes('timeout') || error.message.includes('network error')) {
         errorMessage = 'Request timed out. Please check your connection and try again.';
@@ -1077,7 +712,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       }
 
       variations.push({
-        id: `variation-${variationCount + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `variation-${variationCount + 1}`,
         description: trimmedSection,
         angle: angle,
         pose: pose,
@@ -1099,7 +734,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       paragraphs.forEach((paragraph, index) => {
         // Preserve user's original prompt instead of using generic fallbacks
         variations.push({
-          id: `variation-${index + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `variation-${index + 1}`,
           description: paragraph.trim(),
           angle: `Variation ${index + 1}`,
           pose: `Custom Pose ${index + 1}`,
@@ -1113,7 +748,7 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
       const index = variations.length;
       
       variations.push({
-        id: `variation-${index + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `variation-${index + 1}`,
         description: `Character variation ${index + 1}: Show the same character with different styling while maintaining all original design elements, clothing, and features.`,
         angle: `Variation ${index + 1}`,
         pose: `Custom Pose ${index + 1}`,
@@ -1127,31 +762,30 @@ function parseGeminiResponse(text: string): CharacterVariation[] {
     console.error('Error parsing Gemini response:', error);
     
     // Return fallback variations if parsing completely fails
-    const timestamp = Date.now();
     return [
       {
-        id: `variation-1-${timestamp}`,
+        id: 'variation-1',
         description: 'Character variation 1: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 1',
         pose: 'Custom Pose 1',
         fileType: 'image' as const
       },
       {
-        id: `variation-2-${timestamp}`,
+        id: 'variation-2',
         description: 'Character variation 2: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 2',
         pose: 'Custom Pose 2',
         fileType: 'image' as const
       },
       {
-        id: `variation-3-${timestamp}`,
+        id: 'variation-3',
         description: 'Character variation 3: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 3',
         pose: 'Custom Pose 3',
         fileType: 'image' as const
       },
       {
-        id: `variation-4-${timestamp}`,
+        id: 'variation-4',
         description: 'Character variation 4: Show the same character with different styling while maintaining all original design elements, clothing, and features.',
         angle: 'Variation 4',
         pose: 'Custom Pose 4',
