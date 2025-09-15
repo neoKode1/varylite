@@ -12,7 +12,7 @@ interface VideoVariationRequest {
   images: string[]; // base64 images
   mimeTypes?: string[];
   prompt: string;
-  model: 'decart-lucy-14b' | 'minimax-i2v-director' | 'hailuo-02-pro' | 'kling-video-pro';
+  model: 'decart-lucy-14b' | 'minimax-i2v-director' | 'hailuo-02-pro' | 'kling-video-pro' | 'veo3-fast' | 'minimax-2.0' | 'kling-2.1-master' | 'minimax-video-01' | 'minimax-video-generation' | 'stable-video-diffusion-i2v' | 'modelscope-i2v' | 'text2video-zero-i2v' | 'wan-v2-2-a14b-i2v-lora' | 'cogvideo-i2v' | 'zeroscope-t2v';
 }
 
 interface VideoVariation {
@@ -614,6 +614,30 @@ async function callVideoModel(
   } else if (model === 'zeroscope-t2v') {
     // Use Zeroscope T2V endpoint
     endpoint = 'https://fal.run/fal-ai/zeroscope/text-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'veo3-fast') {
+    // Use Veo3 Fast endpoint
+    endpoint = 'https://fal.run/fal-ai/veo3-fast/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'minimax-2.0') {
+    // Use Minimax 2.0 endpoint
+    endpoint = 'https://fal.run/fal-ai/minimax/video-01-director/image-to-video';
+    requestBody = {
+      image_url,
+      prompt,
+      prompt_optimizer: true
+    };
+  } else if (model === 'kling-2.1-master') {
+    // Use Kling 2.1 Master endpoint
+    endpoint = 'https://fal.run/fal-ai/kling-video/v1.6/pro/image-to-video';
     requestBody = {
       image_url,
       prompt,
