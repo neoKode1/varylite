@@ -7338,8 +7338,8 @@ export default function Home() {
 
         {/* Mobile Gallery Panel - Full Viewport */}
         {showGallery && (
-          <div className="block lg:hidden fixed inset-0 bg-black bg-opacity-95 backdrop-blur-md z-30 overflow-y-auto">
-            <div className="p-3">
+          <div className="block lg:hidden fixed inset-0 bg-black bg-opacity-95 backdrop-blur-md z-30 overflow-y-auto h-screen">
+            <div className="p-3 h-full">
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
@@ -7395,9 +7395,9 @@ export default function Home() {
                 </button>
                     
                     <div className={`transition-all duration-300 ${
-                      expandedPrompts.has('mobile-recent') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
+                      expandedPrompts.has('mobile-recent') ? 'max-h-[70vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
+                      <div className="pt-2 max-h-[70vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-3 gap-2">
                           {filteredGallery.map((item: any, index: number) => {
                             const itemKey = `mobile-recent-${item.id}-${item.timestamp}-${index}`;
@@ -7490,9 +7490,9 @@ export default function Home() {
                               </button>
                     
                     <div className={`transition-all duration-300 ${
-                      expandedPrompts.has('mobile-videos') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
+                      expandedPrompts.has('mobile-videos') ? 'max-h-[70vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
+                      <div className="pt-2 max-h-[70vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-2 gap-2">
                           {filteredGallery.filter(item => item.fileType === 'video').map((item: any, index: number) => {
                             const itemKey = `mobile-video-${item.id}-${item.timestamp}-${index}`;
@@ -7573,9 +7573,9 @@ export default function Home() {
                     </button>
                     
                     <div className={`transition-all duration-300 ${
-                      expandedPrompts.has('mobile-images') ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
+                      expandedPrompts.has('mobile-images') ? 'max-h-[70vh] opacity-100' : 'max-h-0 opacity-0'
                     }`}>
-                      <div className="pt-2 max-h-[60vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
+                      <div className="pt-2 max-h-[70vh] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent touch-pan-y">
                         <div className="grid grid-cols-4 gap-2">
                           {filteredGallery.filter(item => item.fileType === 'image').map((item: any, index: number) => {
                             const itemKey = `mobile-image-${item.id}-${item.timestamp}-${index}`;
