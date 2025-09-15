@@ -330,6 +330,8 @@ export async function POST(request: NextRequest) {
     console.log(`💬 Prompt: "${prompt}"`);
     console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
+    console.log(`🎯 Generation Mode: "${generationMode}"`);
+    console.log(`⚙️ Generation Settings:`, generationSettings);
     
     // Enhanced validation for character combination
     if (images && images.length >= 2) {
@@ -722,10 +724,12 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     
     if (isCharacterCombination) {
       console.log('🎭 [CHARACTER COMBINATION] Gemini analysis completed for character combination');
-      console.log(`📊 [CHARACTER COMBINATION] Analysis preview: ${text.substring(0, 300)}...`);
+      console.log(`📊 [CHARACTER COMBINATION] Full Gemini response: ${text}`);
+      console.log(`📊 [CHARACTER COMBINATION] Analysis preview: ${text.substring(0, 500)}...`);
     } else if (isMultiImageVariation) {
       console.log('🖼️ [MULTI-IMAGE VARIATION] Gemini analysis completed for multi-image variation');
-      console.log(`📊 [MULTI-IMAGE VARIATION] Analysis preview: ${text.substring(0, 300)}...`);
+      console.log(`📊 [MULTI-IMAGE VARIATION] Full Gemini response: ${text}`);
+      console.log(`📊 [MULTI-IMAGE VARIATION] Analysis preview: ${text.substring(0, 500)}...`);
     } else if (isVaryRequest) {
       console.log('🔍 Enhanced character analysis completed for Vary request');
       console.log(`📊 Analysis preview: ${text.substring(0, 200)}...`);
@@ -743,6 +747,15 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     // Parse the response to extract variations
     const variations = parseGeminiResponse(text);
     console.log(`✅ Parsed ${variations.length} variations successfully`);
+    
+    if (isCharacterCombination) {
+      console.log('🎭 [CHARACTER COMBINATION] Parsed variations:');
+      variations.forEach((variation, index) => {
+        console.log(`🎭 [CHARACTER COMBINATION] Variation ${index + 1}:`);
+        console.log(`   - Angle: ${variation.angle}`);
+        console.log(`   - Description: ${variation.description.substring(0, 200)}...`);
+      });
+    }
 
     if (variations.length === 0) {
       console.log('❌ No variations could be parsed from the response');
@@ -787,13 +800,10 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
             
             // Add Nano Banana multi-character best practices for character combination
             if (isCharacterCombination) {
-              // Enhanced prompt structure for multi-character generation with explicit character preservation
+              console.log(`🎭 [CHARACTER COMBINATION] Using Gemini analysis for variation ${index + 1}: ${variation.description}`);
+              // Use the Gemini analysis results for specific character descriptions
               nanoBananaPrompt = `Create a scene with the EXACT same characters from the reference images. `;
-              nanoBananaPrompt += `PRESERVE CHARACTER IDENTITY: `;
-              nanoBananaPrompt += `- Character from Image 1: Keep the EXACT same person, age, appearance, clothing, and features `;
-              nanoBananaPrompt += `- Character from Image 2: Keep the EXACT same person, age, appearance, clothing, and features `;
-              nanoBananaPrompt += `- Do NOT change ages, genders, or physical characteristics `;
-              nanoBananaPrompt += `- Do NOT modify facial features, body type, or distinctive traits `;
+              nanoBananaPrompt += `CHARACTER ANALYSIS FROM GEMINI: ${variation.description} `;
               nanoBananaPrompt += `Scene action: ${prompt} - ${variation.angle.toLowerCase()}. `;
               nanoBananaPrompt += `CRITICAL CHARACTER PRESERVATION: `;
               nanoBananaPrompt += `- Maintain identical character appearance from reference images `;
@@ -803,6 +813,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               nanoBananaPrompt += `- Ensure both characters are clearly visible and recognizable `;
               nanoBananaPrompt += `- Create natural interactions while preserving character identity `;
               nanoBananaPrompt += `- Generate high-quality scene with proper lighting and composition`;
+              console.log(`📝 [CHARACTER COMBINATION] Final FAL prompt for variation ${index + 1}: ${nanoBananaPrompt.substring(0, 200)}...`);
             }
             
             // Add quality enhancements based on the specific angle

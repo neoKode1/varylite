@@ -1316,6 +1316,7 @@ export default function Home() {
       modes.push('nano-banana'); // Character combination
       modes.push('seedream-4-edit'); // Seedream 4 Edit
       modes.push('bytedance-seedream-4'); // Seedream 4
+      modes.push('gemini-25-flash-image-edit'); // Gemini Flash Edit for character combination
     }
     
     // Add text-to-video modes when no images are uploaded
@@ -3230,99 +3231,51 @@ export default function Home() {
         `${prompt.trim()} - high angle shot looking down, bird's eye view, environmental context, wide shot composition`
       ];
 
-      // Generate 4 separate images with different prompts
-      const imagePromises = variationPrompts.map(async (variationPrompt, index) => {
-        try {
-          console.log(`🎨 Generating variation ${index + 1}/4: ${variationPrompt}`);
-          
-          // Use the selected model for character variations
-          const apiEndpoint = generationMode === 'seedream-4-edit' 
-            ? '/api/fal/seedream-4-edit' 
-            : '/api/fal/image-edit';
-          
-          const requestBody = generationMode === 'seedream-4-edit' 
-            ? {
-                prompt: variationPrompt,
-                imageUrls: [imageUrl],
-                imageSize: 'square_hd',
-                numImages: 1,
-                maxImages: 1,
-                enableSafetyChecker: true
-              }
-            : {
-          model: 'nano-banana-edit',
-          imageUrls: [imageUrl],
-                prompt: variationPrompt,
-          numImages: 1,
-          outputFormat: 'jpeg'
-              };
+      // Use the new /api/vary-character endpoint for all models
+      console.log('🔄 Making API call to /api/vary-character...');
+      const response = await fetch('/api/vary-character', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: uploadedFiles.map(img => img.base64),
+          mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
+          prompt: prompt.trim(),
+          generationMode: generationMode,
+          generationSettings: generationSettings
+        }),
+      });
 
-          const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
+      console.log('📡 API response status:', response.status);
+      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating variations...' }));
 
       const data = await response.json();
-          console.log(`📥 FAL API Response ${index + 1}:`, data);
+      console.log('📊 API response data:', data);
 
       if (!response.ok) {
-        throw new Error(`FAL API HTTP Error: ${response.status} ${response.statusText}`);
+        throw new Error(`API HTTP Error: ${response.status} ${response.statusText}`);
       }
 
       if (!data.success) {
-            throw new Error(data.error || 'Failed to process character variation');
-          }
-
-          // Extract image URL from Seedream 4.0 Edit response
-      let extractedImageUrl = null;
-      if (data.data?.images && Array.isArray(data.data.images) && data.data.images.length > 0) {
-            extractedImageUrl = data.data.images[0].url;
-      } else if (data.data?.image_url) {
-        extractedImageUrl = data.data.image_url;
-      } else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-        extractedImageUrl = data.images[0].url || data.images[0];
+        throw new Error(data.error || 'Failed to process character variations');
       }
-      
-      if (!extractedImageUrl) {
-        throw new Error('No image URL found in FAL response');
-      }
-      
-          return {
-            id: `variation-${Date.now()}-${index}`,
-            description: variationPrompt,
-            angle: `Variation ${index + 1}`,
-            pose: `Angle ${index + 1}`,
-        imageUrl: extractedImageUrl,
-        fileType: 'image' as const
-          };
-        } catch (error) {
-          console.error(`❌ Error generating variation ${index + 1}:`, error);
-          // Return a fallback variation
-          return {
-            id: `variation-${Date.now()}-${index}`,
-            description: `${prompt.trim()} - variation ${index + 1}`,
-            angle: `Variation ${index + 1}`,
-            pose: `Fallback ${index + 1}`,
-            imageUrl: null,
-            fileType: 'image' as const
-          };
-        }
-      });
 
-      // Wait for all 4 variations to complete
-      const newVariations = await Promise.all(imagePromises);
+      // The /api/vary-character endpoint returns variations with images already generated
+      const newVariations = data.variations || [];
+      
+      if (newVariations.length === 0) {
+        throw new Error('No variations were generated');
+      }
 
       setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
       
       console.log('🎨 Generated variations:', newVariations.length);
-      console.log('🎨 Variations details:', newVariations.map(v => ({ 
-        id: v.id, 
-        hasImageUrl: !!v.imageUrl, 
-        imageUrl: v.imageUrl,
-        description: v.description 
+      console.log('🎨 Variations details:', newVariations.map((variation: any) => ({ 
+        id: variation.id, 
+        hasImageUrl: !!variation.imageUrl, 
+        imageUrl: variation.imageUrl,
+        description: variation.description 
       })));
       
       // Filter out bad content variations
