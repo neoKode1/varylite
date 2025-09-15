@@ -899,6 +899,7 @@ export default function Home() {
   // Use the "Fix Duplicates" button in development mode if needed
   
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadedAudio, setUploadedAudio] = useState<File | null>(null);
   const [prompt, setPrompt] = useState('');
   const [processing, setProcessing] = useState<ProcessingState>({
     isProcessing: false,
@@ -1161,7 +1162,7 @@ export default function Home() {
       'wan-v2-2-a14b-i2v-lora': 50, // 50 seconds for Wan V2.2 LoRA
       'cogvideo-i2v': 50, // 50 seconds for CogVideo I2V
       'zeroscope-t2v': 50, // 50 seconds for Zeroscope T2V
-      'kling-ai-avatar': 60, // 60 seconds for Kling AI Avatar
+      'kling-ai-avatar': 600, // 10 minutes for Kling AI Avatar (can take 2-20 minutes)
       'gemini-25-flash-image-edit': 20 // 20 seconds for Gemini 2.5 Flash Image Edit
     };
     return timeEstimates[mode] || 30;
@@ -1264,11 +1265,17 @@ export default function Home() {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
     
-    console.log('🔄 [DETERMINE MODE] hasImages:', hasImages, 'hasVideos:', hasVideos, 'fileCount:', uploadedFiles.length);
+    console.log('🔄 [DETERMINE MODE] hasImages:', hasImages, 'hasVideos:', hasVideos, 'fileCount:', uploadedFiles.length, 'contentMode:', contentMode);
     
     if (hasImages && uploadedFiles.length === 1) {
-      console.log('🔄 [DETERMINE MODE] Single image detected, returning nano-banana');
-      return 'nano-banana';
+      // Respect content mode when auto-selecting model for single image
+      if (contentMode === 'video') {
+        console.log('🔄 [DETERMINE MODE] Single image + video mode, returning veo3-fast');
+        return 'veo3-fast'; // Default video model for image-to-video
+      } else {
+        console.log('🔄 [DETERMINE MODE] Single image + image mode, returning nano-banana');
+        return 'nano-banana';
+      }
     } else if (!hasImages && !hasVideos) {
       console.log('🔄 [DETERMINE MODE] No files, returning null for user preferences');
       return null; // Will be set from user preferences
@@ -1276,7 +1283,7 @@ export default function Home() {
     
     console.log('🔄 [DETERMINE MODE] No specific case matched, returning null');
     return null;
-  }, [uploadedFiles]);
+  }, [uploadedFiles, contentMode]);
 
   // Get available generation modes for current state - SIMPLIFIED VERSION
   const getAvailableModes = useCallback((): GenerationMode[] => {
@@ -1337,7 +1344,7 @@ export default function Home() {
       'seedream-4-edit': 'Seedream 4 Edit',
       'bytedance-seedream-4': 'Seedream 4',
       'gemini-25-flash-image-edit': 'Gemini Flash Edit',
-      'kling-ai-avatar': 'Kling AI Avatar',
+            'kling-ai-avatar': 'Kling AI Avatar (2-60 min)',
       // Mid-Tier Image-to-Video Models
       'minimax-video-01': 'Minimax Video 01',
       'minimax-video-generation': 'Minimax Video Gen',
@@ -1461,7 +1468,7 @@ export default function Home() {
     } else if (generationMode) {
       console.log('🔄 [MODEL SELECTION] User has selected model, not overriding:', generationMode);
     }
-  }, [uploadedFiles, determineGenerationMode, generationMode]);
+  }, [uploadedFiles, determineGenerationMode, generationMode, contentMode]);
 
   // Check video duration and show Toasty error if too long
   const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
@@ -1628,6 +1635,11 @@ export default function Home() {
     if (generationMode) {
       // Check if current model is compatible with new content mode
       const isVideoModel = (
+        generationMode === 'veo3-fast' ||
+        generationMode === 'minimax-2.0' ||
+        generationMode === 'kling-2.1-master' ||
+        generationMode === 'kling-ai-avatar' ||
+        generationMode === 'decart-lucy-14b' ||
         generationMode === 'minimax-video-01' ||
         generationMode === 'minimax-video-generation' ||
         generationMode === 'stable-video-diffusion-i2v' ||
@@ -1635,9 +1647,27 @@ export default function Home() {
         generationMode === 'text2video-zero-i2v' ||
         generationMode === 'wan-v2-2-a14b-i2v-lora' ||
         generationMode === 'cogvideo-i2v' ||
-        generationMode === 'zeroscope-t2v'
+        generationMode === 'zeroscope-t2v' ||
+        generationMode === 'runway-video' ||
+        generationMode === 'seedance-pro' ||
+        generationMode === 'seedance-pro-t2v' ||
+        generationMode === 'minimax-i2v-director' ||
+        generationMode === 'hailuo-02-pro' ||
+        generationMode === 'kling-video-pro' ||
+        generationMode === 'seedream-3' ||
+        generationMode === 'seedance-1-pro' ||
+        generationMode === 'veo3-fast-t2v' ||
+        generationMode === 'minimax-2-t2v' ||
+        generationMode === 'kling-2.1-master-t2v'
       );
-      const isImageModel = generationMode === 'nano-banana' || generationMode === 'flux-dev' || generationMode === 'seedream-4-edit';
+      const isImageModel = (
+        generationMode === 'nano-banana' ||
+        generationMode === 'flux-dev' ||
+        generationMode === 'seedream-4-edit' ||
+        generationMode === 'bytedance-seedream-4' ||
+        generationMode === 'runway-t2i' ||
+        generationMode === 'gemini-25-flash-image-edit'
+      );
       
       console.log('🔄 [CONTENT MODE] isVideoModel:', isVideoModel, 'isImageModel:', isImageModel);
       
@@ -1933,6 +1963,13 @@ export default function Home() {
         currentStep: 'Converting image...'
       });
 
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+
       // Convert the image URL to base64
       console.log('🔄 Converting image URL to base64...');
       const base64Image = await urlToBase64(imageUrl);
@@ -1953,6 +1990,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           images: [base64Image],
@@ -2043,6 +2081,13 @@ export default function Home() {
     try {
       console.log('🎨 Starting text-to-image generation:', prompt);
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       setProcessing({
         isProcessing: true,
         progress: 10,
@@ -2061,6 +2106,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -2121,6 +2167,13 @@ export default function Home() {
     try {
       console.log('🎨 Starting Seedream 3 text-to-image generation:', prompt);
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       setProcessing({
         isProcessing: true,
         progress: 10,
@@ -2140,6 +2193,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -2327,6 +2381,13 @@ export default function Home() {
     try {
       console.log('🎬 Starting Seedance 1 Pro text-to-video generation:', prompt);
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       setProcessing({
         isProcessing: true,
         progress: 10,
@@ -2353,6 +2414,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -2529,6 +2591,7 @@ export default function Home() {
     const validFiles = files.filter(file => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
+      const isAudio = file.type.startsWith('audio/');
       
       // Check if video features are disabled
       if (isVideo && !ENABLE_VIDEO_FEATURES) {
@@ -2537,16 +2600,18 @@ export default function Home() {
         return false;
       }
       
-      if (!isImage && !isVideo) {
-        setError('Please upload valid image files (JPG, PNG) or video files (MP4, MOV)');
+      if (!isImage && !isVideo && !isAudio) {
+        setError('Please upload valid image files (JPG, PNG), video files (MP4, MOV), or audio files (MP3, WAV)');
         showAnimatedErrorNotification('User Error: Invalid file type! TOASTY!', 'toasty');
         return false;
       }
       
-      // Different size limits for images vs videos
-      const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
+      // Different size limits for images vs videos vs audio
+      const maxSize = isImage ? 10 * 1024 * 1024 : isVideo ? 100 * 1024 * 1024 : 25 * 1024 * 1024; // 10MB for images, 100MB for videos, 25MB for audio
       if (file.size > maxSize) {
-        setError(`${isImage ? 'Image' : 'Video'} size must be less than ${isImage ? '10MB' : '100MB'}`);
+        const fileType = isImage ? 'Image' : isVideo ? 'Video' : 'Audio';
+        const sizeLimit = isImage ? '10MB' : isVideo ? '100MB' : '25MB';
+        setError(`${fileType} size must be less than ${sizeLimit}`);
         showAnimatedErrorNotification('User Error: File too large! TOASTY!', 'toasty');
         return false;
       }
@@ -2571,45 +2636,73 @@ export default function Home() {
 
     setError(null);
     const newFiles: UploadedFile[] = [];
+    const audioFiles: File[] = [];
     let processedCount = 0;
     
     validFiles.forEach((file) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        const preview = URL.createObjectURL(file);
-        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-        
-        newFiles.push({
-          file,
-          preview,
-          base64: base64.split(',')[1], // Remove data:...;base64, prefix
-          mimeType: file.type, // Store original MIME type
-          type: 'reference', // Default type
-          fileType
-        });
-        
+      if (file.type.startsWith('audio/')) {
+        // Handle audio files separately for Kling AI Avatar
+        audioFiles.push(file);
         processedCount++;
-        // Update state when all files are processed
+        
+        // Update audio state immediately
+        setUploadedAudio(file);
+        console.log('🎵 Audio file uploaded:', file.name, file.type, file.size);
+        
+        // Check if all files are processed
         if (processedCount === validFiles.length) {
-          setUploadedFiles(prev => [...prev, ...newFiles]);
+          if (newFiles.length > 0) {
+            setUploadedFiles(prev => [...prev, ...newFiles]);
+          }
           
-          // Show model selection notification
-          const hasImages = newFiles.some(file => file.fileType === 'image');
-          const hasVideos = newFiles.some(file => file.fileType === 'video');
-          
-          if (hasImages && !hasVideos) {
-            showNotification('🎨 Nano Banana model selected for character variations', 'info');
-          } else if (hasVideos && !hasImages) {
-            showNotification('🎬 Aleph model selected for video-to-video editing', 'info');
-          } else if (hasImages && hasVideos) {
-            showNotification('⚠️ Please upload either images OR videos, not both', 'error');
+          // Show appropriate notification
+          if (audioFiles.length > 0 && newFiles.length > 0) {
+            showNotification('🎵 Audio file uploaded! Ready for Kling AI Avatar generation', 'info');
+          } else if (audioFiles.length > 0) {
+            showNotification('🎵 Audio file uploaded! Please also upload an image for Kling AI Avatar', 'info');
           }
         }
-      };
-      
-      reader.readAsDataURL(file);
+      } else {
+        // Handle image and video files as before
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          const base64 = e.target?.result as string;
+          const preview = URL.createObjectURL(file);
+          const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+          
+          newFiles.push({
+            file,
+            preview,
+            base64: base64.split(',')[1], // Remove data:...;base64, prefix
+            mimeType: file.type, // Store original MIME type
+            type: 'reference', // Default type
+            fileType
+          });
+          
+          processedCount++;
+          // Update state when all files are processed
+          if (processedCount === validFiles.length) {
+            if (newFiles.length > 0) {
+              setUploadedFiles(prev => [...prev, ...newFiles]);
+            }
+            
+            // Show model selection notification
+            const hasImages = newFiles.some(file => file.fileType === 'image');
+            const hasVideos = newFiles.some(file => file.fileType === 'video');
+            
+            if (hasImages && !hasVideos) {
+              showNotification('🎨 Nano Banana model selected for character variations', 'info');
+            } else if (hasVideos && !hasImages) {
+              showNotification('🎬 Aleph model selected for video-to-video editing', 'info');
+            } else if (hasImages && hasVideos) {
+              showNotification('⚠️ Please upload either images OR videos, not both', 'error');
+            }
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      }
     });
   }, [showNotification, checkVideoDuration, showAnimatedErrorNotification]);
 
@@ -3095,6 +3188,9 @@ export default function Home() {
       case 'kling-2.1-master':
         await handleKlingMasterGeneration();
         break;
+      case 'kling-ai-avatar':
+        await handleKlingAiAvatarGeneration();
+        break;
       case 'seedance-pro':
         await handleEndFrameGeneration();
         break;
@@ -3210,6 +3306,13 @@ export default function Home() {
     try {
       setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading image...' }));
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       // Upload image to Supabase and get FAL URL
       const imageUrl = await uploadImageToSupabaseAndFal(uploadedFiles[0].base64);
       
@@ -3229,6 +3332,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           images: uploadedFiles.map(img => img.base64),
@@ -3409,6 +3513,13 @@ export default function Home() {
 
   // Helper function to determine if generation should be enabled
   const canGenerateWithCurrentState = () => {
+    // Special case for Kling AI Avatar - requires both image and audio
+    if (generationMode === 'kling-ai-avatar') {
+      const result = uploadedFiles.length > 0 && uploadedAudio !== null;
+      console.log('🎯 [canGenerateWithCurrentState] Kling AI Avatar:', generationMode, 'uploadedFiles:', uploadedFiles.length, 'uploadedAudio:', !!uploadedAudio, 'result:', result);
+      return result;
+    }
+    
     // For video models, allow generation if images are uploaded (even without prompt)
     if (generationMode && isVideoVariantModel(generationMode)) {
       const result = uploadedFiles.length > 0;
@@ -4189,6 +4300,13 @@ export default function Home() {
     try {
       setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Sending to Runway for video editing...' }));
       
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+      
       // Determine the appropriate model based on file types
       const hasImages = uploadedFiles.some(file => file.fileType === 'image');
       const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
@@ -4216,6 +4334,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -4902,6 +5021,13 @@ export default function Home() {
     });
 
     try {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+
       setProcessing({
         isProcessing: true,
         progress: 20,
@@ -4955,6 +5081,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -5102,6 +5229,13 @@ export default function Home() {
     startGenerationTimer('minimax-2.0');
 
     try {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+
       setProcessing({
         isProcessing: true,
         progress: 20,
@@ -5166,6 +5300,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -5278,6 +5413,13 @@ export default function Home() {
     });
 
     try {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+
       setProcessing({
         isProcessing: true,
         progress: 20,
@@ -5311,6 +5453,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
@@ -5383,6 +5526,220 @@ export default function Home() {
     } catch (error) {
       console.error('Kling 2.1 Master generation error:', error);
       showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Kling 2.1 Master'} TOASTY!`, 'toasty');
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+    }
+  };
+
+  // Handle Kling AI Avatar generation
+  const handleKlingAiAvatarGeneration = async () => {
+    if (!canGenerate) {
+      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
+      return;
+    }
+
+    const imageFile = uploadedFiles.find(file => file.fileType === 'image');
+    if (!imageFile) {
+      showAnimatedErrorNotification('User Error: Please upload a valid image! TOASTY!', 'toasty');
+      return;
+    }
+
+    if (!uploadedAudio) {
+      showAnimatedErrorNotification('User Error: Please upload an audio file for Kling AI Avatar! TOASTY!', 'toasty');
+      return;
+    }
+
+    setProcessing({
+      isProcessing: true,
+      progress: 0,
+      currentStep: 'Starting Kling AI Avatar generation... (This may take 2-20 minutes)'
+    });
+
+    try {
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 20,
+        currentStep: 'Uploading image and audio...'
+      });
+
+      // Upload image to Supabase and get FAL URL
+      const imageUrl = await uploadImageToSupabaseAndFal(imageFile.base64);
+      
+      // Upload audio to Supabase
+      const audioUploadResponse = await fetch('/api/supabase-upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: uploadedAudio, // Send the file directly, not as FormData
+      });
+
+      if (!audioUploadResponse.ok) {
+        throw new Error('Failed to upload audio file');
+      }
+
+      const audioUploadData = await audioUploadResponse.json();
+      const audioUrl = audioUploadData.url;
+
+      setProcessing({
+        isProcessing: true,
+        progress: 40,
+        currentStep: 'Generating AI Avatar video... (Please be patient - this can take 2-20 minutes)'
+      });
+
+      const response = await fetch('/api/kling-ai-avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          imageUrl: imageUrl,
+          audioUrl: audioUrl,
+          prompt: prompt.trim() || 'Generate AI avatar video'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate AI avatar video');
+      }
+
+      const data = await response.json();
+      console.log('✅ Kling AI Avatar job submitted:', data);
+
+      // Start polling for status
+      const requestId = data.requestId;
+      if (!requestId) {
+        throw new Error('No request ID returned from server');
+      }
+
+      console.log('🔄 Starting status polling for request_id:', requestId);
+      
+      // Poll for completion with longer intervals
+        let pollCount = 0;
+        const maxPolls = 360; // 60 minutes max (360 * 10 seconds)
+        const pollInterval = 10000; // 10 seconds
+      
+      const pollForStatus = async (): Promise<any> => {
+        while (pollCount < maxPolls) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          pollCount++;
+          
+          console.log(`🔄 [KLING AI AVATAR] Status poll ${pollCount}/${maxPolls}`);
+          
+          try {
+            const statusResponse = await fetch(`/api/kling-ai-avatar-status?requestId=${requestId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+
+            if (!statusResponse.ok) {
+              throw new Error('Failed to check status');
+            }
+
+            const statusData = await statusResponse.json();
+            console.log('📊 [KLING AI AVATAR] Status:', statusData.status);
+
+            // Update progress based on status
+            const progressPercent = Math.min(90, 40 + (pollCount / maxPolls) * 50);
+            setProcessing(prev => ({
+              ...prev,
+              progress: progressPercent,
+              currentStep: `Generating AI Avatar video... (${statusData.status.toLowerCase()}) - ${Math.round(pollCount * pollInterval / 1000)}s elapsed`
+            }));
+
+            if (statusData.status === 'COMPLETED' && statusData.videoUrl) {
+              console.log('✅ [KLING AI AVATAR] Generation completed!');
+              return statusData;
+            }
+
+            if (statusData.status === 'FAILED') {
+              throw new Error(statusData.errorMessage || 'Generation failed');
+            }
+
+            // Continue polling if still in progress
+            if (statusData.status === 'IN_PROGRESS' || statusData.status === 'IN_QUEUE') {
+              continue;
+            }
+
+          } catch (pollError) {
+            console.error('❌ [KLING AI AVATAR] Polling error:', pollError);
+            if (pollCount >= maxPolls) {
+              throw new Error(`Status polling failed after ${maxPolls} attempts`);
+            }
+          }
+        }
+        
+          throw new Error('Generation timed out after 60 minutes');
+      };
+
+      const finalData = await pollForStatus();
+      console.log('✅ Kling AI Avatar generation successful:', finalData);
+
+      setProcessing({
+        isProcessing: true,
+        progress: 80,
+        currentStep: 'Finalizing AI Avatar video... (Almost done!)'
+      });
+
+      // Create a variation object for the gallery
+      const generatedVariation: CharacterVariation = {
+        id: `kling-avatar-${Date.now()}`,
+        description: `Kling AI Avatar: ${prompt.trim() || 'AI Avatar Video'}`,
+        angle: 'AI Avatar',
+        pose: 'AI Avatar',
+        videoUrl: finalData.videoUrl,
+        fileType: 'video'
+      };
+
+      const storedVariation: StoredVariation = {
+        ...generatedVariation,
+        timestamp: Date.now(),
+        originalPrompt: prompt.trim() || 'AI Avatar Video',
+        fileType: 'video'
+      };
+      setVariations(prev => [storedVariation, ...prev]);
+      addToGallery([generatedVariation], prompt.trim());
+
+      // Track usage
+      trackUsage('video_generation', 'minimax_endframe');
+
+      // Clear input after successful generation
+      setPrompt('');
+      setUploadedFiles([]);
+      setUploadedAudio(null);
+      console.log('🧹 Cleared input after successful Kling AI Avatar generation');
+
+      setProcessing({
+        isProcessing: false,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      setTimeout(() => {
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          currentStep: ''
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Kling AI Avatar generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate AI avatar video'} TOASTY!`, 'toasty');
       setProcessing({
         isProcessing: false,
         progress: 0,
@@ -5791,6 +6148,10 @@ export default function Home() {
         onSignInClick={handleSignInClick}
         onToggleGallery={() => setShowGallery(!showGallery)}
         showGallery={showGallery}
+        onPurchaseCredits={() => {
+          // TODO: Open credit purchase modal
+          console.log('Open credit purchase modal');
+        }}
       />
       
       {/* Background Video */}
@@ -7066,6 +7427,53 @@ export default function Home() {
                     );
                   })}
                 </div>
+                
+                {/* Audio Upload Slot for Kling AI Avatar */}
+                {generationMode === 'kling-ai-avatar' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white text-xs font-medium whitespace-nowrap">Audio:</span>
+                    <div className="relative">
+                      {uploadedAudio ? (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-green-600 bg-opacity-20 border border-green-500 border-opacity-50 rounded-lg">
+                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">🎵</span>
+                          </div>
+                          <span className="text-white text-xs font-medium truncate max-w-32">
+                            {uploadedAudio.name}
+                          </span>
+                          <button
+                            onClick={() => setUploadedAudio(null)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                            aria-label="Remove audio file"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => document.getElementById('audio-input')?.click()}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 border-opacity-50 rounded-lg hover:bg-opacity-70 transition-all duration-200"
+                        >
+                          <Plus className="w-4 h-4 text-gray-400" />
+                          <span className="text-white text-xs">Upload Audio</span>
+                        </button>
+                      )}
+                      <input
+                        id="audio-input"
+                        type="file"
+                        accept="audio/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadedAudio(file);
+                            console.log('🎵 Audio file selected:', file.name, file.type, file.size);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                )}
                 
                 {/* Model Selection - Compact */}
                   <div className="flex items-center gap-2">

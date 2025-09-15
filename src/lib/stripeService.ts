@@ -137,13 +137,22 @@ export class StripeService {
 
       const customer = await this.createCustomer(userId, user.email, user.name);
 
+      // Map tier to price ID
+      let priceId: string;
+      if (tier === 'credit_pack') {
+        // Default to creditPack5 for credit_pack tier
+        priceId = this.config.priceIds.creditPack5;
+      } else {
+        priceId = this.config.priceIds[tier as keyof typeof this.config.priceIds];
+      }
+
       // Create checkout session
       const session = await this.stripe.checkout.sessions.create({
         customer: customer.id,
         payment_method_types: ['card'],
         line_items: [
           {
-            price: this.config.priceIds[tier],
+            price: priceId,
             quantity: 1,
           },
         ],
@@ -423,10 +432,20 @@ export function createStripeService(): StripeService {
     priceIds: {
       light: process.env.STRIPE_LIGHT_PRICE_ID || '',
       heavy: process.env.STRIPE_HEAVY_PRICE_ID || '',
+      weeklyPro: process.env.STRIPE_WEEKLY_PRO_PRICE_ID || '',
+      monthlyPro: process.env.STRIPE_MONTHLY_PRO_PRICE_ID || '',
+      creditPack5: process.env.STRIPE_CREDIT_PACK_5_PRICE_ID || '',
+      creditPack10: process.env.STRIPE_CREDIT_PACK_10_PRICE_ID || '',
+      creditPack25: process.env.STRIPE_CREDIT_PACK_25_PRICE_ID || '',
     },
     productIds: {
       light: process.env.STRIPE_LIGHT_PRODUCT_ID || '',
       heavy: process.env.STRIPE_HEAVY_PRODUCT_ID || '',
+      weeklyPro: process.env.STRIPE_WEEKLY_PRO_PRODUCT_ID || '',
+      monthlyPro: process.env.STRIPE_MONTHLY_PRO_PRODUCT_ID || '',
+      creditPack5: process.env.STRIPE_CREDIT_PACK_5_PRODUCT_ID || '',
+      creditPack10: process.env.STRIPE_CREDIT_PACK_10_PRODUCT_ID || '',
+      creditPack25: process.env.STRIPE_CREDIT_PACK_25_PRODUCT_ID || '',
     },
   };
 

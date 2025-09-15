@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
+import { 
+  checkUserGenerationPermission, 
+  trackUserFirstGeneration, 
+  deductCreditsForGeneration,
+  checkLowBalanceNotification 
+} from '@/lib/creditEnforcementService';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Function to upload image using Fal AI client's built-in upload
 async function uploadImageToTempUrl(base64Data: string): Promise<string> {
@@ -332,6 +339,86 @@ export async function POST(request: NextRequest) {
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
     console.log(`🎯 Generation Mode: "${generationMode}"`);
     console.log(`⚙️ Generation Settings:`, generationSettings);
+
+    // Check authorization header
+    console.log('🔐 [CHARACTER VARIATION] Checking authorization header...');
+    const authHeader = request.headers.get('authorization');
+    console.log('🔐 [CHARACTER VARIATION] Auth header present:', !!authHeader);
+    console.log('🔐 [CHARACTER VARIATION] Auth header format:', authHeader ? `${authHeader.substring(0, 20)}...` : 'null');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ [CHARACTER VARIATION] No valid authorization header');
+      console.error('❌ [CHARACTER VARIATION] Expected format: "Bearer <token>"');
+      console.error('❌ [CHARACTER VARIATION] Received:', authHeader || 'null');
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('🔐 [CHARACTER VARIATION] Token extracted:', token ? `${token.substring(0, 20)}...` : 'null');
+    console.log('🔐 [CHARACTER VARIATION] Token length:', token ? token.length : 0);
+    console.log('🔐 [CHARACTER VARIATION] Validating token with Supabase...');
+    
+    let user: any;
+    try {
+      const { data: { user: authUser }, error: authError } = await supabaseAdmin!.auth.getUser(token);
+      
+      if (authError) {
+        console.error('❌ [CHARACTER VARIATION] Supabase auth error:', authError);
+        console.error('❌ [CHARACTER VARIATION] Error message:', authError.message);
+        console.error('❌ [CHARACTER VARIATION] Error status:', authError.status);
+        return NextResponse.json(
+          { error: 'Invalid authentication', details: authError.message },
+          { status: 401 }
+        );
+      }
+      
+      if (!authUser) {
+        console.error('❌ [CHARACTER VARIATION] No user returned from Supabase');
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 401 }
+        );
+      }
+      
+      user = authUser;
+      console.log('✅ [CHARACTER VARIATION] Token validation successful');
+      console.log('👤 [CHARACTER VARIATION] User ID:', user.id);
+      console.log('📧 [CHARACTER VARIATION] User email:', user.email);
+      console.log('📅 [CHARACTER VARIATION] User created at:', user.created_at);
+      console.log('🔍 [CHARACTER VARIATION] User metadata:', user.user_metadata);
+      
+    } catch (error) {
+      console.error('❌ [CHARACTER VARIATION] Unexpected error during token validation:', error);
+      return NextResponse.json(
+        { error: 'Authentication service error' },
+        { status: 500 }
+      );
+    }
+
+    // Track first generation for new users (starts grace period)
+    console.log('🆕 [CHARACTER VARIATION] Tracking first generation for user...');
+    await trackUserFirstGeneration(user.id);
+
+    // Check user's credit permission for this model
+    console.log('💰 [CHARACTER VARIATION] Checking user credit permission...');
+    console.log('💰 [CHARACTER VARIATION] Model:', generationMode || 'nano-banana');
+    const creditCheck = await checkUserGenerationPermission(user.id, generationMode || 'nano-banana');
+    
+    if (!creditCheck.allowed) {
+      console.log('❌ [CHARACTER VARIATION] Credit check failed:', creditCheck.message);
+      return NextResponse.json({
+        success: false,
+        error: creditCheck.message,
+        reason: creditCheck.reason,
+        gracePeriodExpiresAt: creditCheck.gracePeriodExpiresAt,
+        timeRemaining: creditCheck.timeRemaining
+      }, { status: 402 }); // 402 Payment Required
+    }
+    
+    console.log('✅ [CHARACTER VARIATION] Credit check passed:', creditCheck.message);
     
     // Enhanced validation for character combination
     if (images && images.length >= 2) {
@@ -976,9 +1063,35 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
     const successRate = ((apiStats.successfulRequests / apiStats.totalRequests) * 100).toFixed(1);
     console.log(`✅ Request completed successfully. Success rate: ${successRate}% (${apiStats.successfulRequests}/${apiStats.totalRequests})`);
     
+    // Deduct credits after successful generation
+    console.log('💰 [CHARACTER VARIATION] Starting credit deduction for successful generation...');
+    console.log('💰 [CHARACTER VARIATION] User ID:', user.id);
+    console.log('💰 [CHARACTER VARIATION] Model:', generationMode || 'nano-banana');
+    console.log('💰 [CHARACTER VARIATION] Number of variations generated:', variationsWithImages.length);
+    
+    const creditDeduction = await deductCreditsForGeneration(user.id, generationMode || 'nano-banana');
+    
+    if (!creditDeduction.success) {
+      console.error('❌ [CHARACTER VARIATION] Credit deduction failed:', creditDeduction.error);
+      console.error('❌ [CHARACTER VARIATION] This is a critical error - generation succeeded but credits not deducted');
+    } else {
+      console.log(`✅ [CHARACTER VARIATION] Credit deduction successful!`);
+      console.log(`✅ [CHARACTER VARIATION] Credits deducted: ${creditDeduction.creditsUsed}`);
+      console.log(`💰 [CHARACTER VARIATION] Remaining balance: ${creditDeduction.remainingBalance} credits`);
+      console.log(`💰 [CHARACTER VARIATION] User can generate ~${Math.floor(creditDeduction.remainingBalance / (creditDeduction.creditsUsed || 1))} more similar generations`);
+      
+      // Check for low balance notification
+      console.log('🔔 [CHARACTER VARIATION] Checking for low balance notification...');
+      await checkLowBalanceNotification(user.id);
+    }
+    
     return NextResponse.json({
       success: true,
-      variations: variationsWithImages
+      variations: variationsWithImages,
+      metadata: {
+        creditsUsed: creditDeduction.creditsUsed,
+        remainingBalance: creditDeduction.remainingBalance
+      }
     } as CharacterVariationResponse);
 
   } catch (error) {

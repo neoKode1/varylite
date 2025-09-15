@@ -7,42 +7,33 @@ import { DollarSign, Image, Video, Zap, Crown, Lock, Unlock, RefreshCw } from 'l
 interface CreditSummary {
   user_id: string;
   current_balance: number;
-  total_base_generations: number;
-  total_premium_generations: number;
-  total_ultra_premium_generations: number;
-  cheapest_model: string;
-  cheapest_cost: number;
-  most_expensive_model: string;
-  most_expensive_cost: number;
+  low_balance_threshold: number;
+  tier: string;
+  total_credits_purchased: number;
+  last_credit_purchase: string | null;
 }
 
-interface GenerationCalculation {
+interface ModelCost {
   model_name: string;
-  display_name: string;
   cost_per_generation: number;
-  category: string;
-  is_secret_level: boolean;
-  generations_possible: number;
-  total_cost: number;
+  allowed_tiers: string[];
+  is_active: boolean;
 }
 
 interface CreditDisplayProps {
   showSecretModels?: boolean;
   compact?: boolean;
+  onPurchaseCredits?: () => void;
 }
 
 export interface CreditDisplayRef {
   refresh: () => void;
 }
 
-const UserCreditDisplay = forwardRef<CreditDisplayRef, CreditDisplayProps>(({ showSecretModels = false, compact = false }, ref) => {
+const UserCreditDisplay = forwardRef<CreditDisplayRef, CreditDisplayProps>(({ showSecretModels = false, compact = false, onPurchaseCredits }, ref) => {
   const { user } = useAuth();
   const [creditSummary, setCreditSummary] = useState<CreditSummary | null>(null);
-  const [calculations, setCalculations] = useState<{
-    basic: GenerationCalculation[];
-    premium: GenerationCalculation[];
-    ultraPremium: GenerationCalculation[];
-  }>({ basic: [], premium: [], ultraPremium: [] });
+  const [modelCosts, setModelCosts] = useState<ModelCost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,24 +58,36 @@ const UserCreditDisplay = forwardRef<CreditDisplayRef, CreditDisplayProps>(({ sh
         return;
       }
 
-      const response = await fetch(
-        `/api/user-credits?userId=${user.id}&includeSecret=${showSecretModels}`
-      );
+      // Fetch user credit information
+      const creditResponse = await fetch(`/api/user-credits?userId=${user.id}`);
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', response.status, errorData);
-        throw new Error(`Failed to fetch credit information: ${response.status} ${errorData.error || response.statusText}`);
+      if (!creditResponse.ok) {
+        const errorData = await creditResponse.json().catch(() => ({}));
+        console.error('Credit API Error:', creditResponse.status, errorData);
+        throw new Error(`Failed to fetch credit information: ${creditResponse.status} ${errorData.error || creditResponse.statusText}`);
       }
 
-      const data = await response.json();
+      const creditData = await creditResponse.json();
       
-      if (!data.success) {
-        throw new Error(data.error || 'Invalid response from server');
+      if (!creditData.success) {
+        throw new Error(creditData.error || 'Invalid response from credit API');
       }
 
-      setCreditSummary(data.summary);
-      setCalculations(data.calculations);
+      setCreditSummary(creditData.summary);
+
+      // Fetch model costs
+      const modelResponse = await fetch('/api/model-costs');
+      
+      if (!modelResponse.ok) {
+        console.warn('Failed to fetch model costs, using defaults');
+        setModelCosts([]);
+      } else {
+        const modelData = await modelResponse.json();
+        if (modelData.success) {
+          setModelCosts(modelData.models);
+        }
+      }
+
       setError(null);
     } catch (err) {
       console.error('Error fetching credit info:', err);
@@ -153,6 +156,31 @@ const UserCreditDisplay = forwardRef<CreditDisplayRef, CreditDisplayProps>(({ sh
   }
 
   const { current_balance } = creditSummary;
+
+  // Calculate generations possible for each model category
+  const calculations = {
+    basic: modelCosts.filter(model => model.cost_per_generation <= 0.04).map(model => ({
+      model_name: model.model_name,
+      display_name: model.model_name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      generations_possible: Math.floor(current_balance / model.cost_per_generation),
+      cost_per_generation: model.cost_per_generation,
+      is_secret_level: false
+    })),
+    premium: modelCosts.filter(model => model.cost_per_generation > 0.04 && model.cost_per_generation <= 0.20).map(model => ({
+      model_name: model.model_name,
+      display_name: model.model_name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      generations_possible: Math.floor(current_balance / model.cost_per_generation),
+      cost_per_generation: model.cost_per_generation,
+      is_secret_level: false
+    })),
+    ultraPremium: modelCosts.filter(model => model.cost_per_generation > 0.20).map(model => ({
+      model_name: model.model_name,
+      display_name: model.model_name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      generations_possible: Math.floor(current_balance / model.cost_per_generation),
+      cost_per_generation: model.cost_per_generation,
+      is_secret_level: false
+    }))
+  };
 
   if (compact) {
     return (

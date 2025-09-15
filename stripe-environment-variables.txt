@@ -1,0 +1,33 @@
+# Stripe Environment Variables for vARY Pay-As-You-Go System
+# Add these to your .env.local file
+
+# Stripe API Keys
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+
+# vARY Weekly Pro ($5.99/week - 150 credits)
+STRIPE_WEEKLY_PRO_PRODUCT_ID=prod_T3nwGpTfJhOd27
+STRIPE_WEEKLY_PRO_PRICE_ID=price_1S7gKvA2eb3W4RrA9z3EDlOl
+
+# vARY Monthly Pro ($14.99/month - 375 credits)
+STRIPE_MONTHLY_PRO_PRODUCT_ID=prod_T3nxInWbutJEIp
+STRIPE_MONTHLY_PRO_PRICE_ID=price_1S7gLOA2eb3W4RrANVc700HL
+
+# vARY Credits 5 ($5.00 one-time - 125 credits)
+STRIPE_CREDIT_PACK_5_PRODUCT_ID=prod_T3nxt1tcb6Yof0
+STRIPE_CREDIT_PACK_5_PRICE_ID=price_1S7gM1A2eb3W4RrAh4ySC6rL
+
+# vARY Credits 10 ($10.00 one-time - 250 credits)
+STRIPE_CREDIT_PACK_10_PRODUCT_ID=prod_T3nyoaEryTJnaj
+STRIPE_CREDIT_PACK_10_PRICE_ID=price_1S7gMUA2eb3W4RrAntlXTECx
+
+# vARY Credits 25 ($25.00 one-time - 625 credits)
+STRIPE_CREDIT_PACK_25_PRODUCT_ID=prod_T3nycouRiti1cN
+STRIPE_CREDIT_PACK_25_PRICE_ID=price_1S7gMxA2eb3W4RrAuAv0G8Rt
+
+# Summary:
+# ✅ All 5 vARY products configured
+# ✅ Weekly: $5.99/week (150 credits)
+# ✅ Monthly: $14.99/month (375 credits)  
+# ✅ Credit Packs: $5, $10, $25 (125, 250, 625 credits)
+# 🚀 Ready for pay-as-you-go system deployment!

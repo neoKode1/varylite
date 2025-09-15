@@ -7,6 +7,7 @@ import { useUsageTracking } from '@/hooks/useUsageTracking'
 import { useRouter } from 'next/navigation'
 import { ProfileModal } from './ProfileModal'
 import { AnalyticsUpdater } from './AnalyticsUpdater'
+import { CompactCreditDisplay, MobileCreditDisplay } from './CompactCreditDisplay'
 import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
@@ -19,9 +20,10 @@ interface HeaderProps {
   showGallery?: boolean
   hideAnalytics?: boolean
   showExitSecretLevel?: boolean
+  onPurchaseCredits?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton, onToggleGallery, showGallery, hideAnalytics, showExitSecretLevel }) => {
+export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, showContributors, onToggleContributors, hideCommunityButton, onToggleGallery, showGallery, hideAnalytics, showExitSecretLevel, onPurchaseCredits }) => {
   const { user, signOut } = useAuth()
   const { usageStats, isAnonymous } = useUsageTracking()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -240,6 +242,13 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
              </div>
            )}
            
+           {/* Credit Display - Desktop */}
+           {user && (
+             <div className="hidden lg:block">
+               <CompactCreditDisplay onPurchaseCredits={onPurchaseCredits} />
+             </div>
+           )}
+           
            {/* Usage Stats */}
            <div className="hidden lg:flex items-center space-x-3 text-sm">
              {isAnonymous ? (
@@ -296,8 +305,14 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                     )}
                   </div>
                  <div className="text-left">
-                   <div className="text-sm font-medium text-white">
-                     {user.user_metadata?.name || user.email?.split('@')[0]}
+                   <div className="flex items-center space-x-2">
+                     <div className="text-sm font-medium text-white">
+                       {user.user_metadata?.name || user.email?.split('@')[0]}
+                     </div>
+                     {/* Mobile Credit Display */}
+                     <div className="lg:hidden">
+                       <MobileCreditDisplay onPurchaseCredits={onPurchaseCredits} />
+                     </div>
                    </div>
                    <div className="text-xs text-green-400 font-medium">
                      ✨ Unlimited

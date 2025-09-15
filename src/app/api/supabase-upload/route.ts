@@ -57,6 +57,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum size is 50MB.' }, { status: 400 });
     }
 
+    // Determine bucket based on file type
+    let bucketName = 'images'; // Default bucket
+    if (file.type.startsWith('audio/')) {
+      bucketName = 'audio';
+    } else if (file.type.startsWith('video/')) {
+      bucketName = 'videos';
+    }
+    
+    console.log('📁 File type:', file.type, '-> Bucket:', bucketName);
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 15);
@@ -71,28 +81,43 @@ export async function POST(request: NextRequest) {
     
     console.log('📤 Uploading to Supabase Storage...');
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('images')
+    // Upload to Supabase Storage with fallback
+    let { data, error } = await supabase.storage
+      .from(bucketName)
       .upload(fileName, uint8Array, {
         contentType: file.type,
         cacheControl: '3600',
         upsert: false
       });
 
-    if (error) {
+    // If the specific bucket doesn't exist, fallback to images bucket
+    if (error && error.message.includes('not found')) {
+      console.log(`⚠️ ${bucketName} bucket not found, falling back to images bucket...`);
+      bucketName = 'images';
+      const retryResult = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, uint8Array, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: false
+        });
+      data = retryResult.data;
+      error = retryResult.error;
+    }
+
+    if (error || !data) {
       console.error('❌ Supabase upload error:', error);
       return NextResponse.json(
-        { error: 'Failed to upload to Supabase Storage', details: error.message },
+        { error: 'Failed to upload to Supabase Storage', details: error?.message || 'No data returned' },
         { status: 500 }
       );
     }
 
-    console.log('✅ File uploaded successfully to Supabase:', data.path);
+    console.log('✅ File uploaded successfully to Supabase:', data.path, 'in bucket:', bucketName);
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('images')
+      .from(bucketName)
       .getPublicUrl(data.path);
 
     const publicUrl = urlData.publicUrl;
@@ -107,6 +132,7 @@ export async function POST(request: NextRequest) {
         file_type: file.type,
         public_url: publicUrl,
         storage_path: data.path,
+        storage_bucket: bucketName,
         user_id: user.id,
         created_at: new Date().toISOString()
       });
@@ -123,7 +149,8 @@ export async function POST(request: NextRequest) {
       path: data.path,
       fileName: fileName,
       size: file.size,
-      type: file.type
+      type: file.type,
+      bucket: bucketName
     });
 
   } catch (error) {

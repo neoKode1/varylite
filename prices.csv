@@ -1,0 +1,6 @@
+Price ID,Product ID,Product Name,Product Statement Descriptor,Product Tax Code,Description,Created (UTC),Amount,Currency,Interval,Interval Count,Usage Type,Aggregate Usage,Billing Scheme,Trial Period Days,Tax Behavior
+price_1S7gMxA2eb3W4RrAuAv0G8Rt,prod_T3nycouRiti1cN,vARY Credits 25,,txcd_10103001,,2025-09-15 17:39,25.00,usd,,,,,per_unit,,unspecified
+price_1S7gMUA2eb3W4RrAntlXTECx,prod_T3nyoaEryTJnaj,vARY Credits 10,,txcd_10103001,,2025-09-15 17:38,10.00,usd,,,,,per_unit,,unspecified
+price_1S7gM1A2eb3W4RrAh4ySC6rL,prod_T3nxt1tcb6Yof0,vARY Credits 5,,txcd_10103001,,2025-09-15 17:38,5.00,usd,,,,,per_unit,,unspecified
+price_1S7gLOA2eb3W4RrANVc700HL,prod_T3nxInWbutJEIp,vARY Monthly,,txcd_10103001,,2025-09-15 17:37,14.99,usd,month,1,licensed,,per_unit,,unspecified
+price_1S7gKvA2eb3W4RrA9z3EDlOl,prod_T3nwGpTfJhOd27,vARY_Weekly,,txcd_10103001,,2025-09-15 17:37,5.99,usd,week,1,licensed,,per_unit,,unspecified

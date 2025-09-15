@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { fal } from '@fal-ai/client';
+import { 
+  checkUserGenerationPermission, 
+  trackUserFirstGeneration, 
+  deductCreditsForGeneration,
+  checkLowBalanceNotification 
+} from '@/lib/creditEnforcementService';
 
 // Configure FAL client
 fal.config({
@@ -284,22 +290,49 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    console.log('🔐 [VIDEO VARIANCE] Token extracted, length:', token?.length);
+    console.log('🔐 [VIDEO VARIANCE] Token extracted:', token ? `${token.substring(0, 20)}...` : 'null');
+    console.log('🔐 [VIDEO VARIANCE] Token length:', token ? token.length : 0);
     console.log('🔐 [VIDEO VARIANCE] Validating token with Supabase...');
     
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    let user: any;
+    try {
+      const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-    if (authError || !user) {
-      console.error('❌ [VIDEO VARIANCE] Token validation failed:', authError);
+      if (authError) {
+        console.error('❌ [VIDEO VARIANCE] Supabase auth error:', authError);
+        console.error('❌ [VIDEO VARIANCE] Error message:', authError.message);
+        console.error('❌ [VIDEO VARIANCE] Error status:', authError.status);
+        return NextResponse.json(
+          { error: 'Invalid authentication', details: authError.message },
+          { status: 401 }
+        );
+      }
+      
+      if (!authUser) {
+        console.error('❌ [VIDEO VARIANCE] No user returned from Supabase');
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 401 }
+        );
+      }
+      
+      user = authUser;
+      console.log('✅ [VIDEO VARIANCE] Token validation successful');
+      console.log('👤 [VIDEO VARIANCE] User ID:', user.id);
+      console.log('📧 [VIDEO VARIANCE] User email:', user.email);
+      console.log('📅 [VIDEO VARIANCE] User created at:', user.created_at);
+      
+    } catch (error) {
+      console.error('❌ [VIDEO VARIANCE] Unexpected error during token validation:', error);
       return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 }
+        { error: 'Authentication service error' },
+        { status: 500 }
       );
     }
-    
-    console.log('✅ [VIDEO VARIANCE] Token validation successful');
-    console.log('👤 [VIDEO VARIANCE] User ID:', user.id);
-    console.log('📧 [VIDEO VARIANCE] User email:', user.email);
+
+    // Track first generation for new users (starts grace period)
+    console.log('🆕 [VIDEO VARIANCE] Tracking first generation for user...');
+    await trackUserFirstGeneration(user.id);
 
     // Check if user has secret access OR is admin
     console.log('🔍 [VIDEO VARIANCE] Checking user access permissions...');
@@ -372,6 +405,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`🎬 [VIDEO VARIANCE] Generating video variations with model: ${model}`);
     console.log(`📝 [VIDEO VARIANCE] User prompt: "${prompt || 'None (using default)'}"`);
+
+    // Check user's credit permission for this model
+    console.log('💰 [VIDEO VARIANCE] Checking user credit permission...');
+    const creditCheck = await checkUserGenerationPermission(user.id, model);
+    
+    if (!creditCheck.allowed) {
+      console.log('❌ [VIDEO VARIANCE] Credit check failed:', creditCheck.message);
+      return NextResponse.json({
+        success: false,
+        error: creditCheck.message,
+        reason: creditCheck.reason,
+        gracePeriodExpiresAt: creditCheck.gracePeriodExpiresAt,
+        timeRemaining: creditCheck.timeRemaining
+      }, { status: 402 }); // 402 Payment Required
+    }
+    
+    console.log('✅ [VIDEO VARIANCE] Credit check passed:', creditCheck.message);
 
     console.log('📤 [VIDEO VARIANCE] Starting image upload to Supabase storage...');
     // Upload images to Supabase storage
@@ -488,6 +538,21 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Deduct credits for successful generation
+    console.log('💰 [VIDEO VARIANCE] Deducting credits for successful generation...');
+    const creditDeduction = await deductCreditsForGeneration(user.id, model);
+    
+    if (!creditDeduction.success) {
+      console.error('❌ [VIDEO VARIANCE] Credit deduction failed:', creditDeduction.error);
+      // Don't fail the request, just log the error
+    } else {
+      console.log(`✅ [VIDEO VARIANCE] Successfully deducted ${creditDeduction.creditsUsed} credits`);
+      console.log(`💰 [VIDEO VARIANCE] Remaining balance: ${creditDeduction.remainingBalance} credits`);
+      
+      // Check for low balance notification
+      await checkLowBalanceNotification(user.id);
+    }
+
     return NextResponse.json({ 
       success: true, 
       variations,
@@ -496,7 +561,9 @@ export async function POST(request: NextRequest) {
         successfulVariations: successCount,
         failedVariations: 4 - successCount,
         model: model,
-        cinematicShots: selectedShots.map(s => s.name)
+        cinematicShots: selectedShots.map(s => s.name),
+        creditsUsed: creditDeduction.creditsUsed,
+        remainingBalance: creditDeduction.remainingBalance
       }
     });
 
