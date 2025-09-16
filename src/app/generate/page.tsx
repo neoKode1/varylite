@@ -881,6 +881,19 @@ interface StoredVariation extends CharacterVariation {
   databaseId?: string; // Database primary key for deletion
 }
 
+interface ProcessingItem {
+  id: string;
+  type: 'image' | 'video';
+  model: string;
+  prompt: string;
+  progress: number;
+  currentStep: string;
+  startTime: number;
+  estimatedTime?: number;
+  cancellable: boolean;
+  abortController?: AbortController;
+}
+
 export default function Home() {
   const { user } = useAuth();
   const { canGenerate, trackUsage, isAnonymous } = useUsageTracking();
@@ -917,6 +930,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'images' | 'videos'>('all');
+  
+  // Processing items that appear in gallery
+  const [processingItems, setProcessingItems] = useState<ProcessingItem[]>([]);
   
   // Mobile image display state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -3550,6 +3566,43 @@ export default function Home() {
           return modelsWithoutPromptRequired.includes(model);
         };
 
+  // Helper functions for processing items management
+  const addProcessingItem = (item: ProcessingItem) => {
+    setProcessingItems(prev => [...prev, item]);
+  };
+
+  const updateProcessingItem = (id: string, updates: Partial<ProcessingItem>) => {
+    setProcessingItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, ...updates } : item
+      )
+    );
+  };
+
+  const removeProcessingItem = (id: string) => {
+    setProcessingItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const cancelProcessingItem = (id: string) => {
+    const item = processingItems.find(p => p.id === id);
+    if (item?.abortController) {
+      item.abortController.abort();
+    }
+    removeProcessingItem(id);
+  };
+
+  const getEstimatedTimeForModel = (model: string): number => {
+    const timeEstimates: Record<string, number> = {
+      'kling-ai-avatar': 1200, // 20 minutes
+      'veo3-fast': 300, // 5 minutes
+      'minimax-2.0': 600, // 10 minutes
+      'kling-2.1-master': 600, // 10 minutes
+      'runway-video': 180, // 3 minutes
+      'default': 300 // 5 minutes default
+    };
+    return timeEstimates[model] || timeEstimates.default;
+  };
+
   // Helper function to get appropriate placeholder text based on model and state
   const getPromptPlaceholder = () => {
     // Check if current model doesn't require a prompt
@@ -3780,26 +3833,40 @@ export default function Home() {
 
     console.log('✅ [FRONTEND VIDEO VARIANCE] User can generate, proceeding...');
 
-    console.log('⚙️ [FRONTEND VIDEO VARIANCE] Setting processing state...');
-    setProcessing({
-      isProcessing: true,
+    console.log('⚙️ [FRONTEND VIDEO VARIANCE] Creating processing item...');
+    
+    // Use enhanced camera prompt or model-specific default prompt
+    const userPrompt = prompt.trim();
+    const finalPrompt = userPrompt 
+      ? getEnhancedCameraPrompt(userPrompt) 
+      : getDefaultPromptForModel(generationMode || 'default');
+    
+    // Create processing item for gallery
+    const processingId = `video-${Date.now()}`;
+    const abortController = new AbortController();
+    
+    const processingItem: ProcessingItem = {
+      id: processingId,
+      type: 'video',
+      model: generationMode || 'unknown',
+      prompt: finalPrompt,
       progress: 20,
-      currentStep: 'Preparing video generation...'
-    });
+      currentStep: 'Preparing video generation...',
+      startTime: Date.now(),
+      estimatedTime: getEstimatedTimeForModel(generationMode || 'default'),
+      cancellable: true,
+      abortController
+    };
+    
+    addProcessingItem(processingItem);
 
     try {
       console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 20% - Preparing video generation...');
-      setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading images...' }));
+      updateProcessingItem(processingId, { progress: 40, currentStep: 'Uploading images...' });
       console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 40% - Uploading images...');
       
       console.log('📤 [FRONTEND VIDEO VARIANCE] Preparing request to /api/vary-video...');
       console.log('🔧 [FRONTEND VIDEO VARIANCE] Building request body...');
-      
-      // Use enhanced camera prompt or model-specific default prompt
-      const userPrompt = prompt.trim();
-      const finalPrompt = userPrompt 
-        ? getEnhancedCameraPrompt(userPrompt) 
-        : getDefaultPromptForModel(generationMode || 'default');
       
       if (!prompt.trim()) {
         console.log('🎯 [FRONTEND VIDEO VARIANCE] No user prompt provided, using model-specific default:', finalPrompt);
@@ -3857,7 +3924,7 @@ export default function Home() {
       console.log('📊 [FRONTEND VIDEO VARIANCE] Response headers:', Object.fromEntries(response.headers.entries()));
       console.log('📊 [FRONTEND VIDEO VARIANCE] Response ok:', response.ok);
 
-      setProcessing(prev => ({ ...prev, progress: 70, currentStep: 'Generating video variations...' }));
+      updateProcessingItem(processingId, { progress: 70, currentStep: 'Generating video variations...' });
       console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 70% - Generating video variations...');
 
       console.log('📥 [FRONTEND VIDEO VARIANCE] Parsing response JSON...');
@@ -3871,7 +3938,7 @@ export default function Home() {
         throw new Error(data.error || 'Failed to process video variations');
       }
 
-      setProcessing(prev => ({ ...prev, progress: 100, currentStep: 'Complete!' }));
+      updateProcessingItem(processingId, { progress: 100, currentStep: 'Complete!' });
       console.log('📊 [FRONTEND VIDEO VARIANCE] Progress: 100% - Complete!');
       
       const newVariations = data.variations || [];
@@ -3942,12 +4009,9 @@ export default function Home() {
         showNotification('🚫 All generated content was filtered out due to content policy', 'error');
       }
       
+      // Remove processing item after successful completion
       setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
+        removeProcessingItem(processingId);
         stopGenerationTimer();
       }, 1000);
 
@@ -3996,11 +4060,8 @@ export default function Home() {
         showNotification(`❌ ${userMessage}`, 'error');
       }
       
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        currentStep: ''
-      });
+      // Remove processing item on error
+      removeProcessingItem(processingId);
       stopGenerationTimer();
     }
   };
@@ -6083,13 +6144,72 @@ export default function Home() {
           }}
         >
           <div className="space-y-3 p-2">
-            {gallery.length === 0 ? (
+            {gallery.length === 0 && processingItems.length === 0 ? (
               <div className="text-center py-8">
                 <Images className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                 <p className="text-gray-400 text-xs">No content yet</p>
               </div>
             ) : (
-              gallery.map((item: any, index: number) => (
+              <>
+                {/* Processing Items */}
+                {processingItems.map((item: ProcessingItem, index: number) => (
+                  <div
+                    key={`processing-${item.id}-${index}`}
+                    className="floating-gallery-card group relative bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-[30px] border border-purple-500 overflow-hidden cursor-pointer transition-all duration-400"
+                    style={{
+                      width: '240px',
+                      height: '160px',
+                      filter: 'brightness(0.8)',
+                      transition: 'all 0.4s ease'
+                    }}
+                  >
+                    {/* Processing Content */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                      {/* Spinner */}
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mb-3"></div>
+                      
+                      {/* Model Name */}
+                      <div className="text-cyan-300 text-xs font-medium mb-1 text-center">
+                        {item.model}
+                      </div>
+                      
+                      {/* Progress */}
+                      <div className="text-white text-xs mb-2 text-center">
+                        {item.progress}%
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-700 rounded-full h-1 mb-2">
+                        <div 
+                          className="bg-gradient-to-r from-cyan-400 to-blue-400 h-1 rounded-full transition-all duration-300"
+                          style={{ width: `${item.progress}%` }}
+                        ></div>
+                      </div>
+                      
+                      {/* Current Step */}
+                      <div className="text-gray-300 text-xs text-center leading-tight">
+                        {item.currentStep}
+                      </div>
+                      
+                      {/* Cancel Button */}
+                      {item.cancellable && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelProcessingItem(item.id);
+                          }}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                          title="Cancel"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Regular Gallery Items */}
+                {gallery.map((item: any, index: number) => (
                 <div
                   key={`floating-${item.id}-${index}`}
                   className="floating-gallery-card group relative bg-black bg-opacity-50 rounded-[30px] border border-gray-700 overflow-hidden cursor-pointer transition-all duration-400"
@@ -6235,7 +6355,8 @@ export default function Home() {
                           </div>
                   </div>
                 </div>
-              ))
+              ))}
+              </>
             )}
           </div>
         </div>
@@ -6465,44 +6586,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Loading Component - Fixed Overlay Above Everything */}
-            {processing.isProcessing && (
-              <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] backdrop-blur-sm">
-                <div className="bg-black bg-opacity-90 rounded-[30px] border border-gray-700 p-8 max-w-md mx-4">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mb-6"></div>
-                    <p className="text-white text-xl font-medium mb-3">Generating Variations...</p>
-                    <p className="text-gray-400 text-sm text-center mb-6">{processing.currentStep}</p>
-                    
-                    {/* Progress Bar */}
-                    <div className="w-full max-w-sm bg-gray-700 rounded-full h-3 mb-6">
-                      <div 
-                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full transition-all duration-300"
-                        style={{ width: `${processing.progress}%` }}
-                      ></div>
-                    </div>
-                    
-                    {/* Time Remaining */}
-                    {timeRemaining !== null && (
-                      <p className="text-gray-400 text-sm mb-4">
-                        Estimated time remaining: {Math.ceil(timeRemaining / 60)}m {timeRemaining % 60}s
-                      </p>
-                    )}
-                    
-                    {/* Cancel Button */}
-                    {isCancellable && (
-                      <button
-                        onClick={cancelOperation}
-                        className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Processing items now appear in gallery instead of modal */}
 
             {/* Mobile Floating Input - Match Community Page Style */}
             {!showGallery && (
