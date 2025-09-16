@@ -55,7 +55,6 @@ type SecretGenerationMode =
   | 'kling-video-v2-1-master-image-to-video'
   | 'minimax-hailuo-02-pro-image-to-video'
   | 'minimax-video-01'
-  | 'minimax-video-generation'
   | 'nano-banana-edit'
   | 'qwen-image-edit'
   | 'stable-diffusion-v35-large'
@@ -367,7 +366,6 @@ export default function SecretPage() {
       'kling-video-v2-1-master-image-to-video',
       'minimax-hailuo-02-pro-image-to-video',
       'minimax-video-01',
-      'minimax-video-generation',
       'nano-banana-edit',
       'qwen-image-edit',
       'stable-diffusion-v35-large',
@@ -521,7 +519,6 @@ export default function SecretPage() {
       'kling-video-v2-1-master-image-to-video': 90,
       'minimax-hailuo-02-pro-image-to-video': 120,
       'minimax-video-01': 100,
-      'minimax-video-generation': 110,
       'nano-banana-edit': 20,
       'qwen-image-edit': 25,
       'stable-diffusion-v35-large': 40,
@@ -600,7 +597,6 @@ export default function SecretPage() {
       'flux-pro-kontext': 'Flux Pro Kontext',
       'imagen4-preview': 'Imagen4 Preview',
       'minimax-video-01': 'Minimax Video 01',
-      'minimax-video-generation': 'Minimax Video Gen',
       'nano-banana-edit': 'Nano Banana Edit',
       'qwen-image-edit': 'Qwen Image Edit',
       'stable-diffusion-v35-large': 'Stable Diffusion V3.5',
@@ -699,9 +695,6 @@ export default function SecretPage() {
     if (!hasImages && !hasVideos) {
       if (unlockedModels.has('minimax-video-01')) {
         modes.push('minimax-video-01');
-      }
-      if (unlockedModels.has('minimax-video-generation')) {
-        modes.push('minimax-video-generation');
       }
       if (unlockedModels.has('veo3-standard')) {
         modes.push('veo3-standard');
@@ -1254,7 +1247,7 @@ export default function SecretPage() {
           prompt: 'Restyle this image with cinematic quality and artistic enhancement',
           style: 'cinematic'
         };
-      } else if (['minimax-video-01', 'minimax-video-generation', 'veo3-standard'].includes(generationMode)) {
+      } else if (['minimax-video-01', 'veo3-standard'].includes(generationMode)) {
         // Text-to-video models
         apiEndpoint = '/api/fal/text-to-video';
         requestBody = {

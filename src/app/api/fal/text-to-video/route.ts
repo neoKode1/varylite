@@ -13,11 +13,6 @@ const MODEL_CONFIGS = {
     maxDuration: 5,
     maxPromptLength: 200
   },
-  'minimax-video-generation': {
-    endpoint: 'fal-ai/minimax-video-generation',
-    maxDuration: 5,
-    maxPromptLength: 200
-  },
   'veo3-standard': {
     endpoint: 'fal-ai/veo3-standard',
     maxDuration: 5,

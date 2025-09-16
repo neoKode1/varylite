@@ -41,7 +41,6 @@ const MODEL_COSTS: Record<string, number> = {
   // Video models (4 credits each)
   'veo3-fast': 4,
   'runway-video': 4,
-  'minimax-video-generation': 4,
   'kling-video-pro': 4,
   'decart-lucy-14b': 4,
   'minimax-i2v-director': 4,

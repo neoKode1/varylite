@@ -76,7 +76,6 @@ export class CreditDistributionCalculator {
     { name: 'kling-video-v2-1-master-image-to-video', cost: 0.15, category: 'premium' },
     { name: 'minimax-hailuo-02-pro-image-to-video', cost: 0.15, category: 'premium' },
     { name: 'minimax-video-01', cost: 0.12, category: 'premium' },
-    { name: 'minimax-video-generation', cost: 0.12, category: 'premium' },
     { name: 'nano-banana-edit', cost: 0.0398, category: 'basic' },
     { name: 'qwen-image-edit', cost: 0.05, category: 'basic' },
     { name: 'stable-diffusion-v35-large', cost: 0.05, category: 'basic' },

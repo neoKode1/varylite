@@ -30,7 +30,8 @@ const ASPECT_RATIOS = [
   { value: '9:16', label: 'Portrait (9:16)', icon: Smartphone, description: 'Mobile/vertical format' },
   { value: '4:3', label: 'Standard (4:3)', icon: Monitor, description: 'Traditional format' },
   { value: '3:4', label: 'Vertical (3:4)', icon: Smartphone, description: 'Portrait orientation' },
-  { value: '21:9', label: 'Ultrawide (21:9)', icon: Monitor, description: 'Cinematic format' }
+  { value: '21:9', label: 'Ultrawide (21:9)', icon: Monitor, description: 'Cinematic format' },
+  { value: '9:21', label: 'Tall Portrait (9:21)', icon: Smartphone, description: 'Extra tall format' }
 ];
 
 const RESOLUTIONS = [
@@ -77,7 +78,9 @@ export default function AspectRatioModal({
 
   const isImageModel = selectedModel.includes('nano-banana') || 
                        selectedModel.includes('seedream') || 
-                       selectedModel.includes('flux');
+                       selectedModel.includes('flux') ||
+                       selectedModel.includes('luma-photon-reframe') ||
+                       selectedModel.includes('gemini-25-flash-image-edit');
 
   const isVideoModel = selectedModel.includes('veo3') || 
                        selectedModel.includes('minimax') || 

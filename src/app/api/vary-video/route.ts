@@ -18,7 +18,7 @@ interface VideoVariationRequest {
   images: string[]; // base64 images
   mimeTypes?: string[];
   prompt: string;
-  model: 'decart-lucy-14b' | 'minimax-i2v-director' | 'hailuo-02-pro' | 'kling-video-pro' | 'veo3-fast' | 'minimax-2.0' | 'kling-2.1-master' | 'minimax-video-01' | 'minimax-video-generation' | 'stable-video-diffusion-i2v' | 'modelscope-i2v' | 'text2video-zero-i2v' | 'wan-v2-2-a14b-i2v-lora' | 'cogvideo-i2v' | 'zeroscope-t2v';
+  model: 'decart-lucy-14b' | 'minimax-i2v-director' | 'hailuo-02-pro' | 'kling-video-pro' | 'veo3-fast' | 'minimax-2.0' | 'kling-2.1-master' | 'minimax-video-01' | 'stable-video-diffusion-i2v' | 'modelscope-i2v' | 'text2video-zero-i2v' | 'wan-v2-2-a14b-i2v-lora' | 'cogvideo-i2v' | 'zeroscope-t2v';
 }
 
 interface VideoVariation {
@@ -611,11 +611,8 @@ async function callVideoModel(
       aspect_ratio: '16:9'
     };
   } else if (model === 'minimax-video-01') {
-    // Use Minimax Video 01 endpoint - this is text-to-video only, not image-to-video
-    // For image-to-video, we need to use a different model
-    throw new Error('minimax-video-01 is text-to-video only. Please use a different model for image-to-video generation.');
-  } else if (model === 'minimax-video-generation') {
     // Use Minimax Hailuo 02 Pro endpoint (correct image-to-video model)
+    // minimax-video-01 is text-to-video only, so we redirect to the proper image-to-video model
     endpoint = 'https://fal.run/fal-ai/minimax/hailuo-02/pro/image-to-video';
     requestBody = {
       image_url,

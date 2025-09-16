@@ -25,11 +25,7 @@ type GenerationMode =
   | 'minimax-2.0'
   | 'minimax-video'
   | 'kling-2.1-master'
-  | 'veo3-fast-t2v'
-  | 'minimax-2-t2v'
-  | 'kling-2.1-master-t2v'
   | 'seedance-pro'
-  | 'seedance-pro-t2v'
   | 'decart-lucy-14b'
   | 'minimax-i2v-director'
   | 'hailuo-02-pro'
@@ -41,7 +37,6 @@ type GenerationMode =
   | 'seedream-4-edit'
   // Mid-Tier Image-to-Video Models ($0.08 - $0.12)
   | 'minimax-video-01'
-  | 'minimax-video-generation'
   | 'stable-video-diffusion-i2v'
   | 'modelscope-i2v'
   | 'text2video-zero-i2v'
@@ -50,7 +45,9 @@ type GenerationMode =
   | 'cogvideo-i2v'
   | 'zeroscope-t2v'
   | 'kling-ai-avatar'
-  | 'gemini-25-flash-image-edit';
+  | 'gemini-25-flash-image-edit'
+  // Image Resizing Models
+  | 'luma-photon-reframe';
 import AnimatedError from '@/components/AnimatedError';
 import { useAnimatedError } from '@/hooks/useAnimatedError';
 import { useAuth } from '@/contexts/AuthContext';
@@ -906,6 +903,10 @@ export default function Home() {
     progress: 0,
     currentStep: ''
   });
+  
+  // AbortController for cancelling operations
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [isCancellable, setIsCancellable] = useState(false);
 
   // Generation time estimation state
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
@@ -1138,11 +1139,7 @@ export default function Home() {
       'minimax-2.0': 120, // 2 minutes for minimax video
       'minimax-video': 120, // 2 minutes for minimax video
       'kling-2.1-master': 90, // 1.5 minutes for kling video
-      'veo3-fast-t2v': 60, // 1 minute for text-to-video
-      'minimax-2-t2v': 150, // 2.5 minutes for minimax t2v
-      'kling-2.1-master-t2v': 120, // 2 minutes for kling t2v
       'seedance-pro': 45, // 45 seconds for seedance pro
-      'seedance-pro-t2v': 60, // 1 minute for seedance pro t2v
       'decart-lucy-14b': 90, // 1.5 minutes for Lucy 14B video variations
       'minimax-i2v-director': 120, // 2 minutes for MiniMax I2V Director
       'hailuo-02-pro': 100, // 1.67 minutes for Hailuo 02 Pro video variations
@@ -1154,7 +1151,6 @@ export default function Home() {
       'seedream-4-edit': 30, // 30 seconds for Seedream 4.0 Edit image editing
       // Mid-Tier Image-to-Video Models
       'minimax-video-01': 60, // 1 minute for Minimax Video 01
-      'minimax-video-generation': 60, // 1 minute for Minimax Video Generation
       'stable-video-diffusion-i2v': 45, // 45 seconds for Stable Video Diffusion
       'modelscope-i2v': 40, // 40 seconds for Modelscope I2V
       'text2video-zero-i2v': 40, // 40 seconds for Text2Video Zero
@@ -1163,7 +1159,8 @@ export default function Home() {
       'cogvideo-i2v': 50, // 50 seconds for CogVideo I2V
       'zeroscope-t2v': 50, // 50 seconds for Zeroscope T2V
       'kling-ai-avatar': 600, // 10 minutes for Kling AI Avatar (can take 2-20 minutes)
-      'gemini-25-flash-image-edit': 20 // 20 seconds for Gemini 2.5 Flash Image Edit
+      'gemini-25-flash-image-edit': 20, // 20 seconds for Gemini 2.5 Flash Image Edit
+      'luma-photon-reframe': 45 // 45 seconds for Luma Photon Reframe
     };
     return timeEstimates[mode] || 30;
   };
@@ -1260,6 +1257,31 @@ export default function Home() {
     }
   }, [showAnimatedError, showNotification]);
 
+  // Cancel current operation
+  const cancelOperation = useCallback(() => {
+    if (abortController) {
+      console.log('🛑 Cancelling current operation...');
+      abortController.abort();
+      setAbortController(null);
+      setIsCancellable(false);
+      
+      // Reset processing state
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        currentStep: ''
+      });
+      
+      // Clear timers
+      setEstimatedTime(null);
+      setTimeRemaining(null);
+      setGenerationStartTime(null);
+      
+      // Show cancellation notification
+      showAnimatedErrorNotification('Operation cancelled by user', 'success');
+    }
+  }, [abortController, showAnimatedErrorNotification]);
+
   // Determine generation mode based on uploaded files and user preferences
   const determineGenerationMode = useCallback((): GenerationMode | null => {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
@@ -1285,7 +1307,7 @@ export default function Home() {
     return null;
   }, [uploadedFiles, contentMode]);
 
-  // Get available generation modes for current state - SIMPLIFIED VERSION
+  // Get available generation modes for current state - FILTERED BY CONTENT MODE
   const getAvailableModes = useCallback((): GenerationMode[] => {
     const hasImages = uploadedFiles.some(file => file.fileType === 'image');
     const hasVideos = uploadedFiles.some(file => file.fileType === 'video');
@@ -1296,58 +1318,62 @@ export default function Home() {
     modes.push('runway-t2i');
     
     if (hasImages && uploadedFiles.length === 1) {
+      if (contentMode === 'image') {
+        // IMAGE MODE: Only show image generation and editing models
       modes.push('nano-banana');
-      // Image editing models
       modes.push('seedream-4-edit'); // Seedream 4 Edit
       modes.push('bytedance-seedream-4'); // Seedream 4
       modes.push('gemini-25-flash-image-edit'); // Gemini 2.5 Flash Image Edit
-      // Image-to-video models
+      modes.push('luma-photon-reframe'); // Luma Photon Reframe for image resizing
+      } else if (contentMode === 'video') {
+        // VIDEO MODE: Only show image-to-video models
       modes.push('veo3-fast'); // Veo3 Fast image-to-video
       modes.push('minimax-2.0'); // Minimax 2.0 image-to-video
       modes.push('kling-2.1-master'); // Kling 2.1 Master image-to-video
       modes.push('kling-ai-avatar'); // Kling AI Avatar
       modes.push('decart-lucy-14b'); // Lucy 14B video variations
-      modes.push('minimax-video-01'); // Minimax Video 01
-      modes.push('minimax-video-generation'); // Minimax Video Generation
       modes.push('stable-video-diffusion-i2v'); // Stable Video Diffusion
       modes.push('modelscope-i2v'); // Modelscope I2V
       modes.push('text2video-zero-i2v'); // Text2Video Zero
+      }
     }
     
     // Add endframe mode when 2 images are uploaded
     if (hasImages && uploadedFiles.length === 2) {
-      modes.push('minimax-2.0'); // EndFrame mode for 2 images
-      // Also add image editing models for mobile users
+      if (contentMode === 'image') {
+        // IMAGE MODE: Show image editing models for character combination
       modes.push('nano-banana'); // Character combination
       modes.push('seedream-4-edit'); // Seedream 4 Edit
       modes.push('bytedance-seedream-4'); // Seedream 4
       modes.push('gemini-25-flash-image-edit'); // Gemini Flash Edit for character combination
+      } else if (contentMode === 'video') {
+        // VIDEO MODE: Show EndFrame mode for 2 images
+        modes.push('minimax-2.0'); // EndFrame mode for 2 images
+      }
     }
     
-    // Add text-to-video modes when no images are uploaded
-    if (!hasImages && !hasVideos) {
-        modes.push('veo3-fast-t2v'); // Text-to-video with Veo3 Fast
-        modes.push('minimax-2-t2v'); // Text-to-video with Minimax 2.0
-        modes.push('kling-2.1-master-t2v'); // Text-to-video with Kling 2.1 Master
+    // Add video restyling mode when video files are uploaded
+    if (hasVideos) {
+        modes.push('runway-video'); // Runway ALEPH for video restyling
     }
     
     return modes;
-  }, [uploadedFiles]);
+  }, [uploadedFiles, contentMode]);
 
   // Get display name for generation mode
   const getModelDisplayName = useCallback((mode: GenerationMode, isMobile: boolean = false): string => {
     const displayNames: Record<GenerationMode, string> = {
       'nano-banana': 'Nana Banana',
       'runway-t2i': isMobile ? 'Text to Image' : 'Runway T2I', // Remove "Runway" from mobile view
-      'runway-video': 'Runway Video',
+      'runway-video': 'Runway ALEPH (Video Restyle)',
       'veo3-fast': 'Veo3 Fast',
       'seedream-4-edit': 'Seedream 4 Edit',
       'bytedance-seedream-4': 'Seedream 4',
       'gemini-25-flash-image-edit': 'Gemini Flash Edit',
+      'luma-photon-reframe': 'Luma Photon Reframe',
             'kling-ai-avatar': 'Kling AI Avatar (2-60 min)',
       // Mid-Tier Image-to-Video Models
       'minimax-video-01': 'Minimax Video 01',
-      'minimax-video-generation': 'Minimax Video Gen',
       'stable-video-diffusion-i2v': 'Stable Video Diffusion',
       'modelscope-i2v': 'Modelscope I2V',
       'text2video-zero-i2v': 'Text2Video Zero',
@@ -1358,11 +1384,7 @@ export default function Home() {
       'minimax-2.0': 'MiniMax End Frame',
       'minimax-video': 'Minimax Video',
       'kling-2.1-master': 'Kling 2.1 Master',
-      'veo3-fast-t2v': 'Veo3 Fast T2V',
-      'minimax-2-t2v': 'Minimax 2.0 T2V',
-      'kling-2.1-master-t2v': 'Kling 2.1 Master T2V',
       'seedance-pro': 'Seedance Pro',
-      'seedance-pro-t2v': 'Seedance Pro T2V',
       'decart-lucy-14b': 'Lucy 14B Video',
       'minimax-i2v-director': 'MiniMax I2V Director',
       'hailuo-02-pro': 'Hailuo 02 Pro',
@@ -1460,15 +1482,17 @@ export default function Home() {
     const detectedMode = determineGenerationMode();
     console.log('🔄 [MODEL SELECTION] Detected mode:', detectedMode);
     
+    // Only auto-select if no model is currently selected
+    // This prevents overriding user selections or models set by content mode changes
     if (detectedMode !== null && !generationMode) {
       console.log('🔄 [MODEL SELECTION] Auto-setting model to:', detectedMode);
       setGenerationMode(detectedMode);
     } else if (detectedMode === null && !generationMode) {
       console.log('🔄 [MODEL SELECTION] No model detected and none selected - keeping null');
     } else if (generationMode) {
-      console.log('🔄 [MODEL SELECTION] User has selected model, not overriding:', generationMode);
+      console.log('🔄 [MODEL SELECTION] Model already selected, not overriding:', generationMode);
     }
-  }, [uploadedFiles, determineGenerationMode, generationMode, contentMode]);
+  }, [uploadedFiles, determineGenerationMode]);
 
   // Check video duration and show Toasty error if too long
   const checkVideoDuration = useCallback((file: File): Promise<boolean> => {
@@ -1641,7 +1665,6 @@ export default function Home() {
         generationMode === 'kling-ai-avatar' ||
         generationMode === 'decart-lucy-14b' ||
         generationMode === 'minimax-video-01' ||
-        generationMode === 'minimax-video-generation' ||
         generationMode === 'stable-video-diffusion-i2v' ||
         generationMode === 'modelscope-i2v' ||
         generationMode === 'text2video-zero-i2v' ||
@@ -1650,15 +1673,11 @@ export default function Home() {
         generationMode === 'zeroscope-t2v' ||
         generationMode === 'runway-video' ||
         generationMode === 'seedance-pro' ||
-        generationMode === 'seedance-pro-t2v' ||
         generationMode === 'minimax-i2v-director' ||
         generationMode === 'hailuo-02-pro' ||
         generationMode === 'kling-video-pro' ||
         generationMode === 'seedream-3' ||
-        generationMode === 'seedance-1-pro' ||
-        generationMode === 'veo3-fast-t2v' ||
-        generationMode === 'minimax-2-t2v' ||
-        generationMode === 'kling-2.1-master-t2v'
+        generationMode === 'seedance-1-pro'
       );
       const isImageModel = (
         generationMode === 'nano-banana' ||
@@ -1666,7 +1685,8 @@ export default function Home() {
         generationMode === 'seedream-4-edit' ||
         generationMode === 'bytedance-seedream-4' ||
         generationMode === 'runway-t2i' ||
-        generationMode === 'gemini-25-flash-image-edit'
+        generationMode === 'gemini-25-flash-image-edit' ||
+        generationMode === 'luma-photon-reframe'
       );
       
       console.log('🔄 [CONTENT MODE] isVideoModel:', isVideoModel, 'isImageModel:', isImageModel);
@@ -1674,11 +1694,20 @@ export default function Home() {
       if ((contentMode === 'image' && isVideoModel) || (contentMode === 'video' && isImageModel)) {
         console.log('🔄 [CONTENT MODE] Clearing incompatible model:', generationMode);
         setGenerationMode(null);
+        
+        // Auto-select appropriate model for the new content mode
+        setTimeout(() => {
+          const detectedMode = determineGenerationMode();
+          if (detectedMode) {
+            console.log('🔄 [CONTENT MODE] Auto-selecting compatible model:', detectedMode);
+            setGenerationMode(detectedMode);
+          }
+        }, 50); // Small delay to prevent race conditions
       } else {
         console.log('🔄 [CONTENT MODE] Model is compatible, keeping:', generationMode);
       }
     }
-  }, [contentMode, generationMode]);
+  }, [contentMode, generationMode, determineGenerationMode]);
 
   // Migrate localStorage to database when user signs up
   useEffect(() => {
@@ -2198,7 +2227,7 @@ export default function Home() {
         body: JSON.stringify({
           prompt: prompt.trim(),
           size: 'regular',
-          aspectRatio: '16:9',
+          aspectRatio: generationSettings.aspectRatio,
           guidanceScale: 2.5,
           userId: user?.id
         }),
@@ -3139,7 +3168,6 @@ export default function Home() {
     // Check if we should use video variations based on content mode
     if (contentMode === 'video' && (
       generationMode === 'minimax-video-01' ||
-      generationMode === 'minimax-video-generation' ||
       generationMode === 'stable-video-diffusion-i2v' ||
       generationMode === 'modelscope-i2v' ||
       generationMode === 'text2video-zero-i2v' ||
@@ -3176,6 +3204,9 @@ export default function Home() {
         break;
       case 'gemini-25-flash-image-edit':
         await handleCharacterVariation(); // Use the same handler as nano-banana since it's also character variation
+        break;
+      case 'luma-photon-reframe':
+        await handleLumaPhotonReframeGeneration();
         break;
       case 'minimax-2.0':
         // MiniMax End Frame - requires 2 images, uses older /api/endframe infrastructure
@@ -3511,12 +3542,46 @@ export default function Home() {
     }
   };
 
+  // Helper function to identify models that don't require prompts
+        const isModelThatDoesntNeedPrompt = (model: string): boolean => {
+          const modelsWithoutPromptRequired = [
+            'runway-video' // Video restyling - no prompt validation in API
+          ];
+          return modelsWithoutPromptRequired.includes(model);
+        };
+
+  // Helper function to get appropriate placeholder text based on model and state
+  const getPromptPlaceholder = () => {
+    // Check if current model doesn't require a prompt
+    if (generationMode && isModelThatDoesntNeedPrompt(generationMode)) {
+      return "Optional: Add a prompt for better results...";
+    }
+    
+    // Default placeholder logic
+    if (hasVideoFiles) {
+      return "Describe the scene changes, background modifications, or prop changes you want...";
+    } else if (processingMode === 'endframe') {
+      return "Describe the transition or transformation between your start and end frames...";
+    } else if (uploadedFiles.length === 0) {
+      return "Imagine...";
+    } else {
+      return "Describe the angle or pose variations you want...";
+    }
+  };
+
   // Helper function to determine if generation should be enabled
   const canGenerateWithCurrentState = () => {
     // Special case for Kling AI Avatar - requires both image and audio
     if (generationMode === 'kling-ai-avatar') {
       const result = uploadedFiles.length > 0 && uploadedAudio !== null;
       console.log('🎯 [canGenerateWithCurrentState] Kling AI Avatar:', generationMode, 'uploadedFiles:', uploadedFiles.length, 'uploadedAudio:', !!uploadedAudio, 'result:', result);
+      return result;
+    }
+    
+    // For models that don't require prompts, only check if images are uploaded
+    if (generationMode && isModelThatDoesntNeedPrompt(generationMode)) {
+      const result = uploadedFiles.length > 0;
+      console.log('🎯 [canGenerateWithCurrentState] Model without prompt required:', generationMode, 'uploadedFiles:', uploadedFiles.length, 'result:', result);
       return result;
     }
     
@@ -3541,8 +3606,6 @@ export default function Home() {
       'hailuo-02-pro': 'elegant crane shot moving up and over character, cinematic perspective transition',
       'kling-video-pro': 'dynamic orbital movement around character with fluid camera motion',
       'veo3-fast': 'quick zoom in on character with natural camera movement for emphasis',
-      'minimax-2-t2v': 'cinematic pan left to right across scene with professional camera work',
-      'kling-2.1-master-t2v': 'smooth tilt up to reveal character with dramatic upward camera movement'
     };
     
     return defaultPrompts[model as keyof typeof defaultPrompts] || 'slow zoom in on character with subtle camera movement, creating dynamic cinematic video';
@@ -4144,7 +4207,7 @@ export default function Home() {
           mimeTypes: uploadedFiles.map(img => img.mimeType || 'image/jpeg'),
           prompt: prompt.trim(),
           size: "2K",
-          aspect_ratio: "match_input_image",
+          aspect_ratio: generationSettings.aspectRatio,
           max_images: 4 // Generate multiple variations
         }),
       });
@@ -5014,6 +5077,11 @@ export default function Home() {
       return;
     }
 
+    // Create AbortController for this operation
+    const controller = new AbortController();
+    setAbortController(controller);
+    setIsCancellable(true);
+
     setProcessing({
       isProcessing: true,
       progress: 0,
@@ -5090,6 +5158,7 @@ export default function Home() {
           generate_audio: true,
           resolution: "720p"
         }),
+        signal: controller.signal,
       });
 
       setProcessing({
@@ -5181,6 +5250,9 @@ export default function Home() {
         currentStep: 'Complete!'
       });
 
+      // Cleanup AbortController
+      setAbortController(null);
+      setIsCancellable(false);
 
       setTimeout(() => {
         setProcessing({
@@ -5192,12 +5264,23 @@ export default function Home() {
 
     } catch (error) {
       console.error('Veo3 Fast generation error:', error);
+      
+      // Check if error is due to cancellation
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('🛑 Veo3 Fast generation was cancelled');
+        return; // Don't show error notification for cancellation
+      }
+      
       showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Veo3 Fast'} TOASTY!`, 'toasty');
       setProcessing({
         isProcessing: false,
         progress: 0,
         currentStep: ''
       });
+      
+      // Cleanup AbortController
+      setAbortController(null);
+      setIsCancellable(false);
     }
   };
 
@@ -5748,83 +5831,91 @@ export default function Home() {
     }
   };
 
-  // Handle Veo3 Fast text-to-video generation
-  const handleVeo3FastT2VGeneration = async () => {
+  // Handle Luma Photon Reframe generation
+  const handleLumaPhotonReframeGeneration = async () => {
     if (!canGenerate) {
       showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
       return;
     }
 
-    if (!prompt.trim()) {
-      setError('Please enter a prompt for text-to-video generation');
+    const imageFile = uploadedFiles.find(file => file.fileType === 'image');
+    if (!imageFile) {
+      showAnimatedErrorNotification('User Error: Please upload a valid image! TOASTY!', 'toasty');
       return;
     }
 
     setProcessing({
       isProcessing: true,
       progress: 0,
-      currentStep: 'Starting Veo3 Fast text-to-video generation...'
+      currentStep: 'Starting Luma Photon Reframe generation...'
     });
 
     try {
-      setProcessing({
-        isProcessing: true,
-        progress: 30,
-        currentStep: 'Processing prompt with Veo3 Fast...'
-      });
-
-      const response = await fetch('/api/veo3-fast-t2v', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          duration: "8s",
-          generate_audio: true,
-          resolution: "720p"
-        }),
-      });
-
-      setProcessing({
-        isProcessing: true,
-        progress: 70,
-        currentStep: 'Generating video with Veo3 Fast...'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate video');
+      // Get authentication token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('❌ No active session found');
+        throw new Error('Authentication required - please sign in');
       }
 
       setProcessing({
         isProcessing: true,
-        progress: 90,
-        currentStep: 'Processing video...'
+        progress: 20,
+        currentStep: 'Uploading image...'
       });
 
-      // Create a variation object for the gallery
-      const generatedVariation: CharacterVariation = {
-        id: `veo3-t2v-${Date.now()}`,
-        description: `Veo3 Fast T2V: ${prompt}`,
-        angle: 'Text-to-Video',
-        pose: 'Veo3 Fast T2V Generated',
-        videoUrl: data.videoUrl,
-        fileType: 'video'
+      // Upload image to Supabase and get FAL URL
+      const imageUrl = await uploadImageToSupabaseAndFal(imageFile.base64);
+      
+      setProcessing({
+        isProcessing: true,
+        progress: 40,
+        currentStep: 'Generating reframed image...'
+      });
+
+      // Call the Luma Photon Reframe API
+      const response = await fetch('/api/luma-photon-reframe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          imageUrl: imageUrl,
+          aspectRatio: generationSettings.aspectRatio,
+          prompt: prompt.trim() || 'Reframe this image to the specified aspect ratio'
+        }),
+      });
+
+      const data = await response.json();
+      console.log('📊 Luma Photon Reframe API response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate reframed image');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate reframed image');
+      }
+
+      setProcessing({
+        isProcessing: true,
+        progress: 100,
+        currentStep: 'Complete!'
+      });
+
+      // Create a variation object for the reframed image
+      const reframedVariation: CharacterVariation = {
+        id: `reframe-${Date.now()}`,
+        description: `Reframed image (${generationSettings.aspectRatio})`,
+        angle: 'Reframed',
+        pose: 'Reframed',
+        imageUrl: data.imageUrl,
+        fileType: 'image' as const
       };
 
-      const storedVariation: StoredVariation = {
-        ...generatedVariation,
-        timestamp: Date.now(),
-        originalPrompt: prompt.trim(),
-        fileType: 'video'
-      };
-      setVariations(prev => [storedVariation, ...prev]);
-      addToGallery([generatedVariation], prompt.trim());
-
-      // Track usage
-      trackUsage('video_generation', 'minimax_endframe');
+      // Add to gallery
+      addToGallery([reframedVariation], prompt.trim() || 'Image reframing');
 
       setProcessing({
         isProcessing: false,
@@ -5832,17 +5923,11 @@ export default function Home() {
         currentStep: 'Complete!'
       });
 
-      setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
-      }, 2000);
+      console.log('✅ Luma Photon Reframe generation completed successfully');
 
     } catch (error) {
-      console.error('Veo3 Fast T2V generation error:', error);
-      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Veo3 Fast T2V'} TOASTY!`, 'toasty');
+      console.error('❌ Luma Photon Reframe generation error:', error);
+      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate reframed image'} TOASTY!`, 'toasty');
       setProcessing({
         isProcessing: false,
         progress: 0,
@@ -5851,213 +5936,9 @@ export default function Home() {
     }
   };
 
-  // Handle Minimax 2.0 text-to-video generation
-  const handleMinimax2T2VGeneration = async () => {
-    if (!canGenerate) {
-      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
-      return;
-    }
+  // Text-to-video functions removed - only image-to-video models supported
 
-    if (!prompt.trim()) {
-      setError('Please enter a prompt for text-to-video generation');
-      return;
-    }
 
-    setProcessing({
-      isProcessing: true,
-      progress: 0,
-      currentStep: 'Starting Minimax 2.0 text-to-video generation...'
-    });
-
-    try {
-      setProcessing({
-        isProcessing: true,
-        progress: 30,
-        currentStep: 'Processing prompt with Minimax 2.0...'
-      });
-
-      const response = await fetch('/api/minimax-2-t2v', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          duration: "5",
-          aspect_ratio: "16:9",
-          negative_prompt: "blur, distort, and low quality",
-          cfg_scale: 0.5
-        }),
-      });
-
-      setProcessing({
-        isProcessing: true,
-        progress: 70,
-        currentStep: 'Generating video with Minimax 2.0...'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate video');
-      }
-
-      setProcessing({
-        isProcessing: true,
-        progress: 90,
-        currentStep: 'Processing video...'
-      });
-
-      // Create a variation object for the gallery
-      const generatedVariation: CharacterVariation = {
-        id: `minimax-t2v-${Date.now()}`,
-        description: `Minimax 2.0 T2V: ${prompt}`,
-        angle: 'Text-to-Video',
-        pose: 'Minimax 2.0 T2V Generated',
-        videoUrl: data.videoUrl,
-        fileType: 'video'
-      };
-
-      const storedVariation: StoredVariation = {
-        ...generatedVariation,
-        timestamp: Date.now(),
-        originalPrompt: prompt.trim(),
-        fileType: 'video'
-      };
-      setVariations(prev => [storedVariation, ...prev]);
-      addToGallery([generatedVariation], prompt.trim());
-
-      // Track usage
-      trackUsage('video_generation', 'minimax_endframe');
-
-      setProcessing({
-        isProcessing: false,
-        progress: 100,
-        currentStep: 'Complete!'
-      });
-
-      setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
-      }, 2000);
-
-    } catch (error) {
-      console.error('Minimax 2.0 T2V generation error:', error);
-      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Minimax 2.0 T2V'} TOASTY!`, 'toasty');
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        currentStep: ''
-      });
-    }
-  };
-
-  // Handle Kling 2.1 Master text-to-video generation
-  const handleKlingMasterT2VGeneration = async () => {
-    if (!canGenerate) {
-      showAnimatedErrorNotification('User Error: Free trial limit reached! Sign up for unlimited generations! TOASTY!', 'toasty');
-      return;
-    }
-
-    if (!prompt.trim()) {
-      setError('Please enter a prompt for text-to-video generation');
-      return;
-    }
-
-    setProcessing({
-      isProcessing: true,
-      progress: 0,
-      currentStep: 'Starting Kling 2.1 Master text-to-video generation...'
-    });
-
-    try {
-      setProcessing({
-        isProcessing: true,
-        progress: 30,
-        currentStep: 'Processing prompt with Kling 2.1 Master...'
-      });
-
-      const response = await fetch('/api/cling-2.1-master-t2v', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          duration: "5",
-          aspect_ratio: "16:9",
-          negative_prompt: "blur, distort, and low quality",
-          cfg_scale: 0.5
-        }),
-      });
-
-      setProcessing({
-        isProcessing: true,
-        progress: 70,
-        currentStep: 'Generating video with Kling 2.1 Master...'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate video');
-      }
-
-      setProcessing({
-        isProcessing: true,
-        progress: 90,
-        currentStep: 'Processing video...'
-      });
-
-      // Create a variation object for the gallery
-      const generatedVariation: CharacterVariation = {
-        id: `cling-t2v-${Date.now()}`,
-        description: `Kling 2.1 Master T2V: ${prompt}`,
-        angle: 'Text-to-Video',
-        pose: 'Kling 2.1 Master T2V Generated',
-        videoUrl: data.videoUrl,
-        fileType: 'video'
-      };
-
-      const storedVariation: StoredVariation = {
-        ...generatedVariation,
-        timestamp: Date.now(),
-        originalPrompt: prompt.trim(),
-        fileType: 'video'
-      };
-      setVariations(prev => [storedVariation, ...prev]);
-      addToGallery([generatedVariation], prompt.trim());
-
-      // Track usage
-      trackUsage('video_generation', 'minimax_endframe');
-
-      setProcessing({
-        isProcessing: false,
-        progress: 100,
-        currentStep: 'Complete!'
-      });
-
-      setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
-      }, 2000);
-
-    } catch (error) {
-      console.error('Kling 2.1 Master T2V generation error:', error);
-      showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Kling 2.1 Master T2V'} TOASTY!`, 'toasty');
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        currentStep: ''
-      });
-    }
-  };
 
   const handleEndFrameGeneration = async () => {
     if (uploadedFiles.length < 2) {
@@ -6603,9 +6484,20 @@ export default function Home() {
                     
                     {/* Time Remaining */}
                     {timeRemaining !== null && (
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-sm mb-4">
                         Estimated time remaining: {Math.ceil(timeRemaining / 60)}m {timeRemaining % 60}s
                       </p>
+                    )}
+                    
+                    {/* Cancel Button */}
+                    {isCancellable && (
+                      <button
+                        onClick={cancelOperation}
+                        className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </button>
                     )}
                   </div>
                 </div>
@@ -6765,15 +6657,7 @@ export default function Home() {
                   id="prompt-mobile"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    hasVideoFiles 
-                      ? "Describe the scene changes..." 
-                      : processingMode === 'endframe'
-                      ? "Describe the transition..."
-                      : uploadedFiles.length === 0
-                      ? "Describe the image you want to generate..."
-                      : "Describe the variations you want..."
-                  }
+                  placeholder={getPromptPlaceholder()}
                     className="mobile-chat-input w-full bg-gray-800/50 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     rows={2}
                     style={{ fontSize: '16px', minHeight: '44px' }}
@@ -7632,15 +7516,7 @@ export default function Home() {
                 data-prompt-field="true"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder={
-                  hasVideoFiles 
-                    ? "Describe the scene changes, background modifications, or prop changes you want..." 
-                    : processingMode === 'endframe'
-                    ? "Describe the transition or transformation between your start and end frames..."
-                    : uploadedFiles.length === 0
-                    ? "Imagine..."
-                    : "Describe the angle or pose variations you want..."
-                }
+                placeholder={getPromptPlaceholder()}
                 className="generate-floating-textarea"
                 rows={1}
                 style={{ fontSize: '16px' }} // Prevents zoom on iOS
