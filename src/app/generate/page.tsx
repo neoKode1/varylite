@@ -6645,6 +6645,44 @@ export default function Home() {
                 )}
               </div>
               
+              {/* Mobile Quick Shots and Generate Buttons */}
+              <div className="mt-6 space-y-3">
+                {/* Quick Shots Button - Only show when image is uploaded */}
+                {uploadedFiles.length > 0 && uploadedFiles.some(file => file.fileType === 'image') && (
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('shot');
+                      setShowPresetModal(true);
+                    }}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Camera className="w-5 h-5" />
+                    Quick Shots
+                  </button>
+                )}
+                
+                {/* Generate Button - Show when conditions are met */}
+                {uploadedFiles.length > 0 && prompt.trim() && generationMode && (
+                  <button
+                    onClick={handleCharacterVariation}
+                    disabled={isGeneratingImages}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isGeneratingImages ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight className="w-5 h-5" />
+                        Generate
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              
               {/* Additional Variations (if any) */}
               {variations.length > 1 && (
                 <div className="mt-4 grid grid-cols-2 gap-2">
@@ -6705,21 +6743,6 @@ export default function Home() {
             {/* Mobile Floating Input - Match Community Page Style */}
             <div className="mobile-chat-interface lg:hidden" data-input-area>
 
-              {/* Quick Shots Button - Only show when image is uploaded */}
-              {uploadedFiles.length > 0 && uploadedFiles.some(file => file.fileType === 'image') && (
-                <div className="mb-3">
-                  <button
-                    onClick={() => {
-                      setActivePresetTab('shot');
-                      setShowPresetModal(true);
-                    }}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <Camera className="w-5 h-5" />
-                    Quick Shots
-                  </button>
-                </div>
-              )}
               
               <div className="mobile-input-container">
                 {/* Top Div: 4 Image Upload Slots + Model Selection */}
