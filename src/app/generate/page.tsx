@@ -5138,16 +5138,26 @@ export default function Home() {
       return;
     }
 
-    // Create AbortController for this operation
+    // Create processing item for gallery
+    const processingId = `veo3-${Date.now()}`;
     const controller = new AbortController();
+    
+    const processingItem: ProcessingItem = {
+      id: processingId,
+      type: 'video',
+      model: 'veo3-fast',
+      prompt: prompt.trim() || 'Video generation',
+      progress: 0,
+      currentStep: 'Starting Veo3 Fast generation...',
+      startTime: Date.now(),
+      estimatedTime: getEstimatedTimeForModel('veo3-fast'),
+      cancellable: true,
+      abortController: controller
+    };
+    
+    addProcessingItem(processingItem);
     setAbortController(controller);
     setIsCancellable(true);
-
-    setProcessing({
-      isProcessing: true,
-      progress: 0,
-      currentStep: 'Starting Veo3 Fast generation...'
-    });
 
     try {
       // Get authentication token
@@ -5157,11 +5167,7 @@ export default function Home() {
         throw new Error('Authentication required - please sign in');
       }
 
-      setProcessing({
-        isProcessing: true,
-        progress: 20,
-        currentStep: 'Uploading image to Supabase...'
-      });
+      updateProcessingItem(processingId, { progress: 20, currentStep: 'Uploading image to Supabase...' });
 
       // Upload image to Supabase Storage first
       const uploadResponse = await fetch('/api/supabase-upload', {
@@ -5176,11 +5182,7 @@ export default function Home() {
       const uploadData = await uploadResponse.json();
       const imageUrl = uploadData.url;
 
-      setProcessing({
-        isProcessing: true,
-        progress: 40,
-        currentStep: 'Transferring image to FAL AI...'
-      });
+      updateProcessingItem(processingId, { progress: 40, currentStep: 'Transferring image to FAL AI...' });
 
       // Transfer image from Supabase to FAL AI
       const transferResponse = await fetch('/api/supabase-to-fal', {
@@ -5200,11 +5202,7 @@ export default function Home() {
       const transferData = await transferResponse.json();
       const falImageUrl = transferData.url;
 
-      setProcessing({
-        isProcessing: true,
-        progress: 60,
-        currentStep: 'Generating video with Veo3 Fast...'
-      });
+      updateProcessingItem(processingId, { progress: 60, currentStep: 'Generating video with Veo3 Fast...' });
 
       const response = await fetch('/api/veo3-fast', {
         method: 'POST',
@@ -5222,11 +5220,7 @@ export default function Home() {
         signal: controller.signal,
       });
 
-      setProcessing({
-        isProcessing: true,
-        progress: 70,
-        currentStep: 'Generating video with Veo3 Fast...'
-      });
+      updateProcessingItem(processingId, { progress: 70, currentStep: 'Generating video with Veo3 Fast...' });
 
       const data = await response.json();
 
@@ -5248,11 +5242,7 @@ export default function Home() {
         }
       }
 
-      setProcessing({
-        isProcessing: true,
-        progress: 90,
-        currentStep: 'Processing result...'
-      });
+      updateProcessingItem(processingId, { progress: 90, currentStep: 'Processing result...' });
 
       // Create a variation object for the gallery
       const generatedVariation: CharacterVariation = {
@@ -5305,23 +5295,14 @@ export default function Home() {
 
       showNotification('🎬 Video generated successfully with Veo3 Fast!', 'success');
 
-      setProcessing({
-        isProcessing: false,
-        progress: 100,
-        currentStep: 'Complete!'
-      });
+      // Remove processing item after successful completion
+      setTimeout(() => {
+        removeProcessingItem(processingId);
+      }, 1000);
 
       // Cleanup AbortController
       setAbortController(null);
       setIsCancellable(false);
-
-      setTimeout(() => {
-        setProcessing({
-          isProcessing: false,
-          progress: 0,
-          currentStep: ''
-        });
-      }, 2000);
 
     } catch (error) {
       console.error('Veo3 Fast generation error:', error);
@@ -5329,15 +5310,16 @@ export default function Home() {
       // Check if error is due to cancellation
       if (error instanceof Error && error.name === 'AbortError') {
         console.log('🛑 Veo3 Fast generation was cancelled');
+        removeProcessingItem(processingId);
+        setAbortController(null);
+        setIsCancellable(false);
         return; // Don't show error notification for cancellation
       }
       
       showAnimatedErrorNotification(`User Error: ${error instanceof Error ? error.message : 'Failed to generate video with Veo3 Fast'} TOASTY!`, 'toasty');
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        currentStep: ''
-      });
+      
+      // Remove processing item on error
+      removeProcessingItem(processingId);
       
       // Cleanup AbortController
       setAbortController(null);
