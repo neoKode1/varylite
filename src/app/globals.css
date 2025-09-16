@@ -217,7 +217,7 @@
   }
 
   /* Modern Mobile Chat Interface - Inspired by WhatsApp/Telegram */
-  @media (max-width: 768px) {
+  @media (max-width: 1023px) {
     
     .mobile-chat-interface {
       position: fixed !important;
