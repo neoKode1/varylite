@@ -81,23 +81,37 @@ export class CreditService {
         };
       }
 
-      // Get user's available credits
+      // Get user's available credits - check both user_credits table and users.credit_balance
+      let availableCredits = 0;
+      
+      // First, try user_credits table
       const { data: creditData, error: creditError } = await supabaseAdmin
         .from('user_credits')
         .select('balance')
         .eq('user_id', userId)
         .single();
 
-      if (creditError || !creditData) {
-        return {
-          hasCredits: false,
-          availableCredits: 0,
-          modelCost: modelData.cost_per_generation,
-          error: 'No credits found for user'
-        };
-      }
+      if (creditData && !creditError) {
+        availableCredits = Number(creditData.balance);
+      } else {
+        // If not found in user_credits, check users.credit_balance
+        const { data: userData, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('credit_balance')
+          .eq('id', userId)
+          .single();
 
-      const availableCredits = Number(creditData.balance);
+        if (userData && !userError) {
+          availableCredits = Number(userData.credit_balance || 0);
+        } else {
+          return {
+            hasCredits: false,
+            availableCredits: 0,
+            modelCost: modelData.cost_per_generation,
+            error: 'No credits found for user in either user_credits or users table'
+          };
+        }
+      }
       const modelCost = Number(modelData.cost_per_generation);
 
       return {
@@ -193,12 +207,29 @@ export class CreditService {
         };
       }
 
-      // Get updated credit balance
+      // Get updated credit balance - check both locations
+      let remainingCredits = 0;
+      
       const { data: creditData } = await supabaseAdmin
         .from('user_credits')
         .select('balance')
         .eq('user_id', userId)
         .single();
+
+      if (creditData) {
+        remainingCredits = Number(creditData.balance);
+      } else {
+        // Check users.credit_balance as fallback
+        const { data: userData } = await supabaseAdmin
+          .from('users')
+          .select('credit_balance')
+          .eq('id', userId)
+          .single();
+        
+        if (userData) {
+          remainingCredits = Number(userData.credit_balance || 0);
+        }
+      }
 
       // Get model cost for response
       const { data: modelData } = await supabaseAdmin
@@ -211,7 +242,7 @@ export class CreditService {
       return {
         success: true,
         creditsUsed: Number(modelData?.cost_per_generation || 0),
-        remainingCredits: Number(creditData?.balance || 0),
+        remainingCredits: remainingCredits,
       };
 
     } catch (error) {
