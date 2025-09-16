@@ -6703,7 +6703,7 @@ export default function Home() {
             {/* Processing items now appear in gallery instead of modal */}
 
             {/* Mobile Floating Input - Match Community Page Style */}
-            <div className="mobile-chat-interface md:hidden" data-input-area>
+            <div className="mobile-chat-interface lg:hidden" data-input-area>
 
               {/* Quick Shots Button - Only show when image is uploaded */}
               {uploadedFiles.length > 0 && uploadedFiles.some(file => file.fileType === 'image') && (

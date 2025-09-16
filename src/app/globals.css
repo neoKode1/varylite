@@ -471,7 +471,7 @@
   }
   
   /* Desktop styles - keep original layout */
-  @media (min-width: 769px) {
+  @media (min-width: 1024px) {
     .mobile-chat-interface {
       display: none !important;
     }
