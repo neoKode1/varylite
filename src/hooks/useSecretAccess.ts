@@ -18,11 +18,47 @@ export const useSecretAccess = () => {
   const [loading, setLoading] = useState(true);
 
   const checkSecretAccess = useCallback(async () => {
-    // Give everyone access - no restrictions
-    setHasSecretAccess(true);
-    setIsAdmin(false);
-    setAdminUser(null);
-    setLoading(false);
+    if (!user) {
+      setHasSecretAccess(false);
+      setIsAdmin(false);
+      setAdminUser(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Check if user is admin by email or database field
+      const isAdminUser = user.email === '1deeptechnology@gmail.com';
+      
+      // Also check database for is_admin field
+      const { data: userData } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      
+      const isAdminFromDB = userData?.is_admin || false;
+      const finalIsAdmin = isAdminUser || isAdminFromDB;
+      
+      setHasSecretAccess(true); // Give everyone access - no restrictions
+      setIsAdmin(finalIsAdmin);
+      setAdminUser(finalIsAdmin ? user.email : null);
+      setLoading(false);
+      
+      console.log('🔐 Admin check:', {
+        email: user.email,
+        isAdminEmail: isAdminUser,
+        isAdminDB: isAdminFromDB,
+        finalIsAdmin
+      });
+      
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setHasSecretAccess(true);
+      setIsAdmin(false);
+      setAdminUser(null);
+      setLoading(false);
+    }
   }, [user]);
 
   // Check access when user changes
@@ -31,10 +67,10 @@ export const useSecretAccess = () => {
   }, [checkSecretAccess]);
 
   return {
-    hasSecretAccess: true, // Always true - no restrictions
-    isAdmin: false,
-    adminUser: null,
-    loading: false,
+    hasSecretAccess,
+    isAdmin,
+    adminUser,
+    loading,
     checkSecretAccess
   };
 };
