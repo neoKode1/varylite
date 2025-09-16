@@ -42,7 +42,7 @@ export const useSecretAccess = () => {
       
       setHasSecretAccess(true); // Give everyone access - no restrictions
       setIsAdmin(finalIsAdmin);
-      setAdminUser(finalIsAdmin ? user.email : null);
+      setAdminUser(finalIsAdmin ? (user.email ?? null) : null);
       setLoading(false);
       
       console.log('🔐 Admin check:', {
