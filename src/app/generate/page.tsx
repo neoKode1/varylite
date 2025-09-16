@@ -4810,28 +4810,61 @@ export default function Home() {
         return;
       }
       
-      // For desktop, use blob download
-      console.log('🖥️ Desktop detected, using blob download');
-      const response = await fetch(videoUrl, {
-        mode: 'cors',
-        credentials: 'omit'
-      });
+      // For desktop, try multiple download methods
+      console.log('🖥️ Desktop detected, attempting download');
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Method 1: Try blob download with CORS
+      try {
+        console.log('🔄 Attempting blob download...');
+        const response = await fetch(videoUrl, {
+          mode: 'cors',
+          credentials: 'omit',
+          headers: {
+            'Accept': 'video/*'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        console.log('✅ Blob created, size:', blob.size);
+        
+        if (blob.size === 0) {
+          throw new Error('Empty blob received');
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('🎬 Video downloaded successfully!', 'success');
+        return;
+        
+      } catch (blobError) {
+        console.log('❌ Blob download failed:', blobError);
       }
       
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // Method 2: Try direct download with download attribute
+      console.log('🔄 Attempting direct download...');
       const a = document.createElement('a');
-      a.href = url;
+      a.href = videoUrl;
       a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
       
-      showNotification('🎬 Video downloaded successfully!', 'success');
+      showNotification('🎬 Download initiated! Check your downloads folder.', 'success');
       
     } catch (error) {
       console.error('❌ Error downloading video:', error);
@@ -4846,7 +4879,7 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       
-      showNotification('📱 Video opened in new tab. You can save it from there.', 'info');
+      showNotification('🎬 Video opened in new tab! Right-click the video and select "Save video as..." to download.', 'success');
     }
   };
 
