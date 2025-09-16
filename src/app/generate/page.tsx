@@ -6703,7 +6703,6 @@ export default function Home() {
             {/* Processing items now appear in gallery instead of modal */}
 
             {/* Mobile Floating Input - Match Community Page Style */}
-            {!showGallery && (
             <div className="mobile-chat-interface md:hidden" data-input-area>
 
               {/* Quick Shots Button - Only show when image is uploaded */}
@@ -6931,7 +6930,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            )}
 
             {/* Desktop Generation Panel */}
             <div className="hidden lg:block generation-panel mb-6 lg:mb-8" style={{ top: '-200px' }}>
