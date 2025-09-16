@@ -1,21 +1,28 @@
--- Simple Credit Check - No Complex Logic
--- Copy this into a NEW Supabase query
+-- Simple credit check for the test user
+-- Run this in Supabase SQL Editor
 
--- Check current credits
+-- Check user_credits table
 SELECT 
-    COUNT(*) as total_users,
-    SUM(credit_balance) as total_credits,
-    ROUND(SUM(credit_balance) / 100, 2) as total_dollars,
-    AVG(credit_balance) as avg_credits,
-    MIN(credit_balance) as min_credits,
-    MAX(credit_balance) as max_credits
-FROM public.users;
+    'user_credits table' as source,
+    user_id,
+    balance,
+    created_at,
+    updated_at
+FROM public.user_credits 
+WHERE user_id = '237e93d3-2156-440e-9c0d-a012f26ba094';
 
--- Show credit distribution
+-- Check users table credit_balance column
 SELECT 
-    credit_balance,
-    COUNT(*) as user_count
+    'users table' as source,
+    id as user_id,
+    credit_balance as balance,
+    created_at,
+    updated_at
 FROM public.users 
-WHERE credit_balance > 0
-GROUP BY credit_balance
-ORDER BY credit_balance;
+WHERE id = '237e93d3-2156-440e-9c0d-a012f26ba094';
+
+-- Check what columns exist in credit_transactions
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'credit_transactions' AND table_schema = 'public'
+ORDER BY ordinal_position;

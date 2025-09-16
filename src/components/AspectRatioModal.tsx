@@ -88,6 +88,20 @@ export default function AspectRatioModal({
                        selectedModel.includes('video');
 
   const handleSave = () => {
+    console.log('🎯 [ASPECT RATIO MODAL] Settings saved by user:', {
+      model: selectedModel,
+      aspectRatio: settings.aspectRatio,
+      guidanceScale: settings.guidanceScale,
+      strength: settings.strength,
+      seed: settings.seed,
+      duration: settings.duration,
+      resolution: settings.resolution,
+      outputFormat: settings.outputFormat,
+      styleConsistency: settings.styleConsistency,
+      characterSeparation: settings.characterSeparation,
+      spatialAwareness: settings.spatialAwareness,
+      timestamp: new Date().toISOString()
+    });
     onSaveSettings(settings);
     onClose();
   };

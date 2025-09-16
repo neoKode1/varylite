@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user credit information
+    // Get user credit information including new user status
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('credit_balance, low_balance_threshold, tier, total_credits_purchased, last_credit_purchase')
+      .select('credit_balance, low_balance_threshold, tier, total_credits_purchased, last_credit_purchase, is_new_user, grace_period_expires_at, first_generation_at')
       .eq('id', userId)
       .single();
 
@@ -36,14 +36,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if user is in grace period
+    const isInGracePeriod = userData.is_new_user && 
+      userData.grace_period_expires_at && 
+      new Date() <= new Date(userData.grace_period_expires_at);
+
+    // For new users in grace period, show grace period info instead of credit balance
+    let displayBalance = userData.credit_balance || 0;
+    let displayMessage = null;
+    
+    if (isInGracePeriod) {
+      // Calculate remaining grace period time
+      const gracePeriodEnd = new Date(userData.grace_period_expires_at);
+      const now = new Date();
+      const hoursRemaining = Math.max(0, Math.floor((gracePeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60)));
+      
+      displayBalance = 0; // Show 0 credits for new users
+      displayMessage = `Free trial: ${hoursRemaining}h remaining`;
+    } else if (userData.is_new_user && !userData.grace_period_expires_at) {
+      // New user who hasn't started grace period yet
+      displayBalance = 0;
+      displayMessage = 'Free trial available';
+    }
+
     // Return credit summary
     const summary = {
       user_id: userId,
-      current_balance: userData.credit_balance || 0,
+      current_balance: displayBalance,
       low_balance_threshold: userData.low_balance_threshold || 4,
       tier: userData.tier || 'pay_per_use',
       total_credits_purchased: userData.total_credits_purchased || 0,
-      last_credit_purchase: userData.last_credit_purchase
+      last_credit_purchase: userData.last_credit_purchase,
+      is_new_user: userData.is_new_user,
+      grace_period_expires_at: userData.grace_period_expires_at,
+      grace_period_message: displayMessage
     };
 
     return NextResponse.json({

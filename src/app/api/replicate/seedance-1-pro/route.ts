@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
       image = null,
       duration = 5,
       resolution = '1080p',
-      aspectRatio = '16:9',
       fps = 24,
       cameraFixed = false,
       seed = null,
@@ -40,7 +39,6 @@ export async function POST(request: NextRequest) {
       image: !!image,
       duration, 
       resolution, 
-      aspectRatio, 
       fps, 
       cameraFixed, 
       userId 
@@ -61,7 +59,6 @@ export async function POST(request: NextRequest) {
       image,
       duration,
       resolution,
-      aspect_ratio: aspectRatio,
       fps,
       camera_fixed: cameraFixed,
       seed

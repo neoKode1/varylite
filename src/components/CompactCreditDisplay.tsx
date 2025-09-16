@@ -6,6 +6,9 @@ interface CreditSummary {
   current_balance: number;
   low_balance_threshold: number;
   tier: string;
+  is_new_user?: boolean;
+  grace_period_expires_at?: string;
+  grace_period_message?: string;
 }
 
 interface CompactCreditDisplayProps {
@@ -111,17 +114,20 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
     );
   }
 
-  const { current_balance, low_balance_threshold } = creditSummary;
+  const { current_balance, low_balance_threshold, is_new_user, grace_period_message } = creditSummary;
   const isLow = current_balance <= low_balance_threshold;
   const isCritical = current_balance <= 1;
+  const isInGracePeriod = is_new_user && grace_period_message;
 
   const getCreditColor = () => {
+    if (isInGracePeriod) return 'text-blue-400'; // Blue for grace period
     if (isCritical) return 'text-red-400';
     if (isLow) return 'text-yellow-400';
     return 'text-green-400';
   };
 
   const getCreditIcon = () => {
+    if (isInGracePeriod) return <DollarSign className="w-4 h-4 text-blue-400" />; // Blue icon for grace period
     if (isCritical) return <AlertTriangle className="w-4 h-4 text-red-400" />;
     if (isLow) return <AlertTriangle className="w-4 h-4 text-yellow-400" />;
     return <DollarSign className="w-4 h-4 text-green-400" />;
@@ -131,7 +137,7 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
     <div className={`flex items-center space-x-2 ${className}`}>
       {getCreditIcon()}
       <span className={`text-sm font-medium ${getCreditColor()}`}>
-        {current_balance.toFixed(0)} credits
+        {isInGracePeriod ? grace_period_message : `${current_balance.toFixed(0)} credits`}
       </span>
       <button
         onClick={fetchCreditInfo}
@@ -144,7 +150,9 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
       <button
         onClick={onPurchaseCredits}
         className={`flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded transition-colors ${
-          isCritical
+          isInGracePeriod
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : isCritical
             ? 'bg-red-600 text-white hover:bg-red-700'
             : isLow
             ? 'bg-yellow-600 text-white hover:bg-yellow-700'
@@ -152,7 +160,7 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
         }`}
       >
         <CreditCard className="w-3 h-3" />
-        <span>Buy</span>
+        <span>{isInGracePeriod ? 'Buy Now' : 'Buy'}</span>
       </button>
     </div>
   );
@@ -220,11 +228,13 @@ export const MobileCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
     return null;
   }
 
-  const { current_balance, low_balance_threshold } = creditSummary;
+  const { current_balance, low_balance_threshold, is_new_user, grace_period_message } = creditSummary;
   const isLow = current_balance <= low_balance_threshold;
   const isCritical = current_balance <= 1;
+  const isInGracePeriod = is_new_user && grace_period_message;
 
   const getCreditColor = () => {
+    if (isInGracePeriod) return 'text-blue-400'; // Blue for grace period
     if (isCritical) return 'text-red-400';
     if (isLow) return 'text-yellow-400';
     return 'text-green-400';
@@ -233,10 +243,10 @@ export const MobileCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
   return (
     <div className={`flex items-center space-x-1 ${className}`}>
       <div className={`w-2 h-2 rounded-full ${
-        isCritical ? 'bg-red-500' : isLow ? 'bg-yellow-500' : 'bg-green-500'
+        isInGracePeriod ? 'bg-blue-500' : isCritical ? 'bg-red-500' : isLow ? 'bg-yellow-500' : 'bg-green-500'
       }`} />
       <span className={`text-xs font-medium ${getCreditColor()}`}>
-        {current_balance.toFixed(0)}
+        {isInGracePeriod ? grace_period_message : current_balance.toFixed(0)}
       </span>
     </div>
   );
