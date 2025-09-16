@@ -19,6 +19,7 @@
     "@fal-ai/client": "^1.6.2",
     "@google/generative-ai": "^0.24.1",
     "@runwayml/sdk": "^2.8.2",
+    "@stripe/react-stripe-js": "^4.0.2",
     "@stripe/stripe-js": "^7.9.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
