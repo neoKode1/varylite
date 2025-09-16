@@ -5,6 +5,8 @@ import { Upload, Download, Loader2, RotateCcw, Camera, Sparkles, Images, X, Tras
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useCreditCheck } from '@/hooks/useCreditCheck';
+import { refreshCreditsAfterGeneration } from '@/utils/creditRefresh';
+import CreditPurchaseModal from '@/components/CreditPurchaseModal';
 import type { UploadedFile, UploadedImage, ProcessingState, CharacterVariation, RunwayVideoRequest, RunwayVideoResponse, RunwayTaskResponse, EndFrameRequest, EndFrameResponse } from '@/types/gemini';
 // StoredVariation type (extends CharacterVariation with additional properties)
 interface StoredVariation extends CharacterVariation {
@@ -63,6 +65,7 @@ import { Header } from '@/components/Header';
 import { AuthModal } from '@/components/AuthModal';
 import { UsageLimitBanner, UsageCounter } from '@/components/UsageLimitBanner';
 import { UserCounter } from '@/components/UserCounter';
+import { ProcessingModal } from '@/components/ProcessingModal';
 
 // Ko-fi widget types
 declare global {
@@ -934,6 +937,14 @@ export default function Home() {
   // Processing items that appear in gallery
   const [processingItems, setProcessingItems] = useState<ProcessingItem[]>([]);
   
+  // Processing modal state
+  const [showProcessingModal, setShowProcessingModal] = useState(false);
+  const [processingModalType, setProcessingModalType] = useState<'image' | 'video'>('image');
+  const [processingStartTime, setProcessingStartTime] = useState<number | null>(null);
+  
+  // Credit purchase modal state
+  const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
+  
   // Mobile image display state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [displayedImages, setDisplayedImages] = useState<string[]>([]);
@@ -970,8 +981,21 @@ export default function Home() {
 
   // Handle generation settings save
   const handleSaveGenerationSettings = useCallback((settings: GenerationSettings) => {
+    console.log('🎯 [GENERATE PAGE] Generation settings applied:', {
+      aspectRatio: settings.aspectRatio,
+      guidanceScale: settings.guidanceScale,
+      strength: settings.strength,
+      seed: settings.seed,
+      duration: settings.duration,
+      resolution: settings.resolution,
+      outputFormat: settings.outputFormat,
+      styleConsistency: settings.styleConsistency,
+      characterSeparation: settings.characterSeparation,
+      spatialAwareness: settings.spatialAwareness,
+      timestamp: new Date().toISOString()
+    });
     setGenerationSettings(settings);
-    console.log('🎛️ Generation settings saved:', settings);
+    console.log('✅ [GENERATE PAGE] Generation settings state updated');
   }, []);
 
   // Handle preset combination logic
@@ -1207,6 +1231,29 @@ export default function Home() {
     setGenerationStartTime(null);
   };
 
+  // Start processing with modal
+  const startProcessing = (type: 'image' | 'video', step: string, progress: number = 0) => {
+    setProcessingModalType(type);
+    setShowProcessingModal(true);
+    setProcessingStartTime(Date.now());
+    setProcessing({
+      isProcessing: true,
+      progress,
+      currentStep: step
+    });
+  };
+
+  // Stop processing and hide modal
+  const stopProcessing = () => {
+    setShowProcessingModal(false);
+    setProcessingStartTime(null);
+    setProcessing({
+      isProcessing: false,
+      progress: 0,
+      currentStep: ''
+    });
+  };
+
   // Timer effect for countdown
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -1217,6 +1264,18 @@ export default function Home() {
       if (interval) clearInterval(interval);
     };
   }, [processing.isProcessing, timeRemaining, generationStartTime, estimatedTime]);
+
+  // Auto-hide modal for video generations after 30 seconds
+  useEffect(() => {
+    if (showProcessingModal && processingModalType === 'video' && processingStartTime) {
+      const timer = setTimeout(() => {
+        setShowProcessingModal(false);
+        console.log('🎬 Video generation modal auto-hidden after 30 seconds');
+      }, 30000); // 30 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showProcessingModal, processingModalType, processingStartTime]);
 
   // Show whoopee animation for rejected content
   const showContentRejectedAnimation = () => {
@@ -3344,11 +3403,7 @@ export default function Home() {
       return;
     }
 
-    setProcessing({
-      isProcessing: true,
-      progress: 20,
-      currentStep: 'Processing with FAL AI...'
-    });
+    startProcessing('image', 'Processing with FAL AI...', 20);
 
     try {
       setProcessing(prev => ({ ...prev, progress: 40, currentStep: 'Uploading image...' }));
@@ -3459,32 +3514,18 @@ export default function Home() {
         file_type: uploadedFiles[0]?.fileType
       });
       
+        // Deduct credits after successful generation (regardless of filtering)
+        await refreshCreditsAfterGeneration(
+          user?.id || '',
+          'nano-banana',
+          'character_variation',
+          isAdmin
+        );
+
         // Add to gallery
         if (filteredVariations.length > 0) {
           addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
           showNotification('🎨 Character variations generated successfully!', 'success');
-          
-          // Deduct credits after successful generation
-          if (user?.id && !isAdmin) {
-            try {
-              const response = await fetch('/api/use-credits', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: user.id,
-                  modelName: 'nano-banana',
-                  generationType: 'character_variation'
-                })
-              });
-              
-              if (response.ok) {
-                const result = await response.json();
-                console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-              }
-            } catch (error) {
-              console.error('Failed to deduct credits:', error);
-            }
-          }
           
           // Clear input after successful generation
           setPrompt('');
@@ -3496,11 +3537,7 @@ export default function Home() {
         }
         
         setTimeout(() => {
-          setProcessing({
-            isProcessing: false,
-            progress: 0,
-            currentStep: ''
-          });
+          stopProcessing();
           stopGenerationTimer();
         }, 1000);
 
@@ -3943,10 +3980,12 @@ export default function Home() {
       
       const newVariations = data.variations || [];
       console.log('✅ [FRONTEND VIDEO VARIANCE] Received variations:', newVariations.length);
+      console.log('🔍 [FRONTEND VIDEO VARIANCE] Raw variations data:', newVariations);
       
       // Log each variation received
       newVariations.forEach((variation: CharacterVariation, index: number) => {
         console.log(`🎬 [FRONTEND VIDEO VARIANCE] Variation ${index + 1}:`, {
+          id: variation.id,
           angle: variation.angle,
           description: variation.description,
           imageUrl: variation.imageUrl,
@@ -3973,6 +4012,11 @@ export default function Home() {
         return !isBad;
       });
       
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Filtering results:');
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Original variations:', newVariations.length);
+      console.log('📊 [FRONTEND VIDEO VARIANCE] Filtered variations:', filteredVariations.length);
+      console.log('🔍 [FRONTEND VIDEO VARIANCE] Filtered variations data:', filteredVariations);
+      
       console.log('📊 [FRONTEND VIDEO VARIANCE] Content filtering complete:', {
         originalCount: newVariations.length,
         filteredCount: filteredVariations.length,
@@ -3995,8 +4039,34 @@ export default function Home() {
         model: generationMode
       });
       
+      // Deduct credits after successful generation (regardless of filtering)
+      if (user?.id && !isAdmin) {
+        try {
+          const response = await fetch('/api/use-credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              modelName: generationMode,
+              generationType: 'video'
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+            // Trigger credit display refresh
+            console.log('🔄 Dispatching creditUpdated event');
+            window.dispatchEvent(new CustomEvent('creditUpdated'));
+          }
+        } catch (error) {
+          console.error('Failed to deduct credits:', error);
+        }
+      }
+      
       // Add to gallery
       if (filteredVariations.length > 0) {
+        console.log('🎬 Adding video variations to gallery:', filteredVariations.length);
         addToGallery(filteredVariations, prompt.trim(), uploadedFiles[0]?.preview);
         showNotification('🎬 Video variations generated successfully!', 'success');
         
@@ -4004,16 +4074,31 @@ export default function Home() {
         setPrompt('');
         setUploadedFiles([]);
         console.log('🧹 Cleared input after successful video variation generation');
+        
+        // Remove processing item after successful completion (give more time for video to load)
+        setTimeout(() => {
+          removeProcessingItem(processingId);
+          stopGenerationTimer();
+        }, 3000); // Increased from 1000ms to 3000ms
       } else if (newVariations.length > 0) {
         // All variations were filtered out
         showNotification('🚫 All generated content was filtered out due to content policy', 'error');
+        
+        // Remove processing item even if filtered out
+        setTimeout(() => {
+          removeProcessingItem(processingId);
+          stopGenerationTimer();
+        }, 1000);
+      } else {
+        // No variations received
+        showNotification('❌ No video variations were generated', 'error');
+        
+        // Remove processing item
+        setTimeout(() => {
+          removeProcessingItem(processingId);
+          stopGenerationTimer();
+        }, 1000);
       }
-      
-      // Remove processing item after successful completion
-      setTimeout(() => {
-        removeProcessingItem(processingId);
-        stopGenerationTimer();
-      }, 1000);
 
     } catch (err) {
       console.error('❌ Video variation error:', err);
@@ -4162,6 +4247,9 @@ export default function Home() {
             if (response.ok) {
               const result = await response.json();
               console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+              // Trigger credit display refresh
+              console.log('🔄 Dispatching creditUpdated event');
+              window.dispatchEvent(new CustomEvent('creditUpdated'));
             }
           } catch (error) {
             console.error('Failed to deduct credits:', error);
@@ -4336,6 +4424,9 @@ export default function Home() {
             if (response.ok) {
               const result = await response.json();
               console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
+              // Trigger credit display refresh
+              console.log('🔄 Dispatching creditUpdated event');
+              window.dispatchEvent(new CustomEvent('creditUpdated'));
             }
           } catch (error) {
             console.error('Failed to deduct credits:', error);
@@ -4816,36 +4907,36 @@ export default function Home() {
       // Method 1: Try blob download with CORS
       try {
         console.log('🔄 Attempting blob download...');
-        const response = await fetch(videoUrl, {
-          mode: 'cors',
+      const response = await fetch(videoUrl, {
+        mode: 'cors',
           credentials: 'omit',
           headers: {
             'Accept': 'video/*'
           }
-        });
-        
-        if (!response.ok) {
+      });
+      
+      if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
+      }
+      
+      const blob = await response.blob();
         console.log('✅ Blob created, size:', blob.size);
         
         if (blob.size === 0) {
           throw new Error('Empty blob received');
         }
         
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video-edit-${originalPrompt.toLowerCase().replace(/\s+/g, '-').substring(0, 30)}.mp4`;
         a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showNotification('🎬 Video downloaded successfully!', 'success');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showNotification('🎬 Video downloaded successfully!', 'success');
         return;
         
       } catch (blobError) {
@@ -5305,26 +5396,12 @@ export default function Home() {
       console.log('🧹 Cleared input after successful Veo3 Fast generation');
 
       // Deduct credits after successful generation
-      if (user?.id && !isAdmin) {
-        try {
-          const response = await fetch('/api/use-credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              modelName: 'veo3-fast',
-              generationType: 'video'
-            })
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log(`✅ Credits deducted: $${result.creditsUsed.toFixed(4)}, remaining: $${result.remainingCredits.toFixed(2)}`);
-          }
-        } catch (error) {
-          console.error('Failed to deduct credits:', error);
-        }
-      }
+      await refreshCreditsAfterGeneration(
+        user?.id || '',
+        'veo3-fast',
+        'video',
+        isAdmin
+      );
 
       showNotification('🎬 Video generated successfully with Veo3 Fast!', 'success');
 
@@ -5378,11 +5455,26 @@ export default function Home() {
       return;
     }
 
-    setProcessing({
-      isProcessing: true,
+    // Create processing item for gallery
+    const processingId = `minimax2-${Date.now()}`;
+    const controller = new AbortController();
+    
+    const processingItem: ProcessingItem = {
+      id: processingId,
+      type: 'video',
+      model: 'minimax-2.0',
+      prompt: prompt.trim() || 'Video generation',
       progress: 0,
-      currentStep: 'Starting Minimax 2.0 generation...'
-    });
+      currentStep: 'Starting Minimax 2.0 generation...',
+      startTime: Date.now(),
+      estimatedTime: getEstimatedTimeForModel('minimax-2.0'),
+      cancellable: true,
+      abortController: controller
+    };
+    
+    addProcessingItem(processingItem);
+    setAbortController(controller);
+    setIsCancellable(true);
     
     // Start generation timer
     startGenerationTimer('minimax-2.0');
@@ -5520,6 +5612,14 @@ export default function Home() {
 
       // Track usage
       trackUsage('video_generation', 'minimax_endframe');
+
+      // Deduct credits after successful generation
+      await refreshCreditsAfterGeneration(
+        user?.id || '',
+        'minimax-2.0',
+        'video',
+        isAdmin
+      );
 
       // Clear input after successful generation
       setPrompt('');
@@ -6106,8 +6206,7 @@ export default function Home() {
         onToggleGallery={() => setShowGallery(!showGallery)}
         showGallery={showGallery}
         onPurchaseCredits={() => {
-          // TODO: Open credit purchase modal
-          console.log('Open credit purchase modal');
+          setShowCreditPurchaseModal(true);
         }}
       />
       
@@ -8900,6 +8999,39 @@ export default function Home() {
         selectedModel={generationMode || ''}
         onSaveSettings={handleSaveGenerationSettings}
         currentSettings={generationSettings}
+      />
+
+      {/* Processing Modal */}
+      <ProcessingModal
+        isOpen={showProcessingModal}
+        progress={processing.progress}
+        currentStep={processing.currentStep}
+        estimatedTime={estimatedTime || undefined}
+        timeRemaining={timeRemaining || undefined}
+        onCancel={isCancellable ? () => {
+          if (abortController) {
+            abortController.abort();
+            stopProcessing();
+          }
+        } : undefined}
+        cancellable={isCancellable}
+        type={processingModalType}
+      />
+
+      {/* Credit Purchase Modal */}
+      <CreditPurchaseModal
+        isOpen={showCreditPurchaseModal}
+        onClose={() => setShowCreditPurchaseModal(false)}
+        onSuccess={() => {
+          setShowCreditPurchaseModal(false);
+          // Trigger credit refresh after successful purchase
+          window.dispatchEvent(new CustomEvent('creditUpdated', { 
+            detail: { 
+              type: 'credit_purchase',
+              timestamp: new Date().toISOString()
+            } 
+          }));
+        }}
       />
 
       {/* Mobile Bottom Navigation */}

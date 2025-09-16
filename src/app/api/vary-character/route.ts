@@ -339,6 +339,15 @@ export async function POST(request: NextRequest) {
     console.log(`🖼️ Image data lengths: ${images ? images.map(img => img.length) : []}`);
     console.log(`🎯 Generation Mode: "${generationMode}"`);
     console.log(`⚙️ Generation Settings:`, generationSettings);
+    
+    // Log aspect ratio specifically
+    console.log('🎯 [CHARACTER VARIATION API] Aspect ratio from user settings:', {
+      aspectRatio: generationSettings?.aspectRatio || 'NOT SET',
+      outputFormat: generationSettings?.outputFormat || 'NOT SET',
+      guidanceScale: generationSettings?.guidanceScale || 'NOT SET',
+      strength: generationSettings?.strength || 'NOT SET',
+      timestamp: new Date().toISOString()
+    });
 
     // Check authorization header
     console.log('🔐 [CHARACTER VARIATION] Checking authorization header...');
@@ -990,14 +999,27 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               
               // Use model-specific official supported parameters
               console.log(`🚀 [MODEL API] Using official ${modelName} parameters for multi-image generation...`);
+              
+              const falInput = {
+                prompt: nanoBananaPrompt,
+                image_urls: imageUrls, // Use all uploaded image URLs for multi-image processing
+                num_images: 1,
+                output_format: generationSettings?.outputFormat || "jpeg",
+                aspect_ratio: generationSettings?.aspectRatio || "1:1", // Add aspect ratio support
+                sync_mode: false // Return URLs instead of data URIs
+              };
+              
+              console.log('🎯 [CHARACTER VARIATION API] FAL API input with aspect ratio:', {
+                model: modelName,
+                aspect_ratio: falInput.aspect_ratio,
+                output_format: falInput.output_format,
+                num_images: falInput.num_images,
+                image_urls_count: falInput.image_urls.length,
+                timestamp: new Date().toISOString()
+              });
+              
               const result = await fal.subscribe(modelName, {
-                input: {
-                  prompt: nanoBananaPrompt,
-                  image_urls: imageUrls, // Use all uploaded image URLs for multi-image processing
-                  num_images: 1,
-                  output_format: generationSettings?.outputFormat || "jpeg",
-                  sync_mode: false // Return URLs instead of data URIs
-                },
+                input: falInput,
                 logs: true,
                 onQueueUpdate: (update) => {
                   if (update.status === "IN_PROGRESS") {

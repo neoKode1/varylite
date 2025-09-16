@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
 
     // Get user's gallery data
     console.log('🖼️ Fetching user gallery...');
+    console.log('🔍 [GALLERY DEBUG] User ID:', user.id);
+    console.log('🔍 [GALLERY DEBUG] User email:', user.email);
+    
     const { data: gallery, error: galleryError } = await supabase
       .from('galleries')
       .select('*')
@@ -48,9 +51,47 @@ export async function GET(request: NextRequest) {
 
     if (galleryError) {
       console.error('❌ Error fetching gallery:', galleryError);
+      console.error('❌ [GALLERY DEBUG] Gallery error details:', {
+        message: galleryError.message,
+        code: galleryError.code,
+        details: galleryError.details,
+        hint: galleryError.hint
+      });
       // Don't fail the entire request if gallery fetch fails
     } else {
       console.log('🖼️ Gallery items found:', gallery?.length || 0);
+      console.log('🔍 [GALLERY DEBUG] Gallery query successful:', {
+        user_id: user.id,
+        items_count: gallery?.length || 0,
+        first_item_id: gallery?.[0]?.id || 'none',
+        last_item_id: gallery?.[gallery.length - 1]?.id || 'none',
+        timestamp: new Date().toISOString()
+      });
+      
+      if (gallery && gallery.length === 0) {
+        console.log('⚠️ [GALLERY DEBUG] Fetching user gallery but gallery items found is zero - this may indicate a database issue or RLS policy problem');
+        
+        // Let's also check if there are any gallery items at all for this user (bypassing RLS)
+        console.log('🔍 [GALLERY DEBUG] Checking total gallery count for user...');
+        const { data: totalGallery, error: totalError } = await supabaseAdmin!
+          .from('galleries')
+          .select('id, user_id, created_at')
+          .eq('user_id', user.id);
+          
+        if (totalError) {
+          console.error('❌ [GALLERY DEBUG] Error checking total gallery count:', totalError);
+        } else {
+          console.log('🔍 [GALLERY DEBUG] Total gallery items (admin query):', totalGallery?.length || 0);
+          if (totalGallery && totalGallery.length > 0) {
+            console.log('⚠️ [GALLERY DEBUG] RLS POLICY ISSUE DETECTED: Admin query found items but user query returned zero');
+            console.log('🔍 [GALLERY DEBUG] Sample items:', totalGallery.slice(0, 3).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              created_at: item.created_at
+            })));
+          }
+        }
+      }
     }
 
     // If no profile exists, create a default one

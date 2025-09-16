@@ -81,6 +81,14 @@ export async function POST(request: NextRequest) {
       hasGridPosition: !!(gridPositionX !== undefined && gridPositionY !== undefined),
       hasCoordinates: !!(xStart !== undefined && xEnd !== undefined && yStart !== undefined && yEnd !== undefined)
     });
+    
+    console.log('🎯 [LUMA PHOTON REFRAME API] Aspect ratio from user settings:', {
+      aspectRatio: aspectRatio,
+      prompt: prompt || 'Default: expand the scene',
+      hasGridPosition: !!(gridPositionX !== undefined && gridPositionY !== undefined),
+      hasCoordinates: !!(xStart !== undefined && xEnd !== undefined && yStart !== undefined && yEnd !== undefined),
+      timestamp: new Date().toISOString()
+    });
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });

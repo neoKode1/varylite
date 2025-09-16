@@ -58,14 +58,59 @@ export async function POST(request: NextRequest): Promise<NextResponse<PurchaseC
       );
     }
 
-    // Ensure user is purchasing for themselves or is admin
-    const { data: userData, error: userError } = await supabaseAdmin
+    // Get or create user profile
+    let { data: userData, error: userError } = await supabaseAdmin
       .from('users')
-      .select('is_admin, stripe_customer_id, name')
+      .select('is_admin, name, email')
       .eq('id', user.id)
       .single();
 
-    if (userError || !userData) {
+    // If user doesn't exist, create a default profile
+    if (userError && userError.code === 'PGRST116') {
+      console.log('User profile not found, creating default profile for:', user.id);
+      
+      const defaultProfile = {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        display_name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        username: user.email?.split('@')[0]?.toLowerCase().replace(/\s+/g, '_') || 'user',
+        bio: 'AI enthusiast and creative explorer',
+        profile_picture: null,
+        social_links: {
+          twitter: '',
+          instagram: '',
+          website: ''
+        },
+        background_image: null,
+        preferences: {
+          defaultModel: 'runway-t2i',
+          defaultStyle: 'realistic',
+          notifications: true,
+          publicProfile: false,
+          toastyNotifications: true
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: newProfile, error: insertError } = await supabaseAdmin
+        .from('users')
+        .insert(defaultProfile)
+        .select('is_admin, name, email')
+        .single();
+
+      if (insertError) {
+        console.error('Error creating user profile:', insertError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to create user profile' },
+          { status: 500 }
+        );
+      }
+
+      userData = newProfile;
+    } else if (userError || !userData) {
+      console.error('Error fetching user data:', userError);
       return NextResponse.json(
         { success: false, message: 'User not found' },
         { status: 404 }
@@ -80,25 +125,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<PurchaseC
       );
     }
 
-    // Get or create Stripe customer
-    let customerId = userData.stripe_customer_id;
-    if (!customerId) {
-      // Create Stripe customer
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: userData.name || user.email,
-        metadata: {
-          userId: user.id
-        }
-      });
-      customerId = customer.id;
-
-      // Update user record with customer ID
-      await supabaseAdmin
-        .from('users')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
-    }
+    // Create Stripe customer (always create new for simplicity)
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: userData.name || user.email,
+      metadata: {
+        userId: user.id
+      }
+    });
+    const customerId = customer.id;
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({

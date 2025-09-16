@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, AlertTriangle, Loader2 } from 'lucide-react';
+import { DollarSign, CreditCard, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CreditSummary {
@@ -28,6 +28,27 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
     }
   }, [user?.id]);
 
+  // Listen for credit updates from other components
+  useEffect(() => {
+    const handleCreditUpdate = () => {
+      console.log('🔄 CompactCreditDisplay: Received creditUpdated event');
+      if (user?.id) {
+        fetchCreditInfo();
+      }
+    };
+
+    // Listen for custom events
+    window.addEventListener('creditUpdated', handleCreditUpdate);
+    
+    // Also refresh every 10 seconds to catch any missed updates
+    const interval = setInterval(handleCreditUpdate, 10000);
+
+    return () => {
+      window.removeEventListener('creditUpdated', handleCreditUpdate);
+      clearInterval(interval);
+    };
+  }, [user?.id]);
+
   const fetchCreditInfo = async () => {
     try {
       setLoading(true);
@@ -38,6 +59,7 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
         return;
       }
 
+      console.log('🔄 CompactCreditDisplay: Fetching credit info for user:', user.id);
       const response = await fetch(`/api/user-credits?userId=${user.id}`);
       
       if (!response.ok) {
@@ -50,10 +72,17 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
         throw new Error(data.error || 'Invalid response from server');
       }
 
+      console.log('✅ CompactCreditDisplay: Credit info received:', {
+        current_balance: data.summary?.current_balance,
+        low_balance_threshold: data.summary?.low_balance_threshold,
+        tier: data.summary?.tier,
+        timestamp: new Date().toISOString()
+      });
+
       setCreditSummary(data.summary);
       setError(null);
     } catch (err) {
-      console.error('Error fetching credit info:', err);
+      console.error('❌ CompactCreditDisplay: Error fetching credit info:', err);
       setError(err instanceof Error ? err.message : 'Failed to load credit information');
     } finally {
       setLoading(false);
@@ -104,19 +133,27 @@ export const CompactCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
       <span className={`text-sm font-medium ${getCreditColor()}`}>
         {current_balance.toFixed(0)} credits
       </span>
-      {(isLow || isCritical) && (
-        <button
-          onClick={onPurchaseCredits}
-          className={`flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded transition-colors ${
-            isCritical
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-yellow-600 text-white hover:bg-yellow-700'
-          }`}
-        >
-          <CreditCard className="w-3 h-3" />
-          <span>Buy</span>
-        </button>
-      )}
+      <button
+        onClick={fetchCreditInfo}
+        disabled={loading}
+        className="p-1 hover:bg-white/10 rounded transition-colors"
+        title="Refresh credits"
+      >
+        <RefreshCw className={`w-3 h-3 text-white/60 ${loading ? 'animate-spin' : ''}`} />
+      </button>
+      <button
+        onClick={onPurchaseCredits}
+        className={`flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded transition-colors ${
+          isCritical
+            ? 'bg-red-600 text-white hover:bg-red-700'
+            : isLow
+            ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        <CreditCard className="w-3 h-3" />
+        <span>Buy</span>
+      </button>
     </div>
   );
 };
@@ -134,6 +171,27 @@ export const MobileCreditDisplay: React.FC<CompactCreditDisplayProps> = ({
     if (user?.id) {
       fetchCreditInfo();
     }
+  }, [user?.id]);
+
+  // Listen for credit updates from other components
+  useEffect(() => {
+    const handleCreditUpdate = () => {
+      console.log('🔄 CompactCreditDisplay: Received creditUpdated event');
+      if (user?.id) {
+        fetchCreditInfo();
+      }
+    };
+
+    // Listen for custom events
+    window.addEventListener('creditUpdated', handleCreditUpdate);
+    
+    // Also refresh every 10 seconds to catch any missed updates
+    const interval = setInterval(handleCreditUpdate, 10000);
+
+    return () => {
+      window.removeEventListener('creditUpdated', handleCreditUpdate);
+      clearInterval(interval);
+    };
   }, [user?.id]);
 
   const fetchCreditInfo = async () => {

@@ -43,6 +43,15 @@ export async function POST(request: NextRequest) {
       guidanceScale, 
       userId 
     });
+    
+    console.log('🎯 [SEEDREAM 3 API] Aspect ratio from user settings:', {
+      aspectRatio: aspectRatio,
+      size: size,
+      width: width,
+      height: height,
+      guidanceScale: guidanceScale,
+      timestamp: new Date().toISOString()
+    });
 
     // Check user credits before processing
     const creditCheck = await CreditService.checkUserCredits(userId, 'bytedance/seedream-3');

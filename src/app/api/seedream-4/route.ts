@@ -11,6 +11,13 @@ export async function POST(request: NextRequest) {
     console.log('✅ Request body parsed successfully');
     console.log(`💬 Prompt: "${prompt}"`);
     console.log(`🖼️ Number of images: ${images ? images.length : 0}`);
+    
+    console.log('🎯 [SEEDREAM 4 API] Aspect ratio from user settings:', {
+      aspect_ratio: aspect_ratio,
+      size: size,
+      max_images: max_images,
+      timestamp: new Date().toISOString()
+    });
 
     if (!images || images.length === 0 || !prompt) {
       console.log('❌ Validation failed: Missing image or prompt');
