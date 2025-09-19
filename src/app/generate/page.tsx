@@ -57,6 +57,7 @@ export default function GeneratePage() {
   const [isNumImagesExpanded, setIsNumImagesExpanded] = useState(false);
   const [isSceneBuilderExpanded, setIsSceneBuilderExpanded] = useState(false);
   const [isCharacterStyleExpanded, setIsCharacterStyleExpanded] = useState(false);
+  const [isStyleExtractionExpanded, setIsStyleExtractionExpanded] = useState(false);
   const [isComprehensivePresetsExpanded, setIsComprehensivePresetsExpanded] = useState(false);
   
   // Scene Builder state
@@ -355,6 +356,40 @@ export default function GeneratePage() {
       name: 'Nightmare on Elm Street',
       description: 'Photo-realistic dark fantasy styling featuring twisted, dreamlike aesthetics',
       prompt: 'Make into Freddy Krueger style while adhering to user\'s prompt details'
+    }
+  ];
+
+  // Style Extraction Presets for Nano Banana
+  const styleExtractionPresets = [
+    {
+      name: 'Art Style Copy',
+      description: 'Extract and apply the artistic style from the input image',
+      prompt: 'Extract the artistic style, brushwork, and visual techniques from the input image and apply them to the subject'
+    },
+    {
+      name: 'Color Palette Transfer',
+      description: 'Copy the color scheme and palette from the input image',
+      prompt: 'Extract the color palette, lighting, and mood from the input image and apply them to the subject'
+    },
+    {
+      name: 'Texture & Material',
+      description: 'Extract surface textures and materials from the input image',
+      prompt: 'Extract the surface textures, materials, and tactile qualities from the input image and apply them to the subject'
+    },
+    {
+      name: 'Lighting & Atmosphere',
+      description: 'Copy lighting conditions and atmospheric effects',
+      prompt: 'Extract the lighting conditions, shadows, and atmospheric effects from the input image and apply them to the subject'
+    },
+    {
+      name: 'Composition Style',
+      description: 'Extract compositional elements and framing',
+      prompt: 'Extract the compositional style, framing, and visual arrangement from the input image and apply them to the subject'
+    },
+    {
+      name: 'Complete Style Transfer',
+      description: 'Comprehensive style extraction including all visual elements',
+      prompt: 'Extract the complete visual style including art style, colors, textures, lighting, and composition from the input image and apply them comprehensively to the subject'
     }
   ];
 
@@ -1687,12 +1722,8 @@ export default function GeneratePage() {
                   {characterStylePresets.map((preset, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedStyle(preset.name.toLowerCase().replace(/\s+/g, '-'))}
-                      className={`p-3 text-left rounded border transition-colors ${
-                        selectedStyle === preset.name.toLowerCase().replace(/\s+/g, '-')
-                          ? 'border-blue-500 bg-blue-50 text-blue-900'
-                          : 'border-gray-300 bg-secondary text-gray-700 hover:border-gray-400 hover:bg-gray-50'
-                      }`}
+                      onClick={() => handlePresetClick(preset.prompt)}
+                      className="p-3 text-left rounded border transition-colors border-gray-300 bg-secondary text-gray-700 hover:border-gray-400 hover:bg-gray-50"
                     >
                       <div className="font-medium text-sm">{preset.name}</div>
                       <div className="text-xs text-gray-500 mt-1">{preset.description}</div>
@@ -1703,7 +1734,48 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* 7. QuickShot Presets (Collapsible) */}
+            {/* 7. Style Extraction (Collapsible) */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
+              <button
+                onClick={() => setIsStyleExtractionExpanded(!isStyleExtractionExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">7</span>
+                  </div>
+                  <h3 className="text-sm font-medium text-foreground">Style Extraction</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isStyleExtractionExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isStyleExtractionExpanded && (
+                <div className="bg-secondary rounded border border-gray-400 p-4 mb-4">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Extract styles from your input images (Works best with Nano Banana)
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    Copy artistic styles, colors, textures, and visual elements from uploaded images
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                  {styleExtractionPresets.map((preset, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handlePresetClick(preset.prompt)}
+                      className="p-3 text-left rounded border transition-colors border-gray-300 bg-secondary text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                    >
+                      <div className="font-medium text-sm">{preset.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">{preset.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              )}
+            </div>
+
+            {/* 8. QuickShot Presets (Collapsible) */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
               <button
                 onClick={() => setIsQuickShotExpanded(!isQuickShotExpanded)}
@@ -1711,7 +1783,7 @@ export default function GeneratePage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">7</span>
+                    <span className="text-white text-sm font-bold">8</span>
                   </div>
                   <h3 className="text-sm font-medium text-foreground">QuickShot Presets</h3>
                 </div>
@@ -1764,7 +1836,7 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* 8. Comprehensive Presets */}
+            {/* 9. Comprehensive Presets */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
               <button
                 onClick={() => setIsComprehensivePresetsExpanded(!isComprehensivePresetsExpanded)}
@@ -1772,7 +1844,7 @@ export default function GeneratePage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">8</span>
+                    <span className="text-white text-sm font-bold">9</span>
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">Comprehensive Presets</h3>
                 </div>
@@ -1857,7 +1929,7 @@ export default function GeneratePage() {
                 onClick={() => setIsNumImagesExpanded(!isNumImagesExpanded)}
                 className="flex items-center justify-between w-full text-left"
               >
-                <h3 className="text-lg font-semibold text-black mb-3">9. Number of Images</h3>
+                <h3 className="text-lg font-semibold text-black mb-3">10. Number of Images</h3>
                 <ChevronDown className={`h-5 w-5 transition-transform ${isNumImagesExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isNumImagesExpanded && (
