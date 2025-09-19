@@ -766,8 +766,7 @@ export default function GeneratePage() {
           apiEndpoint = '/api/fal/seedream-4-edit';
           requestBody = {
             prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
-            images: imageUrls.map(url => url.split(',')[1] || url),
-            mimeTypes: imagesToProcess.map(() => 'image/jpeg')
+            imageUrls: imageUrls.map(url => url.split(',')[1] || url)
           };
           break;
 
