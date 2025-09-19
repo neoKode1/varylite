@@ -52,6 +52,9 @@ export default function GeneratePage() {
   const [isThingsToAvoidExpanded, setIsThingsToAvoidExpanded] = useState(false);
   const [isQuickShotExpanded, setIsQuickShotExpanded] = useState(false);
   const [isNumImagesExpanded, setIsNumImagesExpanded] = useState(false);
+  const [isSceneBuilderExpanded, setIsSceneBuilderExpanded] = useState(false);
+  const [isCharacterStyleExpanded, setIsCharacterStyleExpanded] = useState(false);
+  const [isComprehensivePresetsExpanded, setIsComprehensivePresetsExpanded] = useState(false);
   
   // NSFW content detection state
   const [showNSFWWarning, setShowNSFWWarning] = useState(false);
@@ -1051,27 +1054,27 @@ export default function GeneratePage() {
   }, [generationHistory, saveToLocalStorage]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#141414] via-black to-gray-900 text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">vARYLite</h1>
-          <p className="text-gray-400">Free AI Scene Generator - No registration required</p>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">vARY_lite</h1>
+          <p className="text-gray-600">Free AI Scene Generator - No registration required</p>
         </div>
 
         {/* API Key Section */}
-        <div className="mb-6 bg-[#141414] rounded-lg p-4 border border-gray-700">
+        <div className="mb-6 bg-white rounded border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-white">🔑 Fal.ai API Key (Fallback Option)</h3>
+            <h3 className="text-sm font-medium text-gray-900">🔑 Fal.ai API Key (Fallback Option)</h3>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="useCustomApiKey"
                 checked={useCustomApiKey}
                 onChange={(e) => setUseCustomApiKey(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
-              <label htmlFor="useCustomApiKey" className="text-sm text-gray-300">
+              <label htmlFor="useCustomApiKey" className="text-sm text-gray-700">
                 Use my own API key as fallback
               </label>
             </div>
@@ -1084,7 +1087,7 @@ export default function GeneratePage() {
                 value={userFalApiKey}
                 onChange={(e) => setUserFalApiKey(e.target.value)}
                 placeholder="Enter your Fal.ai API key (fal_...)"
-                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                className="w-full p-3 bg-gray-300 border border-gray-400 rounded-lg text-black placeholder-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
               />
               <div className="text-xs text-gray-400 space-y-1">
                 <p>• Your API key is stored locally in your browser</p>
@@ -1104,20 +1107,76 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">
           
           {/* Left Column - Input and Configuration */}
-          <div className="bg-[#141414] rounded-lg p-6 space-y-6">
+          <div className="bg-white rounded border border-gray-200 p-6 space-y-6">
             
-            {/* 1. Upload Image(s) */}
+            {/* 1. Model Selection */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">1. Upload Image(s)</h3>
+              <h3 className="text-lg font-semibold mb-3">1. Select Model</h3>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={toggleModelDropdown}
+                  className="w-full p-4 bg-gray-300 border border-gray-400 rounded-lg text-left hover:bg-gray-400 transition-colors flex items-center gap-3"
+                >
+                  {modelOptions.find(m => m.id === selectedModel) && (
+                    <>
+                      <img
+                        src={modelOptions.find(m => m.id === selectedModel)!.icon}
+                        alt={modelOptions.find(m => m.id === selectedModel)!.label}
+                        className="w-8 h-8 rounded object-contain"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-black">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
+                        <div className="text-xs text-gray-400">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
+                      </div>
+                    </>
+                  )}
+                  <ChevronDown
+                    className={`w-5 h-5 text-gray-400 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isModelDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-gray-300 border border-gray-400 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                    {modelOptions.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => handleModelSelect(model.id)}
+                        className={`w-full p-3 text-left hover:bg-gray-300 transition-colors flex items-center gap-3 ${
+                          selectedModel === model.id ? 'bg-gray-300' : ''
+                        }`}
+                      >
+                        <img
+                          src={model.icon}
+                          alt={model.label}
+                          className="w-6 h-6 rounded object-contain"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-black">{model.label}</div>
+                          <div className="text-xs text-gray-400">{model.type} • {model.cost} credits</div>
+                        </div>
+                        {selectedModel === model.id && (
+                          <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Upload Image(s) */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">2. Upload Image(s)</h3>
               <div
-                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-500 transition-colors bg-gray-800"
+                className="border-2 border-dashed border-gray-300 rounded p-6 text-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-300 mb-2">Choose file(s)...</p>
-                <p className="text-gray-400 text-sm">or drag and drop them here.</p>
+                <p className="text-sm font-medium text-gray-900 mb-2">Choose file(s)...</p>
+                <p className="text-xs text-gray-500">or drag and drop them here.</p>
               </div>
               <input
                 ref={fileInputRef}
@@ -1131,11 +1190,11 @@ export default function GeneratePage() {
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {uploadedFiles.map((file) => (
-                    <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-800 rounded">
+                    <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-100 rounded">
                       <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1">
-                        <p className="text-sm text-white truncate">{file.file.name}</p>
-                        <p className="text-xs text-gray-400">{(file.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p className="text-sm text-gray-900 truncate">{file.file.name}</p>
+                        <p className="text-xs text-gray-500">{(file.file.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                       <button
                         onClick={() => removeFile(file.id)}
@@ -1149,15 +1208,43 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* 2. Describe Your Scene */}
+            {/* 3. Describe Your Scene */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">2. Describe Your Scene</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">3. Describe Your Scene</h3>
               <textarea
                 value={sceneDescription}
                 onChange={(e) => setSceneDescription(e.target.value)}
-                placeholder="Describe what you want to create..."
-                className="w-full h-32 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
+                placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them."
+                className="w-full h-24 p-3 bg-white border border-gray-300 rounded text-gray-900 placeholder-gray-500 focus:border-gray-400 focus:outline-none resize-none text-sm"
               />
+              
+              {/* Scene Options Checkboxes */}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  VIVID
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  SCENE
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  COLOR GRADING
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  CLOSE UP
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  WIDE SHOT
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  KEEP CONTEXT
+                </label>
+              </div>
               
               {/* NSFW Content Warning */}
               {showNSFWWarning && (
@@ -1175,7 +1262,7 @@ export default function GeneratePage() {
                       <div className="flex items-center gap-2 mb-3">
                         <button
                           onClick={() => setSelectedModel('seedance-4-edit')}
-                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-black text-sm rounded transition-colors"
                         >
                           Switch to Seedance 4 Edit
                         </button>
@@ -1199,14 +1286,60 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* 3. Things to Avoid (Collapsible) */}
-            <div>
+            {/* 4. Scene Builder */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
+              <button
+                onClick={() => setIsSceneBuilderExpanded(!isSceneBuilderExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">4</span>
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900">Scene Builder</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isSceneBuilderExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isSceneBuilderExpanded && (
+                <div className="mb-4">
+              {/* Characters */}
+              <div className="mb-4">
+                <h4 className="text-xs font-medium text-gray-700 mb-2">CHARACTERS</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map((num) => (
+                    <div key={num} className="border-2 border-dashed border-gray-300 rounded p-4 text-center bg-gray-50">
+                      <div className="text-gray-400 mb-2">+</div>
+                      <p className="text-xs text-gray-600">Character {num}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Location */}
+              <div>
+                <h4 className="text-xs font-medium text-gray-700 mb-2">LOCATION</h4>
+                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center bg-gray-50">
+                  <div className="text-gray-400 mb-2">+</div>
+                  <p className="text-xs text-gray-600">Location</p>
+                </div>
+              </div>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Things to Avoid (Collapsible) */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
               <button
                 onClick={() => setIsThingsToAvoidExpanded(!isThingsToAvoidExpanded)}
                 className="flex items-center justify-between w-full text-left"
               >
-                <h3 className="text-lg font-semibold mb-3">3. (Optional) Things to Avoid</h3>
-                <ChevronDown className={`h-5 w-5 transition-transform ${isThingsToAvoidExpanded ? 'rotate-180' : ''}`} />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">5</span>
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900">(Optional) Things to Avoid</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isThingsToAvoidExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isThingsToAvoidExpanded && (
                 <div className="mb-4">
@@ -1214,21 +1347,33 @@ export default function GeneratePage() {
                     value={thingsToAvoid}
                     onChange={(e) => setThingsToAvoid(e.target.value)}
                     placeholder="e.g., blurry, text, extra fingers"
-                    className="w-full h-24 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
+                    className="w-full h-24 p-3 bg-gray-300 border border-gray-400 rounded-lg text-black placeholder-gray-600 focus:border-gray-500 focus:outline-none resize-none"
                   />
                 </div>
               )}
             </div>
 
-            {/* 4. Character Style Presets */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">4. Character Style</h3>
-              <div className="bg-[#141414] rounded-lg p-4 border border-gray-600">
+            {/* 6. Character Style Presets */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
+              <button
+                onClick={() => setIsCharacterStyleExpanded(!isCharacterStyleExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">6</span>
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900">Character Style</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isCharacterStyleExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isCharacterStyleExpanded && (
+                <div className="bg-white rounded border border-gray-200 p-4 mb-4">
                 <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Transform your character into popular styles
                   </label>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-500">
                     Choose from iconic character styles and franchises
                   </p>
                 </div>
@@ -1238,36 +1383,42 @@ export default function GeneratePage() {
                     <button
                       key={index}
                       onClick={() => setSelectedStyle(preset.name.toLowerCase().replace(/\s+/g, '-'))}
-                      className={`p-3 text-left rounded-lg border transition-colors ${
+                      className={`p-3 text-left rounded border transition-colors ${
                         selectedStyle === preset.name.toLowerCase().replace(/\s+/g, '-')
-                          ? 'border-red-500 bg-red-500/10 text-red-400'
-                          : 'border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500'
+                          ? 'border-blue-500 bg-blue-50 text-blue-900'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
                       }`}
                     >
                       <div className="font-medium text-sm">{preset.name}</div>
-                      <div className="text-xs text-gray-400 mt-1">{preset.description}</div>
+                      <div className="text-xs text-gray-500 mt-1">{preset.description}</div>
                     </button>
                   ))}
                 </div>
               </div>
+              )}
             </div>
 
-            {/* 5. QuickShot Presets (Collapsible) */}
-            <div>
+            {/* 7. QuickShot Presets (Collapsible) */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
               <button
                 onClick={() => setIsQuickShotExpanded(!isQuickShotExpanded)}
                 className="flex items-center justify-between w-full text-left"
               >
-                <h3 className="text-lg font-semibold mb-3">5. QuickShot Presets</h3>
-                <ChevronDown className={`h-5 w-5 transition-transform ${isQuickShotExpanded ? 'rotate-180' : ''}`} />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">7</span>
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900">QuickShot Presets</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isQuickShotExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isQuickShotExpanded && (
-                <div className="bg-[#141414] rounded-lg p-4 border border-gray-600 mb-4">
+                <div className="bg-white rounded border border-gray-200 p-4 mb-4">
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Choose a cinematic shot type (optional)
                     </label>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       Select a preset for professional camera movements and angles
                     </p>
                   </div>
@@ -1277,8 +1428,8 @@ export default function GeneratePage() {
                       onClick={() => setSelectedQuickShot('')}
                       className={`w-full p-2 text-left rounded transition-colors ${
                         selectedQuickShot === ''
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                          ? 'bg-red-600 text-black'
+                          : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                       }`}
                     >
                       <span className="text-sm">🎲 Random Shot Type</span>
@@ -1290,8 +1441,8 @@ export default function GeneratePage() {
                         onClick={() => setSelectedQuickShot(preset.id)}
                         className={`w-full p-2 text-left rounded transition-colors ${
                           selectedQuickShot === preset.id
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            ? 'bg-red-600 text-black'
+                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -1308,12 +1459,24 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* 6. Comprehensive Presets */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">6. Comprehensive Presets</h3>
-              <div className="bg-[#141414] rounded-lg p-4 border border-gray-600">
+            {/* 8. Comprehensive Presets */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
+              <button
+                onClick={() => setIsComprehensivePresetsExpanded(!isComprehensivePresetsExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">8</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Comprehensive Presets</h3>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isComprehensivePresetsExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isComprehensivePresetsExpanded && (
+                <div className="bg-gray-300 rounded-lg p-4 border border-gray-400 mb-4">
                 <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Choose from comprehensive preset categories
                   </label>
                   <p className="text-xs text-gray-400">
@@ -1327,7 +1490,7 @@ export default function GeneratePage() {
                       setActivePresetTab('background');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors"
                   >
                     <span className="text-lg">🎨</span>
                     <div className="text-left">
@@ -1341,7 +1504,7 @@ export default function GeneratePage() {
                       setActivePresetTab('restyle');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors"
                   >
                     <span className="text-lg">🎭</span>
                     <div className="text-left">
@@ -1355,7 +1518,7 @@ export default function GeneratePage() {
                       setActivePresetTab('camera-motion');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors"
                   >
                     <span className="text-lg">📹</span>
                     <div className="text-left">
@@ -1369,7 +1532,7 @@ export default function GeneratePage() {
                       setActivePresetTab('shot-angles');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors"
                   >
                     <span className="text-lg">📐</span>
                     <div className="text-left">
@@ -1379,63 +1542,9 @@ export default function GeneratePage() {
                   </button>
                 </div>
               </div>
+              )}
             </div>
 
-            {/* 7. Model Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">7. Select Model</h3>
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={toggleModelDropdown}
-                  className="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-left hover:bg-gray-700 transition-colors flex items-center gap-3"
-                >
-                  {modelOptions.find(m => m.id === selectedModel) && (
-                    <>
-                      <img
-                        src={modelOptions.find(m => m.id === selectedModel)!.icon}
-                        alt={modelOptions.find(m => m.id === selectedModel)!.label}
-                        className="w-8 h-8 rounded object-contain"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
-                        <div className="text-xs text-gray-400">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
-                      </div>
-                    </>
-                  )}
-                  <ChevronDown
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {isModelDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#141414] border border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                    {modelOptions.map((model) => (
-                      <button
-                        key={model.id}
-                        onClick={() => handleModelSelect(model.id)}
-                        className={`w-full p-3 text-left hover:bg-gray-800 transition-colors flex items-center gap-3 ${
-                          selectedModel === model.id ? 'bg-gray-800' : ''
-                        }`}
-                      >
-                        <img
-                          src={model.icon}
-                          alt={model.label}
-                          className="w-6 h-6 rounded object-contain"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-white">{model.label}</div>
-                          <div className="text-xs text-gray-400">{model.type} • {model.cost} credits</div>
-                        </div>
-                        {selectedModel === model.id && (
-                          <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Number of Images Setting (Collapsible) */}
             <div>
@@ -1443,14 +1552,14 @@ export default function GeneratePage() {
                 onClick={() => setIsNumImagesExpanded(!isNumImagesExpanded)}
                 className="flex items-center justify-between w-full text-left"
               >
-                <h3 className="text-lg font-semibold text-white mb-3">8. Number of Images</h3>
+                <h3 className="text-lg font-semibold text-black mb-3">9. Number of Images</h3>
                 <ChevronDown className={`h-5 w-5 transition-transform ${isNumImagesExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isNumImagesExpanded && (
-                <div className="bg-[#141414] rounded-lg p-4 border border-gray-600 mb-4">
+                <div className="bg-gray-300 rounded-lg p-4 border border-gray-400 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         How many variations do you want?
                       </label>
                       <p className="text-xs text-gray-400">
@@ -1460,18 +1569,18 @@ export default function GeneratePage() {
                     <div className="flex items-center gap-3 ml-4">
                       <button
                         onClick={() => setImagesToGenerate(Math.max(1, imagesToGenerate - 1))}
-                        className="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        className="w-10 h-10 bg-gray-300 hover:bg-gray-400 rounded-lg flex items-center justify-center text-black font-bold text-lg transition-colors"
                         disabled={imagesToGenerate <= 1}
                       >
                         −
                       </button>
                       <div className="w-16 text-center">
-                        <span className="text-2xl font-bold text-white">{imagesToGenerate}</span>
+                        <span className="text-2xl font-bold text-black">{imagesToGenerate}</span>
                         <div className="text-xs text-gray-400">images</div>
                       </div>
                       <button
                         onClick={() => setImagesToGenerate(Math.min(8, imagesToGenerate + 1))}
-                        className="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        className="w-10 h-10 bg-gray-300 hover:bg-gray-400 rounded-lg flex items-center justify-center text-black font-bold text-lg transition-colors"
                         disabled={imagesToGenerate >= 8}
                       >
                         +
@@ -1485,8 +1594,8 @@ export default function GeneratePage() {
                         onClick={() => setImagesToGenerate(num)}
                         className={`px-3 py-1 text-sm rounded transition-colors ${
                           imagesToGenerate === num
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            ? 'bg-red-600 text-black'
+                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                         }`}
                       >
                         {num}
@@ -1501,7 +1610,7 @@ export default function GeneratePage() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !sceneDescription.trim() || uploadedFiles.length === 0}
-              className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isGenerating ? (
                 <>
@@ -1522,12 +1631,12 @@ export default function GeneratePage() {
               <div className="mb-3">
                 <h3 className="text-lg font-semibold">Generated Scenes</h3>
               </div>
-              <div className="bg-gray-900 rounded-lg p-4 min-h-[400px]">
+              <div className="bg-gray-300 rounded-lg p-4 min-h-[400px]">
                 {isGenerating ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                      <p className="text-gray-400">Generating scenes...</p>
+                      <p className="text-gray-700">Generating scenes...</p>
                     </div>
                   </div>
                 ) : generatedScenes.length > 0 ? (
@@ -1568,7 +1677,7 @@ export default function GeneratePage() {
                                 e.stopPropagation();
                                 varyScene(scene);
                               }}
-                              className="p-2 bg-blue-500 bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
+                              className="p-2 bg-green-500 bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
                               title="Vary"
                               disabled={isGenerating}
                             >
@@ -1592,7 +1701,7 @@ export default function GeneratePage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="flex items-center justify-center h-full text-gray-700">
                     No scenes generated yet.
                   </div>
                 )}
@@ -1603,7 +1712,7 @@ export default function GeneratePage() {
 
         {/* Gallery at Bottom Right */}
         {generatedScenes.length > 0 && (
-          <div className="fixed bottom-6 right-6 w-80 bg-[#141414] rounded-lg p-4 shadow-2xl border border-gray-700">
+          <div className="fixed bottom-6 right-6 w-80 bg-gray-300 rounded-lg p-4 shadow-2xl border border-gray-400">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">Gallery</h3>
               <span className="text-sm text-gray-400">
@@ -1618,7 +1727,7 @@ export default function GeneratePage() {
                   onClick={() => setSelectedImageIndex(prev => 
                     prev > 0 ? prev - 1 : generatedScenes.length - 1
                   )}
-                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
+                  className="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded text-sm"
                 >
                   ←
                 </button>
@@ -1632,7 +1741,7 @@ export default function GeneratePage() {
                   onClick={() => setSelectedImageIndex(prev => 
                     prev < generatedScenes.length - 1 ? prev + 1 : 0
                   )}
-                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
+                  className="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded text-sm"
                 >
                   →
                 </button>
@@ -1681,7 +1790,7 @@ export default function GeneratePage() {
             <div className="relative max-w-7xl max-h-full p-4">
               <button
                 onClick={() => setShowFullscreen(false)}
-                className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
+                className="absolute top-4 right-4 text-black text-2xl hover:text-gray-700 z-10"
               >
                 ✕
               </button>
@@ -1692,9 +1801,9 @@ export default function GeneratePage() {
                 className="max-w-full max-h-full object-contain"
               />
               
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-white">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-black">
                 <p className="text-lg mb-2">{generatedScenes[selectedImageIndex].prompt}</p>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-gray-700">
                   {selectedImageIndex + 1} / {generatedScenes.length}
                 </p>
                 <div className="flex justify-center gap-4 mt-4">
@@ -1741,9 +1850,9 @@ export default function GeneratePage() {
         {/* Comprehensive Preset Modal */}
         {showPresetModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#141414] rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-600">
-                <h3 className="text-xl font-semibold text-white">
+            <div className="bg-gray-300 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-400">
+                <h3 className="text-xl font-semibold text-black">
                   {activePresetTab === 'background' && '🎨 Background Presets'}
                   {activePresetTab === 'restyle' && '🎭 Character Style Presets'}
                   {activePresetTab === 'camera-motion' && '📹 Camera Motion Presets'}
@@ -1754,7 +1863,7 @@ export default function GeneratePage() {
                     setShowPresetModal(false);
                     setActivePresetTab(null);
                   }}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-black"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1771,8 +1880,8 @@ export default function GeneratePage() {
                           onClick={() => setActiveBackgroundTab(key as keyof typeof backgroundPresets)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             activeBackgroundTab === key
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                              ? 'bg-red-600 text-black'
+                              : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                           }`}
                         >
                           <span className="mr-2">{category.icon}</span>
@@ -1786,7 +1895,7 @@ export default function GeneratePage() {
                         <button
                           key={index}
                           onClick={() => handlePresetClick(prompt)}
-                          className="p-3 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+                          className="p-3 text-left bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors text-sm"
                         >
                           {prompt}
                         </button>
@@ -1802,9 +1911,9 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(preset.prompt)}
-                        className="p-4 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-4 text-left bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors"
                       >
-                        <div className="font-medium text-white mb-1">{preset.name}</div>
+                        <div className="font-medium text-black mb-1">{preset.name}</div>
                         <div className="text-sm text-gray-400">{preset.description}</div>
                       </button>
                     ))}
@@ -1818,7 +1927,7 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(motion)}
-                        className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+                        className="p-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors text-sm"
                       >
                         {motion}
                       </button>
@@ -1833,7 +1942,7 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(angle)}
-                        className="p-3 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+                        className="p-3 text-left bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors text-sm"
                       >
                         {angle}
                       </button>

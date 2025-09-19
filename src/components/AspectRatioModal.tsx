@@ -118,26 +118,26 @@ export default function AspectRatioModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-xl max-w-2xl w-full max-h-[85vh] md:max-h-[90vh] overflow-hidden">
+      <div className="bg-gray-300 rounded-xl max-w-2xl w-full max-h-[85vh] md:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-400">
           <div className="flex items-center gap-3">
             <Settings className="w-6 h-6 text-purple-400" />
             <div>
-              <h2 className="text-xl font-semibold text-white">Generation Settings</h2>
+              <h2 className="text-xl font-semibold text-black">Generation Settings</h2>
               <p className="text-sm text-gray-400">Model: {selectedModel}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-300 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-700">
+        <div className="flex border-b border-gray-400">
           {[
             { id: 'aspect', label: 'Aspect Ratio', icon: Square },
             { id: 'quality', label: 'Quality', icon: Monitor },
@@ -149,7 +149,7 @@ export default function AspectRatioModal({
               className={`flex items-center gap-1 md:gap-2 px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/10'
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-gray-400 hover:text-black'
               }`}
             >
               <tab.icon className="w-3 h-3 md:w-4 md:h-4" />
@@ -165,7 +165,7 @@ export default function AspectRatioModal({
           {activeTab === 'aspect' && (
             <div className="space-y-4 md:space-y-6">
               <div>
-                <h3 className="text-base md:text-lg font-medium text-white mb-3 md:mb-4">Choose Aspect Ratio</h3>
+                <h3 className="text-base md:text-lg font-medium text-black mb-3 md:mb-4">Choose Aspect Ratio</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
                   {ASPECT_RATIOS.map(ratio => (
                     <button
@@ -174,7 +174,7 @@ export default function AspectRatioModal({
                       className={`p-3 md:p-4 rounded-lg border-2 transition-all ${
                         settings.aspectRatio === ratio.value
                           ? 'border-purple-400 bg-purple-400/10 text-purple-400'
-                          : 'border-gray-700 hover:border-gray-600 text-gray-300'
+                          : 'border-gray-400 hover:border-gray-400 text-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-2 md:gap-3">
@@ -192,7 +192,7 @@ export default function AspectRatioModal({
               {/* Video-specific settings */}
               {isVideoModel && (
                 <div>
-                  <h3 className="text-base md:text-lg font-medium text-white mb-3 md:mb-4">Video Settings</h3>
+                  <h3 className="text-base md:text-lg font-medium text-black mb-3 md:mb-4">Video Settings</h3>
                   <div className="space-y-3 md:space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -220,7 +220,7 @@ export default function AspectRatioModal({
                       <select
                         value={settings.resolution}
                         onChange={(e) => handleParameterChange('resolution', e.target.value)}
-                        className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
+                        className="w-full p-3 bg-gray-300 border border-gray-400 rounded-lg text-black focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                       >
                         {RESOLUTIONS.map(res => (
                           <option key={res.value} value={res.value}>{res.label}</option>
@@ -286,11 +286,11 @@ export default function AspectRatioModal({
                         type="number"
                         value={settings.seed}
                         onChange={(e) => handleParameterChange('seed', parseInt(e.target.value))}
-                        className="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
+                        className="flex-1 p-3 bg-gray-300 border border-gray-400 rounded-lg text-black focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                       />
                       <button
                         onClick={() => handleParameterChange('seed', Math.floor(Math.random() * 1000000))}
-                        className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                        className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-black rounded-lg transition-colors"
                       >
                         Random
                       </button>
@@ -306,7 +306,7 @@ export default function AspectRatioModal({
                 <select
                   value={settings.outputFormat}
                   onChange={(e) => handleParameterChange('outputFormat', e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
+                  className="w-full p-3 bg-gray-300 border border-gray-400 rounded-lg text-black focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 >
                   {OUTPUT_FORMATS.map(format => (
                     <option key={format.value} value={format.value}>{format.label}</option>
@@ -382,16 +382,16 @@ export default function AspectRatioModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-t border-gray-700">
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-gray-400">
           <button
             onClick={onClose}
-            className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+            className="px-6 py-2 text-gray-400 hover:text-black transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-black rounded-lg transition-colors font-medium"
           >
             Save Settings
           </button>

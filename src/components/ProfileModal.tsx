@@ -919,7 +919,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   return (
     <div className="mobile-modal-container bg-black bg-opacity-50">
       <div 
-        className="mobile-modal-content bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl overflow-hidden relative"
+        className="mobile-modal-content bg-gray-300 rounded-lg shadow-xl w-full max-w-4xl overflow-hidden relative"
         style={{
           backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/Screenshot (2488).png)',
           backgroundSize: 'cover',
@@ -928,14 +928,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         }}
       >
         {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-80 rounded-lg"></div>
+        <div className="absolute inset-0 bg-gray-300 bg-opacity-80 rounded-lg"></div>
         <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">Profile</h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-400">
+          <h2 className="text-2xl font-bold text-black">Profile</h2>
           <div className="flex items-center space-x-3">
             {/* Background Image Upload Button */}
-            <label className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg cursor-pointer transition-colors">
+            <label className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-black px-3 py-2 rounded-lg cursor-pointer transition-colors">
               <Camera className="w-4 h-4" />
               <span className="text-sm">Background</span>
               <input
@@ -947,7 +947,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             </label>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-black transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -955,7 +955,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-700">
+        <div className="flex border-b border-gray-400">
           {[
             { id: 'profile', label: 'Profile', icon: User },
             { id: 'gallery', label: 'Gallery', icon: Heart },
@@ -968,8 +968,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               onClick={() => setActiveTab(id as any)}
               className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium transition-colors ${
                 activeTab === id
-                  ? 'text-white border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'text-black border-b-2 border-purple-500'
+                  : 'text-gray-400 hover:text-black'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -989,11 +989,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover" />
                     ) : (
-                      <User className="w-12 h-12 text-white" />
+                      <User className="w-12 h-12 text-black" />
                     )}
                   </div>
                   <label className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 cursor-pointer hover:bg-purple-700 transition-colors">
-                    <Camera className="w-4 h-4 text-white" />
+                    <Camera className="w-4 h-4 text-black" />
                     <input
                       type="file"
                       accept="image/*"
@@ -1003,7 +1003,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </label>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-white">{profile.displayName}</h3>
+                  <h3 className="text-xl font-semibold text-black">{profile.displayName}</h3>
                   <p className="text-gray-400">@{profile.username}</p>
                   <p className="text-gray-400 text-sm">{profile.email}</p>
                 </div>
@@ -1012,40 +1012,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Profile Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={profile.displayName}
                       onChange={(e) => setProfile(prev => ({ ...prev, displayName: e.target.value }))}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     />
                   ) : (
-                    <p className="text-white">{profile.displayName}</p>
+                    <p className="text-black">{profile.displayName}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                   {isEditing ? (
                     <textarea
                       value={profile.bio}
                       onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                       rows={3}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     />
                   ) : (
-                    <p className="text-white">{profile.bio}</p>
+                    <p className="text-black">{profile.bio}</p>
                   )}
                 </div>
               </div>
 
               {/* Social Links */}
               <div>
-                <h4 className="text-lg font-semibold text-white mb-4">Social Links</h4>
+                <h4 className="text-lg font-semibold text-black mb-4">Social Links</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Twitter</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
                     {isEditing ? (
                       <input
                         type="text"
@@ -1055,15 +1055,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           socialLinks: { ...prev.socialLinks, twitter: e.target.value }
                         }))}
                         placeholder="@username"
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                       />
                     ) : (
-                      <p className="text-white">{profile.socialLinks.twitter || 'Not set'}</p>
+                      <p className="text-black">{profile.socialLinks.twitter || 'Not set'}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Instagram</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
                     {isEditing ? (
                       <input
                         type="text"
@@ -1073,15 +1073,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           socialLinks: { ...prev.socialLinks, instagram: e.target.value }
                         }))}
                         placeholder="@username"
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                       />
                     ) : (
-                      <p className="text-white">{profile.socialLinks.instagram || 'Not set'}</p>
+                      <p className="text-black">{profile.socialLinks.instagram || 'Not set'}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
                     {isEditing ? (
                       <input
                         type="url"
@@ -1091,10 +1091,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           socialLinks: { ...prev.socialLinks, website: e.target.value }
                         }))}
                         placeholder="https://example.com"
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                       />
                     ) : (
-                      <p className="text-white">{profile.socialLinks.website || 'Not set'}</p>
+                      <p className="text-black">{profile.socialLinks.website || 'Not set'}</p>
                     )}
                   </div>
                 </div>
@@ -1107,14 +1107,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <button
                       onClick={handleSaveProfile}
                       disabled={loading}
-                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      className="flex items-center space-x-2 bg-purple-600 text-black px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                     >
                       <Save className="w-4 h-4" />
                       <span>{loading ? 'Saving...' : 'Save Changes'}</span>
                     </button>
                     <button
                       onClick={() => setIsEditing(false)}
-                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                      className="flex items-center space-x-2 bg-gray-600 text-black px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                     >
                       <X className="w-4 h-4" />
                       <span>Cancel</span>
@@ -1123,7 +1123,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 ) : (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-2 bg-purple-600 text-black px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <Edit3 className="w-4 h-4" />
                     <span>Edit Profile</span>
@@ -1138,7 +1138,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Gallery Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <h3 className="text-lg font-semibold text-white">My Gallery</h3>
+                  <h3 className="text-lg font-semibold text-black">My Gallery</h3>
                   <div className="flex space-x-2">
                     {['all', 'favorites', 'public'].map((filter) => (
                       <button
@@ -1146,8 +1146,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         onClick={() => setGalleryFilter(filter as any)}
                         className={`px-3 py-1 rounded-full text-sm ${
                           galleryFilter === filter
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            ? 'bg-purple-600 text-black'
+                            : 'bg-gray-700 text-gray-700 hover:bg-gray-600'
                         }`}
                       >
                         {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -1162,7 +1162,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <button
                           onClick={handleBulkDelete}
                           disabled={loading}
-                          className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                          className="flex items-center space-x-2 bg-red-600 text-black px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                           <span>Delete ({selectedItems.length})</span>
@@ -1173,7 +1173,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           setIsSelectionMode(false);
                           setSelectedItems([]);
                         }}
-                        className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex items-center space-x-2 bg-gray-600 text-black px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                       >
                         <X className="w-4 h-4" />
                         <span>Cancel</span>
@@ -1183,14 +1183,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <>
                       <button
                         onClick={() => setIsSelectionMode(true)}
-                        className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex items-center space-x-2 bg-gray-600 text-black px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                       >
                         <Edit3 className="w-4 h-4" />
                         <span>Select</span>
                       </button>
                       <button
                         onClick={() => setShowCreateCollection(true)}
-                        className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        className="flex items-center space-x-2 bg-purple-600 text-black px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                       >
                         <FolderPlus className="w-4 h-4" />
                         <span>New Collection</span>
@@ -1202,18 +1202,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
               {/* Collections */}
               <div>
-                <h4 className="text-md font-semibold text-white mb-3">Collections</h4>
+                <h4 className="text-md font-semibold text-black mb-3">Collections</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {profile.collections.map((collection) => (
-                    <div key={collection.id} className="bg-gray-800 rounded-lg p-4">
+                    <div key={collection.id} className="bg-gray-300 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h5 className="font-medium text-white">{collection.name}</h5>
+                        <h5 className="font-medium text-black">{collection.name}</h5>
                         <span className="text-xs text-gray-400">{collection.itemCount} items</span>
                       </div>
                       <p className="text-sm text-gray-400 mb-2">{collection.description}</p>
                       <div className="flex items-center space-x-2">
                         <span className={`text-xs px-2 py-1 rounded-full ${
-                          collection.isPublic ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+                          collection.isPublic ? 'bg-green-600 text-black' : 'bg-gray-600 text-gray-700'
                         }`}>
                           {collection.isPublic ? 'Public' : 'Private'}
                         </span>
@@ -1225,7 +1225,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
               {/* Gallery Items */}
               <div>
-                <h4 className="text-md font-semibold text-white mb-3">Recent Items</h4>
+                <h4 className="text-md font-semibold text-black mb-3">Recent Items</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredGalleryItems.map((item) => (
                     <div 
@@ -1258,7 +1258,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             type="checkbox"
                             checked={selectedItems.includes(item.id)}
                             onChange={() => handleSelectItem(item.id)}
-                            className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500"
+                            className="w-4 h-4 text-purple-600 bg-gray-300 border-gray-400 rounded focus:ring-purple-500"
                           />
                         </div>
                       )}
@@ -1295,7 +1295,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           <button
                             onClick={() => handleToggleFavorite(item.id)}
                             className={`p-2 rounded-full ${
-                              item.isFavorite ? 'bg-yellow-400 text-black' : 'bg-white/20 text-white hover:bg-yellow-400 hover:text-black'
+                              item.isFavorite ? 'bg-yellow-400 text-black' : 'bg-white/20 text-black hover:bg-yellow-400 hover:text-black'
                             } transition-colors`}
                             title="Toggle favorite"
                           >
@@ -1304,7 +1304,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           <button
                             onClick={() => handleTogglePublic(item.id)}
                             className={`p-2 rounded-full ${
-                              item.isPublic ? 'bg-green-400 text-black' : 'bg-white/20 text-white hover:bg-green-400 hover:text-black'
+                              item.isPublic ? 'bg-green-400 text-black' : 'bg-white/20 text-black hover:bg-green-400 hover:text-black'
                             } transition-colors`}
                             title="Toggle public/private"
                           >
@@ -1312,7 +1312,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           </button>
                           <button
                             onClick={() => handleDownloadItem(item)}
-                            className="p-2 rounded-full bg-white/20 text-white hover:bg-blue-400 hover:text-black transition-colors"
+                            className="p-2 rounded-full bg-white/20 text-black hover:bg-blue-400 hover:text-black transition-colors"
                             title="Download item"
                           >
                             <Download className="w-4 h-4" />
@@ -1320,7 +1320,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           {!isSelectionMode && (
                             <button
                               onClick={() => handleDeleteItem(item.id)}
-                              className="p-2 rounded-full bg-white/20 text-white hover:bg-red-400 hover:text-black transition-colors"
+                              className="p-2 rounded-full bg-white/20 text-black hover:bg-red-400 hover:text-black transition-colors"
                               title="Delete item"
                               disabled={loading}
                             >
@@ -1332,8 +1332,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       
                       {/* Description Overlay */}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-[30px]">
-                        <p className="text-white text-xs font-medium truncate">{item.title}</p>
-                        <p className="text-white/70 text-xs truncate">{item.description}</p>
+                        <p className="text-black text-xs font-medium truncate">{item.title}</p>
+                        <p className="text-black/70 text-xs truncate">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -1346,10 +1346,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div className="space-y-6">
               {/* Generation Preferences */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Generation Preferences</h3>
+                <h3 className="text-lg font-semibold text-black mb-4">Generation Preferences</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Model</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Model</label>
                     <select
                       value={profile.preferences.defaultModel}
                       onChange={(e) => {
@@ -1359,7 +1359,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         }));
                         setSettingsChanged(true);
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     >
                       <option value="runway-t2i">Runway T2I</option>
                       <option value="nano-banana">Nano Banana</option>
@@ -1368,7 +1368,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Style</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Style</label>
                     <select
                       value={profile.preferences.defaultStyle}
                       onChange={(e) => {
@@ -1378,7 +1378,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         }));
                         setSettingsChanged(true);
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-gray-300 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     >
                       <option value="realistic">Realistic</option>
                       <option value="anime">Anime</option>
@@ -1390,11 +1390,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
               {/* Notification Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Notifications</h3>
+                <h3 className="text-lg font-semibold text-black mb-4">Notifications</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-white">Email Notifications</h4>
+                      <h4 className="text-black">Email Notifications</h4>
                       <p className="text-sm text-gray-400">Receive updates about new features</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1416,7 +1416,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-white">Toasty Sound</h4>
+                      <h4 className="text-black">Toasty Sound</h4>
                       <p className="text-sm text-gray-400">Play sound when generation completes</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1438,7 +1438,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-white">Public Profile</h4>
+                      <h4 className="text-black">Public Profile</h4>
                       <p className="text-sm text-gray-400">Make your profile visible to others</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1466,7 +1466,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <button
                     onClick={handleSaveSettings}
                     disabled={loading}
-                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    className="flex items-center space-x-2 bg-purple-600 text-black px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     <span>{loading ? 'Saving...' : 'Save'}</span>
@@ -1476,10 +1476,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
               {/* Favorite Presets */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Favorite Presets</h3>
+                <h3 className="text-lg font-semibold text-black mb-4">Favorite Presets</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.favoritePresets.map((preset) => (
-                    <span key={preset} className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm">
+                    <span key={preset} className="bg-purple-600 text-black px-3 py-1 rounded-full text-sm">
                       {preset}
                     </span>
                   ))}
@@ -1489,11 +1489,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Promo Codes */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">Promo Codes</h3>
+                  <h3 className="text-lg font-semibold text-black">Promo Codes</h3>
                   {isAdmin && (
                     <button
                       onClick={() => setShowAdminModal(true)}
-                      className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                     >
                       <Crown className="w-4 h-4" />
                       <span className="text-sm font-medium">Generate</span>
@@ -1502,14 +1502,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Enter Promo Code</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Enter Promo Code</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         placeholder="Enter promo code..."
-                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             handleRedeemPromoCode();
@@ -1519,7 +1519,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <button
                         onClick={handleRedeemPromoCode}
                         disabled={!promoCode.trim() || promoLoading}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-purple-600 text-black rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
                         {promoLoading ? (
                           <>
@@ -1548,7 +1548,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <Crown className="w-4 h-4 text-yellow-400" />
                         <span className="text-yellow-400 font-medium text-sm">Admin Access</span>
                       </div>
-                      <p className="text-white/80 text-xs">
+                      <p className="text-black/80 text-xs">
                         You have admin privileges. Click &quot;Generate&quot; to create promo codes.
                       </p>
                     </div>
@@ -1558,16 +1558,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
               {/* Data Management */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Data Management</h3>
+                <h3 className="text-lg font-semibold text-black mb-4">Data Management</h3>
                 <div className="space-y-4">
                   <button
                     onClick={handleExportData}
-                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center space-x-2 bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     <span>Export Data</span>
                   </button>
-                  <button className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                  <button className="flex items-center space-x-2 bg-red-600 text-black px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                     <Trash2 className="w-4 h-4" />
                     <span>Delete Account</span>
                   </button>
@@ -1580,7 +1580,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <button
                     onClick={handleSaveSettings}
                     disabled={loading}
-                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    className="flex items-center space-x-2 bg-purple-600 text-black px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     <span>{loading ? 'Saving...' : 'Save Settings'}</span>
@@ -1592,64 +1592,64 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
           {activeTab === 'stats' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Usage Statistics</h3>
+              <h3 className="text-lg font-semibold text-black mb-4">Usage Statistics</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-gray-800 rounded-lg p-6">
+                <div className="bg-gray-300 rounded-lg p-6">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-purple-600 rounded-lg">
-                      <BarChart3 className="w-6 h-6 text-white" />
+                      <BarChart3 className="w-6 h-6 text-black" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{profile.stats.totalGenerations}</p>
+                      <p className="text-2xl font-bold text-black">{profile.stats.totalGenerations}</p>
                       <p className="text-sm text-gray-400">Total Generations</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6">
+                <div className="bg-gray-300 rounded-lg p-6">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-yellow-600 rounded-lg">
-                      <Star className="w-6 h-6 text-white" />
+                      <Star className="w-6 h-6 text-black" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{profile.stats.favoriteGenerations}</p>
+                      <p className="text-2xl font-bold text-black">{profile.stats.favoriteGenerations}</p>
                       <p className="text-sm text-gray-400">Favorites</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6">
+                <div className="bg-gray-300 rounded-lg p-6">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-green-600 rounded-lg">
-                      <UserPlus className="w-6 h-6 text-white" />
+                      <UserPlus className="w-6 h-6 text-black" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{new Date(profile.stats.accountCreated).toLocaleDateString()}</p>
+                      <p className="text-2xl font-bold text-black">{new Date(profile.stats.accountCreated).toLocaleDateString()}</p>
                       <p className="text-sm text-gray-400">Account Created</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6">
+                <div className="bg-gray-300 rounded-lg p-6">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-blue-600 rounded-lg">
-                      <Clock className="w-6 h-6 text-white" />
+                      <Clock className="w-6 h-6 text-black" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{new Date(profile.stats.lastActive).toLocaleDateString()}</p>
+                      <p className="text-2xl font-bold text-black">{new Date(profile.stats.lastActive).toLocaleDateString()}</p>
                       <p className="text-sm text-gray-400">Last Active</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-white mb-4">Collections</h4>
+              <div className="bg-gray-300 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-black mb-4">Collections</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {profile.collections.map((collection) => (
                     <div key={collection.id} className="bg-gray-700 rounded-lg p-4">
-                      <h5 className="font-medium text-white mb-2">{collection.name}</h5>
+                      <h5 className="font-medium text-black mb-2">{collection.name}</h5>
                       <p className="text-sm text-gray-400 mb-2">{collection.description}</p>
                       <p className="text-lg font-bold text-purple-400">{collection.itemCount} items</p>
                     </div>
@@ -1665,14 +1665,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 backdrop-blur-xl rounded-2xl p-6 border border-yellow-500/20 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
                   <Crown className="w-6 h-6 text-yellow-400" />
-                  <h3 className="text-xl font-bold text-white">Admin Dashboard</h3>
+                  <h3 className="text-xl font-bold text-black">Admin Dashboard</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Process Weekly Payment */}
                   <button
                     onClick={() => window.open('/admin/weekly-payments', '_blank')}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex flex-col items-center gap-2"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-black p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex flex-col items-center gap-2"
                   >
                     <BarChart3 className="w-6 h-6" />
                     <span className="font-medium">Weekly Payments</span>
@@ -1682,7 +1682,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   {/* Credit Distribution */}
                   <button
                     onClick={() => window.open('/admin/credits', '_blank')}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex flex-col items-center gap-2"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-black p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex flex-col items-center gap-2"
                   >
                     <Sparkles className="w-6 h-6" />
                     <span className="font-medium">Credit Distribution</span>
@@ -1692,7 +1692,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   {/* Promo Code Generator */}
                   <button
                     onClick={() => setShowAdminModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex flex-col items-center gap-2"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-black p-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex flex-col items-center gap-2"
                   >
                     <Star className="w-6 h-6" />
                     <span className="font-medium">Promo Codes</span>
@@ -1702,19 +1702,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               </div>
 
               {/* Admin Promo Users Panel */}
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-white mb-4">Promo Code Management</h4>
+              <div className="bg-gray-300 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-black mb-4">Promo Code Management</h4>
                 <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Crown className="w-5 h-5 text-yellow-400" />
                     <span className="text-yellow-400 font-medium">Admin Access</span>
                   </div>
-                  <p className="text-white/80 text-sm mb-4">
+                  <p className="text-black/80 text-sm mb-4">
                     You have admin privileges. Use the buttons above to manage payments, credits, and promo codes.
                   </p>
                   <button
                     onClick={() => setShowAdminModal(true)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
                     <Crown className="w-4 h-4" />
                     <span className="text-sm font-medium">Generate Promo Code</span>
@@ -1728,39 +1728,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         {/* Create Collection Modal */}
         {showCreateCollection && (
           <div className="mobile-modal-container bg-black bg-opacity-50 mobile-z-dropdown">
-            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-white mb-4">Create New Collection</h3>
+            <div className="bg-gray-300 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-black mb-4">Create New Collection</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Collection Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Collection Name</label>
                   <input
                     type="text"
                     value={newCollectionName}
                     onChange={(e) => setNewCollectionName(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     placeholder="Enter collection name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                   <textarea
                     value={newCollectionDescription}
                     onChange={(e) => setNewCollectionDescription(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-400 rounded-lg text-black focus:outline-none focus:border-purple-500"
                     placeholder="Enter collection description"
                   />
                 </div>
                 <div className="flex space-x-4">
                   <button
                     onClick={handleCreateCollection}
-                    className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex-1 bg-purple-600 text-black py-2 rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     Create
                   </button>
                   <button
                     onClick={() => setShowCreateCollection(false)}
-                    className="flex-1 bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex-1 bg-gray-600 text-black py-2 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel
                   </button>
@@ -1775,16 +1775,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           <div className="fixed top-4 right-4 z-[120] animate-in slide-in-from-top-2 duration-300">
             <div className={`px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border max-w-sm ${
               notification.type === 'error' 
-                ? 'bg-red-600 bg-opacity-90 border-red-500 text-white' 
+                ? 'bg-red-600 bg-opacity-90 border-red-500 text-black' 
                 : notification.type === 'success'
-                ? 'bg-green-600 bg-opacity-90 border-green-500 text-white'
-                : 'bg-blue-600 bg-opacity-90 border-blue-500 text-white'
+                ? 'bg-green-600 bg-opacity-90 border-green-500 text-black'
+                : 'bg-blue-600 bg-opacity-90 border-blue-500 text-black'
             }`}>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{notification.message}</p>
                 <button
                   onClick={() => setNotification(null)}
-                  className="ml-3 text-white hover:text-gray-200 transition-colors"
+                  className="ml-3 text-black hover:text-gray-200 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>

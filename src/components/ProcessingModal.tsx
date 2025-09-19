@@ -32,7 +32,7 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
+      <div className="bg-gray-300 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-400">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">

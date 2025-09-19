@@ -15,27 +15,27 @@ const MODEL_CONFIGS = {
   },
   'fast-sdxl': {
     endpoint: 'fal-ai/fast-sdxl',
-    maxPromptLength: 200,
+    maxPromptLength: 500,
     supportedSizes: ['512x512', '768x768', '1024x1024']
   },
   'stable-diffusion-v35-large': {
     endpoint: 'fal-ai/stable-diffusion-v3-5-large',
-    maxPromptLength: 200,
+    maxPromptLength: 500,
     supportedSizes: ['512x512', '768x768', '1024x1024', '1536x1536']
   },
   'flux-krea': {
     endpoint: 'fal-ai/flux-krea',
-    maxPromptLength: 200,
+    maxPromptLength: 500,
     supportedSizes: ['512x512', '768x768', '1024x1024']
   },
   'flux-pro-kontext': {
     endpoint: 'fal-ai/flux-pro-kontext',
-    maxPromptLength: 200,
+    maxPromptLength: 500,
     supportedSizes: ['512x512', '768x768', '1024x1024']
   },
   'imagen4-preview': {
     endpoint: 'fal-ai/imagen4-preview',
-    maxPromptLength: 200,
+    maxPromptLength: 500,
     supportedSizes: ['512x512', '768x768', '1024x1024']
   }
 };

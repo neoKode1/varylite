@@ -168,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               // Show Generate button on community page
               <button
                 onClick={() => router.push('/generate')}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300"
               >
                 Generate
               </button>
@@ -179,8 +179,8 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   onClick={onToggleGallery}
                   className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
                     showGallery 
-                      ? 'text-cyan-400 bg-gray-800' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      ? 'text-cyan-400 bg-gray-300' 
+                      : 'text-gray-700 hover:text-black hover:bg-gray-300'
                   }`}
                 >
                   {showGallery ? 'Hide Gallery' : 'Show Gallery'}
@@ -192,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            {!hideCommunityButton && (
              <button
                onClick={() => router.push('/community')}
-               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300"
              >
                <MessageCircle className="w-4 h-4" />
                <span>Tha Communita</span>
@@ -225,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            {hideCommunityButton && onToggleContributors && (
              <button
                onClick={onToggleContributors}
-               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300"
              >
                <User className="w-4 h-4" />
                <span>{showContributors ? 'Hide' : 'Show'} Contributors</span>
@@ -253,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            <div className="hidden lg:flex items-center space-x-3 text-sm">
              {isAnonymous ? (
                <>
-                 <span className="text-gray-300">Free: {usageStats.totalGenerations}/3</span>
+                 <span className="text-gray-700">Free: {usageStats.totalGenerations}/3</span>
                  <div className="w-16 h-2 bg-gray-700 rounded-full">
                    <div 
                      className="h-2 bg-gradient-to-r from-accent-gray to-light-gray rounded-full transition-all duration-300"
@@ -269,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
              <div className="flex items-center space-x-3">
                <button
                  onClick={onSignInClick}
-                 className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-gray-800"
+                 className="flex items-center space-x-2 text-gray-700 hover:text-black transition-colors px-4 py-2 rounded-lg hover:bg-gray-300"
                >
                  <LogIn className="w-4 h-4" />
                  <span>Sign In</span>
@@ -287,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
              <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-3 text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-gray-800"
+                  className="flex items-center space-x-3 text-gray-700 hover:text-black transition-colors px-4 py-2 rounded-lg hover:bg-gray-300"
                 >
                   <div className="w-8 h-8 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray overflow-hidden">
                     {userProfilePicture ? (
@@ -322,9 +322,9 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
                {/* Dropdown Menu */}
                {showUserMenu && (
-                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[110]">
+                 <div className="absolute right-0 mt-2 w-48 bg-gray-300 border border-gray-400 rounded-lg shadow-lg z-[110]">
                    <div className="py-1">
-                     <div className="px-4 py-2 border-b border-gray-700">
+                     <div className="px-4 py-2 border-b border-gray-400">
                        <div className="text-sm font-medium text-white">
                          {user.user_metadata?.name || 'User'}
                        </div>
@@ -338,7 +338,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                          setShowUserMenu(false)
                          setShowProfileModal(true)
                        }}
-                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                      >
                        <User className="w-4 h-4" />
                        <span>Profile</span>
@@ -349,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                          setShowUserMenu(false)
                          router.push('/profile')
                        }}
-                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                      >
                        <Settings className="w-4 h-4" />
                        <span>Settings</span>
@@ -357,7 +357,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                      
                      <button
                        onClick={handleSignOut}
-                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                      >
                        <LogOut className="w-4 h-4" />
                        <span>Sign Out</span>
@@ -389,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               // Show Generate button on community page
               <button
                 onClick={() => router.push('/generate')}
-                className="flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800 whitespace-nowrap"
+                className="flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300 whitespace-nowrap"
               >
                 Generate
               </button>
@@ -400,8 +400,8 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                   onClick={onToggleGallery}
                   className={`flex-shrink-0 px-3 py-2 text-xs font-medium transition-colors rounded-lg whitespace-nowrap ${
                     showGallery 
-                      ? 'text-cyan-400 bg-gray-800' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      ? 'text-cyan-400 bg-gray-300' 
+                      : 'text-gray-700 hover:text-black hover:bg-gray-300'
                   }`}
                 >
                   {showGallery ? 'Hide Gallery' : 'Show Gallery'}
@@ -413,7 +413,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             {!hideCommunityButton && (
               <button
                 onClick={() => router.push('/community')}
-                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800 whitespace-nowrap"
+                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300 whitespace-nowrap"
               >
                 <MessageCircle className="w-3 h-3" />
                 <span>Community</span>
@@ -446,7 +446,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             {hideCommunityButton && onToggleContributors && (
               <button
                 onClick={onToggleContributors}
-                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-800 whitespace-nowrap"
+                className="flex items-center space-x-1 flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-700 hover:text-black transition-colors rounded-lg hover:bg-gray-300 whitespace-nowrap"
               >
                 <User className="w-3 h-3" />
                 <span>{showContributors ? 'Hide' : 'Show'} Contributors</span>
@@ -458,7 +458,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             <div className="flex items-center space-x-2 flex-shrink-0 text-xs">
               {isAnonymous ? (
                 <>
-                  <span className="text-gray-300">Free: {usageStats.totalGenerations}/3</span>
+                  <span className="text-gray-700">Free: {usageStats.totalGenerations}/3</span>
                   <div className="w-12 h-1.5 bg-gray-700 rounded-full">
                     <div 
                       className="h-1.5 bg-gradient-to-r from-accent-gray to-light-gray rounded-full transition-all duration-300"
@@ -476,7 +476,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
               <>
                 <button
                   onClick={onSignInClick}
-                  className="flex items-center space-x-1 flex-shrink-0 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800 whitespace-nowrap"
+                  className="flex items-center space-x-1 flex-shrink-0 text-gray-700 hover:text-black transition-colors px-3 py-2 rounded-lg hover:bg-gray-300 whitespace-nowrap"
                 >
                   <LogIn className="w-3 h-3" />
                   <span className="text-xs">Sign In</span>
@@ -502,7 +502,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                       setShowUserMenu(!showUserMenu);
                     }
                   }}
-                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-800"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-black transition-colors px-3 py-2 rounded-lg hover:bg-gray-300"
                 >
                   <div className="w-6 h-6 bg-gradient-charcoal rounded-full flex items-center justify-center border border-border-gray overflow-hidden">
                     {userProfilePicture ? (
@@ -531,9 +531,9 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
 
                 {/* Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[110]">
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-300 border border-gray-400 rounded-lg shadow-lg z-[110]">
                     <div className="py-1">
-                      <div className="px-4 py-2 border-b border-gray-700">
+                      <div className="px-4 py-2 border-b border-gray-400">
                         <div className="text-sm font-medium text-white">
                           {user.user_metadata?.name || 'User'}
                         </div>
@@ -547,7 +547,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                           setShowUserMenu(false)
                           setShowProfileModal(true)
                         }}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                       >
                         <User className="w-4 h-4" />
                         <span>Display Profile</span>
@@ -558,7 +558,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                           setShowUserMenu(false)
                           router.push('/profile')
                         }}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Show Profile</span>
@@ -566,7 +566,7 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
                       
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-700 hover:text-black transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Sign Out</span>

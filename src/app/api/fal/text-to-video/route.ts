@@ -11,12 +11,12 @@ const MODEL_CONFIGS = {
   'minimax-video-01': {
     endpoint: 'fal-ai/minimax-video-01',
     maxDuration: 5,
-    maxPromptLength: 200
+    maxPromptLength: 500
   },
   'veo3-standard': {
     endpoint: 'fal-ai/veo3-standard',
     maxDuration: 5,
-    maxPromptLength: 200
+    maxPromptLength: 500
   }
 };
 
