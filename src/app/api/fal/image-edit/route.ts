@@ -22,7 +22,7 @@ const MODEL_CONFIGS = {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check for user's API key in headers
+    // Check for user's API key in headers (fallback only)
     const userApiKey = request.headers.get('X-Fal-API-Key');
     const apiKeyToUse = userApiKey || process.env.FAL_KEY;
     
@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     });
     
     if (userApiKey) {
-      console.log('🔑 Using user-provided Fal.ai API key for image editing');
+      console.log('🔑 Using user-provided Fal.ai API key as fallback for image editing');
     } else {
-      console.log('🔑 Using server Fal.ai API key for image editing');
+      console.log('🔑 Using configured server Fal.ai API key for image editing');
     }
     
     const body = await request.json();

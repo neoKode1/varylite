@@ -960,7 +960,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`⚙️ [GEMINI 2.5 FLASH MULTI-CHARACTER] Using Gemini 2.5 Flash Image official parameters:`);
               console.log(`   - prompt: ${nanoBananaPrompt.substring(0, 100)}...`);
               console.log(`   - image_urls: ${imageUrls.length} images (multi-image support)`);
-              console.log(`   - num_images: 1`);
+              console.log(`   - num_images: ${generationSettings?.numImages || 1}`);
               console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"}`);
               console.log(`   - sync_mode: false (return URLs)`);
             } else if (isReferenceBasedGeneration) {
@@ -970,7 +970,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               console.log(`⚙️ [SEEDREAM 4.0 REFERENCE] Using Gemini 2.5 Flash Image official parameters:`);
               console.log(`   - prompt: ${nanoBananaPrompt.substring(0, 100)}...`);
               console.log(`   - image_urls: ${imageUrls.length} images (reference-based processing)`);
-              console.log(`   - num_images: 1`);
+              console.log(`   - num_images: ${generationSettings?.numImages || 1}`);
               console.log(`   - output_format: ${generationSettings?.outputFormat || "jpeg"}`);
               console.log(`   - sync_mode: false (return URLs)`);
             }
@@ -1003,7 +1003,7 @@ RESPECT THE USER'S CREATIVE VISION - do not standardize or genericize their spec
               const falInput = {
                 prompt: nanoBananaPrompt,
                 image_urls: imageUrls, // Use all uploaded image URLs for multi-image processing
-                num_images: 1,
+                num_images: generationSettings?.numImages || 1, // Use user's desired number of images
                 output_format: generationSettings?.outputFormat || "jpeg",
                 aspect_ratio: generationSettings?.aspectRatio || "1:1", // Add aspect ratio support
                 sync_mode: false // Return URLs instead of data URIs

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📤 FAL Secure Upload API called');
     
-    // Check for user's API key in headers
+    // Check for user's API key in headers (fallback only)
     const userApiKey = request.headers.get('X-Fal-API-Key');
     const apiKeyToUse = userApiKey || process.env.FAL_KEY;
     
@@ -43,14 +43,30 @@ export async function POST(request: NextRequest) {
     });
     
     if (userApiKey) {
-      console.log('🔑 Using user-provided Fal.ai API key');
+      console.log('🔑 Using user-provided Fal.ai API key as fallback');
     } else {
-      console.log('🔑 Using server Fal.ai API key');
+      console.log('🔑 Using configured server Fal.ai API key');
     }
     
     // Get the file from the request body
-    const file = await request.blob();
-    console.log('📦 Received blob:', file.size, 'bytes, type:', file.type);
+    const contentType = request.headers.get('content-type') || '';
+    let file: Blob;
+    
+    if (contentType.startsWith('multipart/form-data')) {
+      // Handle multipart form data
+      const formData = await request.formData();
+      const uploadedFile = formData.get('file') as File;
+      if (!uploadedFile) {
+        console.error('❌ No file in form data');
+        return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      }
+      file = uploadedFile;
+      console.log('📦 Received file from form data:', file.size, 'bytes, type:', file.type);
+    } else {
+      // Handle direct file upload
+      file = await request.blob();
+      console.log('📦 Received blob:', file.size, 'bytes, type:', file.type);
+    }
     
     if (!file || file.size === 0) {
       console.error('❌ No file or empty file received');
