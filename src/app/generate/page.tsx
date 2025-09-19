@@ -1051,7 +1051,7 @@ export default function GeneratePage() {
   }, [generationHistory, saveToLocalStorage]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#141414] via-black to-gray-900 text-white">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -1060,7 +1060,7 @@ export default function GeneratePage() {
         </div>
 
         {/* API Key Section */}
-        <div className="mb-6 bg-gray-800 rounded-lg p-4 border border-gray-600">
+        <div className="mb-6 bg-[#141414] rounded-lg p-4 border border-gray-700">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold text-white">🔑 Fal.ai API Key (Fallback Option)</h3>
             <div className="flex items-center gap-2">
@@ -1069,7 +1069,7 @@ export default function GeneratePage() {
                 id="useCustomApiKey"
                 checked={useCustomApiKey}
                 onChange={(e) => setUseCustomApiKey(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
               />
               <label htmlFor="useCustomApiKey" className="text-sm text-gray-300">
                 Use my own API key as fallback
@@ -1084,7 +1084,7 @@ export default function GeneratePage() {
                 value={userFalApiKey}
                 onChange={(e) => setUserFalApiKey(e.target.value)}
                 placeholder="Enter your Fal.ai API key (fal_...)"
-                className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
               />
               <div className="text-xs text-gray-400 space-y-1">
                 <p>• Your API key is stored locally in your browser</p>
@@ -1104,13 +1104,13 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">
           
           {/* Left Column - Input and Configuration */}
-          <div className="bg-gray-800 rounded-lg p-6 space-y-6">
+          <div className="bg-[#141414] rounded-lg p-6 space-y-6">
             
             {/* 1. Upload Image(s) */}
             <div>
               <h3 className="text-lg font-semibold mb-3">1. Upload Image(s)</h3>
               <div
-                className="border-2 border-dashed border-gray-500 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-700"
+                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-500 transition-colors bg-gray-800"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
@@ -1131,7 +1131,7 @@ export default function GeneratePage() {
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {uploadedFiles.map((file) => (
-                    <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-700 rounded">
+                    <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-800 rounded">
                       <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1">
                         <p className="text-sm text-white truncate">{file.file.name}</p>
@@ -1156,7 +1156,7 @@ export default function GeneratePage() {
                 value={sceneDescription}
                 onChange={(e) => setSceneDescription(e.target.value)}
                 placeholder="Describe what you want to create..."
-                className="w-full h-32 p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none resize-none"
+                className="w-full h-32 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
               />
               
               {/* NSFW Content Warning */}
@@ -1214,7 +1214,7 @@ export default function GeneratePage() {
                     value={thingsToAvoid}
                     onChange={(e) => setThingsToAvoid(e.target.value)}
                     placeholder="e.g., blurry, text, extra fingers"
-                    className="w-full h-24 p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none resize-none"
+                    className="w-full h-24 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
                   />
                 </div>
               )}
@@ -1223,7 +1223,7 @@ export default function GeneratePage() {
             {/* 4. Character Style Presets */}
             <div>
               <h3 className="text-lg font-semibold mb-3">4. Character Style</h3>
-              <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+              <div className="bg-[#141414] rounded-lg p-4 border border-gray-600">
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Transform your character into popular styles
@@ -1241,7 +1241,7 @@ export default function GeneratePage() {
                       className={`p-3 text-left rounded-lg border transition-colors ${
                         selectedStyle === preset.name.toLowerCase().replace(/\s+/g, '-')
                           ? 'border-red-500 bg-red-500/10 text-red-400'
-                          : 'border-gray-500 bg-gray-700 text-gray-300 hover:border-gray-400'
+                          : 'border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500'
                       }`}
                     >
                       <div className="font-medium text-sm">{preset.name}</div>
@@ -1262,7 +1262,7 @@ export default function GeneratePage() {
                 <ChevronDown className={`h-5 w-5 transition-transform ${isQuickShotExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isQuickShotExpanded && (
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-600 mb-4">
+                <div className="bg-[#141414] rounded-lg p-4 border border-gray-600 mb-4">
                   <div className="mb-3">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Choose a cinematic shot type (optional)
@@ -1278,7 +1278,7 @@ export default function GeneratePage() {
                       className={`w-full p-2 text-left rounded transition-colors ${
                         selectedQuickShot === ''
                           ? 'bg-red-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                       }`}
                     >
                       <span className="text-sm">🎲 Random Shot Type</span>
@@ -1291,7 +1291,7 @@ export default function GeneratePage() {
                         className={`w-full p-2 text-left rounded transition-colors ${
                           selectedQuickShot === preset.id
                             ? 'bg-red-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -1311,7 +1311,7 @@ export default function GeneratePage() {
             {/* 6. Comprehensive Presets */}
             <div>
               <h3 className="text-lg font-semibold mb-3">6. Comprehensive Presets</h3>
-              <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+              <div className="bg-[#141414] rounded-lg p-4 border border-gray-600">
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Choose from comprehensive preset categories
@@ -1327,7 +1327,7 @@ export default function GeneratePage() {
                       setActivePresetTab('background');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <span className="text-lg">🎨</span>
                     <div className="text-left">
@@ -1341,7 +1341,7 @@ export default function GeneratePage() {
                       setActivePresetTab('restyle');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <span className="text-lg">🎭</span>
                     <div className="text-left">
@@ -1355,7 +1355,7 @@ export default function GeneratePage() {
                       setActivePresetTab('camera-motion');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <span className="text-lg">📹</span>
                     <div className="text-left">
@@ -1369,7 +1369,7 @@ export default function GeneratePage() {
                       setActivePresetTab('shot-angles');
                       setShowPresetModal(true);
                     }}
-                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <span className="text-lg">📐</span>
                     <div className="text-left">
@@ -1387,7 +1387,7 @@ export default function GeneratePage() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleModelDropdown}
-                  className="w-full p-4 bg-gray-700 border border-gray-500 rounded-lg text-left hover:bg-gray-600 transition-colors flex items-center gap-3"
+                  className="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-left hover:bg-gray-700 transition-colors flex items-center gap-3"
                 >
                   {modelOptions.find(m => m.id === selectedModel) && (
                     <>
@@ -1407,13 +1407,13 @@ export default function GeneratePage() {
                   />
                 </button>
                 {isModelDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-500 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#141414] border border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                     {modelOptions.map((model) => (
                       <button
                         key={model.id}
                         onClick={() => handleModelSelect(model.id)}
-                        className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center gap-3 ${
-                          selectedModel === model.id ? 'bg-gray-700' : ''
+                        className={`w-full p-3 text-left hover:bg-gray-800 transition-colors flex items-center gap-3 ${
+                          selectedModel === model.id ? 'bg-gray-800' : ''
                         }`}
                       >
                         <img
@@ -1447,7 +1447,7 @@ export default function GeneratePage() {
                 <ChevronDown className={`h-5 w-5 transition-transform ${isNumImagesExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isNumImagesExpanded && (
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-600 mb-4">
+                <div className="bg-[#141414] rounded-lg p-4 border border-gray-600 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -1460,7 +1460,7 @@ export default function GeneratePage() {
                     <div className="flex items-center gap-3 ml-4">
                       <button
                         onClick={() => setImagesToGenerate(Math.max(1, imagesToGenerate - 1))}
-                        className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        className="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
                         disabled={imagesToGenerate <= 1}
                       >
                         −
@@ -1471,7 +1471,7 @@ export default function GeneratePage() {
                       </div>
                       <button
                         onClick={() => setImagesToGenerate(Math.min(8, imagesToGenerate + 1))}
-                        className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        className="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
                         disabled={imagesToGenerate >= 8}
                       >
                         +
@@ -1486,7 +1486,7 @@ export default function GeneratePage() {
                         className={`px-3 py-1 text-sm rounded transition-colors ${
                           imagesToGenerate === num
                             ? 'bg-red-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                         }`}
                       >
                         {num}
@@ -1501,7 +1501,7 @@ export default function GeneratePage() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !sceneDescription.trim() || uploadedFiles.length === 0}
-              className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isGenerating ? (
                 <>
@@ -1603,7 +1603,7 @@ export default function GeneratePage() {
 
         {/* Gallery at Bottom Right */}
         {generatedScenes.length > 0 && (
-          <div className="fixed bottom-6 right-6 w-80 bg-gray-800 rounded-lg p-4 shadow-2xl border border-gray-700">
+          <div className="fixed bottom-6 right-6 w-80 bg-[#141414] rounded-lg p-4 shadow-2xl border border-gray-700">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">Gallery</h3>
               <span className="text-sm text-gray-400">
@@ -1618,7 +1618,7 @@ export default function GeneratePage() {
                   onClick={() => setSelectedImageIndex(prev => 
                     prev > 0 ? prev - 1 : generatedScenes.length - 1
                   )}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
                 >
                   ←
                 </button>
@@ -1632,7 +1632,7 @@ export default function GeneratePage() {
                   onClick={() => setSelectedImageIndex(prev => 
                     prev < generatedScenes.length - 1 ? prev + 1 : 0
                   )}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
                 >
                   →
                 </button>
@@ -1741,7 +1741,7 @@ export default function GeneratePage() {
         {/* Comprehensive Preset Modal */}
         {showPresetModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div className="bg-[#141414] rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b border-gray-600">
                 <h3 className="text-xl font-semibold text-white">
                   {activePresetTab === 'background' && '🎨 Background Presets'}
@@ -1772,7 +1772,7 @@ export default function GeneratePage() {
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             activeBackgroundTab === key
                               ? 'bg-red-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                           }`}
                         >
                           <span className="mr-2">{category.icon}</span>
@@ -1786,7 +1786,7 @@ export default function GeneratePage() {
                         <button
                           key={index}
                           onClick={() => handlePresetClick(prompt)}
-                          className="p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                          className="p-3 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
                         >
                           {prompt}
                         </button>
@@ -1802,7 +1802,7 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(preset.prompt)}
-                        className="p-4 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-4 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                       >
                         <div className="font-medium text-white mb-1">{preset.name}</div>
                         <div className="text-sm text-gray-400">{preset.description}</div>
@@ -1818,7 +1818,7 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(motion)}
-                        className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                        className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
                       >
                         {motion}
                       </button>
@@ -1833,7 +1833,7 @@ export default function GeneratePage() {
                       <button
                         key={index}
                         onClick={() => handlePresetClick(angle)}
-                        className="p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                        className="p-3 text-left bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
                       >
                         {angle}
                       </button>
