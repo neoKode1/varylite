@@ -37,6 +37,8 @@ export default function GeneratePage() {
   const [generationHistory, setGenerationHistory] = useState<GenerationHistory[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const [userFalApiKey, setUserFalApiKey] = useState('');
+  const [useCustomApiKey, setUseCustomApiKey] = useState(false);
 
   // Hooks - vARYLite browser storage
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,9 +68,22 @@ export default function GeneratePage() {
   useEffect(() => {
     const savedScenes = loadFromLocalStorage('generatedScenes') || [];
     const savedHistory = loadFromLocalStorage('generationHistory') || [];
+    const savedApiKey = loadFromLocalStorage('userFalApiKey') || '';
+    const savedUseCustomKey = loadFromLocalStorage('useCustomApiKey') || false;
+    
     setGeneratedScenes(savedScenes);
     setGenerationHistory(savedHistory);
+    setUserFalApiKey(savedApiKey);
+    setUseCustomApiKey(savedUseCustomKey);
   }, [loadFromLocalStorage]);
+
+  // Save API key settings when they change
+  useEffect(() => {
+    if (useCustomApiKey) {
+      saveToLocalStorage('userFalApiKey', userFalApiKey);
+      saveToLocalStorage('useCustomApiKey', useCustomApiKey);
+    }
+  }, [userFalApiKey, useCustomApiKey, saveToLocalStorage]);
 
   // Keyboard navigation for gallery
   useEffect(() => {
@@ -197,8 +212,16 @@ export default function GeneratePage() {
         const formData = new FormData();
         formData.append('file', uploadedFile.file);
         
+        // Add API key header if user provided one
+        const headers: Record<string, string> = {};
+        if (useCustomApiKey && userFalApiKey) {
+          headers['X-Fal-API-Key'] = userFalApiKey;
+          console.log(`🔑 [vARYLite] Using user's Fal.ai API key`);
+        }
+        
         const uploadResponse = await fetch('/api/fal/upload', {
           method: 'POST',
+          headers,
           body: formData
         });
         
@@ -277,12 +300,20 @@ export default function GeneratePage() {
       console.log(`🎯 [vARYLite] Making API call to: ${apiEndpoint}`);
       console.log(`📋 [vARYLite] Request body:`, requestBody);
 
+      // Prepare headers with optional API key
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (useCustomApiKey && userFalApiKey) {
+        headers['X-Fal-API-Key'] = userFalApiKey;
+        console.log(`🔑 [vARYLite] Using user's Fal.ai API key for generation`);
+      }
+
       // Make the API call
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(requestBody)
       });
 
@@ -341,7 +372,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [sceneDescription, uploadedFiles, imagesToGenerate, selectedModel, modelOptions, generationHistory, saveToLocalStorage]);
+  }, [sceneDescription, uploadedFiles, imagesToGenerate, selectedModel, modelOptions, generationHistory, saveToLocalStorage, useCustomApiKey, userFalApiKey]);
 
   const downloadScene = useCallback((scene: GeneratedScene) => {
     const link = document.createElement('a');
@@ -369,6 +400,48 @@ export default function GeneratePage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">vARYLite</h1>
           <p className="text-gray-400">Free AI Scene Generator - No registration required</p>
+        </div>
+
+        {/* API Key Section */}
+        <div className="mb-6 bg-gray-800 rounded-lg p-4 border border-gray-600">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-white">🔑 Fal.ai API Key (Optional)</h3>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="useCustomApiKey"
+                checked={useCustomApiKey}
+                onChange={(e) => setUseCustomApiKey(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="useCustomApiKey" className="text-sm text-gray-300">
+                Use my own API key
+              </label>
+            </div>
+          </div>
+          
+          {useCustomApiKey && (
+            <div className="space-y-3">
+              <input
+                type="password"
+                value={userFalApiKey}
+                onChange={(e) => setUserFalApiKey(e.target.value)}
+                placeholder="Enter your Fal.ai API key (fal_...)"
+                className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+              <div className="text-xs text-gray-400 space-y-1">
+                <p>• Your API key is stored locally in your browser</p>
+                <p>• Get your free API key at <a href="https://fal.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">fal.ai</a></p>
+                <p>• Using your own key ensures unlimited generations</p>
+              </div>
+            </div>
+          )}
+          
+          {!useCustomApiKey && (
+            <div className="text-sm text-gray-400">
+              <p>💡 <strong>Tip:</strong> Add your own Fal.ai API key for unlimited generations and faster processing!</p>
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">

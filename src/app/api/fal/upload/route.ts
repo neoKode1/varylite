@@ -28,6 +28,26 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📤 FAL Secure Upload API called');
     
+    // Check for user's API key in headers
+    const userApiKey = request.headers.get('X-Fal-API-Key');
+    const apiKeyToUse = userApiKey || process.env.FAL_KEY;
+    
+    if (!apiKeyToUse) {
+      console.error('❌ No FAL API key available');
+      return NextResponse.json({ error: 'No FAL API key configured' }, { status: 500 });
+    }
+    
+    // Configure Fal.ai client with the appropriate key
+    fal.config({
+      credentials: apiKeyToUse,
+    });
+    
+    if (userApiKey) {
+      console.log('🔑 Using user-provided Fal.ai API key');
+    } else {
+      console.log('🔑 Using server Fal.ai API key');
+    }
+    
     // Get the file from the request body
     const file = await request.blob();
     console.log('📦 Received blob:', file.size, 'bytes, type:', file.type);
@@ -107,7 +127,7 @@ export async function OPTIONS(request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Fal-API-Key',
     },
   });
 }

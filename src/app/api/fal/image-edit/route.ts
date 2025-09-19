@@ -22,6 +22,26 @@ const MODEL_CONFIGS = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for user's API key in headers
+    const userApiKey = request.headers.get('X-Fal-API-Key');
+    const apiKeyToUse = userApiKey || process.env.FAL_KEY;
+    
+    if (!apiKeyToUse) {
+      console.error('❌ No FAL API key available');
+      return NextResponse.json({ error: 'No FAL API key configured' }, { status: 500 });
+    }
+    
+    // Configure Fal.ai client with the appropriate key
+    fal.config({
+      credentials: apiKeyToUse,
+    });
+    
+    if (userApiKey) {
+      console.log('🔑 Using user-provided Fal.ai API key for image editing');
+    } else {
+      console.log('🔑 Using server Fal.ai API key for image editing');
+    }
+    
     const body = await request.json();
     const { 
       model, 
