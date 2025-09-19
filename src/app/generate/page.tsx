@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Upload, Download, Loader2, X, Trash2, ChevronDown } from 'lucide-react';
+import { DarkModeToggle } from '@/components/DarkModeToggle';
 // vARYLite - Browser-based storage only
 
 // Types
@@ -9,6 +10,7 @@ interface UploadedFile {
   file: File;
   preview: string;
   id: string;
+  fileType?: 'image' | 'audio' | 'video';
 }
 
 interface GeneratedScene {
@@ -28,6 +30,7 @@ interface GenerationHistory {
 export default function GeneratePage() {
   // State management
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadedAudioFiles, setUploadedAudioFiles] = useState<UploadedFile[]>([]);
   const [sceneDescription, setSceneDescription] = useState('');
   const [thingsToAvoid, setThingsToAvoid] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
@@ -66,6 +69,7 @@ export default function GeneratePage() {
 
   // Hooks - vARYLite browser storage
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
@@ -516,10 +520,60 @@ export default function GeneratePage() {
     const newFiles: UploadedFile[] = Array.from(files).map(file => ({
       file,
       preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substr(2, 9)
+      id: Math.random().toString(36).substr(2, 9),
+      fileType: file.type.startsWith('image/') ? 'image' : 
+                file.type.startsWith('audio/') ? 'audio' : 'video'
     }));
     
     setUploadedFiles(prev => [...prev, ...newFiles]);
+  }, []);
+
+  const handleAudioUpload = useCallback(async (files: FileList | null) => {
+    if (!files) return;
+    
+    const newFiles: UploadedFile[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      // Validate audio duration (10 seconds max for Kling Avatar)
+      if (file.type.startsWith('audio/')) {
+        try {
+          const duration = await new Promise<number>((resolve, reject) => {
+            const audio = new Audio();
+            const audioUrl = URL.createObjectURL(file);
+            
+            audio.addEventListener('loadedmetadata', () => {
+              URL.revokeObjectURL(audioUrl);
+              resolve(audio.duration);
+            });
+            
+            audio.addEventListener('error', () => {
+              URL.revokeObjectURL(audioUrl);
+              reject(new Error('Could not load audio'));
+            });
+            
+            audio.src = audioUrl;
+          });
+          
+          if (duration > 10) {
+            alert(`Audio too long: ${file.name} (${duration.toFixed(1)}s, max 10s)`);
+            continue;
+          }
+        } catch (error) {
+          console.warn('Could not validate audio duration:', error);
+        }
+      }
+      
+      newFiles.push({
+        file,
+        preview: URL.createObjectURL(file),
+        id: Math.random().toString(36).substr(2, 9),
+        fileType: 'audio'
+      });
+    }
+    
+    setUploadedAudioFiles(prev => [...prev, ...newFiles]);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -718,13 +772,14 @@ export default function GeneratePage() {
           break;
 
         case 'gemini-flash-edit':
-          apiEndpoint = '/api/vary-character';
+          apiEndpoint = '/api/fal/image-edit';
           requestBody = {
-            images: imageUrls, // The endpoint expects 'images' not 'imageUrls'
-            prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
-            generationSettings: {
-              numImages: imagesToGenerate // Pass the desired number of images
-            }
+            model: 'nano-banana-edit', // Use nano-banana-edit as the FAL model for Gemini functionality
+            imageUrls: imageUrls,
+            prompt: finalPrompt,
+            numImages: imagesToGenerate,
+            outputFormat: 'jpeg',
+            operation: 'edit'
           };
           break;
 
@@ -737,10 +792,27 @@ export default function GeneratePage() {
           break;
 
         case 'kling-avatar':
-          apiEndpoint = '/api/kling-ai-avatar';
+          if (uploadedAudioFiles.length === 0) {
+            throw new Error('Kling Avatar requires an audio file. Please upload an audio file (max 10 seconds).');
+          }
+          
+          // Upload audio file to get URL
+          const audioFormData = new FormData();
+          audioFormData.append('file', uploadedAudioFiles[0].file);
+          const audioResponse = await fetch('/api/fal/upload', {
+            method: 'POST',
+            body: audioFormData
+          });
+          if (!audioResponse.ok) {
+            throw new Error('Failed to upload audio file');
+          }
+          const audioResult = await audioResponse.json();
+          
+          apiEndpoint = '/api/fal/kling-avatar';
           requestBody = {
-            prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
-            image_url: imageUrls[0]
+            image_url: imageUrls[0],
+            audio_url: audioResult.url,
+            prompt: finalPrompt
           };
           break;
 
@@ -1108,18 +1180,34 @@ export default function GeneratePage() {
   }, [generationHistory, saveToLocalStorage]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark">
+      {/* Simple Header with Dark Mode Toggle */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background dark:bg-background-dark border-b border-gray-400 dark:border-border-dark">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
+              <span className="text-white font-bold text-sm">V</span>
+            </div>
+            <h1 className="text-lg font-bold text-foreground dark:text-foreground-dark">vARY Ai</h1>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <DarkModeToggle />
+          </div>
+        </div>
+      </header>
+      
       <div className="container mx-auto px-6 py-8 pt-20">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-foreground mb-2">vARY_lite</h1>
-          <p className="text-gray-600">Free AI Scene Generator - No registration required</p>
+          <h1 className="text-3xl font-semibold text-foreground dark:text-foreground-dark mb-2">vARY_lite</h1>
+          <p className="text-gray-600 dark:text-gray-400">A quick tool developed by DeepTech AI</p>
         </div>
 
         {/* API Key Section */}
-        <div className="mb-6 bg-secondary rounded border border-gray-400 p-4 relative z-10">
+        <div className="mb-6 bg-secondary dark:bg-secondary-dark rounded border border-gray-400 dark:border-border-dark p-4 relative z-10">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-foreground">🔑 Fal.ai API Key (Fallback Option)</h3>
+            <h3 className="text-sm font-medium text-foreground dark:text-foreground-dark">🔑 Fal.ai API Key (Fallback Option)</h3>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1129,9 +1217,9 @@ export default function GeneratePage() {
                   console.log('🔑 API Key checkbox clicked:', e.target.checked);
                   setUseCustomApiKey(e.target.checked);
                 }}
-                className="w-4 h-4 text-blue-600 bg-white border-gray-400 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
               />
-              <label htmlFor="useCustomApiKey" className="text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="useCustomApiKey" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 Use my own API key as fallback
               </label>
             </div>
@@ -1144,9 +1232,9 @@ export default function GeneratePage() {
                 value={userFalApiKey}
                 onChange={(e) => setUserFalApiKey(e.target.value)}
                 placeholder="Enter your Fal.ai API key (fal_...)"
-                className="w-full p-3 bg-gray-300 border border-gray-400 rounded-lg text-black placeholder-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                className="w-full p-3 bg-gray-300 dark:bg-input-dark border border-gray-400 dark:border-border-dark rounded-lg text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
               />
-              <div className="text-xs text-gray-400 space-y-1">
+              <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
                 <p>• Your API key is stored locally in your browser</p>
                 <p>• Get your free API key at <a href="https://fal.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">fal.ai</a></p>
                 <p>• Only used when server API key has insufficient credits</p>
@@ -1155,7 +1243,7 @@ export default function GeneratePage() {
           )}
           
           {!useCustomApiKey && (
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-400 dark:text-gray-500">
               <p>✅ <strong>Ready to go!</strong> App uses server API key. Add your own key only if you encounter credit issues.</p>
             </div>
           )}
@@ -1164,15 +1252,15 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">
           
           {/* Left Column - Input and Configuration */}
-          <div className="bg-secondary rounded border border-gray-400 p-6 space-y-6">
+          <div className="bg-secondary dark:bg-secondary-dark rounded border border-gray-400 dark:border-border-dark p-6 space-y-6">
             
             {/* 1. Model Selection */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">1. Select Model</h3>
+              <h3 className="text-lg font-semibold mb-3 text-foreground dark:text-foreground-dark">1. Select Model</h3>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleModelDropdown}
-                  className="w-full p-4 bg-white border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors flex items-center gap-3"
+                  className="w-full p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3"
                 >
                   {modelOptions.find(m => m.id === selectedModel) && (
                     <>
@@ -1182,23 +1270,23 @@ export default function GeneratePage() {
                         className="w-8 h-8 rounded object-contain"
                       />
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-900">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
-                        <div className="text-xs text-gray-500">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
                       </div>
                     </>
                   )}
                   <ChevronDown
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {isModelDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                     {modelOptions.map((model) => (
                       <button
                         key={model.id}
                         onClick={() => handleModelSelect(model.id)}
-                        className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                          selectedModel === model.id ? 'bg-gray-50' : ''
+                        className={`w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 ${
+                          selectedModel === model.id ? 'bg-gray-50 dark:bg-gray-700' : ''
                         }`}
                       >
                         <img
@@ -1207,8 +1295,8 @@ export default function GeneratePage() {
                           className="w-6 h-6 rounded object-contain"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">{model.label}</div>
-                          <div className="text-xs text-gray-500">{model.type} • {model.cost} credits</div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{model.label}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{model.type} • {model.cost} credits</div>
                         </div>
                         {selectedModel === model.id && (
                           <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1243,6 +1331,59 @@ export default function GeneratePage() {
                 onChange={(e) => handleFileUpload(e.target.files)}
                 className="hidden"
               />
+              
+              {/* Audio Upload for Kling Avatar */}
+              {selectedModel === 'kling-avatar' && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Audio File (Required for Kling Avatar)</h4>
+                  <div
+                    className="border-2 border-dashed border-blue-300 rounded p-4 text-center cursor-pointer hover:border-blue-400 transition-colors bg-blue-50"
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleAudioUpload(e.dataTransfer.files);
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => audioInputRef.current?.click()}
+                  >
+                    <Upload className="mx-auto h-8 w-8 text-blue-400 mb-2" />
+                    <p className="text-sm font-medium text-blue-700 mb-1">Choose audio file...</p>
+                    <p className="text-xs text-blue-600">Max 10 seconds • MP3, WAV, OGG</p>
+                  </div>
+                  <input
+                    ref={audioInputRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => handleAudioUpload(e.target.files)}
+                    className="hidden"
+                  />
+                  
+                  {/* Display uploaded audio files */}
+                  {uploadedAudioFiles.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-sm font-medium text-foreground mb-2">Uploaded Audio:</p>
+                      {uploadedAudioFiles.map((audioFile) => (
+                        <div key={audioFile.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded p-2 mb-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                              <span className="text-green-600 text-xs">🎵</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-green-800">{audioFile.file.name}</p>
+                              <p className="text-xs text-green-600">{(audioFile.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setUploadedAudioFiles(prev => prev.filter(f => f.id !== audioFile.id))}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">

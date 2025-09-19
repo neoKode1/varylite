@@ -99,6 +99,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Note: Audio duration validation for Kling Avatar (10 seconds max) 
+    // should be implemented on the frontend before upload
+    // Server-side duration validation would require additional audio processing libraries
+
     // Generate secure filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 15);

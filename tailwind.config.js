@@ -24,24 +24,46 @@ module.exports = {
           950: 'oklch(12% 0 0)',
         },
         // Semantic color mappings - minimal and subtle theme (20% darker)
-        background: '#dee2e6', // Much darker background
-        foreground: '#212529', // Much darker text
-        secondary: '#e9ecef', // Darker cards/panels
+        background: {
+          DEFAULT: '#dee2e6', // Much darker background
+          dark: '#1a1a1a', // Dark mode background
+        },
+        foreground: {
+          DEFAULT: '#212529', // Much darker text
+          dark: '#ffffff', // Dark mode text
+        },
+        secondary: {
+          DEFAULT: '#e9ecef', // Darker cards/panels
+          dark: '#2a2a2a', // Dark mode cards/panels
+        },
         muted: {
           DEFAULT: '#ced4da', // Much darker muted
           foreground: '#343a40', // Much darker muted text
+          dark: '#404040', // Dark mode muted
+          'foreground-dark': '#a0a0a0', // Dark mode muted text
         },
         accent: {
           DEFAULT: '#adb5bd', // Much darker accent
           foreground: '#212529', // Much darker text on accent
+          dark: '#4a4a4a', // Dark mode accent
+          'foreground-dark': '#ffffff', // Dark mode text on accent
         },
         destructive: {
           DEFAULT: '#dc3545', // Keep red for errors
           foreground: '#ffffff',
         },
-        border: '#6c757d', // Much darker borders
-        input: '#e9ecef', // Much darker inputs
-        ring: '#495057', // Much darker focus rings
+        border: {
+          DEFAULT: '#6c757d', // Much darker borders
+          dark: '#404040', // Dark mode borders
+        },
+        input: {
+          DEFAULT: '#e9ecef', // Much darker inputs
+          dark: '#2a2a2a', // Dark mode inputs
+        },
+        ring: {
+          DEFAULT: '#495057', // Much darker focus rings
+          dark: '#666666', // Dark mode focus rings
+        },
         // Legacy colors for backward compatibility
         'jet-black': 'oklch(12% 0 0)',
         'charcoal': 'oklch(22% 0 0)',

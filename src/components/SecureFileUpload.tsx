@@ -53,6 +53,42 @@ const SecureFileUpload: React.FC<SecureFileUploadProps> = ({
     return null;
   }, []);
 
+  const validateAudioDuration = useCallback(async (file: File): Promise<string | null> => {
+    if (!file.type.startsWith('audio/')) {
+      return null; // Not an audio file, no validation needed
+    }
+
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      const audioUrl = URL.createObjectURL(file);
+      
+      const cleanup = () => {
+        URL.revokeObjectURL(audioUrl);
+        audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+        audio.removeEventListener('error', onError);
+      };
+
+      const onLoadedMetadata = () => {
+        cleanup();
+        const duration = audio.duration;
+        if (duration > 10) {
+          resolve(`Audio too long: ${file.name} (${duration.toFixed(1)}s, max 10s)`);
+        } else {
+          resolve(null); // Valid duration
+        }
+      };
+
+      const onError = () => {
+        cleanup();
+        resolve(null); // If we can't validate, allow the upload
+      };
+
+      audio.addEventListener('loadedmetadata', onLoadedMetadata);
+      audio.addEventListener('error', onError);
+      audio.src = audioUrl;
+    });
+  }, []);
+
   const uploadFileToFal = useCallback(async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -93,6 +129,14 @@ const SecureFileUpload: React.FC<SecureFileUploadProps> = ({
         const validationError = validateFile(file);
         if (validationError) {
           console.error('❌ File validation failed:', validationError);
+          continue;
+        }
+
+        // Validate audio duration for Kling Avatar (10 seconds max)
+        const audioDurationError = await validateAudioDuration(file);
+        if (audioDurationError) {
+          console.error('❌ Audio duration validation failed:', audioDurationError);
+          alert(audioDurationError); // Show user-friendly error
           continue;
         }
 

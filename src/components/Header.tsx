@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { ProfileModal } from './ProfileModal'
 import { AnalyticsUpdater } from './AnalyticsUpdater'
 import { CompactCreditDisplay, MobileCreditDisplay } from './CompactCreditDisplay'
+import { DarkModeToggle } from './DarkModeToggle'
 import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
@@ -233,14 +234,19 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
            )}
          </div>
 
-         {/* User Section - Right aligned */}
-         <div className="flex items-center space-x-6">
-           {/* Analytics Dropdown - Desktop only */}
-           {!hideAnalytics && (
-             <div className="hidden lg:block flex-shrink-0">
-               <AnalyticsUpdater />
-             </div>
-           )}
+          {/* User Section - Right aligned */}
+          <div className="flex items-center space-x-6">
+            {/* Dark Mode Toggle */}
+            <div>
+              <DarkModeToggle />
+            </div>
+            
+            {/* Analytics Dropdown - Desktop only */}
+            {!hideAnalytics && (
+              <div className="hidden lg:block flex-shrink-0">
+                <AnalyticsUpdater />
+              </div>
+            )}
            
            {/* Credit Display - Desktop */}
            {user && (
@@ -454,12 +460,17 @@ export const Header: React.FC<HeaderProps> = ({ onSignUpClick, onSignInClick, sh
             )}
             
             
+            {/* Dark Mode Toggle - Mobile */}
+            <div className="flex-shrink-0">
+              <DarkModeToggle />
+            </div>
+
             {/* Usage Stats - Mobile */}
             <div className="flex items-center space-x-2 flex-shrink-0 text-xs">
               {isAnonymous ? (
                 <>
-                  <span className="text-gray-700">Free: {usageStats.totalGenerations}/3</span>
-                  <div className="w-12 h-1.5 bg-gray-700 rounded-full">
+                  <span className="text-gray-700 dark:text-gray-300">Free: {usageStats.totalGenerations}/3</span>
+                  <div className="w-12 h-1.5 bg-gray-700 dark:bg-gray-600 rounded-full">
                     <div 
                       className="h-1.5 bg-gradient-to-r from-accent-gray to-light-gray rounded-full transition-all duration-300"
                       style={{ width: `${(usageStats.totalGenerations / 3) * 100}%` }}

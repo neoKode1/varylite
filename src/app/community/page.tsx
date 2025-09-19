@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, ThumbsUp, User, Send, Loader2, Image, X, Upload, ArrowLeft, Sparkles, Trash2, MoreVertical, Plus, ArrowUp, FolderOpen, Grid3X3, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
-import { Header } from '@/components/Header';
+import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { AnalyticsUpdater } from '@/components/AnalyticsUpdater';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -621,18 +621,31 @@ export default function CommunityPage() {
         Your browser does not support the video tag.
       </video>
       
-      {/* Dark overlay for better text readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+      {/* Dark overlay for better text readability - only over header area */}
+      <div className="absolute top-0 left-0 right-0 h-20 bg-black bg-opacity-40 z-10"></div>
       
       {/* Header with Profile Access */}
       <div className="relative z-20">
-        <Header 
-          onSignUpClick={handleSignUp}
-          onSignInClick={handleSignIn}
-          showContributors={showCollaborators}
-          onToggleContributors={() => setShowCollaborators(!showCollaborators)}
-          hideCommunityButton={true}
-        />
+        <header className="bg-black bg-opacity-50 backdrop-blur-sm border-b border-gray-700 border-opacity-30">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-charcoal rounded-lg flex items-center justify-center border border-border-gray">
+                <span className="text-white font-bold text-sm">V</span>
+              </div>
+              <h1 className="text-lg font-bold text-white">vARY Ai</h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/generate')}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-gray-700"
+              >
+                Generate
+              </button>
+              <DarkModeToggle />
+            </div>
+          </div>
+        </header>
       </div>
 
       {/* Mobile Header with Navigation - Mobile Only */}
@@ -646,14 +659,13 @@ export default function CommunityPage() {
           }}
         />
         
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        {/* Dark overlay for better text readability - removed to show images */}
         
       </header>
       
 
 
-      <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6 relative z-10 pb-32 lg:pb-6">
+      <div className="max-w-6xl mx-auto px-3 lg:px-4 py-6 relative z-20 pb-32 lg:pb-6">
 
         {/* Posts Feed */}
         <div className="space-y-4 mb-6">
@@ -716,6 +728,9 @@ export default function CommunityPage() {
                               src={image} 
                               alt={`Post image ${index + 1}`}
                               className="w-full h-48 object-cover rounded-lg border border-gray-600 border-opacity-30 transition-transform duration-200 group-hover:scale-105"
+                              onLoad={() => console.log('Image loaded:', image)}
+                              onError={() => console.log('Image failed to load:', image)}
+                              style={{ backgroundColor: 'transparent' }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
