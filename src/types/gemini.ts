@@ -16,6 +16,7 @@ export interface CharacterVariationRequest {
     styleConsistency?: boolean;
     characterSeparation?: number;
     spatialAwareness?: boolean;
+    numImages?: number;
   };
 }
 
