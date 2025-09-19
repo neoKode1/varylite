@@ -40,6 +40,23 @@ export default function GeneratePage() {
   const [userFalApiKey, setUserFalApiKey] = useState('');
   const [useCustomApiKey, setUseCustomApiKey] = useState(false);
   const [selectedQuickShot, setSelectedQuickShot] = useState<string>('');
+  
+  // Comprehensive preset system states
+  const [showPresetModal, setShowPresetModal] = useState(false);
+  const [activePresetTab, setActivePresetTab] = useState<'background' | 'restyle' | 'camera-motion' | 'shot-angles' | null>(null);
+  const [activeBackgroundTab, setActiveBackgroundTab] = useState<keyof typeof backgroundPresets>('removal');
+  const [presetCount, setPresetCount] = useState(0);
+  const [showTokenWarning, setShowTokenWarning] = useState(false);
+  
+  // Collapsible sections state
+  const [isThingsToAvoidExpanded, setIsThingsToAvoidExpanded] = useState(false);
+  const [isQuickShotExpanded, setIsQuickShotExpanded] = useState(false);
+  const [isNumImagesExpanded, setIsNumImagesExpanded] = useState(false);
+  
+  // NSFW content detection state
+  const [showNSFWWarning, setShowNSFWWarning] = useState(false);
+  const [detectedNSFWKeywords, setDetectedNSFWKeywords] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Hooks - vARYLite browser storage
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,7 +144,248 @@ export default function GeneratePage() {
     { id: 'minimax-endframe', label: 'Mini Max End Frame', type: 'video', cost: 12, icon: '/minimax-color.svg' },
   ], []);
 
-  // QuickShot presets - Cinematic shot types
+  // Comprehensive Background Change Presets
+  const backgroundPresets = {
+    removal: {
+      name: 'Background Removal',
+      icon: '🗑️',
+      prompts: [
+        'Remove the background completely, transparent background',
+        'Remove background, clean transparent background',
+        'Remove all background elements, transparent background',
+        'Remove background, keep only the character',
+        'Remove background, create transparent background',
+        'Remove background, isolate character on transparent background',
+        'Remove background, clean cutout with transparent background',
+        'Remove background, professional transparent background'
+      ]
+    },
+    studio: {
+      name: 'Studio & Professional',
+      icon: '📸',
+      prompts: [
+        'Change background to professional studio backdrop',
+        'Change background to clean white studio background',
+        'Change background to neutral gray studio background',
+        'Change background to professional photography backdrop',
+        'Change background to seamless studio background',
+        'Change background to clean gradient background',
+        'Change background to solid color background',
+        'Change background to minimalist background'
+      ]
+    },
+    natural: {
+      name: 'Natural & Outdoor',
+      icon: '🌲',
+      prompts: [
+        'Change background to natural outdoor setting',
+        'Change background to forest environment',
+        'Change background to beach scene',
+        'Change background to mountain landscape',
+        'Change background to city skyline',
+        'Change background to park setting',
+        'Change background to garden environment',
+        'Change background to sunset landscape',
+        'Change background to ocean view',
+        'Change background to countryside setting'
+      ]
+    },
+    indoor: {
+      name: 'Indoor & Architectural',
+      icon: '🏠',
+      prompts: [
+        'Change background to modern office interior',
+        'Change background to luxury home interior',
+        'Change background to contemporary living room',
+        'Change background to elegant bedroom',
+        'Change background to modern kitchen',
+        'Change background to library setting',
+        'Change background to art gallery',
+        'Change background to hotel lobby',
+        'Change background to restaurant interior',
+        'Change background to modern architecture'
+      ]
+    },
+    creative: {
+      name: 'Creative & Artistic',
+      icon: '🎨',
+      prompts: [
+        'Change background to abstract artistic background',
+        'Change background to geometric pattern background',
+        'Change background to colorful gradient background',
+        'Change background to artistic texture background',
+        'Change background to creative digital background',
+        'Change background to fantasy environment',
+        'Change background to sci-fi setting',
+        'Change background to dreamy atmosphere',
+        'Change background to artistic illustration background',
+        'Change background to creative concept background'
+      ]
+    },
+    themed: {
+      name: 'Seasonal & Themed',
+      icon: '🎭',
+      prompts: [
+        'Change background to winter scene',
+        'Change background to autumn forest',
+        'Change background to spring garden',
+        'Change background to summer beach',
+        'Change background to night cityscape',
+        'Change background to rainy day scene',
+        'Change background to snowy landscape',
+        'Change background to desert scene',
+        'Change background to tropical paradise',
+        'Change background to urban street scene'
+      ]
+    },
+    horror: {
+      name: 'Horror Movies',
+      icon: '👻',
+      prompts: [
+        'Place character in Halloween movie setting - suburban street with jack-o-lanterns and autumn leaves',
+        'Place character in Nightmare on Elm Street setting - dark suburban neighborhood with eerie streetlights',
+        'Place character in Friday the 13th setting - Camp Crystal Lake with foggy forest and rustic cabins',
+        'Place character in The Exorcist setting - Georgetown townhouse with vintage architecture',
+        'Place character in Poltergeist setting - suburban home with supernatural atmosphere',
+        'Place character in The Shining setting - Overlook Hotel corridor with red carpet',
+        'Place character in Psycho setting - Bates Motel with vintage neon sign',
+        'Place character in Carrie setting - high school prom with dramatic red lighting'
+      ]
+    },
+    scifi: {
+      name: 'Sci-Fi Movies',
+      icon: '🚀',
+      prompts: [
+        'Place character in Blade Runner setting - cyberpunk cityscape with neon rain',
+        'Place character in The Matrix setting - green-tinted digital world with code rain effects',
+        'Place character in Star Wars setting - Tatooine desert with twin suns',
+        'Place character in Avatar setting - Pandora jungle with bioluminescent plants',
+        'Place character in Terminator 2 scene - futuristic Los Angeles with orange fire glow',
+        'Place character in Mad Max setting - post-apocalyptic desert wasteland',
+        'Place character in Inception setting - dreamlike city with impossible architecture',
+        'Place character in Interstellar setting - space station with Earth view'
+      ]
+    },
+    christmas: {
+      name: 'Christmas Movies',
+      icon: '🎄',
+      prompts: [
+        'Place character in A Christmas Carol setting - Victorian London with foggy streets',
+        'Place character in It\'s a Wonderful Life setting - Bedford Falls with snowy streets',
+        'Place character in Home Alone setting - suburban Chicago home with Christmas decorations',
+        'Place character in Elf setting - New York City with Christmas decorations',
+        'Place character in The Grinch setting - Whoville with whimsical architecture',
+        'Place character in Miracle on 34th Street setting - New York City with vintage department store'
+      ]
+    },
+    action: {
+      name: 'Action Movies',
+      icon: '💥',
+      prompts: [
+        'Place character in Batman movie setting - dark Gotham City with neon lights',
+        'Place character in Spider-Man movie setting - New York City skyline with web-slinging action',
+        'Place character in 1980s slasher movie setting - dark forest cabin with warm firelight',
+        'Place character in Steven Spielberg movie setting - suburban street with warm golden hour lighting',
+        'Place character in Quentin Tarantino movie setting - retro diner with neon signs',
+        'Place character in Sin City movie setting - black and white noir with selective red color accents'
+      ]
+    },
+    fantasy: {
+      name: 'Fantasy Movies',
+      icon: '🧙‍♂️',
+      prompts: [
+        'Place character in Lord of the Rings setting - Middle-earth Shire with rolling green hills',
+        'Place character in Harry Potter setting - Hogwarts castle with magical atmosphere',
+        'Place character in The Hobbit setting - Middle-earth with dwarven halls',
+        'Place character in Game of Thrones setting - Westeros with medieval castles',
+        'Place character in The Chronicles of Narnia setting - magical wardrobe world',
+        'Place character in Pan\'s Labyrinth setting - Spanish Civil War with dark fantasy'
+      ]
+    }
+  };
+
+  // Character Style Presets for Restyle
+  const characterStylePresets = [
+    {
+      name: 'The Smurfs',
+      description: 'Small, blue, communal beings from the Smurfs franchise',
+      prompt: 'Transform character into Smurfs style while preserving user\'s original vision and prompt details'
+    },
+    {
+      name: 'Care Bears',
+      description: 'Colorful, emotional-themed bears from the 1980s franchise',
+      prompt: 'Transform character into Care Bears style while maintaining user\'s specific prompt requirements'
+    },
+    {
+      name: 'Gummi Bears',
+      description: 'Magical, medieval bear characters from Disney\'s Adventures of the Gummi Bears',
+      prompt: 'Transform character into Gummi Bears style while preserving user\'s original prompt'
+    },
+    {
+      name: 'The Muppets',
+      description: 'Beloved puppet characters from Jim Henson\'s iconic franchise',
+      prompt: 'Transform character into Muppets style while adhering to user\'s prompt details'
+    },
+    {
+      name: 'Anime Style',
+      description: 'Authentic Japanese anime drawing style inspired by famous anime artists',
+      prompt: 'Transform character into authentic Japanese anime drawing style in the artistic tradition of Hayao Miyazaki, Akira Toriyama, and Osamu Tezuka'
+    },
+    {
+      name: 'Japanese Manga Style',
+      description: 'Traditional Japanese manga drawing style inspired by legendary manga artists',
+      prompt: 'Transform character into authentic Japanese manga drawing style in the artistic tradition of Eiichiro Oda, Masashi Kishimoto, and Kentaro Miura'
+    },
+    {
+      name: 'Hellraiser',
+      description: 'Realistic live-action gothic horror aesthetic featuring dark, leather-clad styling',
+      prompt: 'Make into Pinhead from Hellraiser style while preserving user\'s original prompt'
+    },
+    {
+      name: 'Nightmare on Elm Street',
+      description: 'Photo-realistic dark fantasy styling featuring twisted, dreamlike aesthetics',
+      prompt: 'Make into Freddy Krueger style while adhering to user\'s prompt details'
+    }
+  ];
+
+  // Comprehensive Camera Motion Presets
+  const cameraMotionPresets = [
+    'Slow zoom in', 'Slow zoom out', 'Pan left to right', 'Pan right to left',
+    'Tilt up', 'Tilt down', 'Dolly forward', 'Dolly backward',
+    'Orbital movement', 'Spiral inward', 'Spiral outward', 'Tracking shot',
+    'Leading camera', 'Whip pan', 'Quick zoom in', 'Quick zoom out',
+    'Crane up', 'Crane down', 'Handheld movement', 'Steadicam',
+    'Aerial shot', 'Low angle shot', '360-degree rotation', 'Bullet time effect',
+    'Parallax movement', 'Rack focus', 'Push-in', 'Pull-out',
+    'Tilt shift', 'Camera shake', 'Smooth glide', 'Snap zoom',
+    'Slow motion', 'Time-lapse', 'Hyperlapse', 'Drone movement',
+    'Underwater movement', 'Through character', 'Mirror reflection', 'Split screen',
+    'Picture-in-picture', 'Kaleidoscope effect', 'Tunnel vision', 'Fish-eye lens',
+    'Wide-angle lens'
+  ];
+
+  // Extended Shot Angle Presets
+  const shotAnglePresets = [
+    'Close-up shot of this character',
+    'Extreme close-up of this character\'s face',
+    'Macro shot focusing on character details',
+    'Wide shot showing character in environment',
+    'Medium shot showing character from waist up',
+    'Full body shot showing complete character',
+    'Over-the-shoulder shot from behind character',
+    'Point of view shot from character\'s perspective',
+    'Bird\'s eye view looking down at character',
+    'Worm\'s eye view looking up at character',
+    'Dutch angle shot with tilted perspective',
+    'Profile shot showing character from the side',
+    'Three-quarter angle shot',
+    'Back view showing character from behind',
+    'Low angle shot for dramatic effect',
+    'High angle shot for vulnerability',
+    'Eye level shot for natural perspective'
+  ];
+
+  // QuickShot presets - Cinematic shot types (keeping existing ones)
   const quickShotPresets = [
     { id: 'close-up-push-in', name: 'Close-up Push-in', description: 'Intimate close-up with subtle push-in movement', icon: '🔍' },
     { id: 'tracking-shot', name: 'Tracking Shot', description: 'Dynamic tracking movement following action', icon: '📹' },
@@ -150,6 +408,75 @@ export default function GeneratePage() {
   ];
 
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]?.id || '');
+
+  // Handle preset combination logic
+  const handlePresetClick = useCallback((presetText: string) => {
+    const currentPrompt = sceneDescription.trim();
+    
+    if (currentPrompt === '') {
+      // First preset - just set it
+      setSceneDescription(presetText);
+      setPresetCount(1);
+    } else {
+      // Add comma and new preset
+      const newPrompt = `${currentPrompt}, ${presetText}`;
+      setSceneDescription(newPrompt);
+      setPresetCount(prev => prev + 1);
+      
+      // Show warning after 3 presets
+      if (presetCount >= 2) {
+        setShowTokenWarning(true);
+        // Auto-hide warning after 3 seconds
+        setTimeout(() => setShowTokenWarning(false), 3000);
+      }
+    }
+    
+    // Close modal after selection
+    setShowPresetModal(false);
+    setActivePresetTab(null);
+  }, [sceneDescription, presetCount]);
+
+  // Reset preset count when prompt is manually cleared
+  useEffect(() => {
+    if (sceneDescription.trim() === '') {
+      setPresetCount(0);
+      setShowTokenWarning(false);
+    }
+  }, [sceneDescription]);
+
+  // NSFW content detection
+  const detectNSFWContent = useCallback((prompt: string) => {
+    const nsfwKeywords = [
+      'nude', 'naked', 'sex', 'sexual', 'erotic', 'adult', 'nsfw', 'explicit',
+      'fetish', 'bondage', 'bdsm', 'kink', 'lewd', 'sensual', 'intimate',
+      'undressed', 'topless', 'bottomless', 'lingerie', 'underwear', 'panties',
+      'bra', 'bikini', 'swimsuit', 'provocative', 'suggestive', 'seductive',
+      'romantic', 'love', 'passion', 'desire', 'lust', 'attraction', 'affection'
+    ];
+    
+    const lowerPrompt = prompt.toLowerCase();
+    const detectedKeywords = nsfwKeywords.filter(keyword => 
+      lowerPrompt.includes(keyword)
+    );
+    
+    if (detectedKeywords.length > 0) {
+      setDetectedNSFWKeywords(detectedKeywords);
+      setShowNSFWWarning(true);
+    } else {
+      setShowNSFWWarning(false);
+      setDetectedNSFWKeywords([]);
+    }
+  }, []);
+
+  // Monitor prompt changes for NSFW content
+  useEffect(() => {
+    if (sceneDescription.trim()) {
+      detectNSFWContent(sceneDescription);
+    } else {
+      setShowNSFWWarning(false);
+      setDetectedNSFWKeywords([]);
+    }
+  }, [sceneDescription, detectNSFWContent]);
 
   // Click outside handler for dropdown
   const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -552,14 +879,47 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [sceneDescription, uploadedFiles, imagesToGenerate, selectedModel, modelOptions, generationHistory, saveToLocalStorage, useCustomApiKey, userFalApiKey]);
+  }, [sceneDescription, uploadedFiles, imagesToGenerate, selectedModel, modelOptions, generationHistory, saveToLocalStorage, useCustomApiKey, userFalApiKey, generatedScenes, quickShotPresets, selectedQuickShot, thingsToAvoid]);
 
-  const downloadScene = useCallback((scene: GeneratedScene) => {
-    const link = document.createElement('a');
-    link.href = scene.url;
-    link.download = `scene-${scene.id}.jpg`;
-    link.click();
-  }, []);
+  const downloadScene = useCallback(async (scene: GeneratedScene) => {
+    if (isDownloading) return; // Prevent multiple downloads
+    
+    setIsDownloading(true);
+    try {
+      console.log(`📥 [vARYLite] Downloading scene:`, scene.id, scene.url);
+      
+      // Create a more descriptive filename
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `varylite-scene-${scene.id}-${timestamp}.jpg`;
+      
+      // Try to fetch the image first to ensure it's accessible
+      const response = await fetch(scene.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      window.URL.revokeObjectURL(url);
+      
+      console.log(`✅ [vARYLite] Successfully downloaded: ${filename}`);
+    } catch (error) {
+      console.error(`❌ [vARYLite] Download failed:`, error);
+      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading]);
 
   const varyScene = useCallback(async (scene: GeneratedScene) => {
     console.log(`🔄 [vARYLite] Starting variation generation for scene:`, scene);
@@ -798,90 +1158,232 @@ export default function GeneratePage() {
                 placeholder="Describe what you want to create..."
                 className="w-full h-32 p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none resize-none"
               />
+              
+              {/* NSFW Content Warning */}
+              {showNSFWWarning && (
+                <div className="mt-3 p-4 bg-orange-600 bg-opacity-20 border border-orange-600 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="text-orange-400 text-lg">⚠️</div>
+                    <div className="flex-1">
+                      <div className="text-orange-400 font-medium text-sm mb-2">
+                        Content Moderation Notice
+                      </div>
+                      <div className="text-orange-300 text-sm mb-3">
+                        Your prompt contains content that may require special handling. 
+                        For better results with this type of content, we recommend using:
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <button
+                          onClick={() => setSelectedModel('seedance-4-edit')}
+                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+                        >
+                          Switch to Seedance 4 Edit
+                        </button>
+                        <span className="text-orange-300 text-xs">
+                          (Better for adult content)
+                        </span>
+                      </div>
+                      <div className="text-orange-200 text-xs">
+                        Detected keywords: {detectedNSFWKeywords.slice(0, 3).join(', ')}
+                        {detectedNSFWKeywords.length > 3 && ` +${detectedNSFWKeywords.length - 3} more`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowNSFWWarning(false)}
+                      className="text-orange-400 hover:text-orange-300"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 3. Things to Avoid */}
+            {/* 3. Things to Avoid (Collapsible) */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">3. (Optional) Things to Avoid</h3>
-              <textarea
-                value={thingsToAvoid}
-                onChange={(e) => setThingsToAvoid(e.target.value)}
-                placeholder="e.g., blurry, text, extra fingers"
-                className="w-full h-24 p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none resize-none"
-              />
+              <button
+                onClick={() => setIsThingsToAvoidExpanded(!isThingsToAvoidExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h3 className="text-lg font-semibold mb-3">3. (Optional) Things to Avoid</h3>
+                <ChevronDown className={`h-5 w-5 transition-transform ${isThingsToAvoidExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isThingsToAvoidExpanded && (
+                <div className="mb-4">
+                  <textarea
+                    value={thingsToAvoid}
+                    onChange={(e) => setThingsToAvoid(e.target.value)}
+                    placeholder="e.g., blurry, text, extra fingers"
+                    className="w-full h-24 p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none resize-none"
+                  />
+                </div>
+              )}
             </div>
 
-            {/* 4. Style Selection */}
+            {/* 4. Character Style Presets */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">4. Style</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {styleOptions.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() => setSelectedStyle(style.id)}
-                    className={`p-3 rounded-lg border transition-colors ${
-                      selectedStyle === style.id
-                        ? 'border-red-500 bg-red-500/10 text-red-400'
-                        : 'border-gray-500 bg-gray-700 text-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {style.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 5. QuickShot Presets */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">5. QuickShot Presets</h3>
+              <h3 className="text-lg font-semibold mb-3">4. Character Style</h3>
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Choose a cinematic shot type (optional)
+                    Transform your character into popular styles
                   </label>
                   <p className="text-xs text-gray-400">
-                    Select a preset for professional camera movements and angles
+                    Choose from iconic character styles and franchises
                   </p>
                 </div>
                 
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  <button
-                    onClick={() => setSelectedQuickShot('')}
-                    className={`w-full p-2 text-left rounded transition-colors ${
-                      selectedQuickShot === ''
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    <span className="text-sm">🎲 Random Shot Type</span>
-                  </button>
-                  
-                  {quickShotPresets.map((preset) => (
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                  {characterStylePresets.map((preset, index) => (
                     <button
-                      key={preset.id}
-                      onClick={() => setSelectedQuickShot(preset.id)}
-                      className={`w-full p-2 text-left rounded transition-colors ${
-                        selectedQuickShot === preset.id
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      key={index}
+                      onClick={() => setSelectedStyle(preset.name.toLowerCase().replace(/\s+/g, '-'))}
+                      className={`p-3 text-left rounded-lg border transition-colors ${
+                        selectedStyle === preset.name.toLowerCase().replace(/\s+/g, '-')
+                          ? 'border-red-500 bg-red-500/10 text-red-400'
+                          : 'border-gray-500 bg-gray-700 text-gray-300 hover:border-gray-400'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{preset.icon}</span>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">{preset.name}</div>
-                          <div className="text-xs text-gray-400">{preset.description}</div>
-                        </div>
-                      </div>
+                      <div className="font-medium text-sm">{preset.name}</div>
+                      <div className="text-xs text-gray-400 mt-1">{preset.description}</div>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* 6. Model Selection */}
+            {/* 5. QuickShot Presets (Collapsible) */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">6. Select Model</h3>
+              <button
+                onClick={() => setIsQuickShotExpanded(!isQuickShotExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h3 className="text-lg font-semibold mb-3">5. QuickShot Presets</h3>
+                <ChevronDown className={`h-5 w-5 transition-transform ${isQuickShotExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isQuickShotExpanded && (
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-600 mb-4">
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Choose a cinematic shot type (optional)
+                    </label>
+                    <p className="text-xs text-gray-400">
+                      Select a preset for professional camera movements and angles
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <button
+                      onClick={() => setSelectedQuickShot('')}
+                      className={`w-full p-2 text-left rounded transition-colors ${
+                        selectedQuickShot === ''
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      <span className="text-sm">🎲 Random Shot Type</span>
+                    </button>
+                    
+                    {quickShotPresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => setSelectedQuickShot(preset.id)}
+                        className={`w-full p-2 text-left rounded transition-colors ${
+                          selectedQuickShot === preset.id
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{preset.icon}</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">{preset.name}</div>
+                            <div className="text-xs text-gray-400">{preset.description}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 6. Comprehensive Presets */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">6. Comprehensive Presets</h3>
+              <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Choose from comprehensive preset categories
+                  </label>
+                  <p className="text-xs text-gray-400">
+                    Select from background changes, character styles, camera motions, and shot angles
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('background');
+                      setShowPresetModal(true);
+                    }}
+                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">🎨</span>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Background</div>
+                      <div className="text-xs text-gray-400">Change backgrounds</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('restyle');
+                      setShowPresetModal(true);
+                    }}
+                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">🎭</span>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Restyle</div>
+                      <div className="text-xs text-gray-400">Character styles</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('camera-motion');
+                      setShowPresetModal(true);
+                    }}
+                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">📹</span>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Camera Motion</div>
+                      <div className="text-xs text-gray-400">Camera movements</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActivePresetTab('shot-angles');
+                      setShowPresetModal(true);
+                    }}
+                    className="flex items-center gap-2 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">📐</span>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Shot Angles</div>
+                      <div className="text-xs text-gray-400">Shot types</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Model Selection */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">7. Select Model</h3>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleModelDropdown}
@@ -935,56 +1437,64 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {/* Number of Images Setting */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white">7. Number of Images</h3>
-              <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      How many variations do you want?
-                    </label>
-                    <p className="text-xs text-gray-400">
-                      Choose between 1-8 images. More images = more variations to choose from.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 ml-4">
-                    <button
-                      onClick={() => setImagesToGenerate(Math.max(1, imagesToGenerate - 1))}
-                      className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
-                      disabled={imagesToGenerate <= 1}
-                    >
-                      −
-                    </button>
-                    <div className="w-16 text-center">
-                      <span className="text-2xl font-bold text-white">{imagesToGenerate}</span>
-                      <div className="text-xs text-gray-400">images</div>
+            {/* Number of Images Setting (Collapsible) */}
+            <div>
+              <button
+                onClick={() => setIsNumImagesExpanded(!isNumImagesExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-white mb-3">8. Number of Images</h3>
+                <ChevronDown className={`h-5 w-5 transition-transform ${isNumImagesExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isNumImagesExpanded && (
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-600 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        How many variations do you want?
+                      </label>
+                      <p className="text-xs text-gray-400">
+                        Choose between 1-8 images. More images = more variations to choose from.
+                      </p>
                     </div>
-                    <button
-                      onClick={() => setImagesToGenerate(Math.min(8, imagesToGenerate + 1))}
-                      className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
-                      disabled={imagesToGenerate >= 8}
-                    >
-                      +
-                    </button>
+                    <div className="flex items-center gap-3 ml-4">
+                      <button
+                        onClick={() => setImagesToGenerate(Math.max(1, imagesToGenerate - 1))}
+                        className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        disabled={imagesToGenerate <= 1}
+                      >
+                        −
+                      </button>
+                      <div className="w-16 text-center">
+                        <span className="text-2xl font-bold text-white">{imagesToGenerate}</span>
+                        <div className="text-xs text-gray-400">images</div>
+                      </div>
+                      <button
+                        onClick={() => setImagesToGenerate(Math.min(8, imagesToGenerate + 1))}
+                        className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-lg transition-colors"
+                        disabled={imagesToGenerate >= 8}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    {[1, 2, 3, 4, 6, 8].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setImagesToGenerate(num)}
+                        className={`px-3 py-1 text-sm rounded transition-colors ${
+                          imagesToGenerate === num
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="mt-3 flex gap-2">
-                  {[1, 2, 3, 4, 6, 8].map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => setImagesToGenerate(num)}
-                      className={`px-3 py-1 text-sm rounded transition-colors ${
-                        imagesToGenerate === num
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Generate Button */}
@@ -1039,10 +1549,19 @@ export default function GeneratePage() {
                                 e.stopPropagation();
                                 downloadScene(scene);
                               }}
-                              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
-                              title="Download"
+                              disabled={isDownloading}
+                              className={`p-2 rounded-full transition-colors ${
+                                isDownloading 
+                                  ? 'bg-white bg-opacity-10 cursor-not-allowed' 
+                                  : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                              }`}
+                              title={isDownloading ? "Downloading..." : "Download"}
                             >
-                              <Download className="h-4 w-4" />
+                              {isDownloading ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
                             </button>
                             <button
                               onClick={(e) => {
@@ -1189,9 +1708,21 @@ export default function GeneratePage() {
                   </button>
                   <button
                     onClick={() => downloadScene(generatedScenes[selectedImageIndex])}
-                    className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded"
+                    disabled={isDownloading}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      isDownloading 
+                        ? 'bg-white bg-opacity-10 cursor-not-allowed' 
+                        : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                    }`}
                   >
-                    Download
+                    {isDownloading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Downloading...
+                      </div>
+                    ) : (
+                      'Download'
+                    )}
                   </button>
                   <button
                     onClick={() => setSelectedImageIndex(prev => 
@@ -1203,6 +1734,122 @@ export default function GeneratePage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Comprehensive Preset Modal */}
+        {showPresetModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-600">
+                <h3 className="text-xl font-semibold text-white">
+                  {activePresetTab === 'background' && '🎨 Background Presets'}
+                  {activePresetTab === 'restyle' && '🎭 Character Style Presets'}
+                  {activePresetTab === 'camera-motion' && '📹 Camera Motion Presets'}
+                  {activePresetTab === 'shot-angles' && '📐 Shot Angle Presets'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowPresetModal(false);
+                    setActivePresetTab(null);
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="p-4 overflow-y-auto max-h-[60vh]">
+                {/* Background Presets */}
+                {activePresetTab === 'background' && (
+                  <div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {Object.entries(backgroundPresets).map(([key, category]) => (
+                        <button
+                          key={key}
+                          onClick={() => setActiveBackgroundTab(key as keyof typeof backgroundPresets)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeBackgroundTab === key
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          <span className="mr-2">{category.icon}</span>
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {backgroundPresets[activeBackgroundTab].prompts.map((prompt, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePresetClick(prompt)}
+                          className="p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Character Style Presets */}
+                {activePresetTab === 'restyle' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {characterStylePresets.map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetClick(preset.prompt)}
+                        className="p-4 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                      >
+                        <div className="font-medium text-white mb-1">{preset.name}</div>
+                        <div className="text-sm text-gray-400">{preset.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Camera Motion Presets */}
+                {activePresetTab === 'camera-motion' && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {cameraMotionPresets.map((motion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetClick(motion)}
+                        className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                      >
+                        {motion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Shot Angle Presets */}
+                {activePresetTab === 'shot-angles' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {shotAnglePresets.map((angle, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetClick(angle)}
+                        className="p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                      >
+                        {angle}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Token Warning */}
+              {showTokenWarning && (
+                <div className="p-4 bg-yellow-600 bg-opacity-20 border-t border-yellow-600">
+                  <div className="text-yellow-400 text-sm">
+                    ⚠️ You&apos;ve added multiple presets. Consider keeping it simple for best results.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
