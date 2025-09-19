@@ -56,6 +56,9 @@ export default function GeneratePage() {
   const [isCharacterStyleExpanded, setIsCharacterStyleExpanded] = useState(false);
   const [isComprehensivePresetsExpanded, setIsComprehensivePresetsExpanded] = useState(false);
   
+  // Scene Builder state
+  const [sceneBuilderImages, setSceneBuilderImages] = useState<{[key: string]: UploadedFile}>({});
+  
   // NSFW content detection state
   const [showNSFWWarning, setShowNSFWWarning] = useState(false);
   const [detectedNSFWKeywords, setDetectedNSFWKeywords] = useState<string[]>([]);
@@ -527,6 +530,36 @@ export default function GeneratePage() {
   const removeFile = useCallback((id: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== id));
   }, []);
+
+  // Scene Builder image handling
+  const handleSceneBuilderImageUpload = useCallback((slotId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0]; // Take only the first file
+    const uploadedFile: UploadedFile = {
+      file,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9)
+    };
+    
+    setSceneBuilderImages(prev => ({
+      ...prev,
+      [slotId]: uploadedFile
+    }));
+  }, []);
+
+  const removeSceneBuilderImage = useCallback((slotId: string) => {
+    setSceneBuilderImages(prev => {
+      const newImages = { ...prev };
+      delete newImages[slotId];
+      return newImages;
+    });
+  }, []);
+
+  const handleSceneBuilderDrop = useCallback((e: React.DragEvent, slotId: string) => {
+    e.preventDefault();
+    handleSceneBuilderImageUpload(slotId, e.dataTransfer.files);
+  }, [handleSceneBuilderImageUpload]);
 
   // Generation
   const handleGenerate = useCallback(async () => {
@@ -1306,21 +1339,100 @@ export default function GeneratePage() {
               <div className="mb-4">
                 <h4 className="text-xs font-medium text-gray-700 mb-2">CHARACTERS</h4>
                 <div className="grid grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map((num) => (
-                    <div key={num} className="border-2 border-dashed border-gray-300 rounded p-4 text-center bg-white">
-                      <div className="text-gray-400 mb-2">+</div>
-                      <p className="text-xs text-gray-600">Character {num}</p>
-                    </div>
-                  ))}
+                  {[1, 2, 3, 4].map((num) => {
+                    const slotId = `character-${num}`;
+                    const hasImage = sceneBuilderImages[slotId];
+                    return (
+                      <div 
+                        key={num} 
+                        className="border-2 border-dashed border-gray-300 rounded p-4 text-center bg-white cursor-pointer hover:border-gray-400 transition-colors relative"
+                        onDrop={(e) => handleSceneBuilderDrop(e, slotId)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const target = e.target as HTMLInputElement;
+                            handleSceneBuilderImageUpload(slotId, target.files);
+                          };
+                          input.click();
+                        }}
+                      >
+                        {hasImage ? (
+                          <>
+                            <img 
+                              src={hasImage.preview} 
+                              alt={`Character ${num}`} 
+                              className="w-full h-20 object-cover rounded mb-2"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeSceneBuilderImage(slotId);
+                              }}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                            <p className="text-xs text-gray-600 truncate">{hasImage.file.name}</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-gray-400 mb-2">+</div>
+                            <p className="text-xs text-gray-600">Character {num}</p>
+                            <p className="text-xs text-gray-400 mt-1">Click or drag image</p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               
               {/* Location */}
               <div>
                 <h4 className="text-xs font-medium text-gray-700 mb-2">LOCATION</h4>
-                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center bg-white">
-                  <div className="text-gray-400 mb-2">+</div>
-                  <p className="text-xs text-gray-600">Location</p>
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded p-6 text-center bg-white cursor-pointer hover:border-gray-400 transition-colors relative"
+                  onDrop={(e) => handleSceneBuilderDrop(e, 'location')}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const target = e.target as HTMLInputElement;
+                      handleSceneBuilderImageUpload('location', target.files);
+                    };
+                    input.click();
+                  }}
+                >
+                  {sceneBuilderImages['location'] ? (
+                    <>
+                      <img 
+                        src={sceneBuilderImages['location'].preview} 
+                        alt="Location" 
+                        className="w-full h-24 object-cover rounded mb-2"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSceneBuilderImage('location');
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-gray-600 truncate">{sceneBuilderImages['location'].file.name}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-gray-400 mb-2">+</div>
+                      <p className="text-xs text-gray-600">Location</p>
+                      <p className="text-xs text-gray-400 mt-1">Click or drag image</p>
+                    </>
+                  )}
                 </div>
               </div>
                 </div>
