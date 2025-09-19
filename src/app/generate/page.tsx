@@ -1054,18 +1054,18 @@ export default function GeneratePage() {
   }, [generationHistory, saveToLocalStorage]);
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">vARY_lite</h1>
+          <h1 className="text-3xl font-semibold text-foreground mb-2">vARY_lite</h1>
           <p className="text-gray-600">Free AI Scene Generator - No registration required</p>
         </div>
 
         {/* API Key Section */}
-        <div className="mb-6 bg-white rounded border border-gray-200 p-4">
+        <div className="mb-6 bg-secondary rounded border border-gray-400 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900">🔑 Fal.ai API Key (Fallback Option)</h3>
+            <h3 className="text-sm font-medium text-foreground">🔑 Fal.ai API Key (Fallback Option)</h3>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1107,7 +1107,7 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">
           
           {/* Left Column - Input and Configuration */}
-          <div className="bg-white rounded border border-gray-200 p-6 space-y-6">
+          <div className="bg-secondary rounded border border-gray-400 p-6 space-y-6">
             
             {/* 1. Model Selection */}
             <div>
@@ -1167,7 +1167,7 @@ export default function GeneratePage() {
 
             {/* 2. Upload Image(s) */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">2. Upload Image(s)</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">2. Upload Image(s)</h3>
               <div
                 className="border-2 border-dashed border-gray-300 rounded p-6 text-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50"
                 onDrop={handleDrop}
@@ -1175,7 +1175,7 @@ export default function GeneratePage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-sm font-medium text-gray-900 mb-2">Choose file(s)...</p>
+                <p className="text-sm font-medium text-foreground mb-2">Choose file(s)...</p>
                 <p className="text-xs text-gray-500">or drag and drop them here.</p>
               </div>
               <input
@@ -1193,7 +1193,7 @@ export default function GeneratePage() {
                     <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-100 rounded">
                       <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-900 truncate">{file.file.name}</p>
+                        <p className="text-sm text-foreground truncate">{file.file.name}</p>
                         <p className="text-xs text-gray-500">{(file.file.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                       <button
@@ -1210,12 +1210,12 @@ export default function GeneratePage() {
 
             {/* 3. Describe Your Scene */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">3. Describe Your Scene</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">3. Describe Your Scene</h3>
               <textarea
                 value={sceneDescription}
                 onChange={(e) => setSceneDescription(e.target.value)}
                 placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them."
-                className="w-full h-24 p-3 bg-white border border-gray-300 rounded text-gray-900 placeholder-gray-500 focus:border-gray-400 focus:outline-none resize-none text-sm"
+                className="w-full h-24 p-3 bg-secondary border border-gray-300 rounded text-foreground placeholder-gray-500 focus:border-gray-400 focus:outline-none resize-none text-sm"
               />
               
               {/* Scene Options Checkboxes */}
@@ -1296,7 +1296,7 @@ export default function GeneratePage() {
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">4</span>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900">Scene Builder</h3>
+                  <h3 className="text-sm font-medium text-foreground">Scene Builder</h3>
                 </div>
                 <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isSceneBuilderExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -1337,7 +1337,7 @@ export default function GeneratePage() {
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">5</span>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900">(Optional) Things to Avoid</h3>
+                  <h3 className="text-sm font-medium text-foreground">(Optional) Things to Avoid</h3>
                 </div>
                 <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isThingsToAvoidExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -1363,12 +1363,12 @@ export default function GeneratePage() {
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">6</span>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900">Character Style</h3>
+                  <h3 className="text-sm font-medium text-foreground">Character Style</h3>
                 </div>
                 <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isCharacterStyleExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isCharacterStyleExpanded && (
-                <div className="bg-white rounded border border-gray-200 p-4 mb-4">
+                <div className="bg-secondary rounded border border-gray-400 p-4 mb-4">
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Transform your character into popular styles
@@ -1386,7 +1386,7 @@ export default function GeneratePage() {
                       className={`p-3 text-left rounded border transition-colors ${
                         selectedStyle === preset.name.toLowerCase().replace(/\s+/g, '-')
                           ? 'border-blue-500 bg-blue-50 text-blue-900'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
+                          : 'border-gray-300 bg-secondary text-gray-700 hover:border-gray-400 hover:bg-gray-50'
                       }`}
                     >
                       <div className="font-medium text-sm">{preset.name}</div>
@@ -1408,12 +1408,12 @@ export default function GeneratePage() {
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">7</span>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900">QuickShot Presets</h3>
+                  <h3 className="text-sm font-medium text-foreground">QuickShot Presets</h3>
                 </div>
                 <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isQuickShotExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isQuickShotExpanded && (
-                <div className="bg-white rounded border border-gray-200 p-4 mb-4">
+                <div className="bg-secondary rounded border border-gray-400 p-4 mb-4">
                   <div className="mb-3">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Choose a cinematic shot type (optional)
@@ -1469,7 +1469,7 @@ export default function GeneratePage() {
                   <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm font-bold">8</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Comprehensive Presets</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Comprehensive Presets</h3>
                 </div>
                 <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isComprehensivePresetsExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -1661,8 +1661,8 @@ export default function GeneratePage() {
                               disabled={isDownloading}
                               className={`p-2 rounded-full transition-colors ${
                                 isDownloading 
-                                  ? 'bg-white bg-opacity-10 cursor-not-allowed' 
-                                  : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                                  ? 'bg-secondary bg-opacity-10 cursor-not-allowed' 
+                                  : 'bg-secondary bg-opacity-20 hover:bg-opacity-30'
                               }`}
                               title={isDownloading ? "Downloading..." : "Download"}
                             >
@@ -1811,7 +1811,7 @@ export default function GeneratePage() {
                     onClick={() => setSelectedImageIndex(prev => 
                       prev > 0 ? prev - 1 : generatedScenes.length - 1
                     )}
-                    className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded"
+                    className="px-4 py-2 bg-secondary bg-opacity-20 hover:bg-opacity-30 rounded"
                   >
                     ← Previous
                   </button>
@@ -1820,8 +1820,8 @@ export default function GeneratePage() {
                     disabled={isDownloading}
                     className={`px-4 py-2 rounded transition-colors ${
                       isDownloading 
-                        ? 'bg-white bg-opacity-10 cursor-not-allowed' 
-                        : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                        ? 'bg-secondary bg-opacity-10 cursor-not-allowed' 
+                        : 'bg-secondary bg-opacity-20 hover:bg-opacity-30'
                     }`}
                   >
                     {isDownloading ? (
@@ -1837,7 +1837,7 @@ export default function GeneratePage() {
                     onClick={() => setSelectedImageIndex(prev => 
                       prev < generatedScenes.length - 1 ? prev + 1 : 0
                     )}
-                    className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded"
+                    className="px-4 py-2 bg-secondary bg-opacity-20 hover:bg-opacity-30 rounded"
                   >
                     Next →
                   </button>
