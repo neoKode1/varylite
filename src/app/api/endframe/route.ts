@@ -17,6 +17,27 @@ interface EndFrameResponse {
   retryable?: boolean;
 }
 
+// Helper function to fetch image from URL and convert to base64
+async function fetchImageAsBase64(imageUrl: string): Promise<string> {
+  try {
+    console.log(`🖼️ Fetching image from URL: ${imageUrl.substring(0, 100)}...`);
+    
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    
+    console.log(`✅ Image converted to base64, length: ${base64.length}`);
+    return base64;
+  } catch (error) {
+    console.error('❌ Error fetching image:', error);
+    throw new Error(`Failed to fetch and convert image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 // Helper function to create data URI from base64
 function createDataUri(base64Data: string): string {
   return `data:image/jpeg;base64,${base64Data}`;
@@ -72,9 +93,29 @@ export async function POST(request: NextRequest) {
       throw new Error('No prompt provided');
     }
     
-    // Validate image aspect ratios
-    const firstImageValidation = validateImageAspectRatio(firstImage);
-    const secondImageValidation = validateImageAspectRatio(secondImage);
+    // Convert image URLs to base64 if they are URLs, otherwise use as base64
+    let firstImageBase64: string;
+    let secondImageBase64: string;
+    
+    if (firstImage.startsWith('http') || firstImage.startsWith('https')) {
+      console.log('🔄 Converting first image URL to base64...');
+      firstImageBase64 = await fetchImageAsBase64(firstImage);
+    } else {
+      console.log('📝 Using first image as base64 data...');
+      firstImageBase64 = firstImage;
+    }
+    
+    if (secondImage.startsWith('http') || secondImage.startsWith('https')) {
+      console.log('🔄 Converting second image URL to base64...');
+      secondImageBase64 = await fetchImageAsBase64(secondImage);
+    } else {
+      console.log('📝 Using second image as base64 data...');
+      secondImageBase64 = secondImage;
+    }
+    
+    // Validate image aspect ratios using the base64 data
+    const firstImageValidation = validateImageAspectRatio(firstImageBase64);
+    const secondImageValidation = validateImageAspectRatio(secondImageBase64);
     
     if (!firstImageValidation.isValid) {
       throw new Error(`First image validation failed: ${firstImageValidation.message}`);
@@ -85,8 +126,8 @@ export async function POST(request: NextRequest) {
     }
     
     // Create data URIs from base64 images
-    const firstImageUri = createDataUri(firstImage);
-    const secondImageUri = createDataUri(secondImage);
+    const firstImageUri = createDataUri(firstImageBase64);
+    const secondImageUri = createDataUri(secondImageBase64);
     console.log('🖼️ Image URIs created successfully');
     
     // Make request to Minimax EndFrame API
