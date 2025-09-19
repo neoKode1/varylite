@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
-import { AuthModal } from '@/components/AuthModal';
 
 export default function LandingPage() {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,20 +99,8 @@ export default function LandingPage() {
     };
   }, [currentVideoIndex]);
 
-  const handleSignIn = () => {
-    console.log('Sign In button clicked');
-    setAuthMode('signin');
-    setShowAuthModal(true);
-  };
-
-  const handleSignUp = () => {
-    console.log('Sign Up button clicked');
-    setAuthMode('signup');
-    setShowAuthModal(true);
-  };
-
-  const handleGetFreeGenerations = () => {
-    console.log('Get Free Generations button clicked, navigating to /generate');
+  const handleStartVarylite = () => {
+    console.log('vARYLite START button clicked, navigating to /generate');
     try {
       router.push('/generate');
     } catch (error) {
@@ -187,75 +171,34 @@ export default function LandingPage() {
               </h1>
             </div>
             <p className="text-lg md:text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
-              The AI app made for creation by creators.
+              The free AI app made for creation by creators.
             </p>
             
-            <p className="text-gray-300 mb-6">Ready to get started?</p>
+            <p className="text-gray-300 mb-8">Ready to create with vARYLite?</p>
             
-            {/* <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
-            No one has these presets... because no one made them.
-            </p> */}
-            
-            <div className="flex flex-col gap-4 justify-center items-center">
-              {/* Free Generations Button - Primary CTA */}
+            {/* Single START Button - Centered */}
+            <div className="flex justify-center">
               <button
-                onClick={handleGetFreeGenerations}
+                onClick={handleStartVarylite}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    handleGetFreeGenerations();
+                    handleStartVarylite();
                   }
                 }}
                 tabIndex={0}
-                aria-label="Get 3 free generations and start creating"
-                className="flex items-center justify-center space-x-2 text-black bg-white border border-white px-8 py-4 rounded-lg hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[200px] font-semibold text-lg"
+                aria-label="Start creating with vARYLite"
+                className="group flex items-center justify-center space-x-3 text-black bg-white border-2 border-white px-12 py-6 rounded-xl hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-all duration-300 min-w-[250px] font-bold text-2xl shadow-2xl hover:shadow-white/20 hover:scale-105 transform"
               >
-                <span>🎨 Get 3 Free Generations</span>
+                <span>🚀</span>
+                <span>START vARYLite</span>
+                <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
               </button>
-              
-              {/* Account Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button
-                  onClick={handleSignUp}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSignUp();
-                    }
-                  }}
-                  tabIndex={0}
-                  aria-label="Create a new account"
-                  className="flex items-center justify-center space-x-2 text-white bg-white bg-opacity-10 border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 focus:bg-white focus:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[160px]"
-                >
-                  <span>Create Account</span>
-                </button>
-                
-                <button
-                  onClick={handleSignIn}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSignIn();
-                    }
-                  }}
-                  tabIndex={0}
-                  aria-label="Sign in to your account"
-                  className="flex items-center justify-center space-x-2 text-white border border-white border-opacity-30 px-6 py-3 rounded-lg hover:bg-white hover:bg-opacity-10 focus:bg-white focus:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black transition-colors min-w-[160px]"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>→ Sign In</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        defaultMode={authMode}
-      />
     </div>
   );
 }

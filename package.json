@@ -1,19 +1,17 @@
 {
-  "name": "vary-ai",
+  "name": "varylite",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test:endframe": "node test-endframe.js",
-    "test:endframe:ps1": "powershell -ExecutionPolicy Bypass -File test-endframe.ps1"
+    "lint": "next lint"
   },
-  "keywords": [],
+  "keywords": ["ai", "image-generation", "video-generation", "free", "browser-based"],
   "author": "",
-  "license": "ISC",
-  "description": "AI-powered character angle variation generator using Google Gemini",
+  "license": "MIT",
+  "description": "vARYLite - Free AI Scene Generator with browser-based storage",
   "private": true,
   "dependencies": {
     "@fal-ai/client": "^1.6.2",

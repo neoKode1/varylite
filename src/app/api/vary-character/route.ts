@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { fal } from '@fal-ai/client';
 import type { CharacterVariationRequest, CharacterVariationResponse, CharacterVariation } from '@/types/gemini';
-import { 
-  checkUserGenerationPermission, 
-  trackUserFirstGeneration, 
-  deductCreditsForGeneration,
-  checkLowBalanceNotification 
-} from '@/lib/creditEnforcementService';
-import { supabaseAdmin } from '@/lib/supabase';
+import { aiServiceManager } from '@/lib/ai-service-manager';
+import { circuitBreakerManager } from '@/lib/circuit-breaker';
+import { optimizedCreditService } from '@/lib/optimized-credit-service';
+import { fileProcessingManager } from '@/lib/file-processing-manager';
+import { supabaseAdmin } from '@/lib/optimized-supabase';
+import { userCache, modelCache } from '@/lib/cache-manager';
+import { fal } from '@fal-ai/client';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { trackUserFirstGeneration, checkUserGenerationPermission, deductCreditsForGeneration, checkLowBalanceNotification } from '@/lib/creditEnforcementService';
 
 // Function to upload image using Fal AI client's built-in upload
 async function uploadImageToTempUrl(base64Data: string): Promise<string> {
