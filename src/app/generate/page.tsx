@@ -1115,7 +1115,7 @@ export default function GeneratePage() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleModelDropdown}
-                  className="w-full p-4 bg-gray-300 border border-gray-400 rounded-lg text-left hover:bg-gray-400 transition-colors flex items-center gap-3"
+                  className="w-full p-4 bg-white border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors flex items-center gap-3"
                 >
                   {modelOptions.find(m => m.id === selectedModel) && (
                     <>
@@ -1125,8 +1125,8 @@ export default function GeneratePage() {
                         className="w-8 h-8 rounded object-contain"
                       />
                       <div className="flex-1">
-                        <div className="font-semibold text-black">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
-                        <div className="text-xs text-gray-400">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
+                        <div className="font-semibold text-gray-900">{modelOptions.find(m => m.id === selectedModel)!.label}</div>
+                        <div className="text-xs text-gray-500">{modelOptions.find(m => m.id === selectedModel)!.type} • {modelOptions.find(m => m.id === selectedModel)!.cost} credits</div>
                       </div>
                     </>
                   )}
@@ -1135,13 +1135,13 @@ export default function GeneratePage() {
                   />
                 </button>
                 {isModelDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-gray-300 border border-gray-400 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                     {modelOptions.map((model) => (
                       <button
                         key={model.id}
                         onClick={() => handleModelSelect(model.id)}
-                        className={`w-full p-3 text-left hover:bg-gray-300 transition-colors flex items-center gap-3 ${
-                          selectedModel === model.id ? 'bg-gray-300' : ''
+                        className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+                          selectedModel === model.id ? 'bg-gray-50' : ''
                         }`}
                       >
                         <img
@@ -1150,8 +1150,8 @@ export default function GeneratePage() {
                           className="w-6 h-6 rounded object-contain"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-black">{model.label}</div>
-                          <div className="text-xs text-gray-400">{model.type} • {model.cost} credits</div>
+                          <div className="font-medium text-gray-900">{model.label}</div>
+                          <div className="text-xs text-gray-500">{model.type} • {model.cost} credits</div>
                         </div>
                         {selectedModel === model.id && (
                           <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1169,7 +1169,7 @@ export default function GeneratePage() {
             <div>
               <h3 className="text-sm font-medium text-foreground mb-3">2. Upload Image(s)</h3>
               <div
-                className="border-2 border-dashed border-gray-300 rounded p-6 text-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50"
+                className="border-2 border-dashed border-gray-300 rounded p-6 text-center cursor-pointer hover:border-gray-400 transition-colors bg-white"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
@@ -1190,7 +1190,7 @@ export default function GeneratePage() {
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {uploadedFiles.map((file) => (
-                    <div key={file.id} className="flex items-center gap-3 p-2 bg-gray-100 rounded">
+                    <div key={file.id} className="flex items-center gap-3 p-2 bg-white border border-gray-200 rounded">
                       <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1">
                         <p className="text-sm text-foreground truncate">{file.file.name}</p>
@@ -1307,7 +1307,7 @@ export default function GeneratePage() {
                 <h4 className="text-xs font-medium text-gray-700 mb-2">CHARACTERS</h4>
                 <div className="grid grid-cols-2 gap-3">
                   {[1, 2, 3, 4].map((num) => (
-                    <div key={num} className="border-2 border-dashed border-gray-300 rounded p-4 text-center bg-gray-50">
+                    <div key={num} className="border-2 border-dashed border-gray-300 rounded p-4 text-center bg-white">
                       <div className="text-gray-400 mb-2">+</div>
                       <p className="text-xs text-gray-600">Character {num}</p>
                     </div>
@@ -1318,7 +1318,7 @@ export default function GeneratePage() {
               {/* Location */}
               <div>
                 <h4 className="text-xs font-medium text-gray-700 mb-2">LOCATION</h4>
-                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center bg-white">
                   <div className="text-gray-400 mb-2">+</div>
                   <p className="text-xs text-gray-600">Location</p>
                 </div>
