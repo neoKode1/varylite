@@ -564,7 +564,15 @@ export default function GeneratePage() {
   // Generation
   const handleGenerate = useCallback(async () => {
     if (!sceneDescription.trim()) return;
-    if (uploadedFiles.length === 0) return;
+    
+    // Check if Scene Builder has images, otherwise fall back to single upload
+    const sceneBuilderImageCount = Object.keys(sceneBuilderImages).length;
+    const hasSceneBuilderImages = sceneBuilderImageCount > 0;
+    const hasSingleUploadImages = uploadedFiles.length > 0;
+    
+    if (!hasSceneBuilderImages && !hasSingleUploadImages) {
+      return; // No images available
+    }
 
     setIsGenerating(true);
     try {
@@ -590,11 +598,24 @@ export default function GeneratePage() {
       let apiEndpoint = '';
       let requestBody: any = {};
 
+      // Determine which images to use - prioritize Scene Builder images
+      let imagesToProcess: UploadedFile[] = [];
+      
+      if (hasSceneBuilderImages) {
+        // Use Scene Builder images
+        imagesToProcess = Object.values(sceneBuilderImages);
+        console.log(`📤 [vARYLite] Using Scene Builder images (${imagesToProcess.length} files)...`);
+      } else {
+        // Fall back to single upload images
+        imagesToProcess = uploadedFiles;
+        console.log(`📤 [vARYLite] Using single upload images (${imagesToProcess.length} files)...`);
+      }
+      
       // Upload images to get URLs first
-      console.log(`📤 [vARYLite] Starting image upload process for ${uploadedFiles.length} files...`);
+      console.log(`📤 [vARYLite] Starting image upload process for ${imagesToProcess.length} files...`);
       const imageUrls: string[] = [];
       
-      for (const uploadedFile of uploadedFiles) {
+      for (const uploadedFile of imagesToProcess) {
         const formData = new FormData();
         formData.append('file', uploadedFile.file);
         
@@ -692,7 +713,7 @@ export default function GeneratePage() {
           requestBody = {
             prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
             images: imageUrls.map(url => url.split(',')[1] || url),
-            mimeTypes: uploadedFiles.map(() => 'image/jpeg')
+            mimeTypes: imagesToProcess.map(() => 'image/jpeg')
           };
           break;
 
@@ -1088,7 +1109,7 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8 pt-20">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-foreground mb-2">vARY_lite</h1>
@@ -1096,7 +1117,7 @@ export default function GeneratePage() {
         </div>
 
         {/* API Key Section */}
-        <div className="mb-6 bg-secondary rounded border border-gray-400 p-4">
+        <div className="mb-6 bg-secondary rounded border border-gray-400 p-4 relative z-10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-foreground">🔑 Fal.ai API Key (Fallback Option)</h3>
             <div className="flex items-center gap-2">
@@ -1104,10 +1125,13 @@ export default function GeneratePage() {
                 type="checkbox"
                 id="useCustomApiKey"
                 checked={useCustomApiKey}
-                onChange={(e) => setUseCustomApiKey(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                onChange={(e) => {
+                  console.log('🔑 API Key checkbox clicked:', e.target.checked);
+                  setUseCustomApiKey(e.target.checked);
+                }}
+                className="w-4 h-4 text-blue-600 bg-white border-gray-400 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
               />
-              <label htmlFor="useCustomApiKey" className="text-sm text-gray-700">
+              <label htmlFor="useCustomApiKey" className="text-sm text-gray-700 cursor-pointer">
                 Use my own API key as fallback
               </label>
             </div>
@@ -1317,6 +1341,35 @@ export default function GeneratePage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Generate Button */}
+            <div className="space-y-2">
+              {/* Image Source Indicator */}
+              {(Object.keys(sceneBuilderImages).length > 0 || uploadedFiles.length > 0) && (
+                <div className="text-xs text-gray-600 text-center">
+                  {Object.keys(sceneBuilderImages).length > 0 ? (
+                    <>Using Scene Builder images ({Object.keys(sceneBuilderImages).length} files)</>
+                  ) : (
+                    <>Using uploaded images ({uploadedFiles.length} files)</>
+                  )}
+                </div>
+              )}
+              
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !sceneDescription.trim() || (Object.keys(sceneBuilderImages).length === 0 && uploadedFiles.length === 0)}
+                className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Scene'
+                )}
+              </button>
             </div>
 
             {/* 4. Scene Builder */}
@@ -1718,21 +1771,6 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || !sceneDescription.trim() || uploadedFiles.length === 0}
-              className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Generate Scene'
-              )}
-            </button>
           </div>
 
           {/* Right Column - Output */}

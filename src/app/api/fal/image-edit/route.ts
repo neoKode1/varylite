@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       model, 
       imageUrls, 
       prompt, 
+      negative_prompt,
       numImages = 1, 
       outputFormat = 'jpeg',
       operation = 'edit', 
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
     console.log(`🚀 FAL Image Edit Request - Model: ${model}`, { 
       imageUrls, 
       prompt, 
+      negative_prompt,
       numImages,
       outputFormat,
       operation, 
@@ -104,6 +106,11 @@ export async function POST(request: NextRequest) {
       num_images: numImages,
       output_format: outputFormat
     };
+
+    // Add negative prompt if provided
+    if (negative_prompt) {
+      input.negative_prompt = negative_prompt;
+    }
 
     // Add model-specific parameters for other models
     if (model !== 'nano-banana-edit') {
@@ -145,6 +152,7 @@ export async function POST(request: NextRequest) {
       model,
       imageUrls,
       prompt,
+      negative_prompt,
       numImages,
       outputFormat,
       operation

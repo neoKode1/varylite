@@ -23,25 +23,25 @@ module.exports = {
           900: 'oklch(18% 0 0)',
           950: 'oklch(12% 0 0)',
         },
-        // Semantic color mappings - minimal and subtle theme
-        background: '#f8f9fa', // Very light background
-        foreground: '#495057', // Subtle dark text
-        secondary: '#ffffff', // Clean white cards/panels
+        // Semantic color mappings - minimal and subtle theme (20% darker)
+        background: '#dee2e6', // Much darker background
+        foreground: '#212529', // Much darker text
+        secondary: '#e9ecef', // Darker cards/panels
         muted: {
-          DEFAULT: '#f1f3f4', // Very subtle muted
-          foreground: '#6c757d', // Muted text
+          DEFAULT: '#ced4da', // Much darker muted
+          foreground: '#343a40', // Much darker muted text
         },
         accent: {
-          DEFAULT: '#e9ecef', // Subtle accent
-          foreground: '#495057', // Dark text on accent
+          DEFAULT: '#adb5bd', // Much darker accent
+          foreground: '#212529', // Much darker text on accent
         },
         destructive: {
           DEFAULT: '#dc3545', // Keep red for errors
           foreground: '#ffffff',
         },
-        border: '#dee2e6', // Very subtle borders
-        input: '#ffffff', // Clean white inputs
-        ring: '#adb5bd', // Subtle focus rings
+        border: '#6c757d', // Much darker borders
+        input: '#e9ecef', // Much darker inputs
+        ring: '#495057', // Much darker focus rings
         // Legacy colors for backward compatibility
         'jet-black': 'oklch(12% 0 0)',
         'charcoal': 'oklch(22% 0 0)',
@@ -55,10 +55,10 @@ module.exports = {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        // Minimal theme gradients - very subtle
-        'gradient-primary': 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        'gradient-muted': 'linear-gradient(135deg, #f1f3f4 0%, #f8f9fa 100%)',
-        'gradient-accent': 'linear-gradient(135deg, #e9ecef 0%, #f1f3f4 100%)',
+        // Minimal theme gradients - 20% darker and subtle
+        'gradient-primary': 'linear-gradient(135deg, #dee2e6 0%, #e9ecef 100%)',
+        'gradient-muted': 'linear-gradient(135deg, #ced4da 0%, #dee2e6 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #adb5bd 0%, #ced4da 100%)',
         // Legacy gradients
         'gradient-jet': 'linear-gradient(135deg, oklch(12% 0 0) 0%, oklch(22% 0 0) 100%)',
         'gradient-charcoal': 'linear-gradient(135deg, oklch(22% 0 0) 0%, oklch(28% 0 0) 100%)',
