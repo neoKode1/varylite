@@ -860,7 +860,7 @@ export default function GeneratePage() {
             model: 'nano-banana-edit',
             imageUrls: imageUrls,  // Send as array, not single string
             prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
-            negative_prompt: thingsToAvoid,
+            // Note: negative_prompt not supported by nano-banana-edit API
             numImages: imagesToGenerate  // Use user's desired number of images
           };
           break;
@@ -869,7 +869,9 @@ export default function GeneratePage() {
           apiEndpoint = '/api/fal/seedream-4-edit';
           requestBody = {
             prompt: finalPrompt, // Use smart prompt (single or variations based on image count)
-            imageUrls: imageUrls.map(url => url.split(',')[1] || url)
+            imageUrls: imageUrls.map(url => url.split(',')[1] || url),
+            numImages: imagesToGenerate,
+            maxImages: Math.min(imagesToGenerate * 2, 6) // Max 6 as per API spec
           };
           break;
 
@@ -1179,7 +1181,7 @@ export default function GeneratePage() {
         model: 'nano-banana-edit',
         imageUrls: imageUrls,
         prompt: variationPrompt,
-        negative_prompt: thingsToAvoid,
+        // Note: negative_prompt not supported by nano-banana-edit API
         numImages: 1
       };
       

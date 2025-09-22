@@ -80,6 +80,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Validate numImages for nano-banana-edit (max 4)
+    if (model === 'nano-banana-edit' && (numImages < 1 || numImages > 4)) {
+      return NextResponse.json({ 
+        error: 'Number of images must be between 1 and 4 for nano-banana-edit' 
+      }, { status: 400 });
+    }
+
     // Validate operation
     if (!config.supportedOperations.includes(operation)) {
       return NextResponse.json({ 
@@ -107,8 +114,11 @@ export async function POST(request: NextRequest) {
       output_format: outputFormat
     };
 
-    // Add negative prompt if provided
-    if (negative_prompt) {
+    // Debug: Log the exact input being sent to FAL
+    console.log('🔍 FAL Input Debug:', JSON.stringify(input, null, 2));
+
+    // Add negative prompt if provided (only for non-nano-banana models)
+    if (negative_prompt && model !== 'nano-banana-edit') {
       input.negative_prompt = negative_prompt;
     }
 
@@ -161,9 +171,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ FAL Image Edit Error:', error);
     
+    // Log more details about validation errors
+    if (error && typeof error === 'object' && 'status' in error && error.status === 422) {
+      console.error('🔍 Validation Error Details:', {
+        status: error.status,
+        body: (error as any).body,
+        message: (error as any).message
+      });
+    }
+    
     return NextResponse.json({ 
       error: 'FAL image edit request failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      status: error && typeof error === 'object' && 'status' in error ? error.status : 500
     }, { status: 500 });
   }
 }
