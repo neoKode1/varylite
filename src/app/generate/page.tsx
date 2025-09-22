@@ -369,32 +369,32 @@ export default function GeneratePage() {
     {
       name: 'Art Style Copy',
       description: 'Extract and apply the artistic style from the input image',
-      prompt: 'Extract the artistic style, brushwork, and visual techniques from the input image and apply them to the subject'
+      prompt: 'Apply the artistic style, brushwork, and visual techniques from the reference image to transform the subject'
     },
     {
       name: 'Color Palette Transfer',
       description: 'Copy the color scheme and palette from the input image',
-      prompt: 'Extract the color palette, lighting, and mood from the input image and apply them to the subject'
+      prompt: 'Transform the subject using the color palette, lighting, and mood from the reference image'
     },
     {
       name: 'Texture & Material',
       description: 'Extract surface textures and materials from the input image',
-      prompt: 'Extract the surface textures, materials, and tactile qualities from the input image and apply them to the subject'
+      prompt: 'Apply the surface textures, materials, and tactile qualities from the reference image to the subject'
     },
     {
       name: 'Lighting & Atmosphere',
       description: 'Copy lighting conditions and atmospheric effects',
-      prompt: 'Extract the lighting conditions, shadows, and atmospheric effects from the input image and apply them to the subject'
+      prompt: 'Transform the subject using the lighting conditions, shadows, and atmospheric effects from the reference image'
     },
     {
       name: 'Composition Style',
       description: 'Extract compositional elements and framing',
-      prompt: 'Extract the compositional style, framing, and visual arrangement from the input image and apply them to the subject'
+      prompt: 'Apply the compositional style, framing, and visual arrangement from the reference image to the subject'
     },
     {
       name: 'Complete Style Transfer',
       description: 'Comprehensive style extraction including all visual elements',
-      prompt: 'Extract the complete visual style including art style, colors, textures, lighting, and composition from the input image and apply them comprehensively to the subject'
+      prompt: 'Completely transform the subject using the visual style, colors, textures, lighting, and composition from the reference image'
     }
   ];
 
@@ -480,13 +480,13 @@ export default function GeneratePage() {
       return null;
     }
     
-    // Construct the Halloween me prompt
+    // Construct the Halloween me prompt with descriptive language
     if (allImages.length === 2) {
-      return `style the character from image 1 in the Halloween costume style of the character in image 2`;
+      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference image as inspiration`;
     } else if (allImages.length === 3) {
-      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from image 3`;
+      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference images as inspiration, incorporating additional elements from the third image`;
     } else if (allImages.length >= 4) {
-      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from images 3 and 4`;
+      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference images as inspiration, incorporating additional elements from the other images`;
     }
     
     return null;
