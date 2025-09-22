@@ -356,6 +356,11 @@ export default function GeneratePage() {
       name: 'Nightmare on Elm Street',
       description: 'Photo-realistic dark fantasy styling featuring twisted, dreamlike aesthetics',
       prompt: 'Make into Freddy Krueger style while adhering to user\'s prompt details'
+    },
+    {
+      name: 'Halloween me',
+      description: 'Apply costume style from uploaded images to create Halloween transformation',
+      prompt: 'HALLOWEEN_ME_SPECIAL' // Special marker for custom logic
     }
   ];
 
@@ -454,32 +459,95 @@ export default function GeneratePage() {
 
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]?.id || '');
 
+  // Construct Halloween me prompt based on uploaded images
+  const constructHalloweenMePrompt = useCallback(() => {
+    // Get all uploaded images (both single upload and scene builder)
+    const allImages = [];
+    
+    // Add single uploaded images
+    if (uploadedFiles.length > 0) {
+      allImages.push(...uploadedFiles);
+    }
+    
+    // Add scene builder images
+    const sceneBuilderImageList = Object.values(sceneBuilderImages);
+    if (sceneBuilderImageList.length > 0) {
+      allImages.push(...sceneBuilderImageList);
+    }
+    
+    // Need at least 2 images for Halloween me feature
+    if (allImages.length < 2) {
+      return null;
+    }
+    
+    // Construct the Halloween me prompt
+    if (allImages.length === 2) {
+      return `style the character from image 1 in the Halloween costume style of the character in image 2`;
+    } else if (allImages.length === 3) {
+      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from image 3`;
+    } else if (allImages.length >= 4) {
+      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from images 3 and 4`;
+    }
+    
+    return null;
+  }, [uploadedFiles, sceneBuilderImages]);
+
+  // Handle text input with Halloween me detection
+  const handlePromptChange = useCallback((value: string) => {
+    // Check if user typed "Halloween me" (case insensitive)
+    if (value.toLowerCase().includes('halloween me')) {
+      const halloweenPrompt = constructHalloweenMePrompt();
+      if (halloweenPrompt) {
+        // Replace "Halloween me" with the constructed prompt
+        const newValue = value.replace(/halloween me/gi, halloweenPrompt);
+        setSceneDescription(newValue);
+        return;
+      }
+    }
+    
+    // Normal text input
+    setSceneDescription(value);
+  }, [constructHalloweenMePrompt]);
+
   // Handle preset combination logic
   const handlePresetClick = useCallback((presetText: string) => {
-    const currentPrompt = sceneDescription.trim();
-    
-    if (currentPrompt === '') {
-      // First preset - just set it
-      setSceneDescription(presetText);
-      setPresetCount(1);
+    // Special handling for Halloween me feature
+    if (presetText === 'HALLOWEEN_ME_SPECIAL') {
+      const halloweenPrompt = constructHalloweenMePrompt();
+      if (halloweenPrompt) {
+        setSceneDescription(halloweenPrompt);
+        setPresetCount(1);
+      } else {
+        // Fallback if no images uploaded
+        setSceneDescription('Transform into Halloween costume style');
+        setPresetCount(1);
+      }
     } else {
-      // Add comma and new preset
-      const newPrompt = `${currentPrompt}, ${presetText}`;
-      setSceneDescription(newPrompt);
-      setPresetCount(prev => prev + 1);
+      const currentPrompt = sceneDescription.trim();
       
-      // Show warning after 3 presets
-      if (presetCount >= 2) {
-        setShowTokenWarning(true);
-        // Auto-hide warning after 3 seconds
-        setTimeout(() => setShowTokenWarning(false), 3000);
+      if (currentPrompt === '') {
+        // First preset - just set it
+        setSceneDescription(presetText);
+        setPresetCount(1);
+      } else {
+        // Add comma and new preset
+        const newPrompt = `${currentPrompt}, ${presetText}`;
+        setSceneDescription(newPrompt);
+        setPresetCount(prev => prev + 1);
+        
+        // Show warning after 3 presets
+        if (presetCount >= 2) {
+          setShowTokenWarning(true);
+          // Auto-hide warning after 3 seconds
+          setTimeout(() => setShowTokenWarning(false), 3000);
+        }
       }
     }
     
     // Close modal after selection
     setShowPresetModal(false);
     setActivePresetTab(null);
-  }, [sceneDescription, presetCount]);
+  }, [sceneDescription, presetCount, constructHalloweenMePrompt]);
 
   // Reset preset count when prompt is manually cleared
   useEffect(() => {
@@ -1445,8 +1513,8 @@ export default function GeneratePage() {
               <h3 className="text-sm font-medium text-foreground mb-3">3. Describe Your Scene</h3>
               <textarea
                 value={sceneDescription}
-                onChange={(e) => setSceneDescription(e.target.value)}
-                placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them."
+                onChange={(e) => handlePromptChange(e.target.value)}
+                placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them. Try typing 'Halloween me' with 2+ images uploaded!"
                 className="w-full h-24 p-3 bg-secondary border border-gray-300 rounded text-foreground placeholder-gray-500 focus:border-gray-400 focus:outline-none resize-none text-sm"
               />
               
