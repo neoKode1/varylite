@@ -116,6 +116,32 @@ export async function POST(request: NextRequest) {
 
     // Debug: Log the exact input being sent to FAL
     console.log('🔍 FAL Input Debug:', JSON.stringify(input, null, 2));
+    
+    // Additional validation for nano-banana-edit
+    if (model === 'nano-banana-edit') {
+      // Ensure image_urls is an array of strings
+      if (!Array.isArray(input.image_urls) || input.image_urls.length === 0) {
+        return NextResponse.json({ 
+          error: 'image_urls must be a non-empty array for nano-banana-edit' 
+        }, { status: 400 });
+      }
+      
+      // Validate each URL
+      for (const url of input.image_urls) {
+        if (typeof url !== 'string' || !url.startsWith('http')) {
+          return NextResponse.json({ 
+            error: 'All image URLs must be valid HTTP URLs' 
+          }, { status: 400 });
+        }
+      }
+      
+      // Ensure prompt is within limits
+      if (input.prompt.length < 3 || input.prompt.length > 5000) {
+        return NextResponse.json({ 
+          error: 'Prompt must be between 3 and 5000 characters for nano-banana-edit' 
+        }, { status: 400 });
+      }
+    }
 
     // Add negative prompt if provided (only for non-nano-banana models)
     if (negative_prompt && model !== 'nano-banana-edit') {
@@ -178,6 +204,11 @@ export async function POST(request: NextRequest) {
         body: (error as any).body,
         message: (error as any).message
       });
+      
+      // Log the detailed validation errors
+      if ((error as any).body && (error as any).body.detail) {
+        console.error('🔍 Detailed Validation Errors:', JSON.stringify((error as any).body.detail, null, 2));
+      }
     }
     
     return NextResponse.json({ 

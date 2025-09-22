@@ -800,6 +800,9 @@ export default function GeneratePage() {
 
       console.log(`✅ [vARYLite] All images uploaded successfully:`, imageUrls);
       console.log(`🔧 [vARYLite] Preparing request for model: ${selectedModel}`);
+      
+      // Debug: Log the exact imageUrls being sent
+      console.log(`🔍 [vARYLite] Image URLs for API:`, JSON.stringify(imageUrls, null, 2));
       console.log(`🔧 [vARYLite] Selected model config:`, selectedModelConfig);
       console.log(`🔧 [vARYLite] Scene description:`, sceneDescription);
       console.log(`🔧 [vARYLite] Images to generate:`, imagesToGenerate);
