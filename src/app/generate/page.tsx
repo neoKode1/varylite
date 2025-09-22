@@ -359,7 +359,7 @@ export default function GeneratePage() {
     },
     {
       name: 'Halloween me',
-      description: 'Apply costume style from uploaded images to create Halloween transformation',
+      description: 'Apply costume style from uploaded images to create Halloween transformation (Image 1: person, Image 2: costume style)',
       prompt: 'HALLOWEEN_ME_SPECIAL' // Special marker for custom logic
     }
   ];
@@ -480,13 +480,13 @@ export default function GeneratePage() {
       return null;
     }
     
-    // Construct the Halloween me prompt with descriptive language
+    // Construct the Halloween me prompt using numbered references (works with Nano Banana)
     if (allImages.length === 2) {
-      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference image as inspiration`;
+      return `style the character from image 1 in the Halloween costume style of the character in image 2`;
     } else if (allImages.length === 3) {
-      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference images as inspiration, incorporating additional elements from the third image`;
+      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from image 3`;
     } else if (allImages.length >= 4) {
-      return `Transform the person/character into a Halloween costume style, using the costume and styling from the reference images as inspiration, incorporating additional elements from the other images`;
+      return `style the character from image 1 in the Halloween costume style of the character in image 2, incorporating elements from images 3 and 4`;
     }
     
     return null;
@@ -1491,12 +1491,18 @@ export default function GeneratePage() {
               
               {uploadedFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {uploadedFiles.map((file) => (
+                  {uploadedFiles.map((file, index) => (
                     <div key={file.id} className="flex items-center gap-3 p-2 bg-white border border-gray-200 rounded">
-                      <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
+                      <div className="relative">
+                        <img src={file.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
+                        <div className="absolute -top-1 -left-1 w-5 h-5 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                          {index + 1}
+                        </div>
+                      </div>
                       <div className="flex-1">
                         <p className="text-sm text-foreground truncate">{file.file.name}</p>
                         <p className="text-xs text-gray-500">{(file.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p className="text-xs text-blue-600 font-medium">Image {index + 1}</p>
                       </div>
                       <button
                         onClick={() => removeFile(file.id)}
@@ -1516,7 +1522,7 @@ export default function GeneratePage() {
               <textarea
                 value={sceneDescription}
                 onChange={(e) => handlePromptChange(e.target.value)}
-                placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them. Try typing 'Halloween me' with 2+ images uploaded!"
+                placeholder="e.g., Mix these images into a surreal landscape... Use character names if you've added them. Try typing 'Halloween me' with 2+ images uploaded! (Image 1: person, Image 2: costume style)"
                 className="w-full h-24 p-3 bg-secondary border border-gray-300 rounded text-foreground placeholder-gray-500 focus:border-gray-400 focus:outline-none resize-none text-sm"
               />
               
@@ -1659,11 +1665,16 @@ export default function GeneratePage() {
                       >
                         {hasImage ? (
                           <>
-                            <img 
-                              src={hasImage.preview} 
-                              alt={`Character ${num}`} 
-                              className="w-full h-20 object-cover rounded mb-2"
-                            />
+                            <div className="relative">
+                              <img 
+                                src={hasImage.preview} 
+                                alt={`Character ${num}`} 
+                                className="w-full h-20 object-cover rounded mb-2"
+                              />
+                              <div className="absolute top-1 left-1 w-5 h-5 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                {num}
+                              </div>
+                            </div>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1674,11 +1685,13 @@ export default function GeneratePage() {
                               ×
                             </button>
                             <p className="text-xs text-gray-600 truncate">{hasImage.file.name}</p>
+                            <p className="text-xs text-blue-600 font-medium">Image {num}</p>
                           </>
                         ) : (
                           <>
                             <div className="text-gray-400 mb-2">+</div>
                             <p className="text-xs text-gray-600">Character {num}</p>
+                            <p className="text-xs text-blue-600 font-medium">Image {num}</p>
                             <p className="text-xs text-gray-400 mt-1">Click or drag image</p>
                           </>
                         )}
