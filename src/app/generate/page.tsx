@@ -148,10 +148,12 @@ export default function GeneratePage() {
   // Model options - integrating the core models with icons
   const modelOptions = useMemo(() => [
     { id: 'nano-banana', label: 'Nano Banana', type: 'image-edit', cost: 3, icon: '/flux.png' },
-    { id: 'seedance-4-edit', label: 'Seedance 4 Edit', type: 'video', cost: 8, icon: '/bytedance-color.svg' },
     { id: 'gemini-flash-edit', label: 'Gemini Flash Edit', type: 'image-edit', cost: 2, icon: '/gemini-color.svg' },
+    { id: 'seedance-4-edit', label: 'Seedream 4 Edit', type: 'image-edit', cost: 8, icon: '/bytedance-color.svg' },
+    { id: 'reframe', label: 'Reframe', type: 'image-edit', cost: 4, icon: '/fal-icon.svg' },
+    { id: 'veo3-fast-i2v', label: 'Veo3 Fast I2V', type: 'video', cost: 12, icon: '/google-color.svg' },
+    { id: 'kling-avatar', label: 'Kling Avatar', type: 'video', cost: 15, icon: '/kling-color.svg' },
     { id: 'minimax-2-0', label: 'Mini Max 2.0', type: 'video', cost: 10, icon: '/minimax-color.svg' },
-    { id: 'kling-avatar', label: 'KlingAvatar', type: 'video', cost: 15, icon: '/kling-color.svg' },
     { id: 'minimax-endframe', label: 'Mini Max End Frame', type: 'video', cost: 12, icon: '/minimax-color.svg' },
   ], []);
 
@@ -881,12 +883,36 @@ export default function GeneratePage() {
         case 'gemini-flash-edit':
           apiEndpoint = '/api/fal/image-edit';
           requestBody = {
-            model: 'nano-banana-edit', // Use nano-banana-edit as the FAL model for Gemini functionality
+            model: 'gemini-flash-edit', // Use correct Gemini Flash Edit model
             imageUrls: imageUrls,
             prompt: finalPrompt,
             numImages: imagesToGenerate,
             outputFormat: 'jpeg',
             operation: 'edit'
+          };
+          break;
+
+        case 'reframe':
+          apiEndpoint = '/api/fal/reframe';
+          requestBody = {
+            imageUrl: imageUrls[0], // Reframe only takes single image
+            aspectRatio: '16:9',
+            guidanceScale: 3.5,
+            numInferenceSteps: 30,
+            safetyTolerance: '2',
+            outputFormat: 'jpeg'
+          };
+          break;
+
+        case 'veo3-fast-i2v':
+          apiEndpoint = '/api/fal/veo3-fast-i2v';
+          requestBody = {
+            prompt: finalPrompt,
+            imageUrl: imageUrls[0], // Veo3 Fast I2V only takes single image
+            aspectRatio: 'auto',
+            duration: '8s',
+            generateAudio: true,
+            resolution: '720p'
           };
           break;
 

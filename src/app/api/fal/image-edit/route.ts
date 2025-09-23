@@ -10,8 +10,13 @@ fal.config({
 const MODEL_CONFIGS = {
   'nano-banana-edit': {
     endpoint: 'fal-ai/nano-banana/edit',
-    maxPromptLength: 500,
-    supportedOperations: ['edit', 'inpaint', 'outpaint']
+    maxPromptLength: 5000, // Updated per schema
+    supportedOperations: ['edit']
+  },
+  'gemini-flash-edit': {
+    endpoint: 'fal-ai/gemini-25-flash-image/edit',
+    maxPromptLength: 5000, // Updated per schema
+    supportedOperations: ['edit']
   },
   'qwen-image-edit': {
     endpoint: 'fal-ai/qwen-image-edit',
