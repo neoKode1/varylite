@@ -23,23 +23,23 @@
 			<!-- Logo -->
 			<a href="/" class="flex items-center gap-2 group">
 				<span class="text-xl font-bold tracking-tight">
-					<span class="text-white/70 text-lg">v</span><span class="text-white font-black">ARY</span><span class="gradient-text font-extrabold">Lite</span>
+					<span class="text-surface-400 text-lg font-medium">v</span><span class="text-white font-black">ARY</span><span class="gradient-text font-extrabold">Lite</span>
 				</span>
 			</a>
 
 			<!-- Desktop links -->
-			<div class="hidden md:flex items-center gap-1">
+			<div class="hidden md:flex items-center gap-0.5">
 				{#each links as { href, label }}
 					<a
 						{href}
-						class="relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
+						class="relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300
 							{isActive(href)
 								? 'text-white bg-white/10'
-								: 'text-surface-400 hover:text-white hover:bg-white/5'}"
+								: 'text-surface-400 hover:text-white hover:bg-white/[0.04]'}"
 					>
 						{label}
 						{#if isActive(href)}
-							<span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-accent-500 rounded-full"></span>
+							<span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-gradient-to-r from-accent-500 to-cyan-400 rounded-full"></span>
 						{/if}
 					</a>
 				{/each}
@@ -49,15 +49,16 @@
 			<div class="hidden md:flex items-center gap-3">
 				<a
 					href="/generate"
-					class="px-5 py-2 text-sm font-semibold text-white bg-accent-600 hover:bg-accent-500 rounded-lg transition-colors"
+					class="group relative px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-accent-600/20"
 				>
 					Start Creating
+					<div class="absolute inset-0 rounded-xl shimmer-bg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 				</a>
 			</div>
 
 			<!-- Mobile hamburger -->
 			<button
-				class="md:hidden p-2 text-surface-400 hover:text-white transition-colors"
+				class="md:hidden p-2 text-surface-400 hover:text-white transition-colors duration-300"
 				onclick={() => mobileOpen = !mobileOpen}
 				aria-label="Toggle menu"
 			>
@@ -74,14 +75,14 @@
 
 	<!-- Mobile menu -->
 	{#if mobileOpen}
-		<div class="md:hidden border-t border-white/5 bg-surface-950/95 backdrop-blur-xl animate-[slideUp_0.2s_ease-out]">
-			<div class="px-4 py-4 space-y-1">
+		<div class="md:hidden border-t border-white/[0.04] bg-surface-950/98 backdrop-blur-2xl animate-slide-down">
+			<div class="px-4 py-5 space-y-1">
 				{#each links as { href, label }}
 					<a
 						{href}
 						onclick={() => mobileOpen = false}
-						class="block px-4 py-3 text-sm font-medium rounded-lg transition-colors
-							{isActive(href) ? 'text-white bg-white/10' : 'text-surface-400 hover:text-white hover:bg-white/5'}"
+						class="block px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300
+							{isActive(href) ? 'text-white bg-white/10' : 'text-surface-400 hover:text-white hover:bg-white/[0.04]'}"
 					>
 						{label}
 					</a>
@@ -89,7 +90,7 @@
 				<a
 					href="/generate"
 					onclick={() => mobileOpen = false}
-					class="block mt-3 px-4 py-3 text-center text-sm font-semibold text-white bg-accent-600 hover:bg-accent-500 rounded-lg transition-colors"
+					class="block mt-4 px-4 py-3.5 text-center text-sm font-semibold text-white bg-gradient-to-r from-accent-600 to-accent-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-accent-600/20"
 				>
 					Start Creating
 				</a>
