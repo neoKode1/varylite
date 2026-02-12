@@ -10,7 +10,7 @@
 	<title>vARYLite — Free AI Scene Generator</title>
 </svelte:head>
 
-<div class="min-h-screen flex flex-col bg-surface-950 text-white font-sans">
+<div class="min-h-screen flex flex-col bg-surface-950 text-surface-50 font-sans antialiased">
 	<Nav />
 	<main class="flex-1 pt-16">
 		{@render children()}

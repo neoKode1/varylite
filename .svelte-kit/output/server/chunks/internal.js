@@ -2614,7 +2614,7 @@ const options = {
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="theme-color" content="#0a0a0a" />
+		<meta name="theme-color" content="#020617" />
 		<meta name="description" content="vARYLite — Free AI Scene Generator. Create stunning images and videos with 70+ AI models, no registration required." />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
@@ -2692,7 +2692,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1q12501"
+  version_hash: "vo79bn"
 };
 async function get_hooks() {
   let handle;
