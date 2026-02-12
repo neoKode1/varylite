@@ -1,0 +1,26 @@
+All tasks complete. Here's a summary of what was built:
+
+## What Changed
+
+The entire website was modernized by migrating from Next.js 15/React to **SvelteKit 5** with a completely redesigned, modern UI.
+
+### Architecture
+- **Framework:** Next.js + React → SvelteKit 5 with Svelte 5 Runes (`$state`, `$derived`, `$effect`)
+- **Styling:** Tailwind CSS v3 → Tailwind CSS v4 with `@theme` tokens and custom `@utility` directives
+- **Deploy:** Cloudflare Workers via `@sveltejs/adapter-cloudflare`
+
+### Pages Built (5 routes)
+1. **Home** (`/`) — Full hero section with animated gradient orbs, "IMAGINE YOUR WORLD" headline, rotating model showcase, stats bar, feature grid (6 capabilities), 3-step "How It Works", model provider grid (12 providers), and final CTA
+2. **Generate** (`/generate`) — Complete generation interface with drag-and-drop upload, mode selector (Text→Image, Text→Video, Image→Video), model dropdown with credit costs, prompt/negative prompt inputs, generation history grid, and fullscreen viewer
+3. **Gallery** (`/gallery`) — Masonry grid layout with category filters, hover overlays showing prompts/models, fullscreen viewer with keyboard support
+4. **Community** (`/community`) — Social feed with post composer, likes/comments/reposts, and collaborators leaderboard tab
+5. **Pricing** (`/pricing`) — Three-tier pricing cards (Free/Light/Heavy) with monthly/annual toggle, pay-as-you-go credit packs, and model cost reference table
+
+### Design System
+- Dark-first design with `surface-50` through `surface-950` color scale
+- Glassmorphism UI (`glass`, `glass-strong` utilities with backdrop blur)
+- Purple accent theme (`accent-400/500/600`)
+- Custom animations: fade-in, slide-up, float, pulse-glow, blur-in, shimmer
+- Fully responsive with mobile hamburger nav
+
+### Build: Clean, zero errors

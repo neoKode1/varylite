@@ -1,0 +1,26 @@
+{
+  "model": "claude-haiku-4-5-20251001",
+  "model_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5-20251001",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-6",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0
+    }
+  ],
+  "input_tokens": 3989,
+  "output_tokens": 33033,
+  "total_tokens": 37022,
+  "cache_creation_tokens": 83668,
+  "cache_read_tokens": 2827090,
+  "cost_usd": 2.9703217499999996,
+  "duration_ms": 598923
+}
