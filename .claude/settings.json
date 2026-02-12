@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/settings.json",
+  "hooks": {
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "command": ["bash", "-c", "node \"$GITHUB_WORKSPACE/pegasus-horizon-breakthrough/scripts/report-subagent-usage.js\""],
+        "async": true
+      }
+    ]
+  }
+}
+
